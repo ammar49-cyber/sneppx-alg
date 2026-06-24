@@ -39,10 +39,20 @@ file(GLOB ARIX_SECURITY_C_SRC src/security/c/src/*.c)
 add_library(arix_core STATIC ${ARIX_CORE_SRC})
 target_include_directories(arix_core PUBLIC
     ${CMAKE_SOURCE_DIR}/src/core/include
-    ${CMAKE_SOURCE_DIR}/src/arch/include
     ${CMAKE_SOURCE_DIR}/src/security/c/include
     ${CMAKE_SOURCE_DIR}/src/security/cpp/include
 )
+
+file(GLOB_RECURSE ARIX_ARCH_SRC src/arch/src/*.c)
+
+add_library(arix_arch STATIC ${ARIX_ARCH_SRC})
+target_include_directories(arix_arch PUBLIC
+    ${CMAKE_SOURCE_DIR}/src/arch/include
+    ${CMAKE_SOURCE_DIR}/src/core/include
+    ${CMAKE_SOURCE_DIR}/src/security/c/include
+    ${CMAKE_SOURCE_DIR}/src/security/cpp/include
+)
+target_link_libraries(arix_arch PUBLIC arix_core)
 
 if(ARIX_SECURITY_C_SRC)
     add_library(arix_security_c STATIC ${ARIX_SECURITY_C_SRC})
@@ -52,6 +62,7 @@ endif()
 if(ARIX_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+    add_subdirectory(examples)
 endif()
 
 if(ARIX_BUILD_PYTHON)
