@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/Users/PC/ARIX/ARIX_Algo/build/cmake_install.cmake",
-		"C:/Users/PC/ARIX/ARIX_Algo/build/tests/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
