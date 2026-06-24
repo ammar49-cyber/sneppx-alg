@@ -25,3 +25,10 @@ target_include_directories(npe_demo PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/include
     ${CMAKE_SOURCE_DIR}/src/arch/include
 )
+
+add_executable(fm_demo fm_demo.c)
+target_link_libraries(fm_demo arix_core arix_arch)
+target_include_directories(fm_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/core/include
+    ${CMAKE_SOURCE_DIR}/src/arch/include
+)
