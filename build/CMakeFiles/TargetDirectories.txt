@@ -1,0 +1,7 @@
+C:/Users/PC/ARIX/ARIX_Algo/build/CMakeFiles/arix_core.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/CMakeFiles/arix_security_c.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/CMakeFiles/RUN_TESTS.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/tests/CMakeFiles/test_tensor.dir
+C:/Users/PC/ARIX/ARIX_Algo/build/tests/CMakeFiles/RUN_TESTS.dir
