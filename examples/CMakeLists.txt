@@ -18,3 +18,10 @@ target_include_directories(arc_demo PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/include
     ${CMAKE_SOURCE_DIR}/src/arch/include
 )
+
+add_executable(npe_demo npe_demo.c)
+target_link_libraries(npe_demo arix_core arix_arch)
+target_include_directories(npe_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/core/include
+    ${CMAKE_SOURCE_DIR}/src/arch/include
+)
