@@ -23,32 +23,60 @@ ArixModel* arix_model_create(const ArixArchConfig* config) {
     memset(model, 0, sizeof(ArixModel));
 
     model->config = *config;
-    unsigned int seed = config->seed;
+    unsigned int seed = config->seed ? config->seed : 42;
 
-    model->hss_model = arix_hss_model_create(&config->hss_config, seed);
+    size_t in_dim = config->input_dim ? config->input_dim : 16;
+    size_t out_dim = config->output_dim ? config->output_dim : 16;
+
+    ArixHSSConfig hss_cfg = config->hss_config;
+    if (hss_cfg.input_dim == 0 || hss_cfg.num_layers == 0) {
+        hss_cfg = arix_hss_config_default();
+        hss_cfg.input_dim = in_dim;
+        hss_cfg.output_dim = out_dim;
+    }
+    ArixSERConfig ser_cfg = config->ser_config;
+    if (ser_cfg.num_experts == 0 || ser_cfg.expert_dim == 0) {
+        ser_cfg = arix_ser_config_default();
+        ser_cfg.input_dim = in_dim;
+        ser_cfg.output_dim = out_dim;
+    }
+    ArixARCConfig arc_cfg = config->arc_config;
+    if (arc_cfg.input_guard_strength == 0.0f) {
+        arc_cfg = arix_arc_config_default();
+    }
+    ArixNPEConfig npe_cfg = config->npe_config;
+    if (npe_cfg.max_program_length == 0) {
+        npe_cfg = arix_npe_config_default();
+    }
+    ArixFMConfig fm_cfg = config->fm_config;
+    if (fm_cfg.num_nodes == 0) {
+        fm_cfg = arix_fm_config_default();
+    }
+
+    model->hss_model = arix_hss_model_create(&hss_cfg, seed);
     if (!model->hss_model) { arix_model_destroy(model); return NULL; }
 
-    model->ser_model = arix_ser_model_create(&config->ser_config, seed + 1, 1);
+    model->ser_model = arix_ser_model_create(&ser_cfg, seed + 1, 1);
     if (!model->ser_model) { arix_model_destroy(model); return NULL; }
 
-    model->arc_layer = arix_arc_layer_create(&config->arc_config, config->input_dim, config->output_dim, seed + 2);
+    model->arc_layer = arix_arc_layer_create(&arc_cfg, config->input_dim, config->output_dim, seed + 2);
     if (!model->arc_layer) { arix_model_destroy(model); return NULL; }
 
     model->npe_program = arix_npe_compile_mlp(config->input_dim, config->input_dim * 2);
     if (!model->npe_program) { arix_model_destroy(model); return NULL; }
 
     unsigned long s = seed;
-    size_t total_weights = config->input_dim * (config->input_dim * 2) + (config->input_dim * 2) + (config->input_dim * 2) * config->input_dim + config->input_dim;
+    size_t total_weights = in_dim * (in_dim * 2) + (in_dim * 2) + (in_dim * 2) * out_dim + out_dim;
     for (size_t i = 0; i < total_weights && i < model->npe_program->memory->size; i++) {
         s = s * 1103515245UL + 12345UL;
         ((float*)model->npe_program->memory->data)[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 0.1f;
     }
 
-    model->npe_vm = arix_npe_vm_create(&config->npe_config);
+    model->npe_vm = arix_npe_vm_create(&npe_cfg);
     if (!model->npe_vm) { arix_model_destroy(model); return NULL; }
     arix_npe_vm_load(model->npe_vm, model->npe_program);
 
-    model->fm_controller = arix_fm_controller_create(&config->fm_config);
+    model->fm_controller = arix_fm_controller_create(&fm_cfg);
     if (!model->fm_controller) { arix_model_destroy(model); return NULL; }
 
     return model;

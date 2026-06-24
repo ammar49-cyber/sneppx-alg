@@ -33,7 +33,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-file(GLOB ARIX_CORE_SRC src/core/src/*.c)
+file(GLOB_RECURSE ARIX_CORE_SRC src/core/src/*.c)
 file(GLOB ARIX_SECURITY_C_SRC src/security/c/src/*.c)
 
 add_library(arix_core STATIC ${ARIX_CORE_SRC})

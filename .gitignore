@@ -4,3 +4,9 @@ __pycache__/
 .vs/
 *.user
 *.suo
+.pytest_cache/
+*.pyd
+src/python/arix_algo/Release/
+*.lib
+*.exp
+*.obj
