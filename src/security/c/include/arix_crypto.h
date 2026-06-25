@@ -23,4 +23,13 @@
 #include "arix_random.h"
 #include "arix_argon2.h"
 
+#include "arix_secure_mem.h"
+#include "arix_canary.h"
+#include "arix_aslr.h"
+#include "arix_lock.h"
+#include "arix_sc.h"
+#include "arix_timing.h"
+#include "arix_cache.h"
+#include "arix_power.h"
+
 #endif

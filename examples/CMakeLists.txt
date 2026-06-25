@@ -32,3 +32,11 @@ target_include_directories(fm_demo PRIVATE
     ${CMAKE_SOURCE_DIR}/src/core/include
     ${CMAKE_SOURCE_DIR}/src/arch/include
 )
+
+add_executable(security_stress security_stress.c)
+target_link_libraries(security_stress arix_security_c arix_core arix_arch)
+target_include_directories(security_stress PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/security/c/include
+    ${CMAKE_SOURCE_DIR}/src/core/include
+    ${CMAKE_SOURCE_DIR}/src/arch/include
+)
