@@ -18,3 +18,14 @@ src/python/arix_algo/Debug/
 *.dll
 *.ilk
 
+
+test_chacha_ref.py
+test_chacha_standalone.c
+test_qr.c
+CMakeLists_standalone.txt
+releases/
+*.tar.gz
+*.zip
+*.sig
+SUMS
+
