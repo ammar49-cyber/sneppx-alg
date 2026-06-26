@@ -1,5 +1,9 @@
 # 🚀 ARIX-Algo
 
+<p align="center">
+  <img src="docs/logo.jpeg" alt="ARIX-Algo Logo" width="400"/>
+</p>
+
 > **Next-Generation AI Architecture** · Security built into the foundation.  
 > Not patched later. Not bolted on. **In every instruction.**
 
