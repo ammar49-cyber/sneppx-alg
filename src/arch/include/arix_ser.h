@@ -2,6 +2,7 @@
 #define ARIX_SER_H
 
 #include "arix_tensor.h"
+#include "arix_autodiff.h"
 #include <stddef.h>
 
 typedef enum {
@@ -59,5 +60,10 @@ void arix_ser_route(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** g
 void arix_ser_expert_forward(const ArixExpert* expert, const ArixTensor* input, ArixTensor* output);
 void arix_ser_forward(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** output);
 float arix_ser_load_balance_loss(const ArixTensor* gate_weights, const int* expert_indices, size_t num_tokens);
+size_t arix_ser_get_params(const ArixSERModel* model, ArixTensor** out_params, size_t max_params);
+int arix_ser_build_train_graph(ArixSERModel* model, ArixTape* tape,
+                               ArixVariable* input_var,
+                               ArixVariable** weight_vars, size_t num_weights,
+                               ArixVariable** output_var);
 
 #endif /* ARIX_SER_H */

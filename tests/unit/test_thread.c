@@ -1,0 +1,314 @@
+#include "arix_thread.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef _WIN32
+#include <intrin.h>
+#pragma intrinsic(_InterlockedIncrement)
+#endif
+
+static int tests_passed = 0;
+static int tests_failed = 0;
+
+#define ASSERT(cond, msg) do { \
+    if (!(cond)) { \
+        printf("FAIL: %s (%s)\n", msg, #cond); \
+        tests_failed++; \
+        return; \
+    } \
+} while(0)
+
+static void run_test(const char* name, void (*test_fn)(void)) {
+    printf("Running %s... ", name);
+    fflush(stdout);
+    test_fn();
+    printf("PASS\n");
+    tests_passed++;
+}
+
+/* ── Shared data for counter tests ────────────────────────── */
+
+typedef struct {
+    int*   counter;
+    int    iterations;
+    size_t tid;
+} IncArg;
+
+static void inc_func(void* arg) {
+    IncArg* a = (IncArg*)arg;
+    for (int i = 0; i < a->iterations; i++) {
+#ifdef _WIN32
+        _InterlockedIncrement((volatile long*)a->counter);
+#else
+        __sync_add_and_fetch(a->counter, 1);
+#endif
+    }
+}
+
+/* ── Pool create / destroy ────────────────────────────────── */
+
+static void test_pool_create_destroy(void) {
+    ArixThreadPool* pool = arix_threadpool_create(2);
+    ASSERT(pool != NULL, "pool created");
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Default count at least 2 ─────────────────────────────── */
+
+static void test_default_count(void) {
+    size_t n = arix_threadpool_default_count();
+    ASSERT(n >= 2, "default count >= 2");
+}
+
+/* ── Submit and execute one task ──────────────────────────── */
+
+static void test_submit_one(void) {
+    ArixThreadPool* pool = arix_threadpool_create(2);
+    ASSERT(pool != NULL, "pool created");
+
+    int counter = 0;
+    IncArg arg = { &counter, 1000, 0 };
+    ArixTask task;
+    task.func = inc_func;
+    task.arg  = &arg;
+
+    ASSERT(arix_threadpool_submit(pool, task) == 0, "submit ok");
+    arix_threadpool_wait(pool);
+    ASSERT(counter == 1000, "counter == 1000");
+
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Multiple tasks ───────────────────────────────────────── */
+
+static void test_multiple_tasks(void) {
+    ArixThreadPool* pool = arix_threadpool_create(4);
+    ASSERT(pool != NULL, "pool created");
+
+    int counter = 0;
+    int N = 100;
+    for (int i = 0; i < N; i++) {
+        IncArg* arg = (IncArg*)malloc(sizeof(IncArg));
+        ASSERT(arg != NULL, "arg malloc");
+        arg->counter    = &counter;
+        arg->iterations = 1000;
+        arg->tid        = (size_t)i;
+        ArixTask task;
+        task.func = inc_func;
+        task.arg  = arg;
+        arix_threadpool_submit(pool, task);
+    }
+
+    arix_threadpool_wait(pool);
+    ASSERT(counter == N * 1000, "counter == N*1000");
+
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Future ───────────────────────────────────────────────── */
+
+typedef struct {
+    int value;
+} FutArg;
+
+static void fut_func(void* arg) {
+    FutArg* a = (FutArg*)arg;
+    a->value = 42;
+}
+
+static void test_future(void) {
+    ArixThreadPool* pool = arix_threadpool_create(2);
+    ASSERT(pool != NULL, "pool created");
+
+    ArixFuture* fut = arix_future_create();
+    ASSERT(fut != NULL, "future created");
+
+    FutArg arg;
+    arg.value = 0;
+
+    ArixTask task;
+    task.func = fut_func;
+    task.arg  = &arg;
+
+    ASSERT(!arix_future_is_ready(fut), "future not ready yet");
+    arix_threadpool_submit_future(pool, task, fut);
+
+    arix_future_wait(fut);
+    ASSERT(arix_future_is_ready(fut), "future ready after wait");
+    ASSERT(arg.value == 42, "future task executed");
+
+    arix_future_destroy(fut);
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Future without pool ──────────────────────────────────── */
+
+static void test_future_solo(void) {
+    ArixFuture* fut = arix_future_create();
+    ASSERT(fut != NULL, "future created");
+    ASSERT(!arix_future_is_ready(fut), "not ready");
+
+    arix_future_set_result(fut, (void*)(intptr_t)99);
+    ASSERT(arix_future_is_ready(fut), "ready");
+    ASSERT(arix_future_get_result(fut) == (void*)(intptr_t)99, "result == 99");
+
+    arix_future_destroy(fut);
+}
+
+/* ── Parallel For ─────────────────────────────────────────── */
+
+typedef struct {
+    int*  array;
+    int   value;
+} ForArg;
+
+static void for_func(size_t start, size_t end, void* arg) {
+    ForArg* fa = (ForArg*)arg;
+    for (size_t i = start; i < end; i++) {
+        fa->array[i] = fa->value;
+    }
+}
+
+static void test_parallel_for(void) {
+    ArixThreadPool* pool = arix_threadpool_create(4);
+    ASSERT(pool != NULL, "pool created");
+
+    enum { N = 10000 };
+    int* arr = (int*)calloc(N, sizeof(int));
+    ASSERT(arr != NULL, "array malloc");
+
+    ForArg arg;
+    arg.array = arr;
+    arg.value = 7;
+
+    arix_parallel_for(pool, 0, N, for_func, &arg);
+    for (int i = 0; i < N; i++) {
+        ASSERT(arr[i] == 7, "array[i] == 7");
+    }
+
+    free(arr);
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Parallel Reduce (sum) ────────────────────────────────── */
+
+typedef struct {
+    int*  array;
+    size_t len;
+} ReduceArg;
+
+static void sum_func(size_t start, size_t end, void* arg, void* result) {
+    ReduceArg* ra = (ReduceArg*)arg;
+    int* sum = (int*)result;
+    for (size_t i = start; i < end; i++) {
+        *sum += ra->array[i];
+    }
+}
+
+static void combine_int(void* dst, const void* src) {
+    *(int*)dst += *(const int*)src;
+}
+
+static void test_parallel_reduce(void) {
+    ArixThreadPool* pool = arix_threadpool_create(4);
+    ASSERT(pool != NULL, "pool created");
+
+    enum { N = 10000 };
+    int* arr = (int*)malloc(N * sizeof(int));
+    ASSERT(arr != NULL, "array malloc");
+
+    int expected = 0;
+    for (int i = 0; i < N; i++) {
+        arr[i] = i + 1;
+        expected += arr[i];
+    }
+
+    ReduceArg rarg;
+    rarg.array = arr;
+    rarg.len   = N;
+
+    int result = 0;
+    int init   = 0;
+    arix_parallel_reduce(pool, 0, N, &init, sizeof(int),
+                         sum_func, combine_int, &result, &rarg);
+    ASSERT(result == expected, "reduce sum matches expected");
+
+    free(arr);
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Single-threaded pool (1 thread) ──────────────────────── */
+
+static void test_single_thread_pool(void) {
+    ArixThreadPool* pool = arix_threadpool_create(1);
+    ASSERT(pool != NULL, "pool created");
+
+    int counter = 0;
+    IncArg arg = { &counter, 500, 0 };
+    ArixTask task;
+    task.func = inc_func;
+    task.arg  = &arg;
+
+    arix_threadpool_submit(pool, task);
+    arix_threadpool_wait(pool);
+    ASSERT(counter == 500, "counter == 500");
+
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Many iterations (stress) ─────────────────────────────── */
+
+static void test_stress(void) {
+    ArixThreadPool* pool = arix_threadpool_create(4);
+    ASSERT(pool != NULL, "pool created");
+
+    enum { N = 500, ITERS = 500 };
+    int* counters = (int*)calloc(N, sizeof(int));
+    ASSERT(counters != NULL, "counters malloc");
+
+    for (int i = 0; i < N; i++) {
+        IncArg* arg = (IncArg*)malloc(sizeof(IncArg));
+        ASSERT(arg != NULL, "arg malloc");
+        arg->counter    = &counters[i];
+        arg->iterations = ITERS;
+        arg->tid        = (size_t)i;
+        ArixTask task;
+        task.func = inc_func;
+        task.arg  = arg;
+        arix_threadpool_submit(pool, task);
+    }
+
+    arix_threadpool_wait(pool);
+    for (int i = 0; i < N; i++) {
+        ASSERT(counters[i] == ITERS, "counter == ITERS");
+    }
+
+    free(counters);
+    arix_threadpool_destroy(pool);
+}
+
+/* ── Null-safe destroy ────────────────────────────────────── */
+
+static void test_null_destroy(void) {
+    arix_threadpool_destroy(NULL);
+}
+
+/* ─────────────────────────────────────────────────────────── */
+
+int main(void) {
+    run_test("pool_create_destroy",      test_pool_create_destroy);
+    run_test("default_count",            test_default_count);
+    run_test("submit_one",               test_submit_one);
+    run_test("multiple_tasks",           test_multiple_tasks);
+    run_test("future",                   test_future);
+    run_test("future_solo",              test_future_solo);
+    run_test("parallel_for",             test_parallel_for);
+    run_test("parallel_reduce",          test_parallel_reduce);
+    run_test("single_thread_pool",       test_single_thread_pool);
+    run_test("stress",                   test_stress);
+    run_test("null_destroy",             test_null_destroy);
+
+    printf("\n%d passed, %d failed out of %d\n",
+           tests_passed, tests_failed, tests_passed + tests_failed);
+    return tests_failed > 0 ? 1 : 0;
+}

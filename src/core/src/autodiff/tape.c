@@ -39,14 +39,13 @@ void arix_tape_record(ArixTape* tape, ArixVariable* var) {
 
 void arix_tape_backward(ArixTape* tape, ArixVariable* loss) {
     if (!tape || !loss) return;
+
     if (loss->grad) arix_tensor_destroy(loss->grad);
     loss->grad = arix_tensor_ones(loss->data->shape, loss->data->ndim, ARIX_FLOAT32);
 
     for (size_t i = tape->num_vars; i > 0; i--) {
         ArixVariable* var = tape->vars[i - 1];
-        if (var->requires_grad && var->grad == NULL) {
-            size_t shape[] = {1};
-            var->grad = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
-        }
+        if (!var || !var->backward_fn || !var->grad) continue;
+        var->backward_fn(var->backward_ctx, var->grad);
     }
 }

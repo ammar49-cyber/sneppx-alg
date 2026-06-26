@@ -135,3 +135,31 @@ int arix_model_forward(ArixModel* model, const ArixTensor* input, ArixTensor** o
 
     return 0;
 }
+
+size_t arix_model_get_params(const ArixModel* model, ArixTensor** out, size_t max_out) {
+    if (!model) return 0;
+    size_t hss_n = 0, ser_n = 0;
+    if (model->hss_model) {
+        hss_n = arix_hss_get_params(model->hss_model, NULL, 0);
+    }
+    if (model->ser_model) {
+        ser_n = arix_ser_get_params(model->ser_model, NULL, 0);
+    }
+    size_t total = hss_n + ser_n;
+    size_t idx = 0;
+    if (out) {
+        if (model->hss_model) {
+            size_t n = hss_n;
+            if (idx + n > max_out) n = max_out - idx;
+            arix_hss_get_params(model->hss_model, out + idx, n);
+            idx += n;
+        }
+        if (model->ser_model) {
+            size_t n = ser_n;
+            if (idx + n > max_out) n = max_out - idx;
+            arix_ser_get_params(model->ser_model, out + idx, n);
+            idx += n;
+        }
+    }
+    return total;
+}

@@ -2,6 +2,7 @@
 #define ARIX_HSS_H
 
 #include "arix_tensor.h"
+#include "arix_autodiff.h"
 #include <stddef.h>
 
 typedef struct {
@@ -45,5 +46,10 @@ void arix_hss_discretize(ArixHSSLayer* layer);
 void arix_hss_step(const ArixHSSLayer* layer, const ArixTensor* x, ArixTensor* h_next);
 void arix_hss_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* h_seq, ArixTensor* y_seq);
 void arix_hss_hierarchical_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* y_seq);
+size_t arix_hss_get_params(const ArixHSSModel* model, ArixTensor** out_params, size_t max_params);
+int arix_hss_build_train_graph(ArixHSSModel* model, ArixTape* tape,
+                               ArixVariable* input_var,
+                               ArixVariable** weight_vars, size_t num_weights,
+                               ArixVariable** output_var);
 
 #endif /* ARIX_HSS_H */

@@ -23,3 +23,8 @@ void arix_variable_destroy(ArixVariable* var) {
     if (var->parents) arix_free(var->parents, var->num_parents * sizeof(ArixVariable*));
     arix_free(var, sizeof(ArixVariable));
 }
+
+void arix_variable_set_requires_grad(ArixVariable* var, int requires_grad) {
+    if (!var) return;
+    var->requires_grad = requires_grad;
+}

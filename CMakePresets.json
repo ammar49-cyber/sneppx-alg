@@ -1,0 +1,96 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default Debug (MSVC)",
+            "generator": "Visual Studio 17 2022",
+            "architecture": { "value": "x64", "strategy": "set" },
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ARIX_BUILD_TESTS": "ON",
+                "ARIX_BUILD_BENCHMARKS": "ON",
+                "ARIX_BUILD_PYTHON": "OFF"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release (MSVC)",
+            "generator": "Visual Studio 17 2022",
+            "architecture": { "value": "x64", "strategy": "set" },
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ARIX_BUILD_TESTS": "ON",
+                "ARIX_BUILD_BENCHMARKS": "ON",
+                "ARIX_BUILD_PYTHON": "OFF",
+                "ARIX_USE_LTO": "ON"
+            }
+        },
+        {
+            "name": "relwithdebinfo",
+            "displayName": "RelWithDebInfo (MSVC)",
+            "generator": "Visual Studio 17 2022",
+            "architecture": { "value": "x64", "strategy": "set" },
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "ARIX_BUILD_TESTS": "ON",
+                "ARIX_BUILD_BENCHMARKS": "ON",
+                "ARIX_BUILD_PYTHON": "OFF"
+            }
+        },
+        {
+            "name": "ninja-release",
+            "displayName": "Release (Ninja, GCC/Clang)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ARIX_BUILD_TESTS": "ON",
+                "ARIX_BUILD_BENCHMARKS": "ON",
+                "ARIX_USE_LTO": "ON"
+            }
+        },
+        {
+            "name": "asan",
+            "displayName": "Debug with AddressSanitizer",
+            "inherits": "default",
+            "cacheVariables": {
+                "ARIX_USE_ASAN": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "configuration": "Release"
+        },
+        {
+            "name": "relwithdebinfo",
+            "configurePreset": "relwithdebinfo",
+            "configuration": "RelWithDebInfo"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default",
+            "configuration": "Debug",
+            "output": { "maxFailedTestOutputSize": 1024, "outputOnFailure": true }
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "configuration": "Release",
+            "output": { "maxFailedTestOutputSize": 1024, "outputOnFailure": true }
+        }
+    ]
+}

@@ -10,6 +10,7 @@ macro(add_arix_test test_src link_libs)
         ${CMAKE_SOURCE_DIR}/src/core/include
         ${CMAKE_SOURCE_DIR}/src/arch/include
         ${CMAKE_SOURCE_DIR}/src/security/c/include
+        ${CMAKE_SOURCE_DIR}/tests
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
 endmacro()
@@ -37,6 +38,7 @@ macro(add_arix_cpp_test test_src link_libs)
         ${CMAKE_SOURCE_DIR}/src/arch/include
         ${CMAKE_SOURCE_DIR}/src/security/c/include
         ${CMAKE_SOURCE_DIR}/src/security/cpp/include
+        ${CMAKE_SOURCE_DIR}/tests
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
 endmacro()
@@ -44,3 +46,16 @@ endmacro()
 foreach(test_src ${SECURITY_CPP_SRCS})
     add_arix_cpp_test(${test_src} "arix_security_cpp;arix_security_c;arix_core;arix_arch")
 endforeach()
+
+# --- Python tests ---
+if(ARIX_BUILD_PYTHON)
+    file(GLOB PYTHON_TEST_SRCS ../tests/python/*.py)
+    foreach(test_src ${PYTHON_TEST_SRCS})
+        get_filename_component(test_name ${test_src} NAME_WE)
+        add_test(NAME py_${test_name}
+            COMMAND ${CMAKE_COMMAND} -E env
+                PYTHONPATH=${CMAKE_BINARY_DIR}/src/python/$<CONFIG>
+                ${Python3_EXECUTABLE} ${test_src}
+        )
+    endforeach()
+endif()

@@ -32,3 +32,23 @@ void arix_ser_model_destroy(ArixSERModel* model) {
     arix_free(model->layers, model->num_layers * sizeof(ArixSERLayer*));
     arix_free(model, sizeof(ArixSERModel));
 }
+
+size_t arix_ser_get_params(const ArixSERModel* model, ArixTensor** out, size_t max_out) {
+    if (!model) return 0;
+    size_t count = 0;
+    for (size_t l = 0; l < model->num_layers; l++) {
+        ArixSERLayer* layer = model->layers[l];
+        if (out && count < max_out) out[count] = layer->router;
+        count++;
+        if (out && count < max_out) out[count] = layer->router_bias;
+        count++;
+        for (size_t e = 0; e < model->config.num_experts; e++) {
+            ArixExpert* exp = layer->experts[e];
+            if (out && count < max_out) out[count] = exp->w1; count++;
+            if (out && count < max_out) out[count] = exp->b1; count++;
+            if (out && count < max_out) out[count] = exp->w2; count++;
+            if (out && count < max_out) out[count] = exp->b2; count++;
+        }
+    }
+    return count;
+}

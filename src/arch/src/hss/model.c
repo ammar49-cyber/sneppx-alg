@@ -40,6 +40,25 @@ ArixHSSModel* arix_hss_model_create(const ArixHSSConfig* config, unsigned int se
     return model;
 }
 
+size_t arix_hss_get_params(const ArixHSSModel* model, ArixTensor** out, size_t max_out) {
+    if (!model) return 0;
+
+    size_t count = 0;
+    for (size_t l = 0; l < model->config.num_layers; l++) {
+        ArixHSSLayer* layer = model->layers[l];
+        ArixTensor* tensors[9] = {
+            layer->A, layer->B, layer->C, layer->D, layer->dt,
+            layer->x_proj, layer->x_proj_bias,
+            model->norm_gamma[l], model->norm_beta[l]
+        };
+        for (int i = 0; i < 9; i++) {
+            if (out && count < max_out) out[count] = tensors[i];
+            count++;
+        }
+    }
+    return count;
+}
+
 void arix_hss_model_destroy(ArixHSSModel* model) {
     if (!model) return;
     for (size_t i = 0; i < model->config.num_layers; i++) {

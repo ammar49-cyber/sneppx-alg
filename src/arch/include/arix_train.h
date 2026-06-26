@@ -4,12 +4,8 @@
 #include "arix_arch.h"
 #include "arix_autodiff.h"
 #include "arix_optimizer.h"
+#include "arix_tensor.h"
 #include <stddef.h>
-
-typedef enum {
-    ARIX_DEVICE_CPU,
-    ARIX_DEVICE_CUDA
-} ArixDevice;
 
 typedef struct {
     size_t num_epochs;

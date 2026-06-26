@@ -1,5 +1,7 @@
 #include "arix_train.h"
+#include "arix_autodiff.h"
 #include "arix_memory.h"
+#include "arix_arch.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -52,34 +54,95 @@ void arix_trainer_destroy(ArixTrainer* trainer) {
 float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_input, const ArixTensor* batch_target) {
     if (!trainer || !batch_input || !batch_target) return -1.0f;
 
-    ArixTensor* output = NULL;
-    int ret = arix_model_forward(trainer->model, batch_input, &output);
-    if (ret != 0 || !output) return -1.0f;
+    size_t nw = arix_model_get_params(trainer->model, NULL, 0);
 
-    float* od = (float*)output->data;
-    float* td = (float*)batch_target->data;
-    size_t sz = output->size < batch_target->size ? output->size : batch_target->size;
+    ArixTensor** params = (ArixTensor**)arix_malloc(nw * sizeof(ArixTensor*), 64);
+    if (!params) return -1.0f;
+    arix_model_get_params(trainer->model, params, nw);
 
-    float sum_sq = 0.0f;
-    for (size_t i = 0; i < sz; i++) {
-        float d = od[i] - td[i];
-        sum_sq += d * d;
+    ArixTape* tape = arix_tape_create();
+
+    ArixVariable** wv = (ArixVariable**)arix_malloc(nw * sizeof(ArixVariable*), 64);
+    if (!wv) { arix_free(params, nw * sizeof(ArixTensor*)); arix_tape_destroy(tape); return -1.0f; }
+    for (size_t i = 0; i < nw; i++) {
+        wv[i] = arix_variable_create(params[i], 1);
     }
-    float loss = sum_sq / (float)(sz > 0 ? sz : 1);
+
+    size_t in_shape2[2];
+    size_t in_ndim;
+    size_t in_size;
+    const size_t* in_shape;
+    if (batch_input->ndim == 3) {
+        in_shape2[0] = batch_input->shape[0] * batch_input->shape[1];
+        in_shape2[1] = batch_input->shape[2];
+        in_shape = in_shape2;
+        in_ndim = 2;
+        in_size = in_shape2[0] * in_shape2[1];
+    } else {
+        in_shape = batch_input->shape;
+        in_ndim = batch_input->ndim;
+        in_size = batch_input->size;
+    }
+    ArixTensor* inv_t = arix_tensor_create(in_shape, in_ndim, ARIX_FLOAT32);
+    memcpy(inv_t->data, ((ArixTensor*)batch_input)->data, in_size * sizeof(float));
+    ArixVariable* inv = arix_variable_create(inv_t, 0);
+
+    ArixVariable* outv = NULL;
+    int ret = -1;
+    if (trainer->model->hss_model && trainer->model->hss_model->config.num_layers > 0) {
+        ret = arix_hss_build_train_graph(trainer->model->hss_model, tape, inv, wv, nw, &outv);
+    } else if (trainer->model->ser_model && trainer->model->ser_model->num_layers > 0) {
+        ret = arix_ser_build_train_graph(trainer->model->ser_model, tape, inv, wv, nw, &outv);
+    }
+
+    float loss_val = -1.0f;
+    if (ret == 0 && outv) {
+        size_t out_sz = outv->data->size;
+        size_t tgt_sz = batch_target->size;
+        size_t copy_sz = out_sz < tgt_sz ? out_sz : tgt_sz;
+        ArixTensor* tgt_flat = arix_tensor_zeros(&out_sz, 1, ARIX_FLOAT32);
+        if (tgt_flat) {
+            memcpy((float*)tgt_flat->data, (float*)batch_target->data, copy_sz * sizeof(float));
+        }
+        ArixVariable* tgv = arix_variable_create(tgt_flat, 0);
+        ArixVariable* loss = arix_mse_loss(tape, outv, tgv);
+
+        if (loss) {
+            arix_tape_backward(tape, loss);
+
+            ArixTensor** grads = (ArixTensor**)arix_malloc(nw * sizeof(ArixTensor*), 64);
+            if (grads) {
+                for (size_t i = 0; i < nw; i++) {
+                    grads[i] = wv[i]->grad;
+                }
+                arix_optimizer_step(trainer->optimizer, params, grads, nw);
+                arix_free(grads, nw * sizeof(ArixTensor*));
+            }
+
+            loss_val = ((float*)loss->data)[0];
+        }
+
+        tgv->data = NULL; arix_variable_destroy(tgv);
+    }
 
     size_t idx = trainer->step_count;
     if (idx < trainer->loss_history->size) {
-        ((float*)trainer->loss_history->data)[idx] = loss;
+        ((float*)trainer->loss_history->data)[idx] = loss_val;
     }
 
     trainer->step_count++;
-    arix_tensor_destroy(output);
+
+    for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
+    arix_variable_destroy(inv);
+    arix_free(wv, nw * sizeof(ArixVariable*));
+    arix_free(params, nw * sizeof(ArixTensor*));
+    arix_tape_destroy(tape);
 
     if (trainer->config.log_interval > 0 && trainer->step_count % trainer->config.log_interval == 0) {
-        printf("[Step %zu] loss = %.6f\n", trainer->step_count, (double)loss);
+        printf("[Step %zu] loss = %.6f\n", trainer->step_count, (double)loss_val);
     }
 
-    return loss;
+    return loss_val;
 }
 
 float arix_trainer_evaluate(ArixTrainer* trainer, const ArixTensor* val_input, const ArixTensor* val_target) {

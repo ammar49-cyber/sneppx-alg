@@ -5,14 +5,15 @@ import numpy as np
 
 class Model:
     def __init__(self, config=None):
-        if config is None:
-            cfg = ArchConfig()
-            cfg.input_dim = 16
-            cfg.output_dim = 16
-        else:
-            cfg = ArchConfig()
-            cfg.input_dim = config.get('input_dim', 16)
-            cfg.output_dim = config.get('output_dim', 16)
+        cfg = ArchConfig()
+        cfg.input_dim = 16
+        cfg.output_dim = 16
+        if config:
+            for k in ('input_dim', 'output_dim', 'seed', 
+                       'hss_state_dim', 'hss_num_layers',
+                       'hss_input_dim', 'hss_output_dim'):
+                if k in config:
+                    setattr(cfg, k, config[k])
         self._model = _Model(cfg)
 
     def forward(self, input):
@@ -28,4 +29,7 @@ class Model:
         return Tensor(result)
 
     def parameters(self):
-        return []
+        return [Tensor(p) for p in self._model.parameters()]
+
+    def num_params(self):
+        return self._model.num_params()

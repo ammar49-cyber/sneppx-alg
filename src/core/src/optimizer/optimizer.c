@@ -2,6 +2,7 @@
 #include "arix_memory.h"
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 ArixOptimizerConfig arix_optimizer_config_default(void) {
     ArixOptimizerConfig cfg;
@@ -9,7 +10,31 @@ ArixOptimizerConfig arix_optimizer_config_default(void) {
     cfg.momentum = 0.9f;
     cfg.weight_decay = 1e-4f;
     cfg.grad_clip = 1.0f;
+    cfg.type = ARIX_OPTIMIZER_SGD;
+    cfg.beta1 = 0.9f;
+    cfg.beta2 = 0.999f;
+    cfg.epsilon = 1e-8f;
+    cfg.dampening = 0.0f;
+    cfg.nesterov = 0;
+    cfg.rho = 0.9f;
     return cfg;
+}
+
+static ArixTensor** alloc_bufs(size_t n, size_t sz, size_t ndim, const size_t* shape) {
+    ArixTensor** bufs = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+    if (!bufs) return NULL;
+    memset(bufs, 0, n * sizeof(ArixTensor*));
+    for (size_t i = 0; i < n; i++) {
+        bufs[i] = arix_tensor_zeros(shape, ndim, ARIX_FLOAT32);
+    }
+    return bufs;
+}
+
+static void free_bufs(ArixTensor** bufs, size_t n) {
+    if (!bufs) return;
+    for (size_t i = 0; i < n; i++)
+        if (bufs[i]) arix_tensor_destroy(bufs[i]);
+    arix_free(bufs, n * sizeof(ArixTensor*));
 }
 
 ArixOptimizer* arix_optimizer_create(const ArixOptimizerConfig* config) {
@@ -21,65 +46,323 @@ ArixOptimizer* arix_optimizer_create(const ArixOptimizerConfig* config) {
     opt->momentum = config->momentum;
     opt->weight_decay = config->weight_decay;
     opt->grad_clip = config->grad_clip;
+    opt->type = config->type;
+    opt->beta1 = config->beta1;
+    opt->beta2 = config->beta2;
+    opt->epsilon = config->epsilon;
+    opt->dampening = config->dampening;
+    opt->nesterov = config->nesterov;
+    opt->rho = config->rho;
     opt->num_params = 0;
     opt->momentum_buffers = NULL;
+    opt->state_buf2 = NULL;
+    opt->state_buf3 = NULL;
     opt->step_count = 0;
     return opt;
 }
 
 void arix_optimizer_destroy(ArixOptimizer* opt) {
     if (!opt) return;
-    if (opt->momentum_buffers) {
-        for (size_t i = 0; i < opt->num_params; i++) {
-            if (opt->momentum_buffers[i]) arix_tensor_destroy(opt->momentum_buffers[i]);
-        }
-        arix_free(opt->momentum_buffers, opt->num_params * sizeof(ArixTensor*));
-    }
+    free_bufs(opt->momentum_buffers, opt->num_params);
+    free_bufs(opt->state_buf2, opt->num_params);
+    free_bufs(opt->state_buf3, opt->num_params);
     arix_free(opt, sizeof(ArixOptimizer));
+}
+
+static float clip_grad(float g, float clip) {
+    if (g > clip) return clip;
+    if (g < -clip) return -clip;
+    return g;
+}
+
+static void ensure_bufs(ArixOptimizer* opt, ArixTensor** params, size_t n) {
+    if (opt->num_params == n) return;
+    free_bufs(opt->momentum_buffers, opt->num_params);
+    free_bufs(opt->state_buf2, opt->num_params);
+    free_bufs(opt->state_buf3, opt->num_params);
+    opt->momentum_buffers = NULL;
+    opt->state_buf2 = NULL;
+    opt->state_buf3 = NULL;
+    opt->num_params = 0;
+
+    opt->momentum_buffers = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+    if (!opt->momentum_buffers) return;
+    memset(opt->momentum_buffers, 0, n * sizeof(ArixTensor*));
+
+    if (opt->type == ARIX_OPTIMIZER_ADAM || opt->type == ARIX_OPTIMIZER_ADAMW ||
+        opt->type == ARIX_OPTIMIZER_ADAMAX || opt->type == ARIX_OPTIMIZER_RMSPROP ||
+        opt->type == ARIX_OPTIMIZER_ADAGRAD || opt->type == ARIX_OPTIMIZER_ADADELTA) {
+        opt->state_buf2 = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+        if (opt->state_buf2) memset(opt->state_buf2, 0, n * sizeof(ArixTensor*));
+    }
+    if (opt->type == ARIX_OPTIMIZER_ADADELTA) {
+        opt->state_buf3 = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+        if (opt->state_buf3) memset(opt->state_buf3, 0, n * sizeof(ArixTensor*));
+    }
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i]) continue;
+        opt->momentum_buffers[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
+        if (opt->state_buf2) opt->state_buf2[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
+        if (opt->state_buf3) opt->state_buf3[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
+    }
+    opt->num_params = n;
+}
+
+static void step_sgd(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float lr = opt->learning_rate, wd = opt->weight_decay, clip = opt->grad_clip;
+        float mu = opt->momentum, dp = opt->dampening;
+        float* md = opt->momentum_buffers[i] ? (float*)opt->momentum_buffers[i]->data : NULL;
+        size_t sz = params[i]->size;
+
+        if (md && mu > 0) {
+            for (size_t j = 0; j < sz; j++) {
+                float g = clip_grad(gd[j], clip);
+                g += wd * pd[j];
+                md[j] = mu * md[j] - lr * g;
+                pd[j] += md[j];
+            }
+        } else {
+            for (size_t j = 0; j < sz; j++) {
+                float g = clip_grad(gd[j], clip);
+                g += wd * pd[j];
+                pd[j] -= lr * g;
+            }
+        }
+    }
+}
+
+static void step_adam(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n, int decoupled_wd) {
+    float lr = opt->learning_rate, b1 = opt->beta1, b2 = opt->beta2;
+    float eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
+    float bias1 = 1.0f, bias2 = 1.0f;
+    for (size_t t = 0; t < opt->step_count; t++) { bias1 *= b1; bias2 *= b2; }
+    bias1 = 1.0f - bias1;
+    bias2 = 1.0f - bias2;
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float* m1 = (float*)opt->momentum_buffers[i]->data;
+        float* m2 = (float*)opt->state_buf2[i]->data;
+        size_t sz = params[i]->size;
+
+        for (size_t j = 0; j < sz; j++) {
+            float g = clip_grad(gd[j], clip);
+            m1[j] = b1 * m1[j] + (1.0f - b1) * g;
+            m2[j] = b2 * m2[j] + (1.0f - b2) * g * g;
+            float m1_hat = m1[j] / bias1;
+            float m2_hat = m2[j] / bias2;
+            float step = lr * m1_hat / (sqrtf(m2_hat) + eps);
+            if (decoupled_wd) step += lr * wd * pd[j];
+            pd[j] -= step;
+            if (!decoupled_wd) pd[j] -= lr * wd * pd[j];
+        }
+    }
+}
+
+static void step_adamax(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+    float lr = opt->learning_rate, b1 = opt->beta1, b2 = opt->beta2;
+    float eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
+    float bias1 = 1.0f;
+    for (size_t t = 0; t < opt->step_count; t++) bias1 *= b1;
+    bias1 = 1.0f - bias1;
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float* m1 = (float*)opt->momentum_buffers[i]->data;
+        float* m2 = (float*)opt->state_buf2[i]->data;
+        size_t sz = params[i]->size;
+
+        for (size_t j = 0; j < sz; j++) {
+            float g = clip_grad(gd[j], clip);
+            m1[j] = b1 * m1[j] + (1.0f - b1) * g;
+            m2[j] = fmaxf(b2 * m2[j], fabsf(g));
+            pd[j] -= lr * m1[j] / (bias1 * (m2[j] + eps)) + lr * wd * pd[j];
+        }
+    }
+}
+
+static void step_rmsprop(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+    float lr = opt->learning_rate, alpha = opt->beta1, eps = opt->epsilon;
+    float wd = opt->weight_decay, clip = opt->grad_clip, mu = opt->momentum;
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float* v = (float*)opt->state_buf2[i]->data;
+        float* m = opt->momentum_buffers[i] ? (float*)opt->momentum_buffers[i]->data : NULL;
+        size_t sz = params[i]->size;
+
+        for (size_t j = 0; j < sz; j++) {
+            float g = clip_grad(gd[j], clip);
+            g += wd * pd[j];
+            v[j] = alpha * v[j] + (1.0f - alpha) * g * g;
+            float step = lr * g / (sqrtf(v[j]) + eps);
+            if (m && mu > 0) {
+                m[j] = mu * m[j] + step;
+                pd[j] -= m[j];
+            } else {
+                pd[j] -= step;
+            }
+        }
+    }
+}
+
+static void step_adagrad(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+    float lr = opt->learning_rate, eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float* v = (float*)opt->state_buf2[i]->data;
+        size_t sz = params[i]->size;
+
+        for (size_t j = 0; j < sz; j++) {
+            float g = clip_grad(gd[j], clip);
+            g += wd * pd[j];
+            v[j] += g * g;
+            pd[j] -= lr * g / (sqrtf(v[j]) + eps);
+        }
+    }
+}
+
+static void step_adadelta(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+    float rho = opt->rho, eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
+
+    for (size_t i = 0; i < n; i++) {
+        if (!params[i] || !grads[i]) continue;
+        float* pd = (float*)params[i]->data;
+        float* gd = (float*)grads[i]->data;
+        float* v = (float*)opt->state_buf2[i]->data;
+        float* d = (float*)opt->state_buf3[i]->data;
+        size_t sz = params[i]->size;
+
+        for (size_t j = 0; j < sz; j++) {
+            float g = clip_grad(gd[j], clip);
+            g += wd * pd[j];
+            v[j] = rho * v[j] + (1.0f - rho) * g * g;
+            float delta = g * sqrtf(d[j] + eps) / sqrtf(v[j] + eps);
+            d[j] = rho * d[j] + (1.0f - rho) * delta * delta;
+            pd[j] -= delta;
+        }
+    }
 }
 
 void arix_optimizer_step(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t num_params) {
     if (!opt || !params || !grads || num_params == 0) return;
-
-    if (opt->num_params != num_params) {
-        if (opt->momentum_buffers) {
-            for (size_t i = 0; i < opt->num_params; i++) {
-                if (opt->momentum_buffers[i]) arix_tensor_destroy(opt->momentum_buffers[i]);
-            }
-            arix_free(opt->momentum_buffers, opt->num_params * sizeof(ArixTensor*));
-        }
-        opt->momentum_buffers = (ArixTensor**)arix_malloc(num_params * sizeof(ArixTensor*), 64);
-        if (!opt->momentum_buffers) return;
-        memset(opt->momentum_buffers, 0, num_params * sizeof(ArixTensor*));
-        for (size_t i = 0; i < num_params; i++) {
-            if (params[i]) {
-                opt->momentum_buffers[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
-            }
-        }
-        opt->num_params = num_params;
-    }
-
+    ensure_bufs(opt, params, num_params);
+    if (opt->num_params == 0) return;
     opt->step_count++;
 
-    for (size_t i = 0; i < num_params; i++) {
-        if (!params[i] || !grads[i]) continue;
+    switch (opt->type) {
+        case ARIX_OPTIMIZER_SGD:      step_sgd(opt, params, grads, num_params); break;
+        case ARIX_OPTIMIZER_ADAM:     step_adam(opt, params, grads, num_params, 0); break;
+        case ARIX_OPTIMIZER_ADAMW:    step_adam(opt, params, grads, num_params, 1); break;
+        case ARIX_OPTIMIZER_ADAMAX:   step_adamax(opt, params, grads, num_params); break;
+        case ARIX_OPTIMIZER_RMSPROP:  step_rmsprop(opt, params, grads, num_params); break;
+        case ARIX_OPTIMIZER_ADAGRAD:  step_adagrad(opt, params, grads, num_params); break;
+        case ARIX_OPTIMIZER_ADADELTA: step_adadelta(opt, params, grads, num_params); break;
+    }
+}
 
-        float* pd = (float*)params[i]->data;
-        float* gd = (float*)grads[i]->data;
-        float* md = (float*)opt->momentum_buffers[i]->data;
-        float lr = opt->learning_rate;
-        float mu = opt->momentum;
-        float wd = opt->weight_decay;
-        float clip = opt->grad_clip;
-        size_t sz = params[i]->size;
+ArixLRScheduler* arix_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_t step_size) {
+    if (!lr_ptr) return NULL;
+    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    if (!s) return NULL;
+    memset(s, 0, sizeof(ArixLRScheduler));
+    s->type = ARIX_LR_STEP;
+    s->lr_ptr = lr_ptr;
+    s->gamma = gamma;
+    s->step_size = step_size;
+    s->mode_min = 1;
+    return s;
+}
 
-        for (size_t j = 0; j < sz; j++) {
-            float g = gd[j];
-            if (g > clip) g = clip;
-            if (g < -clip) g = -clip;
-            g += wd * pd[j];
-            md[j] = mu * md[j] - lr * g;
-            pd[j] += md[j];
+ArixLRScheduler* arix_lr_scheduler_exponential(float* lr_ptr, float gamma) {
+    if (!lr_ptr) return NULL;
+    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    if (!s) return NULL;
+    memset(s, 0, sizeof(ArixLRScheduler));
+    s->type = ARIX_LR_EXPONENTIAL;
+    s->lr_ptr = lr_ptr;
+    s->gamma = gamma;
+    s->mode_min = 1;
+    return s;
+}
+
+ArixLRScheduler* arix_lr_scheduler_cosine(float* lr_ptr, float min_lr, float max_lr, size_t total_steps) {
+    if (!lr_ptr) return NULL;
+    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    if (!s) return NULL;
+    memset(s, 0, sizeof(ArixLRScheduler));
+    s->type = ARIX_LR_COSINE;
+    s->lr_ptr = lr_ptr;
+    s->min_lr = min_lr;
+    s->max_lr = max_lr;
+    s->total_steps = total_steps;
+    s->mode_min = 1;
+    return s;
+}
+
+ArixLRScheduler* arix_lr_scheduler_reduce_on_plateau(float* lr_ptr, float factor, size_t patience, int mode_min) {
+    if (!lr_ptr) return NULL;
+    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    if (!s) return NULL;
+    memset(s, 0, sizeof(ArixLRScheduler));
+    s->type = ARIX_LR_REDUCE_ON_PLATEAU;
+    s->lr_ptr = lr_ptr;
+    s->factor = factor;
+    s->patience = patience;
+    s->mode_min = mode_min;
+    s->best_loss = mode_min ? 1e30f : -1e30f;
+    return s;
+}
+
+void arix_lr_scheduler_destroy(ArixLRScheduler* sched) {
+    arix_free(sched, sizeof(ArixLRScheduler));
+}
+
+void arix_lr_scheduler_step(ArixLRScheduler* sched, float current_loss) {
+    if (!sched || !sched->lr_ptr) return;
+    sched->last_epoch++;
+
+    switch (sched->type) {
+        case ARIX_LR_STEP:
+            if (sched->step_size > 0 && sched->last_epoch % sched->step_size == 0)
+                *sched->lr_ptr *= sched->gamma;
+            break;
+        case ARIX_LR_EXPONENTIAL:
+            *sched->lr_ptr *= sched->gamma;
+            break;
+        case ARIX_LR_COSINE: {
+            float progress = (float)sched->last_epoch / (float)(sched->total_steps > 0 ? sched->total_steps : 1);
+            if (progress > 1.0f) progress = 1.0f;
+            *sched->lr_ptr = sched->min_lr + 0.5f * (sched->max_lr - sched->min_lr) * (1.0f + cosf((float)3.14159265f * progress));
+            break;
+        }
+        case ARIX_LR_REDUCE_ON_PLATEAU: {
+            int improved = sched->mode_min ? (current_loss < sched->best_loss) : (current_loss > sched->best_loss);
+            if (improved) {
+                sched->best_loss = current_loss;
+                sched->wait_count = 0;
+            } else {
+                sched->wait_count++;
+                if (sched->wait_count >= (int)sched->patience && sched->patience > 0) {
+                    *sched->lr_ptr *= sched->factor;
+                    sched->wait_count = 0;
+                }
+            }
+            break;
         }
     }
 }

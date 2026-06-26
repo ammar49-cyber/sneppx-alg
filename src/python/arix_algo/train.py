@@ -1,4 +1,4 @@
-from .arix_algo_core import _Trainer, _TrainConfig
+from .arix_algo_core import _Trainer, _TrainConfig, _OptimizerConfig, _Optimizer, _OptimizerType
 import numpy as np
 
 
@@ -31,3 +31,7 @@ class Trainer:
 
     def load(self, path):
         return self._trainer.load(path)
+
+    @property
+    def learning_rate(self):
+        return self._trainer.learning_rate
