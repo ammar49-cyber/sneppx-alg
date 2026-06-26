@@ -1,91 +1,161 @@
 # ARIX-Algo
 
-**The first open-source AI algorithm with cryptographic integrity.**
+> Next-generation AI architecture with security built into the foundation.
+> Not patched later. Not bolted on. In every instruction.
 
-Neuro-symbolic execution where every inference is verifiable, every execution path is tamper-proof, and the model evolves on-device without compromising privacy. The algorithm protects itself (memory encryption, control-flow obfuscation, anti-debug) so you can run it anywhere without trusting the host.
+## Status
 
-## Core Thesis
+| Version | Date | Status |
+|---------|------|--------|
+| v0.1.0 | 2026-06-24 | Research prototype — core structure implemented, training not yet enabled |
 
-Most AI asks you to trust the company. ARIX-Algo lets you **verify the algorithm**.
+## What This Is
 
-| Problem | ARIX-Algo Solution |
-|---------|-------------------|
-| "Can I trust the output?" | Zero-knowledge proofs verify every inference |
-| "Is my model being stolen?" | Obfuscated execution, encrypted memory, anti-tamper |
-| "Does it work on my phone?" | Quantized, sparse, on-device-first design |
-| "How do I contribute?" | Federated protocol with cryptographically signed gradient contributions |
-| "Is it safe?" | Formal runtime safety guarantees enforced by the behavioral monitor |
+ARIX-Algo is a new class of AI architecture. Not a model. Not a chatbot. A foundation.
 
-## Architecture
+Five components:
 
-```
-                     ┌──────────────────────────────────────┐
-                     │           Security Layer              │
-                     │  S0 Crypto · S1 Secure Mem · S2 Obf  │
-                     │  S3 Behavioral Monitor (WIP)          │
-                     └──────────────────────────────────────┘
-                                     │
-                     ┌───────────────▼──────────────────────┐
-                     │         Algorithm Pipeline            │
-                     │  HSS → SER → ARC → NPE → FM          │
-                     │  (SSM) (MoE) (Guard) (VM)  (Fed Mem) │
-                     └──────────────────────────────────────┘
-                                     │
-                     ┌───────────────▼──────────────────────┐
-                     │         Integrity Layer (Future)      │
-                     │  ZK Proofs · Formal Safety · On-Device│
-                     └──────────────────────────────────────┘
-```
+- **HSS** — Hierarchical State Space. O(n log n) sequence modeling.
+- **SER** — Sparse Expert Routing. Dynamic parameter efficiency.
+- **ARC** — Adversarial Robustness Core. Security in the weights.
+- **NPE** — Neural Program Executor. Guaranteed-correct paths.
+- **FM** — Federated Memory. Learn collectively. Forget nothing.
 
-## Components
+## What Works Now (v0.1.0)
 
-| Layer | Component | Description |
-|-------|-----------|-------------|
-| **Algorithm** | HSS — Hierarchical State Space | Multi-layer SSM with ZOH discretization |
-| | SER — Sparse Expert Routing | Softmax + top-k MoE with load balance |
-| | ARC — Adversarial Robustness Core | Input guard, gradient obfuscation, output verifier |
-| | NPE — Neural Program Executor | 14-opcode register VM for programmable inference |
-| | FM — Federated Memory | Trust-weighted all-reduce sync with DP noise |
-| **Security** | S0 — Crypto Core | SHA-3, ChaCha20-Poly1305, Ed25519, BLAKE3, Argon2 |
-| | S1 — Secure Memory | Guard pages, canaries, ASLR, side-channel resistance |
-| | S2 — Obfuscation Engine | CFG flattening, string encryption, opaque predicates, code VM, anti-debug |
-| | S3 — Behavioral Monitor | Runtime integrity, anomaly detection, hook detection (WIP) |
+| Component | Status | What Works | What Doesn't |
+|-----------|--------|-----------|--------------|
+| Tensor Core | ✅ Real | Multi-dim arrays, 5 dtypes, row-major, 50+ ops | GPU (CPU only) |
+| Memory | ✅ Real | Aligned allocation, secure zero, guard pages | NUMA optimization |
+| Thread Pool | ⚠️ Stub | Single-threaded fallback | Real parallelism |
+| HSS | ⚠️ Partial | Forward pass, sequential scan, first-order discretization | Parallel scan, training |
+| SER | ⚠️ Partial | Top-k routing, expert forward, load balance loss | Learned gating |
+| ARC | ⚠️ Partial | Z-score input guard, gradient noise, output check | Formal proofs |
+| NPE | ⚠️ Partial | VM executes, compilers generate programs | JIT, formal verification |
+| FM | ⚠️ Partial | Single-node memory banks, sync stubs | Real distributed |
+| Autodiff | ❌ Stub | Structure only | Backward pass (does nothing) |
+| Optimizer | ❌ Stub | Structure only | Parameter updates |
+| Python API | ❌ Stub | Package installs, `hello()` works | Model, Trainer classes |
+| Security S0 | ✅ Real | Ed25519, ChaCha20-Poly1305, SHA-3, BLAKE3, Argon2id | — |
+| Security S1 | ✅ Real | Guard pages, canaries, ASLR, locked memory | — |
+| Security S2 | ⚠️ Partial | Control flow flattening, string encryption stubs | Full obfuscation |
+| Security S3 | ⚠️ Partial | Behavioral monitor structure | Real anomaly detection |
 
-## Roadmap
+## What This Means
 
-| Phase | What | Why |
-|-------|------|-----|
-| **S3** | Behavioral monitor | Runtime integrity is table stakes |
-| **S4** | Verifiable inference (ZK proofs) | Differentiator no one else has |
-| **S5** | On-device runtime + quantization | Real-world deployment |
-| **S6** | Federated contribution protocol | Community growth engine |
-| **S7** | Self-evolving NPE paths | Truly next-gen |
+You can:
+
+- ✅ Build the project from source
+- ✅ Run all tests (50 pass)
+- ✅ Run demos (HSS, SER, ARC, NPE, FM)
+- ✅ Audit the security code (S0-S1 are production-grade)
+- ✅ Read the architecture and understand the design
+- ✅ Contribute to development
+
+You cannot:
+
+- ❌ Train a model
+- ❌ Generate text
+- ❌ Benchmark against GPT-2
+- ❌ Use as PyTorch replacement
+- ❌ Deploy to production
 
 ## Build
 
 ```bash
-git clone https://github.com/ammar49-cyber/nextgen-arixalgo.git
-cd nextgen-arixalgo
 mkdir build && cd build
-cmake .. -G "Visual Studio 17 2022" -DBUILD_TYPE=Release
-cmake --build . --config Release
-ctest --output-on-failure -C Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake --build . -j$(nproc)
+ctest --output-on-failure
 ```
 
-## Project Stats
+### Quick Start
 
-- **~3,000 lines** C/C++ across 7 layers
-- **42 tests**, 40 passing (2 pre-existing S0 edge cases)
-- **Security-hardened**: all memory allocs are canary-protected, constant-time, obfuscatable
+```c
+#include "arix_tensor.h"
+#include "arix_hss.h"
 
-## Docs
+int main() {
+    size_t shape[] = {4, 8, 16};
+    ArixTensor* input = arix_tensor_randn(shape, 3, ARIX_FLOAT32);
 
-- [Vision & Thesis](docs/VISION.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Development](docs/DEVELOPMENT.md)
-- [API Reference](docs/API.md)
+    ArixHSSConfig config = arix_hss_config_default();
+    ArixHSSModel* model = arix_hss_model_create(&config, 42);
+
+    ArixTensor* output;
+    arix_hss_forward(model, input, &output);
+
+    arix_tensor_print(output);
+    return 0;
+}
+```
+
+### Python (Stub)
+
+```python
+from arix_algo import hello
+print(hello())  # "ARIX-Algo v0.1.0 — Core tensor operations implemented in C"
+```
+
+Full Python API in v0.5.0.
+
+## Security
+
+Security is not a feature. It is the architecture.
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| S0 | ✅ Complete | Cryptographic primitives |
+| S1 | ✅ Complete | Secure memory |
+| S2 | ⚠️ In Progress | Obfuscation engine |
+| S3 | ⚠️ In Progress | Behavioral monitor |
+| S4-S9 | ⏳ Planned | Network, AI sanitizer, UI, updates, formal verification, penetration |
+
+## Roadmap
+
+| Version | Timeline | Milestone |
+|---------|----------|-----------|
+| v0.5.0 | 6 months | Trainable on CPU, WikiText-2, autodiff real |
+| v1.0 | 18 months | 7B parameters, competitive with GPT-2, CUDA |
+| v2.0 | 4 years | 70B parameters, 1M LOC, competitive with LLaMA-3 |
+| v3.0 | 7 years | 1T parameters, 5M LOC, competitive with GPT-4 |
+| v4.0 | 10 years | 10T parameters, 15M LOC, beyond existing systems |
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT for algorithm. Closed-source for website and distribution.
+
+## Governance
+
+BDFL: Ammar [ARIX]
+
+Patches: patches@arix.dev
+
+Security: security@arix.dev
+
+## Links
+
+- Website: https://aixsite.vercel.app
+- GitHub: https://github.com/ARIX-Algo
+- Twitter: https://x.com/Arixdrv
+- Instagram: https://www.instagram.com/algoarix/
+- YouTube: https://www.youtube.com/@ArixAlgo
+
+## Citation
+
+```bibtex
+@software{arix_algo_2026,
+  author = {Ammar [ARIX]},
+  title = {ARIX-Algo: Next-generation AI architecture},
+  url = {https://github.com/ARIX-Algo},
+  year = {2026}
+}
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)

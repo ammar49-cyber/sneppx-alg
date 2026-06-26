@@ -1,143 +1,495 @@
-# Architecture
+# ARIX-Algo Architecture
 
-ARIX-Algo is a neuro-symbolic AI system with cryptographic integrity — a composable 5-component algorithm pipeline wrapped in 4 security layers.
+## Overview
 
-## System Layers
+ARIX-Algo implements a composite AI algorithm with cryptographic integrity. The system processes inputs through five sequential algorithm components, each wrapped in four security layers.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Application Layer                             │
-│         Python Bindings · CLI · REST API · Demos                │
-├─────────────────────────────────────────────────────────────────┤
-│                    Algorithm Pipeline                            │
-│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐              │
-│  │ HSS  │→│ SER  │→│ ARC  │→│ NPE  │→│  FM  │              │
-│  │ SSM  │  │ MoE  │  │Guard │  │ VM   │  │FedMem│              │
-│  └──────┘  └──────┘  └──────┘  └──────┘  └──────┘              │
-├─────────────────────────────────────────────────────────────────┤
-│               Integrity Layer (Future)                           │
-│    ZK Proofs · Formal Safety · On-Device Runtime                 │
-├─────────────────────────────────────────────────────────────────┤
-│                    Security Layer                                │
-│  ┌────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐            │
-│  │ S0     │  │ S1     │  │ S2       │  │ S3 (WIP)│            │
-│  │ Crypto │  │Secure  │  │Obfuscate │  │Behavior │            │
-│  │ Core   │  │Memory  │  │Engine    │  │Monitor  │            │
-│  └────────┘  └────────┘  └──────────┘  └──────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│                    Foundation Layer                              │
-│        Tensor · Memory · Thread · Autodiff · Optimizer          │
-└─────────────────────────────────────────────────────────────────┘
+                     ┌──────────────────────────────────────┐
+                     │           Security Layer              │
+                     │  S0 Crypto · S1 Secure Mem · S2 Obf  │
+                     │  S3 Behavioral Monitor (WIP)          │
+                     └──────────────────────────────────────┘
+                                     │
+                     ┌───────────────▼──────────────────────┐
+                     │         Algorithm Pipeline            │
+                     │  HSS → SER → ARC → NPE → FM          │
+                     │  (SSM) (MoE) (Guard) (VM)  (Fed Mem) │
+                     └──────────────────────────────────────┘
+                                     │
+                     ┌───────────────▼──────────────────────┐
+                     │         Integrity Layer (Future)      │
+                     │  ZK Proofs · Formal Safety · On-Device│
+                     └──────────────────────────────────────┘
 ```
 
 ## Algorithm Pipeline
 
-```
-Input ──► [HSS] ──► [SER] ──► [ARC] ──► [NPE] ──► [FM] ──► Output
-            │         │         │         │         │
-            ▼         ▼         ▼         ▼         ▼
-         State    Route     Guard     Execute    Sync
-         Space    Experts  I/O+Grad   Program   Memory
-```
+### HSS — Hierarchical State Space
 
-## Security Layer Detail
+**Layer**: `src/arch/src/hss/`
+**Files**: `hss.h`, `hss.c`
 
-### S0 — Crypto Core (`src/security/c/`)
-| Module | Purpose |
-|--------|---------|
-| SHA-3 | FIPS 202, all 4 variants (224/256/384/512) |
-| ChaCha20 | Stream cipher, IETF variant (96-bit nonce) |
-| Poly1305 | MAC, RFC 8439, constant-time |
-| AEAD | ChaCha20-Poly1305 combined mode |
-| Ed25519 | Sign/verify, RFC 8032 (304/306 pass) |
-| BLAKE3 | Parallel hash, keyed hashing, KDF |
-| Argon2 | Password hash, id (3/4 pass) |
-| CT utils | Constant-time select, equal, compare |
+HSS is a multi-layer state space model that processes sequences by maintaining a hidden state updated per timestep.
 
-### S1 — Secure Memory (`src/security/c/`)
-| Module | Purpose |
-|--------|---------|
-| Secure pool | Guard pages, canaries, mlock, ASLR |
-| Canary | 128-bit random + generation counter |
-| ASLR | Page-aligned random offset |
-| Locked mem | mlock/VirtualLock with EPERM warning |
-| SC ops | Branchless select, equal, lt, is_zero |
-| Timing | RDTSC/QPC, random delay, timing-safe equal |
-| Cache | clflush, prefetch, mfence |
-| Power | Dummy ops, balance regions |
-| ASM | x86_64 CMOV-based constant-time (124 lines) |
+#### Mathematical Formulation
 
-### S2 — Obfuscation Engine (`src/security/cpp/`)
-| Module | Purpose |
-|--------|---------|
-| CFG flatten | Switch-dispatch state machine, junk states |
-| String encrypt | Compile-time XOR, runtime decrypt, secure wipe |
-| Inst subst | LEA for ADD, NAND for AND/OR/XOR |
-| Opaque pred | Math invariants, pointer self-compare |
-| Code VM | Stack-based 256-register VM, encrypted handlers |
-| Anti-debug | ptrace, IsDebuggerPresent, RDTSC, INT3 scan, CPUID |
-| Pipeline | Levels LIGHT→MAXIMUM, semantic verify |
-
-### S3 — Behavioral Monitor (Planned)
-Runtime integrity, anomaly detection, hook detection, execution profiling.
-
-## Directory Structure
+For each layer l at timestep k:
 
 ```
-ARIX_Algo/
-├── CMakeLists.txt
-├── src/
-│   ├── core/                    # Foundation: tensor, memory, thread, autodiff, optimizer
-│   ├── arch/                    # Algorithm pipeline: HSS, SER, ARC, NPE, FM, train
-│   ├── security/
-│   │   ├── c/                   # S0 — Crypto Core + S1 — Secure Memory (C)
-│   │   ├── cpp/                 # S2 — Obfuscation Engine (C++)
-│   │   ├── asm/                 # x86_64 assembly helpers
-│   │   └── rust/                # Future: Rust security layer
-│   └── python/                  # pybind11 bindings
-├── tests/
-│   ├── unit/                    # Component unit tests
-│   ├── integration/             # Multi-component integration tests
-│   ├── security/                # S0 + S1 (C) tests
-│   └── security/cpp/            # S2 (C++) tests
-├── examples/                    # Demos for each component
-└── docs/                        # Documentation
+x_{k}  ∈ R^{d_model}     (input at timestep k)
+h^{l}_k                  (hidden state for layer l, timestep k)
+y^{l}_k                  (output for layer l, timestep k)
+
+Transition matrices:
+A^{l} ∈ R^{d_state × d_state}
+B^{l} ∈ R^{d_state × d_model}
+C^{l} ∈ R^{d_model × d_state}
+Δ^{l} ∈ R^{d_model × d_model}     (step size)
+
+Discretization (zero-order hold):
+Ā = exp(Δ · A)
+B̄ = (Δ · A)^{-1} · (exp(Δ · A) - I) · Δ · B
+
+State update:
+h^{l}_k = Ā · h^{l}_{k-1} + B̄ · x^{l}_k
+
+Output:
+y^{l}_k = C^{l} · h^{l}_k
+
+Merge multi-layer outputs:
+y_k = Σ_{l} W^{l} · y^{l}_k + x_k     (residual connection)
 ```
+
+The sequential scan processes timesteps sequentially. A parallel scan over the state dimension is planned for PyTorch/CUDA integration.
+
+#### Code Structure
+
+```c
+typedef struct {
+    int32_t d_model;      // Input/output dimension
+    int32_t d_state;      // Hidden state dimension (default: d_model/4)
+    int32_t num_layers;   // Number of HSS layers
+    float dt_min;         // Minimum step size (default: 0.001)
+    float dt_max;         // Maximum step size (default: 0.1)
+    int32_t seed;         // Random seed for init
+} ArixHSSConfig;
+
+ArixHSSConfig arix_hss_config_default(void);
+ArixHSSModel* arix_hss_model_create(ArixHSSConfig* config, int32_t seed);
+void arix_hss_forward(ArixHSSModel* model, ArixTensor* input, ArixTensor** output);
+void arix_hss_model_destroy(ArixHSSModel* model);
+```
+
+### SER — Sparse Expert Routing
+
+**Layer**: `src/arch/src/ser/`
+**Files**: `ser.h`, `ser.c`
+
+SER implements a Mixture-of-Experts layer with top-k routing.
+
+#### Mathematical Formulation
+
+```
+Input:  x ∈ R^{batch × seq × d_model}
+Experts: E_1, ..., E_n where E_i : R^{d_model} → R^{d_model}
+Router:  r(x) = Softmax(W_r · x + b_r)     W_r ∈ R^{n × d_model}
+
+Top-k selection (k << n):
+indices = topk(r(x), k)
+weights = Softmax(r(x)[indices])
+
+Output:
+y = Σ_{i=1}^{k} weights_i · E_{indices_i}(x)
+```
+
+Load-balancing loss:
+
+```
+ℓ_balance = α · n · Σ_{i=1}^{n} f_i · P_i
+
+where:
+f_i = fraction of tokens routed to expert i
+P_i = average router probability for expert i
+α = balancing coefficient (default: 0.01)
+```
+
+#### Code Structure
+
+```c
+typedef struct {
+    int32_t d_model;         // Input/output dimension
+    int32_t d_expert;        // Expert hidden dimension (default: 4*d_model)
+    int32_t num_experts;     // Total number of experts (default: 8)
+    int32_t top_k;           // Number of active experts per token (default: 2)
+    int32_t seed;            // Random seed for expert init
+} ArixSERConfig;
+
+ArixSERConfig arix_ser_config_default(void);
+ArixSERModel* arix_ser_model_create(ArixSERConfig* config, int32_t seed);
+void arix_ser_forward(ArixSERModel* model, ArixTensor* input, ArixTensor** output);
+void arix_ser_compute_load_balance_loss(ArixSERModel* model, float* loss);
+void arix_ser_model_destroy(ArixSERModel* model);
+```
+
+### ARC — Adversarial Robustness Core
+
+**Layer**: `src/arch/src/arc/`
+**Files**: `arc.h`, `arc.c`
+
+ARC provides a three-layer defense-with-verification pipeline.
+
+#### Defense Layers
+
+1. **Input Guard**: z-score anomaly detection across the input.
+
+```c
+// For each feature dimension j:
+z_j = (x_j - μ_j) / σ_j
+// Flag if |z_j| > threshold (default: 3.0)
+```
+
+2. **Gradient Obfuscation**: Noise injection + gradient clipping.
+
+```c
+// During training:
+g' = g + N(0, σ² · |g|)     // noise proportional to gradient magnitude
+g'' = clamp(g', -γ, γ)       // gradient clipping threshold γ
+```
+
+3. **Output Verifier**: Consistency check with cosine similarity + temporal smoothing.
+
+```c
+// Cosine similarity:
+sim = ŷ · y_prev / (|ŷ| · |y_prev|)
+// Detect if sim drops below threshold τ_adv (default: 0.5)
+// Temporal smoothing:
+y_smooth = β · y_prev + (1 - β) · ŷ     // with β ∈ [0.7, 0.99]
+```
+
+#### Attack Simulation
+
+ARC includes simulation for:
+
+- **FGSM** (Fast Gradient Sign Method): `x_adv = x + ε · sign(∇_x L(x, y))`
+- **PGD** (Projected Gradient Descent): Multi-step FGSM with projection
+- **C&W** (Carlini-Wagner): Optimization-based attack: `min ||δ|| + c · f(x + δ)`
+
+#### Code Structure
+
+```c
+typedef struct {
+    float z_threshold;        // Z-score anomaly threshold (default: 3.0)
+    float noise_std;          // Gradient noise std deviation (default: 0.01)
+    float grad_clip;          // Gradient clipping threshold (default: 1.0)
+    float sim_threshold;      // Cosine similarity threshold (default: 0.5)
+    float temporal_beta;      // Temporal smoothing coefficient (default: 0.9)
+    int32_t seed;             // Random seed
+} ArixARCConfig;
+
+ArixARCConfig arix_arc_config_default(void);
+ArixARCModel* arix_arc_model_create(ArixARCConfig* config);
+void arix_arc_forward(ArixARCModel* model, ArixTensor* input,
+                      ArixTensor** output, ArixTensor** anomaly_scores);
+void arix_arc_attack_fgsm(ArixARCModel* model, ArixTensor* input,
+                          ArixTensor* gradient, float epsilon);
+void arix_arc_attack_pgd(ArixARCModel* model, ArixTensor* input,
+                         ArixTensor* gradient, float epsilon, int32_t steps);
+void arix_arc_model_destroy(ArixARCModel* model);
+```
+
+### NPE — Neural Program Executor
+
+**Layer**: `src/arch/src/npe/`
+**Files**: `npe.h`, `npe.c`
+
+NPE is a 16-register virtual machine with 14 opcodes for executing neural network operations.
+
+#### Virtual Machine
+
+```
+Registers: R0-R15, each holds an ArixTensor*
+Program Counter: PC
+Halt Flag: H
+
+Opcodes:
+  0x00  NOP          No operation
+  0x01  LOAD rd, imm Load immediate into register
+  0x02  MOV rd, rs   Move register
+  0x03  MATMUL rd,rs1,rs2    Matrix multiply
+  0x04  ADD  rd, rs1, rs2    Element-wise add
+  0x05  RELU rd, rs          ReLU activation
+  0x06  SOFTMAX rd, rs       Softmax over last dim
+  0x07  LAYERNORM rd, rs     Layer normalization
+  0x08  SIGMOID rd, rs       Sigmoid activation
+  0x13  TANH  rd, rs         Tanh activation
+  0x09  SUM  rd, rs          Sum all elements
+  0x0A  MEAN rd, rs          Mean of elements
+  0x0D  ATTENTION rd, q, k, v  Scaled dot-product attention
+  0x10  COMPUTE rd, rs       Compute opcode (extended)
+  0x11  HALT                 Stop execution
+```
+
+#### Compilers
+
+NPE includes compilers that generate programs from network configurations:
+
+- **Attention Compiler**: Generates QKV projection → scaled dot-product → output projection
+- **MLP Compiler**: Generates linear → activation → linear
+
+#### Static Verifier
+
+The verifier checks:
+- No register is used before being written
+- No out-of-bound register access
+- The program terminates (no infinite loops)
+
+#### Code Structure
+
+```c
+typedef struct {
+    int32_t num_registers;    // Number of registers (default: 16)
+    int32_t max_program_size; // Maximum program length (default: 1024)
+} ArixNPEConfig;
+
+ArixNPEConfig arix_npe_config_default(void);
+ArixNPEModel* arix_npe_model_create(ArixNPEConfig* config);
+int32_t arix_npe_load_program(ArixNPEModel* model, uint8_t* program, int32_t size);
+void arix_npe_execute(ArixNPEModel* model, ArixTensor** outputs, int32_t num_outputs);
+int32_t arix_npe_verify(ArixNPEModel* model);
+void arix_npe_model_destroy(ArixNPEModel* model);
+```
+
+### FM — Federated Memory
+
+**Layer**: `src/arch/src/fm/`
+**Files**: `fm.h`, `fm.c`
+
+FM provides distributed memory with per-node memory banks and trust-weighted synchronization.
+
+#### Memory Bank
+
+Each node maintains a fixed-size memory bank with:
+- **Euclidean similarity** for nearest-neighbor retrieval
+- **LRU eviction** when the bank is full
+- **Learnable read/write** operations
+
+#### Synchronization Protocol
+
+```
+Trust-weighted all-reduce:
+θ_global = Σ_i trust_score_i · θ_i / Σ_j trust_score_j
+
+Differential privacy noise:
+θ_shared = θ_global + Lap(0, ε)     // Laplace noise
+ε = noise_scale / sensitivity
+
+Gradient compression:
+Select top-k gradients by magnitude (random sampling fallback)
+```
+
+#### Code Structure
+
+```c
+typedef struct {
+    int32_t memory_size;       // Number of memory slots per node (default: 1024)
+    int32_t d_model;           // Memory vector dimension
+    float lr;                  // Learning rate for memory writes
+    float diff_privacy_noise;  // Differential privacy noise scale
+    float compression_ratio;   // Gradient compression ratio (default: 0.01)
+} ArixFMConfig;
+
+ArixFMConfig arix_fm_config_default(void);
+ArixFMModel* arix_fm_model_create(ArixFMConfig* config, int32_t node_id, int32_t seed);
+void arix_fm_write(ArixFMModel* model, ArixTensor* key, ArixTensor* value);
+void arix_fm_read(ArixFMModel* model, ArixTensor* query, ArixTensor** output);
+void arix_fm_sync(ArixFMModel* model, ArixTensor* global_bank, int32_t* trust_scores, int32_t num_nodes);
+void arix_fm_model_destroy(ArixFMModel* model);
+```
+
+## Security Layers
+
+### S0 — Cryptographic Core
+
+**Status: ✅ Complete**
+**Files**: `src/security/c/arix_s0_*.h/.c`
+
+Production-grade cryptographic primitives:
+
+| Primitive | Implementation | Status |
+|-----------|---------------|--------|
+| Ed25519 | RFC 8032 | Verified, 304/306 vectors pass |
+| X25519 | RFC 7748 | Full DH exchange |
+| ChaCha20-Poly1305 | RFC 8439 | AEAD encrypt/decrypt |
+| SHA-3 | FIPS 202 | 224/256/384/512 |
+| BLAKE3 | Reference impl | Fast hashing |
+| Argon2id | RFC 9106 | KDF with timing defense |
+| Secure Random | OS CPRG | Entropy source abstraction |
+
+### S1 — Secure Memory
+
+**Status: ✅ Complete**
+**Files**: `src/security/c/arix_s1_*.h/.c`
+
+| Feature | Description |
+|---------|-------------|
+| Guard Pages | RW pages with PROT_NONE adjacent to detect overflow |
+| Canaries | Stack-based overflow detection |
+| ASLR | Heap entropy via Windows VirtualAlloc / Linux mmap randomization |
+| Locked Memory | mlock/VirtualLock to prevent swapping to disk (CAP_IPC_LOCK) |
+| Secure Wipe | memset with compiler barrier to prevent removal |
+| Constant-Time Ops | memcmp variant for secret comparison |
+
+### S2 — Obfuscation Engine
+
+**Status: ⚠️ Partial**
+**Files**: `src/security/cpp/arix_s2_*.h/.cpp`
+
+| Feature | Status |
+|---------|--------|
+| Control Flow Flattening | Partial |
+| String Encryption | Stub |
+| Instruction Substitution | Planned |
+| Opaque Predicates | Planned |
+
+### S3 — Behavioral Monitor
+
+**Status: ⚠️ Partial**
+**Files**: `src/security/cpp/arix_s3_*.h/.cpp`
+
+| Feature | Status |
+|---------|--------|
+| Frequency Analysis | Structure only |
+| Timing Analysis | Structure only |
+| Anomaly Detection | Structure only |
+
+## Foundation Components
+
+### Tensor Core
+
+**Files**: `src/core/tensor.h`, `src/core/tensor.c`
+
+Multi-dimensional array with row-major layout.
+
+```c
+typedef enum {
+    ARIX_BOOL,      // sizeof(int8_t)
+    ARIX_INT32,     // sizeof(int32_t)
+    ARIX_INT64,     // sizeof(int64_t)
+    ARIX_FLOAT32,   // sizeof(float) — default
+    ARIX_FLOAT64    // sizeof(double)
+} ArixDType;
+```
+
+**Supported ops (50+):**
+
+- Creation: zeros, ones, full, randn, arange, identity, from_buffer, copy
+- Shape: reshape, transpose, permute, expand, squeeze, unsqueeze, slice, pad
+- Arithmetic: add, sub, mul, div, pow, sqrt, neg, abs
+- Matmul: matmul, batch_matmul
+- Reduction: sum, mean, var, max, min, argmax, argmin
+- Comparison: eq, ne, lt, gt, le, ge
+- Unary: exp, log, sin, cos, tan, sigmoid, relu, softmax, gelu, layer_norm
+- Utility: print, save, load, to_host, from_host
+
+### Memory
+
+**Files**: `src/core/memory.h`, `src/core/memory.c`
+
+Aligned allocation on aligned boundaries. Free list with best-fit for sizes > 4KB. Optional guard pages on request.
+
+### Thread Pool
+
+**Files**: `src/core/thread_pool.h`, `src/core/thread_pool.c`
+
+Single-threaded fallback. Interface supports work queue and tasks. Real parallelism deferred to v0.5.
 
 ## Data Flow
 
 ```
-User Input
+Input (ArixTensor)
     │
     ▼
-┌─────────────┐
-│  S2 Anti-   │  Debugger check, timing anomaly detection
-│  Debug      │  If detected → wipe sensitive data → exit
-└──────┬──────┘
-       │
-┌──────▼──────┐
-│  S1 Secure  │  Allocate with guard pages, canaries
-│  Memory     │  Decrypt strings from S2 pool
-└──────┬──────┘
-       │
-┌──────▼──────┐
-│  Pipeline   │  HSS → SER → ARC → NPE → FM
-│  Inference  │  Each step uses S0 crypto for RNG,
-└──────┬──────┘  S1 allocators, S2 obfuscation
-       │
-┌──────▼──────┐
-│  S0 Crypto  │  Sign output with Ed25519
-│  Attest     │  (Future: generate ZK proof)
-└──────┬──────┘
-       │
-       ▼
-   Verified Output
+┌─────────────────────┐
+│  HSS Forward         │
+│  (sequential scan)   │
+│  Output: (B, S, D)   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  SER Forward         │
+│  (top-k routing)     │
+│  Output: (B, S, D)   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  ARC Forward         │
+│  (guard + filter)    │
+│  Output: (B, S, D)   │
+│  + anomaly_scores    │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  NPE Execute         │
+│  (VM program)        │
+│  Output: (B, S, D)   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  FM Read             │
+│  (memory lookup)     │
+│  Output: (B, S, D)   │
+└─────────┬───────────┘
+          │
+          ▼
+      Output (ArixTensor)
 ```
 
-## Key Properties
+## Training Flow
 
-- **Constant-time**: All crypto operations are branchless
-- **Memory-safe**: All allocations have guard pages + canaries
-- **Obfuscatable**: Control flow, strings, instructions all transformable
-- **Verifiable**: (Future) Every inference produces a cryptographic proof
-- **On-device**: No cloud dependency for inference
+```
+Forward pass (HSS → SER → ARC → NPE → FM)
+    │
+    ▼
+Compute loss (MSE + load balance + ARC regularization)
+    │
+    ▼
+Backward pass (autodiff) — STUB (does nothing in v0.1.0)
+    │
+    ▼
+Optimizer step (SGD) — STUB (does nothing in v0.1.0)
+    │
+    ▼
+Secure memory wipe of intermediate tensors
+```
+
+## Future Architecture
+
+### Integrity Layer (v1.0+)
+
+```
+┌──────────────────────────────────────┐
+│         Integrity Layer               │
+│  ZK Proofs · Formal Safety ·         │
+│  On-Device Attestation               │
+└──────────────────────────────────────┘
+                    │
+    ┌───────────────▼──────────────────────┐
+    │         Algorithm Pipeline            │
+    │  HSS → SER → ARC → NPE → FM          │
+    └──────────────────────────────────────┘
+                    │
+    ┌───────────────▼──────────────────────┐
+    │         Security Layer                │
+    │  S0-S9 Full Implementation            │
+    └──────────────────────────────────────┘
+```
+
+The integrity layer will provide:
+- **Zero-knowledge proofs** of correct inference
+- **Formal safety verification** of constraint compliance
+- **On-device attestation** for distributed verification
