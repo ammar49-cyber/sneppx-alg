@@ -1,7 +1,7 @@
 # 🚀 ARIX-Algo
 
 <p align="center">
-  <img src="docs/logo.jpeg" alt="ARIX-Algo Logo" width="30%"/>
+  <img src="docs/logo.jpeg" alt="ARIX-Algo Logo" width="30%" style="mix-blend-mode: screen; background: transparent;"/>
 </p>
 
 > **Next-Generation AI Architecture** · Security built into the foundation.  
