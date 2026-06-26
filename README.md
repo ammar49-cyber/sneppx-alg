@@ -614,3 +614,7 @@ ARIX-Algo stands on the shoulders of giants. We are grateful to:
 <p align="center">
   <sub>Built with ❤️ for a safer AI future</sub>
 </p>
+
+<p align="center">
+  <a href="#">⬆️ Back to Top</a>
+</p>
