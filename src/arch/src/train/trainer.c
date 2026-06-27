@@ -173,10 +173,30 @@ int arix_trainer_save_checkpoint(ArixTrainer* trainer, const char* path) {
     if (!f) return 1;
 
     unsigned int magic = 0x41524958;
-    unsigned int version = 1;
+    unsigned int version = 2;
     fwrite(&magic, sizeof(magic), 1, f);
     fwrite(&version, sizeof(version), 1, f);
     fwrite(&trainer->step_count, sizeof(trainer->step_count), 1, f);
+
+    size_t nw = arix_model_get_params(trainer->model, NULL, 0);
+    fwrite(&nw, sizeof(nw), 1, f);
+
+    if (nw > 0) {
+        ArixTensor** params = (ArixTensor**)arix_malloc(nw * sizeof(ArixTensor*), 64);
+        if (params) {
+            arix_model_get_params(trainer->model, params, nw);
+            for (size_t i = 0; i < nw; i++) {
+                if (!params[i]) continue;
+                unsigned int ndim = (unsigned int)params[i]->ndim;
+                fwrite(&ndim, sizeof(ndim), 1, f);
+                fwrite(params[i]->shape, sizeof(size_t), ndim, f);
+                fwrite(&params[i]->size, sizeof(params[i]->size), 1, f);
+                fwrite(params[i]->data, sizeof(float), params[i]->size, f);
+            }
+            arix_free(params, nw * sizeof(ArixTensor*));
+        }
+    }
+
     fclose(f);
     return 0;
 }
@@ -190,12 +210,38 @@ int arix_trainer_load_checkpoint(ArixTrainer* trainer, const char* path) {
     if (fread(&magic, sizeof(magic), 1, f) != 1 || magic != 0x41524958) {
         fclose(f); return 1;
     }
-    if (fread(&version, sizeof(version), 1, f) != 1 || version != 1) {
+    if (fread(&version, sizeof(version), 1, f) != 1 || version < 1 || version > 2) {
         fclose(f); return 1;
     }
     if (fread(&trainer->step_count, sizeof(trainer->step_count), 1, f) != 1) {
         fclose(f); return 1;
     }
+
+    if (version >= 2) {
+        size_t nw = 0;
+        if (fread(&nw, sizeof(nw), 1, f) != 1) { fclose(f); return 1; }
+        if (nw > 0) {
+            ArixTensor** params = (ArixTensor**)arix_malloc(nw * sizeof(ArixTensor*), 64);
+            if (params) {
+                size_t actual = arix_model_get_params(trainer->model, params, nw);
+                for (size_t i = 0; i < actual && i < nw; i++) {
+                    if (!params[i]) continue;
+                    unsigned int ndim;
+                    size_t stored_shape[8];
+                    size_t stored_size;
+                    if (fread(&ndim, sizeof(ndim), 1, f) != 1) break;
+                    if (ndim > 8) { for (size_t j = 0; j < ndim; j++) { size_t tmp; fread(&tmp, sizeof(tmp), 1, f); } break; }
+                    if (fread(stored_shape, sizeof(size_t), ndim, f) != ndim) break;
+                    if (fread(&stored_size, sizeof(stored_size), 1, f) != 1) break;
+                    size_t copy_sz = stored_size < params[i]->size ? stored_size : params[i]->size;
+                    if (fread(params[i]->data, sizeof(float), copy_sz, f) != copy_sz) break;
+                    if (stored_size > copy_sz) { float tmp; for (size_t j = copy_sz; j < stored_size; j++) fread(&tmp, sizeof(float), 1, f); }
+                }
+                arix_free(params, nw * sizeof(ArixTensor*));
+            }
+        }
+    }
+
     fclose(f);
     return 0;
 }

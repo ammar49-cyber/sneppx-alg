@@ -140,6 +140,125 @@ public:
     }
 };
 
+class PyARCLayer {
+public:
+    ArixARCLayer* layer;
+    PyARCLayer(const ArixARCConfig& config, size_t input_dim, size_t output_dim, unsigned int seed) {
+        layer = arix_arc_layer_create(&config, input_dim, output_dim, seed);
+    }
+    ~PyARCLayer() { if (layer) arix_arc_layer_destroy(layer); }
+    py::array forward(py::array_t<float> input) {
+        if (!layer) return py::none();
+        ArixTensor* t = numpy_to_tensor(input);
+        if (!t) return py::none();
+        ArixTensor* output = NULL;
+        float metrics[4] = {0};
+        arix_arc_forward(layer, t, &output, metrics);
+        arix_tensor_destroy(t);
+        if (!output) return py::none();
+        py::array result = tensor_to_numpy(output);
+        arix_tensor_destroy(output);
+        return result;
+    }
+    py::array simulate_attack(py::array_t<float> input, int attack_type, float epsilon) {
+        ArixTensor* t = numpy_to_tensor(input);
+        if (!t) return py::none();
+        ArixTensor* adv = NULL;
+        arix_arc_simulate_attack(t, attack_type, epsilon, &adv);
+        arix_tensor_destroy(t);
+        if (!adv) return py::none();
+        py::array result = tensor_to_numpy(adv);
+        arix_tensor_destroy(adv);
+        return result;
+    }
+};
+
+class PyNPEVM {
+public:
+    ArixNPEVM* vm;
+    PyNPEVM(const ArixNPEConfig& config) {
+        vm = arix_npe_vm_create(&config);
+    }
+    ~PyNPEVM() { if (vm) arix_npe_vm_destroy(vm); }
+    void load_program(py::bytes prog_bytes) {
+        (void)prog_bytes;
+    }
+    py::array run(py::array_t<float> input) {
+        if (!vm || !vm->program) return py::none();
+        ArixTensor* t = numpy_to_tensor(input);
+        if (!t) return py::none();
+        ArixTensor* output = NULL;
+        arix_npe_vm_run(vm, t, &output);
+        arix_tensor_destroy(t);
+        if (!output) return py::none();
+        py::array result = tensor_to_numpy(output);
+        arix_tensor_destroy(output);
+        return result;
+    }
+};
+
+class PyFMController {
+public:
+    ArixFMController* ctrl;
+    PyFMController(const ArixFMConfig& config) {
+        ctrl = arix_fm_controller_create(&config);
+    }
+    ~PyFMController() { if (ctrl) arix_fm_controller_destroy(ctrl); }
+    py::array forward(size_t node_id, py::array_t<float> input) {
+        if (!ctrl) return py::none();
+        ArixTensor* t = numpy_to_tensor(input);
+        if (!t) return py::none();
+        ArixTensor* output = NULL;
+        arix_fm_forward(ctrl, node_id, t, &output);
+        arix_tensor_destroy(t);
+        if (!output) return py::none();
+        py::array result = tensor_to_numpy(output);
+        arix_tensor_destroy(output);
+        return result;
+    }
+    void sync() {
+        if (!ctrl) return;
+        arix_fm_sync_all_reduce(ctrl);
+    }
+};
+
+class PySERModel {
+public:
+    ArixSERModel* model;
+    PySERModel(const ArixSERConfig& config, unsigned int seed, size_t num_layers) {
+        model = arix_ser_model_create(&config, seed, num_layers);
+    }
+    ~PySERModel() { if (model) arix_ser_model_destroy(model); }
+    py::array forward(py::array_t<float> input) {
+        if (!model || model->num_layers == 0) return py::none();
+        ArixTensor* t = numpy_to_tensor(input);
+        if (!t) return py::none();
+        ArixTensor* output = NULL;
+        arix_ser_forward(model->layers[0], t, &output);
+        arix_tensor_destroy(t);
+        if (!output) return py::none();
+        py::array result = tensor_to_numpy(output);
+        arix_tensor_destroy(output);
+        return result;
+    }
+    size_t num_params() {
+        if (!model) return 0;
+        return arix_ser_get_params(model, NULL, 0);
+    }
+    std::vector<py::array> parameters() {
+        std::vector<py::array> result;
+        if (!model) return result;
+        size_t n = arix_ser_get_params(model, NULL, 0);
+        if (n == 0) return result;
+        std::vector<ArixTensor*> params(n);
+        arix_ser_get_params(model, params.data(), n);
+        for (size_t i = 0; i < n; i++) {
+            result.push_back(tensor_to_numpy(params[i]));
+        }
+        return result;
+    }
+};
+
 PYBIND11_MODULE(arix_algo_core, m) {
     m.doc() = "ARIX-Algo core C++ bindings";
 
@@ -229,7 +348,77 @@ PYBIND11_MODULE(arix_algo_core, m) {
         .def("load", &PyTrainer::load)
         .def_property_readonly("learning_rate", &PyTrainer::get_lr);
 
+    py::class_<ArixARCConfig>(m, "_ARCConfig")
+        .def(py::init<>())
+        .def_readwrite("input_guard_strength", &ArixARCConfig::input_guard_strength)
+        .def_readwrite("gradient_obfuscation_method", &ArixARCConfig::gradient_obfuscation_method)
+        .def_readwrite("gradient_noise_scale", &ArixARCConfig::gradient_noise_scale)
+        .def_readwrite("gradient_clip_max", &ArixARCConfig::gradient_clip_max)
+        .def_readwrite("output_verify_layers", &ArixARCConfig::output_verify_layers)
+        .def_readwrite("output_verify_threshold", &ArixARCConfig::output_verify_threshold)
+        .def_readwrite("adversarial_training", &ArixARCConfig::adversarial_training)
+        .def_readwrite("attack_simulation_types", &ArixARCConfig::attack_simulation_types);
+
+    py::class_<ArixNPEConfig>(m, "_NPEConfig")
+        .def(py::init<>())
+        .def_readwrite("step_limit", &ArixNPEConfig::step_limit)
+        .def_readwrite("max_program_length", &ArixNPEConfig::max_program_length);
+
+    py::class_<ArixFMConfig>(m, "_FMConfig")
+        .def(py::init<>())
+        .def_readwrite("num_nodes", &ArixFMConfig::num_nodes)
+        .def_readwrite("memory_dim", &ArixFMConfig::memory_dim)
+        .def_readwrite("memory_capacity", &ArixFMConfig::memory_capacity)
+        .def_readwrite("sync_interval", &ArixFMConfig::sync_interval)
+        .def_readwrite("sync_method", &ArixFMConfig::sync_method)
+        .def_readwrite("compression_ratio", &ArixFMConfig::compression_ratio)
+        .def_readwrite("privacy_epsilon", &ArixFMConfig::privacy_epsilon)
+        .def_readwrite("ewm_alpha", &ArixFMConfig::ewm_alpha);
+
+    py::class_<ArixSERConfig>(m, "_SERConfig")
+        .def(py::init<>())
+        .def_readwrite("num_experts", &ArixSERConfig::num_experts)
+        .def_readwrite("num_active", &ArixSERConfig::num_active)
+        .def_readwrite("input_dim", &ArixSERConfig::input_dim)
+        .def_readwrite("expert_dim", &ArixSERConfig::expert_dim)
+        .def_readwrite("output_dim", &ArixSERConfig::output_dim)
+        .def_readwrite("top_k_method", &ArixSERConfig::top_k_method)
+        .def_readwrite("load_balance_coef", &ArixSERConfig::load_balance_coef)
+        .def_readwrite("dropout_rate", &ArixSERConfig::dropout_rate);
+
+    py::class_<PyARCLayer>(m, "_ARCLayer")
+        .def(py::init<const ArixARCConfig&, size_t, size_t, unsigned int>(),
+             py::arg("config") = arix_arc_config_default(),
+             py::arg("input_dim") = 16,
+             py::arg("output_dim") = 16,
+             py::arg("seed") = 42)
+        .def("forward", &PyARCLayer::forward)
+        .def("simulate_attack", &PyARCLayer::simulate_attack);
+
+    py::class_<PyNPEVM>(m, "_NPEVM")
+        .def(py::init<const ArixNPEConfig&>(), py::arg("config") = arix_npe_config_default())
+        .def("load_program", &PyNPEVM::load_program)
+        .def("run", &PyNPEVM::run);
+
+    py::class_<PyFMController>(m, "_FMController")
+        .def(py::init<const ArixFMConfig&>(), py::arg("config") = arix_fm_config_default())
+        .def("forward", &PyFMController::forward, py::arg("node_id"), py::arg("input"))
+        .def("sync", &PyFMController::sync);
+
+    py::class_<PySERModel>(m, "_SERModel")
+        .def(py::init<const ArixSERConfig&, unsigned int, size_t>(),
+             py::arg("config") = arix_ser_config_default(),
+             py::arg("seed") = 42,
+             py::arg("num_layers") = 2)
+        .def("forward", &PySERModel::forward)
+        .def("parameters", &PySERModel::parameters)
+        .def("num_params", &PySERModel::num_params);
+
     m.def("_hss_config_default", []() { return arix_hss_config_default(); });
     m.def("_optimizer_config_default", []() { return arix_optimizer_config_default(); });
     m.def("_arch_config_default", []() { return arix_arch_config_default(); });
+    m.def("_arc_config_default", []() { return arix_arc_config_default(); });
+    m.def("_npe_config_default", []() { return arix_npe_config_default(); });
+    m.def("_fm_config_default", []() { return arix_fm_config_default(); });
+    m.def("_ser_config_default", []() { return arix_ser_config_default(); });
 }

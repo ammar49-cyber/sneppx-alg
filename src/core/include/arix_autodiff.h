@@ -25,11 +25,19 @@ typedef struct {
 ArixVariable* arix_variable_create(ArixTensor* data, int requires_grad);
 void          arix_variable_destroy(ArixVariable* var);
 void          arix_variable_set_requires_grad(ArixVariable* var, int requires_grad);
+ArixVariable* arix_variable_detach(ArixVariable* var);
+ArixVariable* arix_variable_copy(ArixVariable* var);
+void          arix_variable_zero_grad(ArixVariable* var);
+float         arix_variable_item(ArixVariable* var);
+size_t        arix_variable_numel(ArixVariable* var);
 
 ArixTape* arix_tape_create(void);
 void      arix_tape_destroy(ArixTape* tape);
 void      arix_tape_record(ArixTape* tape, ArixVariable* var);
 void      arix_tape_backward(ArixTape* tape, ArixVariable* loss);
+void      arix_tape_zero_grad(ArixTape* tape);
+float     arix_tape_global_norm(ArixTape* tape);
+void      arix_tape_clip_grad_norm(ArixTape* tape, float max_norm);
 
 void  arix_no_grad_enter(void);
 void  arix_no_grad_exit(void);

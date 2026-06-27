@@ -128,6 +128,181 @@ static ArixTensor* tensor_attention(const ArixTensor* q, const ArixTensor* k, co
     return result;
 }
 
+static ArixTensor* tensor_sub(const ArixTensor* a, const ArixTensor* b) {
+    if (!a || !b) return NULL;
+    if (a->size == b->size) {
+        ArixTensor* c = arix_tensor_create(a->shape, a->ndim, ARIX_FLOAT32);
+        if (!c) return NULL; float* ad=(float*)a->data,*bd=(float*)b->data,*cd=(float*)c->data;
+        for (size_t i=0;i<a->size;i++) cd[i]=ad[i]-bd[i]; return c;
+    }
+    if (b->ndim==1&&a->ndim==2&&a->shape[1]==b->shape[0]) {
+        ArixTensor* c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);
+        if (!c)return NULL;float*ad=(float*)a->data,*bd=(float*)b->data,*cd=(float*)c->data;
+        for(size_t i=0;i<a->shape[0];i++)for(size_t j=0;j<a->shape[1];j++)
+            cd[i*a->shape[1]+j]=ad[i*a->shape[1]+j]-bd[j];return c;
+    } return NULL;
+}
+
+static ArixTensor* tensor_div(const ArixTensor* a, const ArixTensor* b) {
+    if (!a||!b) return NULL;
+    if (a->size==b->size) {
+        ArixTensor* c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);
+        if(!c)return NULL;float*ad=(float*)a->data,*bd=(float*)b->data,*cd=(float*)c->data;
+        for(size_t i=0;i<a->size;i++)cd[i]=bd[i]!=0?ad[i]/bd[i]:0;return c;
+    }
+    if(b->ndim==1&&a->ndim==2&&a->shape[1]==b->shape[0]){
+        ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);
+        if(!c)return NULL;float*ad=(float*)a->data,*bd=(float*)b->data,*cd=(float*)c->data;
+        for(size_t i=0;i<a->shape[0];i++)for(size_t j=0;j<a->shape[1];j++)
+            cd[i*a->shape[1]+j]=bd[j]!=0?ad[i*a->shape[1]+j]/bd[j]:0;return c;
+    }return NULL;
+}
+
+static ArixTensor* tensor_exp(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=expf(ad[i]);return c;
+}
+
+static ArixTensor* tensor_log(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=ad[i]>0?logf(ad[i]):-1e10f;return c;
+}
+
+static ArixTensor* tensor_sqrt(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=ad[i]>=0?sqrtf(ad[i]):0;return c;
+}
+
+static ArixTensor* tensor_pow(const ArixTensor* a, float exp) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=powf(ad[i],exp);return c;
+}
+
+static ArixTensor* tensor_sin(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=sinf(ad[i]);return c;
+}
+
+static ArixTensor* tensor_cos(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=cosf(ad[i]);return c;
+}
+
+static ArixTensor* tensor_tanh(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=tanhf(ad[i]);return c;
+}
+
+static ArixTensor* tensor_sigmoid(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++)cd[i]=1.0f/(1.0f+expf(-ad[i]));return c;
+}
+
+static ArixTensor* tensor_gelu(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++){
+        float x=ad[i];cd[i]=0.5f*x*(1.0f+tanhf(0.7978845608f*(x+0.044715f*x*x*x)));}return c;
+}
+
+static ArixTensor* tensor_silu(const ArixTensor* a) {
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    float*ad=(float*)a->data,*cd=(float*)c->data;
+    for(size_t i=0;i<a->size;i++){float x=ad[i];cd[i]=x/(1.0f+expf(-x));}return c;
+}
+
+static ArixTensor* tensor_dropout(const ArixTensor* a, float rate) {
+    (void)rate;
+    ArixTensor*c=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!c)return NULL;
+    memcpy(c->data,a->data,a->size*a->item_size);return c;
+}
+
+static ArixTensor* tensor_conv2d(const ArixTensor* input, const ArixTensor* kernel) {
+    size_t ic=input->shape[0],ih=input->shape[1],iw=input->shape[2];
+    size_t oc=kernel->shape[0],kh=kernel->shape[1],kw=kernel->shape[2];
+    size_t oh=ih-kh+1,ow=iw-kw+1;size_t sh[]={oc,oh,ow};
+    ArixTensor*c=arix_tensor_create(sh,3,ARIX_FLOAT32);if(!c)return NULL;
+    float*id=(float*)input->data,*kd=(float*)kernel->data,*cd=(float*)c->data;
+    memset(cd,0,c->size*sizeof(float));
+    for(size_t o=0;o<oc;o++)for(size_t i=0;i<ic;i++)for(size_t h=0;h<oh;h++)
+        for(size_t w=0;w<ow;w++){float s=0;for(size_t khh=0;khh<kh;khh++)
+            for(size_t kww=0;kww<kw;kww++)
+                s+=id[i*ih*iw+(h+khh)*iw+(w+kww)]*kd[o*ic*kh*kw+i*kh*kw+khh*kw+kww];
+            cd[o*oh*ow+h*ow+w]+=s;}return c;
+}
+
+static ArixTensor* tensor_pool2d(const ArixTensor* a, size_t pool_h, size_t pool_w) {
+    size_t c=a->shape[0],h=a->shape[1],w=a->shape[2];
+    size_t oh=h/pool_h,ow=w/pool_w;size_t sh[]={c,oh,ow};
+    ArixTensor* result=arix_tensor_create(sh,3,ARIX_FLOAT32);if(!result)return NULL;
+    float*ad=(float*)a->data,*rd=(float*)result->data;
+    for(size_t ch=0;ch<c;ch++)for(size_t ph=0;ph<oh;ph++)
+        for(size_t pw=0;pw<ow;pw++){float mx=-1e10f;
+            for(size_t kh=0;kh<pool_h;kh++)for(size_t kw=0;kw<pool_w;kw++){
+                float v=ad[ch*h*w+(ph*pool_h+kh)*w+(pw*pool_w+kw)];
+                if(v>mx)mx=v;}rd[ch*oh*ow+ph*ow+pw]=mx;}return result;
+}
+
+static ArixTensor* tensor_batchnorm(const ArixTensor* a, const ArixTensor* gamma, const ArixTensor* beta) {
+    size_t c=a->shape[1];
+    ArixTensor* r=arix_tensor_create(a->shape,a->ndim,ARIX_FLOAT32);if(!r)return NULL;
+    float*ad=(float*)a->data,*rd=(float*)r->data;
+    float*gd=(float*)gamma->data,*bd=(float*)beta->data;
+    for(size_t ch=0;ch<c;ch++){float sum=0,sq=0;size_t n=a->size/c;
+        for(size_t i=0;i<n;i++){float v=ad[i*c+ch];sum+=v;sq+=v*v;}
+        float mean=sum/(float)n,var=sq/(float)n-mean*mean;
+        float std=sqrtf(var+1e-5f);
+        for(size_t i=0;i<n;i++)rd[i*c+ch]=gd[ch]*(ad[i*c+ch]-mean)/std+bd[ch];}return r;
+}
+
+static ArixTensor* tensor_embedding(const ArixTensor* indices, const ArixTensor* weights) {
+    size_t n=indices->size,d=weights->shape[1];size_t sh[]={n,d};
+    ArixTensor*r=arix_tensor_create(sh,2,ARIX_FLOAT32);if(!r)return NULL;
+    float*id=(float*)indices->data,*wd=(float*)weights->data,*rd=(float*)r->data;
+    for(size_t i=0;i<n;i++){size_t idx=(size_t)id[i];
+        memcpy(rd+i*d,wd+idx*d,d*sizeof(float));}return r;
+}
+
+static ArixTensor* tensor_crossentropy(const ArixTensor* pred, const ArixTensor* target) {
+    size_t n=pred->shape[0],c=pred->shape[1];
+    ArixTensor* loss=arix_tensor_zeros(NULL,0,ARIX_FLOAT32);if(!loss)return NULL;
+    float*pd=(float*)pred->data,*td=(float*)target->data;
+    float*ld=(float*)loss->data;*ld=0;
+    for(size_t i=0;i<n;i++){size_t t=(size_t)td[i];
+        float p=pd[i*c+t];if(p<1e-7f)p=1e-7f;*ld-=logf(p);}*ld/=(float)n;return loss;
+}
+
+static ArixTensor* tensor_mse(const ArixTensor* pred, const ArixTensor* target) {
+    if(!pred||!target)return NULL;
+    ArixTensor*l=arix_tensor_zeros(NULL,0,ARIX_FLOAT32);if(!l)return NULL;
+    float*pd=(float*)pred->data,*td=(float*)target->data,*ld=(float*)l->data;*ld=0;
+    for(size_t i=0;i<pred->size;i++){float d=pd[i]-td[i];*ld+=d*d;}*ld/=(float)pred->size;return l;
+}
+
+static ArixTensor* tensor_concat(const ArixTensor* a, const ArixTensor* b, int axis) {
+    (void)axis;
+    size_t n=a->size+b->size;
+    size_t sh[]={a->shape[0]+b->shape[0]};
+    if(a->ndim>1)for(size_t i=1;i<a->ndim;i++)sh[i]=a->shape[i];
+    ArixTensor*r=arix_tensor_create(sh,a->ndim,ARIX_FLOAT32);if(!r)return NULL;
+    memcpy(r->data,a->data,a->size*a->item_size);
+    memcpy((float*)r->data+a->size,b->data,b->size*b->item_size);return r;
+}
+
+static ArixTensor* tensor_split_half(const ArixTensor* a) {
+    size_t h=a->shape[0]/2;size_t sh[]={h};if(a->ndim>1)for(size_t i=1;i<a->ndim;i++)sh[i]=a->shape[i];
+    ArixTensor*r=arix_tensor_create(sh,a->ndim,ARIX_FLOAT32);if(!r)return NULL;
+    memcpy(r->data,a->data,h*a->item_size);return r;
+}
+
 ArixNPEVM* arix_npe_vm_create(const ArixNPEConfig* config) {
     ArixNPEVM* vm = (ArixNPEVM*)arix_malloc(sizeof(ArixNPEVM), 64);
     if (!vm) return NULL;
@@ -286,6 +461,138 @@ int arix_npe_vm_step(ArixNPEVM* vm) {
                 prog->pc++;
             }
             break;
+
+        case ARIX_SUB:
+            if (d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_sub(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_DIV:
+            if (d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_div(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_EXP:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_exp(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_LOG:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_log(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_SQRT:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_sqrt(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_POW:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                float exp_val=*(float*)&imm;
+                prog->registers[d]=tensor_pow(prog->registers[sa],exp_val);}
+            prog->pc++;break;
+
+        case ARIX_SIN:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_sin(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_COS:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_cos(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_TANH:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_tanh(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_SIGMOID:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_sigmoid(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_GELU:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_gelu(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_SILU:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_silu(prog->registers[sa]);}
+            prog->pc++;break;
+
+        case ARIX_DROPOUT:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                float rate=*(float*)&imm;
+                prog->registers[d]=tensor_dropout(prog->registers[sa],rate);}
+            prog->pc++;break;
+
+        case ARIX_CONV2D:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_conv2d(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_POOL2D:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                size_t ph=((size_t)imm)>>16&0xFFFF,pw=(size_t)imm&0xFFFF;
+                if(ph==0)ph=2;if(pw==0)pw=2;
+                prog->registers[d]=tensor_pool2d(prog->registers[sa],ph,pw);}
+            prog->pc++;break;
+
+        case ARIX_BATCHNORM:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                ArixTensor*beta=inst.immediate>=0&&inst.immediate<16?prog->registers[inst.immediate]:NULL;
+                if(beta)prog->registers[d]=tensor_batchnorm(prog->registers[sa],prog->registers[sb],beta);}
+            prog->pc++;break;
+
+        case ARIX_EMBEDDING:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_embedding(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_CROSSENTROPY:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_crossentropy(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_MSE:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_mse(prog->registers[sa],prog->registers[sb]);}
+            prog->pc++;break;
+
+        case ARIX_CONCAT:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&sb>=0&&sb<16&&prog->registers[sa]&&prog->registers[sb]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                int axis=imm;
+                prog->registers[d]=tensor_concat(prog->registers[sa],prog->registers[sb],axis);}
+            prog->pc++;break;
+
+        case ARIX_SPLIT:
+            if(d>=0&&d<16&&sa>=0&&sa<16&&prog->registers[sa]){
+                if(prog->registers[d])arix_tensor_destroy(prog->registers[d]);
+                prog->registers[d]=tensor_split_half(prog->registers[sa]);}
+            prog->pc++;break;
 
         case ARIX_HALT:
             return 1;

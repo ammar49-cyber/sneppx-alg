@@ -50,6 +50,12 @@ ArixOptimizer* arix_optimizer_create(const ArixOptimizerConfig* config);
 void arix_optimizer_destroy(ArixOptimizer* opt);
 void arix_optimizer_step(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t num_params);
 
+ArixOptimizer* arix_sgd_create(float lr, float momentum, float weight_decay);
+ArixOptimizer* arix_adam_create(float lr, float beta1, float beta2, float eps, float weight_decay);
+ArixOptimizer* arix_adamw_create(float lr, float beta1, float beta2, float eps, float weight_decay);
+ArixOptimizer* arix_rmsprop_create(float lr, float alpha, float eps, float momentum, float weight_decay);
+ArixOptimizer* arix_adagrad_create(float lr, float eps, float weight_decay);
+
 typedef enum {
     ARIX_LR_STEP,
     ARIX_LR_EXPONENTIAL,

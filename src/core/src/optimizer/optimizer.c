@@ -332,6 +332,41 @@ void arix_lr_scheduler_destroy(ArixLRScheduler* sched) {
     arix_free(sched, sizeof(ArixLRScheduler));
 }
 
+ArixOptimizer* arix_sgd_create(float lr, float momentum, float weight_decay) {
+    ArixOptimizerConfig cfg = arix_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_SGD;
+    cfg.momentum = momentum; cfg.weight_decay = weight_decay;
+    return arix_optimizer_create(&cfg);
+}
+
+ArixOptimizer* arix_adam_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
+    ArixOptimizerConfig cfg = arix_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAM;
+    cfg.beta1 = beta1; cfg.beta2 = beta2; cfg.epsilon = eps; cfg.weight_decay = weight_decay;
+    return arix_optimizer_create(&cfg);
+}
+
+ArixOptimizer* arix_adamw_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
+    ArixOptimizerConfig cfg = arix_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAMW;
+    cfg.beta1 = beta1; cfg.beta2 = beta2; cfg.epsilon = eps; cfg.weight_decay = weight_decay;
+    return arix_optimizer_create(&cfg);
+}
+
+ArixOptimizer* arix_rmsprop_create(float lr, float alpha, float eps, float momentum, float weight_decay) {
+    ArixOptimizerConfig cfg = arix_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_RMSPROP;
+    cfg.beta1 = alpha; cfg.epsilon = eps; cfg.momentum = momentum; cfg.weight_decay = weight_decay;
+    return arix_optimizer_create(&cfg);
+}
+
+ArixOptimizer* arix_adagrad_create(float lr, float eps, float weight_decay) {
+    ArixOptimizerConfig cfg = arix_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAGRAD;
+    cfg.epsilon = eps; cfg.weight_decay = weight_decay;
+    return arix_optimizer_create(&cfg);
+}
+
 void arix_lr_scheduler_step(ArixLRScheduler* sched, float current_loss) {
     if (!sched || !sched->lr_ptr) return;
     sched->last_epoch++;
