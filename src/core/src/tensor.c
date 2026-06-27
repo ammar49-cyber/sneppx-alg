@@ -677,6 +677,16 @@ ArixTensor* arix_tensor_to_layout(const ArixTensor* src, ArixLayout layout) {
     return dst;
 }
 
+int arix_tensor_save(const ArixTensor* src, const char* path) {
+    (void)src; (void)path;
+    return -1;
+}
+
+ArixTensor* arix_tensor_load(const char* path) {
+    (void)path;
+    return NULL;
+}
+
 static ArixTensor* compare_op(const ArixTensor* a, const ArixTensor* b, int (*cmp)(float, float)) {
     if (!a || !b) return NULL;
     size_t n = a->size < b->size ? a->size : b->size;

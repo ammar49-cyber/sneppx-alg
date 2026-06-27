@@ -20,10 +20,16 @@ typedef enum {
     ARIX_COMPLEX128,
 } ArixDtype;
 
+#define ARIX_DTYPE_SIZE(dtype) arix_tensor_dtype_size(dtype)
+#define ARIX_DTYPE_IS_FLOAT(dtype) ((dtype) == ARIX_FLOAT32 || (dtype) == ARIX_FLOAT64 || (dtype) == ARIX_FLOAT16 || (dtype) == ARIX_BFLOAT16 || (dtype) == ARIX_FLOAT8)
+#define ARIX_DTYPE_IS_INT(dtype) ((dtype) == ARIX_INT32 || (dtype) == ARIX_INT64 || (dtype) == ARIX_INT16 || (dtype) == ARIX_INT8 || (dtype) == ARIX_UINT8 || (dtype) == ARIX_BOOL)
+#define ARIX_DTYPE_IS_COMPLEX(dtype) ((dtype) == ARIX_COMPLEX64 || (dtype) == ARIX_COMPLEX128)
+
 typedef enum {
     ARIX_LAYOUT_ROW_MAJOR,
     ARIX_LAYOUT_COL_MAJOR,
     ARIX_LAYOUT_CHANNELS_LAST,
+    ARIX_LAYOUT_TILED,
 } ArixLayout;
 
 typedef enum {
@@ -31,6 +37,8 @@ typedef enum {
     ARIX_DEVICE_CUDA,
     ARIX_DEVICE_METAL,
     ARIX_DEVICE_VULKAN,
+    ARIX_DEVICE_TPU,
+    ARIX_DEVICE_NPU,
 } ArixDevice;
 
 typedef struct {
@@ -96,6 +104,8 @@ ArixTensor* arix_tensor_where(const ArixTensor* condition, const ArixTensor* x, 
 ArixTensor* arix_tensor_cast(const ArixTensor* src, ArixDtype dtype);
 ArixTensor* arix_tensor_to_device(const ArixTensor* src, ArixDevice device);
 ArixTensor* arix_tensor_to_layout(const ArixTensor* src, ArixLayout layout);
+int arix_tensor_save(const ArixTensor* src, const char* path);
+ArixTensor* arix_tensor_load(const char* path);
 
 ArixTensor* arix_tensor_eq(const ArixTensor* a, const ArixTensor* b);
 ArixTensor* arix_tensor_ne(const ArixTensor* a, const ArixTensor* b);
