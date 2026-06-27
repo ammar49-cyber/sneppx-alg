@@ -21,10 +21,10 @@ static void bench_npe_create(void) {
 static void bench_npe_basic_ops(void) {
     BENCH_INIT(bs);
     ArixNPEProgram* prog = arix_npe_program_create(16);
-    ArixNPEInstruction i1 = {ARIX_LOAD, 1, 0, 0, {64,64}, 0};
-    ArixNPEInstruction i2 = {ARIX_RELU, 2, 1, 0, {0,0}, 0};
-    ArixNPEInstruction i3 = {ARIX_SOFTMAX, 3, 2, 0, {0,0}, 0};
-    ArixNPEInstruction i4 = {ARIX_HALT, 0, 0, 0, {0,0}, 0};
+    ArixNPEInstruction i1 = {ARIX_LOAD, 1, 0, 0, 0, {64,64}, {0,0}};
+    ArixNPEInstruction i2 = {ARIX_RELU, 2, 1, 0, 0, {0,0}, {0,0}};
+    ArixNPEInstruction i3 = {ARIX_SOFTMAX, 3, 2, 0, 0, {0,0}, {0,0}};
+    ArixNPEInstruction i4 = {ARIX_HALT, 0, 0, 0, 0, {0,0}, {0,0}};
     arix_npe_program_append(prog, i1);
     arix_npe_program_append(prog, i2);
     arix_npe_program_append(prog, i3);
@@ -52,10 +52,10 @@ static void bench_npe_basic_ops(void) {
 static void bench_npe_matmul(void) {
     BENCH_INIT(bs);
     ArixNPEProgram* prog = arix_npe_program_create(16);
-    ArixNPEInstruction i1 = {ARIX_LOAD, 1, 0, 0, {128,64}, 0};
-    ArixNPEInstruction i2 = {ARIX_LOAD, 2, 0, 0, {64,128}, (int)(64*64)};
-    ArixNPEInstruction i3 = {ARIX_MATMUL, 3, 1, 2, {0,0}, 0};
-    ArixNPEInstruction i4 = {ARIX_HALT, 0, 0, 0, {0,0}, 0};
+    ArixNPEInstruction i1 = {ARIX_LOAD, 1, 0, 0, 0, {128,64}, {0,0}};
+    ArixNPEInstruction i2 = {ARIX_LOAD, 2, 0, 0, (int)(64*64), {64,128}, {0,0}};
+    ArixNPEInstruction i3 = {ARIX_MATMUL, 3, 1, 2, 0, {0,0}, {0,0}};
+    ArixNPEInstruction i4 = {ARIX_HALT, 0, 0, 0, 0, {0,0}, {0,0}};
     arix_npe_program_append(prog, i1);
     arix_npe_program_append(prog, i2);
     arix_npe_program_append(prog, i3);

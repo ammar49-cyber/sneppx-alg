@@ -8,7 +8,7 @@ static void bench_hss_create(void) {
     BENCH_START(bs, 10000, 100, {
         ArixHSSConfig cfg = arix_hss_config_default();
         cfg.state_dim = 16; cfg.num_layers = 2;
-        ArixHSSModel* m = arix_hss_model_create(&cfg);
+        ArixHSSModel* m = arix_hss_model_create(&cfg, 42);
         arix_hss_model_destroy(m);
     });
     bench_print("model_create(state=16,layers=2)", &bs);
@@ -16,7 +16,7 @@ static void bench_hss_create(void) {
     BENCH_START(bs, 5000, 50, {
         ArixHSSConfig cfg = arix_hss_config_default();
         cfg.state_dim = 128; cfg.num_layers = 4;
-        ArixHSSModel* m = arix_hss_model_create(&cfg);
+        ArixHSSModel* m = arix_hss_model_create(&cfg, 42);
         arix_hss_model_destroy(m);
     });
     bench_print("model_create(state=128,layers=4)", &bs);
@@ -27,7 +27,7 @@ static void bench_hss_forward(void) {
     ArixHSSConfig cfg = arix_hss_config_default();
     cfg.state_dim = 64; cfg.input_dim = 32; cfg.output_dim = 16;
     cfg.num_layers = 4; cfg.seq_len = 128;
-    ArixHSSModel* model = arix_hss_model_create(&cfg);
+    ArixHSSModel* model = arix_hss_model_create(&cfg, 42);
 
     size_t sh[] = {128, 32};
     ArixTensor* input = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
@@ -49,7 +49,7 @@ static void bench_hss_forward_large(void) {
     ArixHSSConfig cfg = arix_hss_config_default();
     cfg.state_dim = 256; cfg.input_dim = 128; cfg.output_dim = 64;
     cfg.num_layers = 6; cfg.seq_len = 512;
-    ArixHSSModel* model = arix_hss_model_create(&cfg);
+    ArixHSSModel* model = arix_hss_model_create(&cfg, 42);
 
     size_t sh[] = {512, 128};
     ArixTensor* input = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
