@@ -70,7 +70,7 @@ if(ARIX_USE_LTO)
 endif()
 
 file(GLOB_RECURSE ARIX_CORE_SRC kernel/*.c)
-file(GLOB_RECURSE ARIX_SECURITY_C_SRC src/security/c/src/*.c)
+file(GLOB_RECURSE ARIX_SECURITY_C_SRC security/crypto/c/*.c)
 
 add_library(arix_core STATIC ${ARIX_CORE_SRC})
 target_include_directories(arix_core PUBLIC
@@ -107,7 +107,7 @@ if(ARIX_SECURITY_C_SRC)
     endif()
 endif()
 
-file(GLOB_RECURSE ARIX_SECURITY_CPP_SRC src/security/cpp/src/*.cpp)
+file(GLOB_RECURSE ARIX_SECURITY_CPP_SRC security/obfuscation/*.cpp)
 
 if(ARIX_SECURITY_CPP_SRC)
     add_library(arix_security_cpp STATIC ${ARIX_SECURITY_CPP_SRC})
