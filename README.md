@@ -453,7 +453,7 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 | Metric | Value |
 |--------|-------|
 | 📝 C/C++ Source | **~15,500 lines** |
-| 🧪 Registered Tests | **52** (50 pass, 2 pre-existing edge cases) |
+| 🧪 Registered Tests | **56** (54 pass, 2 pre-existing crypto edge cases) |
 | 🔧 Build Time | **~30s** (Release, 8 cores) |
 | 📦 Dependencies | **0** for C core |
 | 🖥️ Platforms | **Windows** (MSVC) · **Linux** (GCC/Clang) · **macOS** (Clang) |
@@ -479,7 +479,7 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 │   ├── test_autodiff.c         # 🔄 Autodiff operations
 │   ├── test_autodiff_edge.c    # 🔄 Autodiff edge cases (27 tests)
 │   ├── test_memory.c           # 💾 Memory allocator
-│   ├── test_thread_pool.c      # 🧵 Thread pool
+│   ├── test_thread.c           # 🧵 Thread pool
 │   ├── hss/                    # 🌀 HSS tests
 │   ├── ser/                    # 🎯 SER tests
 │   ├── arc/                    # 🛡️ ARC tests
@@ -489,10 +489,14 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 ├── 📁 integration/             # 🔗 Multi-component integration tests
 ├── 📁 benchmark/               # ⏱️ Performance benchmarks
 │   ├── bench_tensor.c          # 🧮 Tensor benchmarks (7 groups)
-│   └── bench_autodiff.c        # 🔄 Autodiff benchmarks (7 groups)
-├── 📁 security/                # 🔐 S0 + S1 tests
-│   └── cpp/                    # 🔐 S2 (C++) tests
-└── 📁 python/                  # 🐍 Python tests
+│   ├── bench_autodiff.c        # 🔄 Autodiff benchmarks (7 groups)
+│   ├── bench_hss.c             # 🌀 HSS benchmarks
+│   ├── bench_ser.c             # 🎯 SER benchmarks
+│   └── bench_npe.c             # 🤖 NPE benchmarks
+├── 📁 security/                # 🔐 S0+S1 crypto + S2 obfuscation tests
+├── 📁 fuzz/                    # 🎲 Fuzz testing (future)
+├── 📁 integration/             # 🔗 Multi-component integration tests
+└── 📁 python/                  # 🐍 Python tests (stubs)
 ```
 
 ```bash

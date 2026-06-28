@@ -1,7 +1,9 @@
-# Tensor Core Progress
+# Project Progress
+
+## Tensor Core
 
 Target: 6,000 LOC (existing 2,484 + 3,000 new)
-Timeline: 6 phases, 6 days
+Timeline: 6 phases, 6 days — **Completed**
 
 | Phase | Day | Focus | LOC Target | LOC Actual | Status |
 |-------|-----|-------|------------|------------|--------|
@@ -61,3 +63,22 @@ Total: 5,742 LOC
 - [x] to_device, to_layout implemented
 - [x] 9 I/O tests pass
 - [x] All 54 tests pass (excluding 2 pre-existing crypto failures)
+
+## Directory Restructure (Linux-kernel-style hierarchy)
+
+| Old Path | New Path |
+|----------|----------|
+| `src/arch/include/arix/` | `include/arix/` (headers) |
+| `src/arch/src/` | `kernel/` (core runtime) |
+| `src/arch/src/hss/` | `algorithms/hss/core/` |
+| `src/arch/src/ser/` | `algorithms/ser/core/` |
+| `src/arch/src/arc/` | `algorithms/arc/core/` |
+| `src/arch/src/npe/` | `algorithms/npe/core/` |
+| `src/arch/src/fm/` | `algorithms/fm/core/` |
+| `src/security/c/src/` | `security/crypto/c/` |
+| `src/security/asm/x86_64/` | `security/crypto/asm/x86_64/` |
+| `src/security/cpp/src/` | `security/obfuscation/` |
+| `src/distributed/` | `net/` (placeholder) |
+| `src/python/` | removed (stub) |
+
+Commits: `226629a`, `697a227`, `3706183`, `e9fdb6c`, `f3a1331`
