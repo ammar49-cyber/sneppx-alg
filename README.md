@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/CMake-3.16-064F8C?style=for-the-badge&logo=cmake" alt="CMake 3.16"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License MIT"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing"/>
-  <img src="https://img.shields.io/badge/tests-47%2F49%20passing-success?style=for-the-badge" alt="47/49 Tests Passing"/>
+  <img src="https://img.shields.io/badge/tests-50%2F52%20passing-success?style=for-the-badge" alt="50/52 Tests Passing"/>
   <img src="https://img.shields.io/badge/security-S0%2FS1%20complete-important?style=for-the-badge" alt="Security S0/S1 Complete"/>
 </p>
 
@@ -136,7 +136,7 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 
 | Component | Status | What Works | What Doesn't |
 |-----------|--------|-----------|--------------|
-| 🧮 **Tensor Core** | ✅ **Real** | Multi-dim arrays, 5 dtypes, row-major, 50+ ops | GPU (CPU only) |
+| 🧮 **Tensor Core** | ✅ **Real** | Multi-dim arrays, 13 dtypes, row-major, 80+ ops | GPU (CPU only) |
 | 💾 **Memory** | ✅ **Real** | Aligned allocation, secure zero, guard pages | NUMA optimization |
 | 🧵 **Thread Pool** | ⚠️ Stub | Single-threaded fallback | Real parallelism |
 | 🌀 **HSS** | ⚠️ Partial | Forward pass, sequential scan, first-order discretization | Parallel scan, training |
@@ -156,7 +156,7 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 
 | Component | C/C++ LOC | Tests | Status |
 |-----------|-----------|-------|--------|
-| 🧮 Tensor Core | ~2,000 | 57+27 edge | ✅ |
+| 🧮 Tensor Core | ~2,500 | 57+27 edge + 19 creation + 29 shape | ✅ |
 | 💾 Memory | ~800 | 13 | ✅ |
 | 🧵 Thread Pool | ~300 | 11 | ⚠️ |
 | 🌀 HSS | ~500 | 2 | ⚠️ |
@@ -178,12 +178,12 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 ## ✅ What You Can Do
 
 - ✅ **Build the project from source** — on Windows, Linux, or macOS
-- ✅ **Run all tests** — 47/49 pass (2 pre-existing S0 edge cases)
+- ✅ **Run all tests** — 50/52 pass (2 pre-existing S0 edge cases)
 - ✅ **Run demos** — HSS, SER, ARC, NPE, FM all have working examples
 - ✅ **Audit the security code** — S0 and S1 are production-grade cryptography
 - ✅ **Read the architecture** — Full mathematical documentation included
 - ✅ **Contribute** — Email patches welcome, see [CONTRIBUTING.md](CONTRIBUTING.md)
-- ✅ **Use the tensor ops** — 50+ operations on 5 data types
+- ✅ **Use the tensor ops** — 80+ operations on 13 data types
 - ✅ **Run benchmarks** — Compare tensor and autodiff performance
 
 ## ❌ What You Cannot Do (Yet)
@@ -452,8 +452,8 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 
 | Metric | Value |
 |--------|-------|
-| 📝 C/C++ Source | **~15,000 lines** |
-| 🧪 Registered Tests | **49** (47 pass, 2 pre-existing edge cases) |
+| 📝 C/C++ Source | **~15,500 lines** |
+| 🧪 Registered Tests | **52** (50 pass, 2 pre-existing edge cases) |
 | 🔧 Build Time | **~30s** (Release, 8 cores) |
 | 📦 Dependencies | **0** for C core |
 | 🖥️ Platforms | **Windows** (MSVC) · **Linux** (GCC/Clang) · **macOS** (Clang) |
@@ -468,8 +468,10 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 ```
 📂 tests/
 ├── 📁 unit/                    # 🧪 Component unit tests
-│   ├── test_tensor.c           # 🧮 Tensor operations (50+ tests)
+│   ├── test_tensor.c           # 🧮 Tensor operations (6 tests)
 │   ├── test_tensor_edge.c      # 🧮 Edge cases (57 tests)
+│   ├── test_tensor_creation.c  # 🧮 Creation functions (19 tests)
+│   ├── test_tensor_shape.c     # 🧮 Shape manipulation (29 tests)
 │   ├── test_autodiff.c         # 🔄 Autodiff operations
 │   ├── test_autodiff_edge.c    # 🔄 Autodiff edge cases (27 tests)
 │   ├── test_memory.c           # 💾 Memory allocator
