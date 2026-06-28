@@ -74,29 +74,28 @@ file(GLOB_RECURSE ARIX_SECURITY_C_SRC src/security/c/src/*.c)
 
 add_library(arix_core STATIC ${ARIX_CORE_SRC})
 target_include_directories(arix_core PUBLIC
-    ${CMAKE_SOURCE_DIR}/src/core/include
-    ${CMAKE_SOURCE_DIR}/src/security/c/include
-    ${CMAKE_SOURCE_DIR}/src/security/cpp/include
+    ${CMAKE_SOURCE_DIR}/include/arix/core
+    ${CMAKE_SOURCE_DIR}/include/arix/security
+    ${CMAKE_SOURCE_DIR}/include/arix/arch
 )
 
 file(GLOB_RECURSE ARIX_ARCH_SRC src/arch/src/*.c)
 
 add_library(arix_arch STATIC ${ARIX_ARCH_SRC})
 target_include_directories(arix_arch PUBLIC
-    ${CMAKE_SOURCE_DIR}/src/arch/include
-    ${CMAKE_SOURCE_DIR}/src/core/include
-    ${CMAKE_SOURCE_DIR}/src/security/c/include
-    ${CMAKE_SOURCE_DIR}/src/security/cpp/include
+    ${CMAKE_SOURCE_DIR}/include/arix/arch
+    ${CMAKE_SOURCE_DIR}/include/arix/core
+    ${CMAKE_SOURCE_DIR}/include/arix/security
 )
 target_link_libraries(arix_arch PUBLIC arix_core)
 
 if(ARIX_SECURITY_C_SRC)
     add_library(arix_security_c STATIC ${ARIX_SECURITY_C_SRC})
-    target_include_directories(arix_security_c PUBLIC ${CMAKE_SOURCE_DIR}/src/security/c/include)
+    target_include_directories(arix_security_c PUBLIC ${CMAKE_SOURCE_DIR}/include/arix/security)
     target_compile_definitions(arix_security_c PRIVATE $<$<CONFIG:Release>:ARIX_S1_SECURE_MEMORY>)
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" AND NOT MSVC)
-        file(GLOB ARIX_ASM_X86_64 src/security/asm/x86_64/*.asm src/security/asm/x86_64/*.S)
+        file(GLOB ARIX_ASM_X86_64 security/crypto/asm/x86_64/*.asm security/crypto/asm/x86_64/*.S)
         if(ARIX_ASM_X86_64)
             set_source_files_properties(${ARIX_ASM_X86_64} PROPERTIES LANGUAGE ASM)
             target_sources(arix_security_c PRIVATE ${ARIX_ASM_X86_64})
@@ -112,8 +111,8 @@ file(GLOB_RECURSE ARIX_SECURITY_CPP_SRC src/security/cpp/src/*.cpp)
 
 if(ARIX_SECURITY_CPP_SRC)
     add_library(arix_security_cpp STATIC ${ARIX_SECURITY_CPP_SRC})
-    target_include_directories(arix_security_cpp PUBLIC ${CMAKE_SOURCE_DIR}/src/security/cpp/include)
-    target_include_directories(arix_security_cpp PRIVATE ${CMAKE_SOURCE_DIR}/src/security/c/include)
+    target_include_directories(arix_security_cpp PUBLIC ${CMAKE_SOURCE_DIR}/include/arix/security)
+    target_include_directories(arix_security_cpp PRIVATE ${CMAKE_SOURCE_DIR}/include/arix/security)
     target_link_libraries(arix_security_cpp PUBLIC arix_security_c arix_core arix_arch)
     target_compile_definitions(arix_security_cpp PRIVATE ARIX_S2_OBFUSCATION)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
