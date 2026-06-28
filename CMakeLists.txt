@@ -79,7 +79,7 @@ target_include_directories(arix_core PUBLIC
     ${CMAKE_SOURCE_DIR}/include/arix/arch
 )
 
-file(GLOB_RECURSE ARIX_ARCH_SRC src/arch/src/*.c)
+file(GLOB_RECURSE ARIX_ARCH_SRC algorithms/*/core/*.c)
 
 add_library(arix_arch STATIC ${ARIX_ARCH_SRC})
 target_include_directories(arix_arch PUBLIC
