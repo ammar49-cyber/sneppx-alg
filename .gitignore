@@ -72,3 +72,5 @@ CMakeLists_standalone.txt
 
 # DO NOT ignore security-sensitive files
 # *.key, *.pem, *.secret — should never be in repo; block via pre-commit
+
+target/
