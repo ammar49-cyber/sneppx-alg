@@ -242,6 +242,77 @@ static void clamp_scalar(uint8_t* s) {
     s[0] &= 248; s[31] &= 127; s[31] |= 64;
 }
 
+static const uint8_t L_BYTES[32] = {
+    0xed,0xd3,0xf5,0x5c,0x1a,0x63,0x12,0x58,
+    0xd6,0x9c,0xf7,0xa2,0xde,0xf9,0xde,0x14,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10
+};
+
+/* Subtract L << (8*shift) from t[64]; return 0 if result >= 0, 1 if borrow */
+static int sub_sc_shifted(uint8_t t[64], int shift) {
+    uint16_t borrow = 0;
+    for (int i = 0; i < 64; i++) {
+        uint16_t sub = (i >= shift && i < shift + 32) ? (uint16_t)L_BYTES[i - shift] : 0;
+        uint16_t diff = (uint16_t)t[i] - sub - borrow;
+        t[i] = (uint8_t)(diff & 0xFF);
+        borrow = (diff >> 8) & 1;
+    }
+    return (int)borrow;
+}
+
+/* Reduce a 64-byte value mod L to 32 bytes by repeatedly subtracting L << (8*k) */
+static void sc_reduce64(uint8_t r[32], const uint8_t a[64]) {
+    uint8_t t[64]; memcpy(t, a, 64);
+    /* Find highest non-zero byte in t */
+    int hi = 63;
+    while (hi >= 0 && t[hi] == 0) hi--;
+    if (hi < 0) { memset(r, 0, 32); return; }
+    /* Subtract L << (8*k) for k from (hi-31) down to 0 */
+    for (int k = hi - 31; k >= 0; k--) {
+        while (1) {
+            /* Check if t >= L << (8*k) by comparing bytes from hi down to k */
+            int ge = 0;
+            for (int i = hi; i >= k + 32; i--) { if (t[i]) { ge = 1; break; } }
+            if (!ge) {
+                /* Compare the overlapping 32-byte window */
+                int cmp = 0;
+                for (int i = k + 31; i >= k && cmp == 0; i--) {
+                    uint8_t tv = t[i];
+                    uint8_t lv = L_BYTES[i - k];
+                    if (tv > lv) { cmp = 1; } else if (tv < lv) { cmp = -1; }
+                }
+                if (cmp <= 0) break; /* t < L << (8*k) */
+            }
+            if (sub_sc_shifted(t, k)) break; /* borrow = overshot */
+        }
+    }
+    /* Final subtraction of L (shift 0) up to 4 times */
+    for (int iter = 0; iter < 4; iter++) {
+        int cmp = 0;
+        for (int i = 31; i >= 0 && cmp == 0; i--) {
+            if (t[i] > L_BYTES[i]) cmp = 1; else if (t[i] < L_BYTES[i]) cmp = -1;
+        }
+        if (cmp <= 0) break;
+        sub_sc_shifted(t, 0);
+    }
+    memcpy(r, t, 32);
+}
+
+/* Multiply two 32-byte scalars -> 64-byte product (schoolbook) */
+static void sc_mul256(uint8_t p[64], const uint8_t a[32], const uint8_t b[32]) {
+    uint32_t t[64] = {0};
+    for (int i = 0; i < 32; i++)
+        for (int j = 0; j < 32; j++)
+            t[i + j] += (uint32_t)a[i] * (uint32_t)b[j];
+    uint32_t carry = 0;
+    for (int i = 0; i < 64; i++) {
+        carry += t[i];
+        p[i] = (uint8_t)(carry & 0xFF);
+        carry >>= 8;
+    }
+}
+
 int arix_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed) {
     if (!seed || !expanded_sk) return -1;
     uint8_t hash[64];
@@ -268,27 +339,41 @@ int arix_ed25519_keypair_generate(ArixEd25519Keypair* kp) {
 int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size_t msg_len, ArixEd25519Signature* sig) {
     if (!kp || !message || !sig) return -1;
     init_base_point();
-    uint8_t hash[64], r[64];
-    arix_sha512(kp->private_key + 32, 32, hash);
-    memcpy(r, hash, 64);
-    arix_sha512(r, 64, hash);
-    point R; point_scalar_mult(&R, hash, 64, &B);
+    uint8_t r_seed[64], r_scalar[32], h_scalar[32], hram[64], product[64], sum[64];
+    /* r = SHA-512(nonce_seed || message) */
+    ArixSHA512Context ctx;
+    arix_sha512_init(&ctx);
+    arix_sha512_update(&ctx, kp->private_key + 32, 32);
+    arix_sha512_update(&ctx, message, msg_len);
+    arix_sha512_finish(&ctx, r_seed);
+    sc_reduce64(r_scalar, r_seed);
+    /* R = r_scalar * B */
+    point R; point_scalar_mult(&R, r_scalar, 32, &B);
     fe_to_bytes(sig->data, &R.Y);
     sig->data[31] |= (uint8_t)((R.X.v[0] & 1) << 7);
-    ArixSHA512Context ctx;
+    /* h = SHA-512(R || A || message) */
     arix_sha512_init(&ctx);
     arix_sha512_update(&ctx, sig->data, 32);
     arix_sha512_update(&ctx, kp->public_key, 32);
     arix_sha512_update(&ctx, message, msg_len);
-    arix_sha512_finish(&ctx, hash);
-    uint8_t S[32]; memcpy(S, hash, 32);
-    uint8_t a[32]; memcpy(a, kp->private_key, 32);
+    arix_sha512_finish(&ctx, hram);
+    memcpy(h_scalar, hram, 32);
+    /* Reduce h_scalar mod L (copy 32 bytes into 64-byte buffer) */
+    { uint8_t h64[64]; memset(h64, 0, 64); memcpy(h64, h_scalar, 32);
+      sc_reduce64(h_scalar, h64); }
+    /* S = (r + h*a) mod L */
+    /* a is the clamped private key (kp->private_key[0:32]) */
+    sc_mul256(product, h_scalar, kp->private_key);
+    /* product + r_scalar as 64-byte sum */
     uint32_t carry = 0;
     for (int i = 0; i < 32; i++) {
-        carry = (uint32_t)kp->private_key[i] + (uint32_t)S[i] + carry;
-        sig->data[32 + i] = (uint8_t)(carry & 0xFF);
+        carry = (uint32_t)product[i] + (uint32_t)r_scalar[i] + carry;
+        sum[i] = (uint8_t)(carry & 0xFF);
         carry >>= 8;
     }
+    for (int i = 32; i < 64; i++) { carry += product[i]; sum[i] = (uint8_t)(carry & 0xFF); carry >>= 8; }
+    /* Reduce sum mod L to get S */
+    sc_reduce64(sig->data + 32, sum);
     return 0;
 }
 
