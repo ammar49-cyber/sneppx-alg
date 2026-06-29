@@ -3,6 +3,9 @@
 #include "arix_ct.h"
 #include <string.h>
 #include <intrin.h>
+#include <stdio.h>
+
+extern int arix_random_bytes(uint8_t* buffer, size_t len);
 
 /* GF(2^255-19) field element: 5 limbs of 51 bits */
 typedef struct { uint64_t v[5]; } field;
@@ -16,12 +19,12 @@ static uint128 mul64_64(uint64_t a, uint64_t b) {
 }
 
 static const field D = {{
-    0x0000000000000019ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL, 0x0000000000000000ULL
+    0x00034DCA135978A3ULL, 0x0001A8283B156EBDULL, 0x0005E7A26001C029ULL,
+    0x000739C663A03CBBULL, 0x00052036CEE2B6FFULL
 }};
 static const field D2 = {{
-    0x0000000000000032ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL, 0x0000000000000000ULL
+    0x00069B9426B2F159ULL, 0x00035050762ADD7AULL, 0x0003CF44C0038052ULL,
+    0x0006738CC7407977ULL, 0x0002406D9DC56DFFULL
 }};
 static const field SQRTM1 = {{
     0x1d5dc8c5feba2c79ULL, 0x499183e80ec73e91ULL, 0x5b596a684f25bcf9ULL,
@@ -39,11 +42,15 @@ static void fe_add(field* r, const field* a, const field* b) {
 }
 
 static void fe_sub(field* r, const field* a, const field* b) {
-    static const uint64_t k[5] = {
-        0xFFFFFFFFFFFDAULL, 0xFFFFFFFFFFFFEULL,
-        0xFFFFFFFFFFFFEULL, 0xFFFFFFFFFFFFEULL, 0xFFFFFFFFFFFFEULL
-    };
-    for (int i = 0; i < 5; i++) r->v[i] = a->v[i] - b->v[i] + k[i];
+    int64_t t[5];
+    for (int i = 0; i < 5; i++) t[i] = (int64_t)a->v[i] - (int64_t)b->v[i];
+    for (int pass = 0; pass < 3; pass++) {
+        for (int i = 0; i < 4; i++) {
+            if (t[i] < 0) { t[i] += 0x8000000000000LL; t[i+1]--; }
+        }
+        if (t[4] < 0) { t[4] += 0x8000000000000LL; t[0] -= 19; }
+    }
+    for (int i = 0; i < 5; i++) r->v[i] = (uint64_t)t[i];
 }
 
 static void fe_mul(field* r, const field* a, const field* b) {
@@ -63,16 +70,19 @@ static void fe_mul(field* r, const field* a, const field* b) {
     /* Two rounds of carry propagation */
     for (int round = 0; round < 2; round++) {
         uint128 carry;
-        carry = rshift128(t[0], 51); t[0].lo = mask51(t[0].lo);
+        carry = rshift128(t[0], 51); t[0].lo = mask51(t[0].lo); t[0].hi = 0;
         t[1] = add128(t[1], carry);
-        carry = rshift128(t[1], 51); t[1].lo = mask51(t[1].lo);
+        carry = rshift128(t[1], 51); t[1].lo = mask51(t[1].lo); t[1].hi = 0;
         t[2] = add128(t[2], carry);
-        carry = rshift128(t[2], 51); t[2].lo = mask51(t[2].lo);
+        carry = rshift128(t[2], 51); t[2].lo = mask51(t[2].lo); t[2].hi = 0;
         t[3] = add128(t[3], carry);
-        carry = rshift128(t[3], 51); t[3].lo = mask51(t[3].lo);
+        carry = rshift128(t[3], 51); t[3].lo = mask51(t[3].lo); t[3].hi = 0;
         t[4] = add128(t[4], carry);
-        carry = rshift128(t[4], 51); t[4].lo = mask51(t[4].lo);
-        t[0] = add128(t[0], mul64_64(19, carry.lo));
+        carry = rshift128(t[4], 51); t[4].lo = mask51(t[4].lo); t[4].hi = 0;
+        if (carry.lo || carry.hi) {
+            t[0] = add128(t[0], mul64_64(19, carry.lo));
+            t[0] = add128(t[0], mul64_64(19, carry.hi));
+        }
     }
     for (int i = 0; i < 5; i++) r->v[i] = t[i].lo;
 }
@@ -136,9 +146,12 @@ static void fe_to_bytes(uint8_t b[32], const field* r) {
     b[25] = (uint8_t)(t[4] >> 4); b[26] = (uint8_t)(t[4] >> 12); b[27] = (uint8_t)(t[4] >> 20);
     b[28] = (uint8_t)(t[4] >> 28); b[29] = (uint8_t)(t[4] >> 36); b[30] = (uint8_t)(t[4] >> 44);
     b[31] = 0;
-    /* Conditional subtract p (2^255 - 19) if packed value >= p */
+    /* Correct comparison: packed value >= p (2^255-19) */
     { int ge = 1;
-      for (int i = 30; i >= 0; i--) { if (b[i] != 0xFF) { ge = (b[i] > 0xED && i == 0) || (b[i] > 0 && i > 0); break; } }
+      for (int i = 30; i >= 0; i--) {
+          uint8_t p_byte = (i == 0) ? 0xED : 0xFF;
+          if (b[i] != p_byte) { ge = (b[i] > p_byte); break; }
+      }
       if (ge) {
           uint16_t brw = 0;
           for (int i = 0; i < 32; i++) {
@@ -159,6 +172,93 @@ static void point_set_neutral(point* p) {
     p->Y.v[0] = 1; p->Z.v[0] = 1;
 }
 
+static void fe_neg(field* r, const field* a) {
+    field zero; memset(&zero, 0, sizeof(field)); fe_sub(r, &zero, a);
+}
+
+/* Compute a^((p-5)/8) = a^(2^252 - 3) via square-and-multiply */
+static void fe_pow22523(field* r, const field* a) {
+    field base; memcpy(&base, a, sizeof(field));
+    memcpy(r, a, sizeof(field));
+    for (int i = 250; i >= 0; i--) {
+        fe_sq(r, r);
+        int bit = (i >= 2) || (i == 0);
+        if (bit) fe_mul(r, r, &base);
+    }
+}
+
+/* Decode Edwards point from 32 bytes: Y in bytes, X parity in top bit of byte[31] */
+static int point_from_bytes(point* p, const uint8_t b[32]) {
+    fe_from_bytes(&p->Y, b);
+    p->Z.v[0] = 1;
+    field u, v, v3, vxx, check;
+    fe_sq(&u, &p->Y);
+    fe_sub(&u, &u, &p->Z);  /* u = Y^2 - 1 */
+    fe_sq(&v, &p->Y); fe_mul(&v, &v, &D); fe_add(&v, &v, &p->Z);  /* v = d*Y^2 + 1 */
+    fe_sq(&v3, &v); fe_mul(&v3, &v3, &v);     /* v3 = v^3 */
+    fe_sq(&p->X, &v3); fe_mul(&p->X, &p->X, &v);
+    fe_mul(&p->X, &p->X, &u);                  /* X = u * v^7 */
+    fe_pow22523(&p->X, &p->X);                 /* X = (u * v^7)^((p-5)/8) */
+    fe_mul(&p->X, &p->X, &v3); fe_mul(&p->X, &p->X, &u);  /* X = u * v^3 * (u*v^7)^((p-5)/8) */
+    fe_sq(&vxx, &p->X); fe_mul(&vxx, &vxx, &v);
+    fe_sub(&check, &vxx, &u);
+    uint8_t ck[32]; fe_to_bytes(ck, &check);
+    if (!arix_ct_is_zero(ck, 32)) {
+        fe_add(&check, &vxx, &u); fe_to_bytes(ck, &check);
+        if (!arix_ct_is_zero(ck, 32)) {
+            fprintf(stderr, "DBG: sqrt fail — vxx==u? no, vxx==-u? no\n");
+            { uint8_t ub[32], vxxb[32]; fe_to_bytes(ub, &u); fe_to_bytes(vxxb, &vxx);
+              fprintf(stderr, "  u="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",ub[i]); fprintf(stderr,"\n");
+              fprintf(stderr, "vxx="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",vxxb[i]); fprintf(stderr,"\n");
+              fe_add(&check, &vxx, &u); fe_to_bytes(ck, &check);
+              fprintf(stderr, "vxx+u="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",ck[i]); fprintf(stderr,"\n");
+              fe_sub(&check, &vxx, &u); fe_to_bytes(ck, &check);
+              fprintf(stderr, "vxx-u="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",ck[i]); fprintf(stderr,"\n");
+            }
+            return -1;
+        }
+        fe_mul(&p->X, &p->X, &SQRTM1);
+    }
+    if ((p->X.v[0] & 1) != (b[31] >> 7)) fe_neg(&p->X, &p->X);
+    fe_mul(&p->T, &p->X, &p->Y);
+    return 0;
+}
+
+static point B;
+
+static void init_base_point(void) {
+    static int initialized = 0;
+    if (initialized) return;
+    B.Z.v[0] = 1;
+    B.Y.v[0] = 0x0006666666666658ULL; B.Y.v[1] = 0x0004CCCCCCCCCCCCULL;
+    B.Y.v[2] = 0x0001999999999999ULL; B.Y.v[3] = 0x0003333333333333ULL;
+    B.Y.v[4] = 0x0006666666666666ULL;
+    /* Compute X from Y using sqrt formula */
+    { field u, v, v3, vxx, check;
+      fe_sq(&u, &B.Y); fe_sub(&u, &u, &B.Z);
+      fe_sq(&v, &B.Y); fe_mul(&v, &v, &D); fe_add(&v, &v, &B.Z);
+      fe_sq(&v3, &v); fe_mul(&v3, &v3, &v);
+      fe_sq(&B.X, &v3); fe_mul(&B.X, &B.X, &v); fe_mul(&B.X, &B.X, &u);
+      fe_pow22523(&B.X, &B.X);
+      fe_mul(&B.X, &B.X, &v3); fe_mul(&B.X, &B.X, &u);
+      fe_sq(&vxx, &B.X); fe_mul(&vxx, &vxx, &v);
+      fe_sub(&check, &vxx, &u);
+      uint8_t ck[32]; fe_to_bytes(ck, &check);
+      if (!arix_ct_is_zero(ck, 32)) {
+          fe_add(&check, &vxx, &u); fe_to_bytes(ck, &check);
+          if (!arix_ct_is_zero(ck, 32)) { fprintf(stderr, "DBG: B sqrt fail\n"); return; }
+          fe_mul(&B.X, &B.X, &SQRTM1);
+      }
+    }
+    fe_mul(&B.T, &B.X, &B.Y);
+    { uint8_t dbg[32]; fe_to_bytes(dbg, &B.X);
+      fprintf(stderr, "DBG: B.X="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fe_to_bytes(dbg, &B.Y);
+      fprintf(stderr, "DBG: B.Y="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fprintf(stderr, "DBG: B on curve=%d\n", point_is_on_curve(&B)); }
+    initialized = 1;
+}
+
 static void point_add(point* r, const point* p, const point* q) {
     field a, b, c, d, e, f, g, h;
     fe_sub(&a, &p->Y, &p->X); fe_sub(&b, &q->Y, &q->X); fe_mul(&a, &a, &b);
@@ -172,20 +272,23 @@ static void point_add(point* r, const point* p, const point* q) {
 }
 
 static void point_double(point* r, const point* p) {
-    field a, b, c, d, e, f, g, h;
-    fe_sq(&a, &p->X); fe_sq(&b, &p->Y); fe_sq(&c, &p->Z);
-    fe_add(&c, &c, &c); fe_add(&d, &p->X, &p->Y); fe_sq(&d, &d);
-    fe_sub(&d, &d, &a); fe_sub(&d, &d, &b);
-    fe_add(&e, &b, &a);
-    fe_sub(&f, &d, &c);
-    fe_add(&g, &d, &c);
-    fe_sub(&h, &b, &a);
-    fe_mul(&r->X, &d, &f);
-    fe_mul(&r->Y, &e, &g);
-    fe_mul(&r->T, &f, &g);
-    fe_mul(&r->Z, &d, &h);
-    /* Identity guard: if X == 0, force output to (0,1,1,0) */
-    { uint8_t xb[32]; fe_to_bytes(xb, &p->X); uint64_t idm = (uint64_t)(-(int)arix_ct_is_zero(xb, 32));
+    field a, b, c, d, e, f, g, h, t;
+    fe_sub(&a, &p->Y, &p->X); fe_sq(&a, &a);  /* A = (Y-X)^2 */
+    fe_add(&b, &p->Y, &p->X); fe_sq(&b, &b);  /* B = (Y+X)^2 */
+    fe_sq(&c, &p->T); fe_mul(&c, &c, &D2);    /* C = 2*d*T^2 */
+    fe_sq(&d, &p->Z); fe_add(&d, &d, &d);     /* D = 2*Z^2 */
+    fe_sub(&e, &b, &a);  /* E = B-A = 4*X*Y */
+    fe_sub(&f, &d, &c);  /* F = D-C = 2*(Z^2 - d*T^2) */
+    fe_add(&g, &d, &c);  /* G = D+C = 2*(Z^2 + d*T^2) */
+    fe_add(&h, &b, &a);  /* H = B+A = 2*(Y^2+X^2) */
+    fe_mul(&r->X, &e, &f);
+    fe_mul(&r->Y, &g, &h);
+    fe_mul(&r->T, &e, &h);
+    fe_mul(&r->Z, &f, &g);
+    /* Identity guard: if X == 0 and Y == Z, force output to (0,1,1,0) */
+    { uint8_t xb[32], yzb[32]; fe_to_bytes(xb, &p->X);
+      fe_sub(&t, &p->Y, &p->Z); fe_to_bytes(yzb, &t);
+      uint64_t idm = (uint64_t)(-(int)(arix_ct_is_zero(xb, 32) && arix_ct_is_zero(yzb, 32)));
       for (int i = 0; i < 5; i++) {
           r->X.v[i] &= ~idm; r->Y.v[i] = (r->Y.v[i] & ~idm) | (idm & 1ULL);
           r->Z.v[i] = (r->Z.v[i] & ~idm) | (idm & 1ULL); r->T.v[i] &= ~idm;
@@ -193,32 +296,13 @@ static void point_double(point* r, const point* p) {
     }
 }
 
-static point B;
-
-static void init_base_point(void) {
-    static int initialized = 0;
-    if (initialized) return;
-    B.X.v[0] = 0x08b999a3a49a0951ULL; B.X.v[1] = 0x088ec5e36ca3884fULL;
-    B.X.v[2] = 0x34ceec1b86aa6a17ULL; B.X.v[3] = 0x48a365bd0c9d71a8ULL;
-    B.X.v[4] = 0x28c8f376b8cfa895ULL;
-    B.Y.v[0] = 0x60e0c40eed77c1deULL; B.Y.v[1] = 0x79918bbaa3dded63ULL;
-    B.Y.v[2] = 0x48666e0e8d82a5e1ULL; B.Y.v[3] = 0x17db6d21b11bfbb5ULL;
-    B.Y.v[4] = 0x62733c88ec799a2cULL;
-    B.Z.v[0] = 1;
-    B.T.v[0] = 0x7134d2ce4e2a1b62ULL; B.T.v[1] = 0x1d26a62b9b39e54dULL;
-    B.T.v[2] = 0x489ee74d3b1fac69ULL; B.T.v[3] = 0x44bd81cf1ccfe980ULL;
-    B.T.v[4] = 0x3a5c2bae045f1a87ULL;
-    initialized = 1;
-}
-
 static int point_is_on_curve(const point* p) {
-    field u, v;
-    fe_sq(&u, &p->Y); fe_sq(&v, &p->X); fe_mul(&v, &v, &D); fe_add(&u, &u, &v);
-    fe_mul(&v, &p->Z, &p->Z); fe_add(&u, &u, &v);
-    fe_sub(&u, &u, &v); fe_mul(&v, &p->T, &p->Z); fe_sq(&v, &v);
-    fe_sub(&u, &u, &v); fe_sq(&v, &p->X); fe_mul(&v, &v, &p->Y); fe_sq(&v, &v);
-    uint8_t b1[32], b2[32]; fe_to_bytes(b1, &u); fe_to_bytes(b2, &v);
-    return arix_ct_equal(b1, b2, 32);
+    field lhs, v;
+    fe_sq(&lhs, &p->Y); fe_sq(&v, &p->X); fe_sub(&lhs, &lhs, &v);
+    fe_sq(&v, &p->Z); fe_sub(&lhs, &lhs, &v);
+    fe_sq(&v, &p->T); fe_mul(&v, &v, &D); fe_sub(&lhs, &lhs, &v);
+    uint8_t b[32]; fe_to_bytes(b, &lhs);
+    return arix_ct_is_zero(b, 32);
 }
 
 static void point_scalar_mult(point* r, const uint8_t* scalar, size_t sc_len, const point* base) {
@@ -282,7 +366,7 @@ static void sc_reduce64(uint8_t r[32], const uint8_t a[64]) {
                     uint8_t lv = L_BYTES[i - k];
                     if (tv > lv) { cmp = 1; } else if (tv < lv) { cmp = -1; }
                 }
-                if (cmp <= 0) break; /* t < L << (8*k) */
+                if (cmp < 0) break; /* t < L << (8*k) */
             }
             if (sub_sc_shifted(t, k)) break; /* borrow = overshot */
         }
@@ -293,19 +377,19 @@ static void sc_reduce64(uint8_t r[32], const uint8_t a[64]) {
         for (int i = 31; i >= 0 && cmp == 0; i--) {
             if (t[i] > L_BYTES[i]) cmp = 1; else if (t[i] < L_BYTES[i]) cmp = -1;
         }
-        if (cmp <= 0) break;
+        if (cmp < 0) break;
         sub_sc_shifted(t, 0);
     }
     memcpy(r, t, 32);
 }
 
-/* Multiply two 32-byte scalars -> 64-byte product (schoolbook) */
+/* Multiply two 32-byte scalars -> 64-byte product (schoolbook, 16-bit limbs) */
 static void sc_mul256(uint8_t p[64], const uint8_t a[32], const uint8_t b[32]) {
     uint32_t t[64] = {0};
     for (int i = 0; i < 32; i++)
         for (int j = 0; j < 32; j++)
             t[i + j] += (uint32_t)a[i] * (uint32_t)b[j];
-    uint32_t carry = 0;
+    uint64_t carry = 0;
     for (int i = 0; i < 64; i++) {
         carry += t[i];
         p[i] = (uint8_t)(carry & 0xFF);
@@ -327,12 +411,36 @@ int arix_ed25519_keypair_generate(ArixEd25519Keypair* kp) {
     init_base_point();
     memset(kp, 0, sizeof(ArixEd25519Keypair));
     uint8_t seed[32];
-    extern int arix_random_bytes(uint8_t* buffer, size_t len);
     if (arix_random_bytes(seed, 32) != 0) return -1;
     if (arix_ed25519_secret_key_expand(kp->private_key, seed) != 0) return -1;
+    /* DEBUG: test identity + B */
+    { point id; point_set_neutral(&id);
+      point z; point_add(&z, &id, &B);
+      uint8_t d2[32]; fe_to_bytes(d2, &z.X);
+      fprintf(stderr, "DBG: id+B.X="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fe_to_bytes(d2, &z.Y);
+      fprintf(stderr, "DBG: id+B.Y="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fprintf(stderr, "DBG: id+B on curve=%d\n", point_is_on_curve(&z));
+      point d; point_double(&d, &B);
+      fe_to_bytes(d2, &d.X);
+      fprintf(stderr, "DBG: 2B.X="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fe_to_bytes(d2, &d.Y);
+      fprintf(stderr, "DBG: 2B.Y="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fprintf(stderr, "DBG: 2B on curve=%d\n", point_is_on_curve(&d));
+    }
     point pub; point_scalar_mult(&pub, kp->private_key, 32, &B);
+    { uint8_t dbg[32]; fe_to_bytes(dbg, &pub.X);
+      fprintf(stderr, "DBG: pub.X="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fe_to_bytes(dbg, &pub.Y);
+      fprintf(stderr, "DBG: pub.Y="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fe_to_bytes(dbg, &pub.Z);
+      fprintf(stderr, "DBG: pub.Z="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fe_to_bytes(dbg, &pub.T);
+      fprintf(stderr, "DBG: pub.T="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",dbg[i]); fprintf(stderr,"\n");
+      fprintf(stderr, "DBG: pub on curve=%d\n", point_is_on_curve(&pub)); }
     fe_to_bytes(kp->public_key, &pub.Y);
     kp->public_key[31] |= (uint8_t)((pub.X.v[0] & 1) << 7);
+    /* Skip decode check for now to avoid stderr flood */
     return 0;
 }
 
@@ -348,6 +456,11 @@ int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size
     arix_sha512_finish(&ctx, r_seed);
     sc_reduce64(r_scalar, r_seed);
     /* R = r_scalar * B */
+    { uint8_t d2[32]; fe_to_bytes(d2, &B.X);
+      fprintf(stderr, "DBG: B.X bytes="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fe_to_bytes(d2, &B.Y);
+      fprintf(stderr, "DBG: B.Y bytes="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",d2[i]); fprintf(stderr,"\n");
+      fprintf(stderr, "DBG: B.T limbs="); for(int i=0;i<5;i++) fprintf(stderr,"%llx ", B.T.v[i]); fprintf(stderr,"\n"); }
     point R; point_scalar_mult(&R, r_scalar, 32, &B);
     fe_to_bytes(sig->data, &R.Y);
     sig->data[31] |= (uint8_t)((R.X.v[0] & 1) << 7);
@@ -379,7 +492,6 @@ int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size
 
 int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const ArixEd25519Signature* sig) {
     if (!public_key || !message || !sig) return -1;
-    if (sig->data[31] & 224) return -1;
     init_base_point();
     uint8_t hram[64];
     ArixSHA512Context ctx;
@@ -388,16 +500,10 @@ int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_
     arix_sha512_update(&ctx, public_key, 32);
     arix_sha512_update(&ctx, message, msg_len);
     arix_sha512_finish(&ctx, hram);
-    point A; fe_from_bytes(&A.Y, public_key);
-    A.X.v[0] = (uint64_t)(public_key[31] >> 7);
-    A.Z.v[0] = 1;
-    fe_sq(&A.T, &A.Y); fe_mul(&A.T, &A.T, &D); fe_add(&A.T, &A.T, &A.Z);
-    fe_sub(&A.T, &A.T, &A.Z); fe_mul(&A.T, &A.T, &A.Y);
-    point R; fe_from_bytes(&R.Y, sig->data);
-    R.X.v[0] = (uint64_t)(sig->data[31] >> 7);
-    R.Z.v[0] = 1;
-    fe_sq(&R.T, &R.Y); fe_mul(&R.T, &R.T, &D); fe_add(&R.T, &R.T, &R.Z);
-    fe_sub(&R.T, &R.T, &R.Z); fe_mul(&R.T, &R.T, &R.Y);
+    point A; int ret_A = point_from_bytes(&A, public_key); printf("DBG: point_from_bytes(A)=%d\n", ret_A);
+    if (ret_A != 0) { printf("DBG: A.public_key="); for(int i=0;i<32;i++) printf("%02x",public_key[i]); printf("\n"); return -1; }
+    point R; int ret_R = point_from_bytes(&R, sig->data); printf("DBG: point_from_bytes(R)=%d\n", ret_R);
+    if (ret_R != 0) return -1;
     uint8_t h_scalar[32]; memcpy(h_scalar, hram, 32);
     {
         static const uint8_t sc_l[32] = {
@@ -419,21 +525,20 @@ int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_
     point hA; point_scalar_mult(&hA, h_scalar, 32, &A);
     point sB; point_scalar_mult(&sB, sig->data + 32, 32, &B);
     point R_plus_hA; point_add(&R_plus_hA, &R, &hA);
-    field lhs, rhs;
-    fe_mul(&lhs, &R_plus_hA.X, &sB.Z);
-    fe_mul(&rhs, &sB.X, &R_plus_hA.Z);
-    uint8_t lb1[32], lb2[32];
-    fe_to_bytes(lb1, &lhs); fe_to_bytes(lb2, &rhs);
-    return arix_ct_equal(lb1, lb2, 32);
+    field lhs_x, rhs_x, lhs_y, rhs_y;
+    fe_mul(&lhs_x, &R_plus_hA.X, &sB.Z);
+    fe_mul(&rhs_x, &sB.X, &R_plus_hA.Z);
+    fe_mul(&lhs_y, &R_plus_hA.Y, &sB.Z);
+    fe_mul(&rhs_y, &sB.Y, &R_plus_hA.Z);
+    uint8_t bx[32], cx[32], by[32], cy[32];
+    fe_to_bytes(bx, &lhs_x); fe_to_bytes(cx, &rhs_x);
+    fe_to_bytes(by, &lhs_y); fe_to_bytes(cy, &rhs_y);
+    return arix_ct_equal(bx, cx, 32) && arix_ct_equal(by, cy, 32);
 }
 
 int arix_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point_bytes) {
     if (!result || !scalar || !point_bytes) return -1;
-    point p; fe_from_bytes(&p.Y, point_bytes);
-    p.X.v[0] = (uint64_t)(point_bytes[31] >> 7);
-    p.Z.v[0] = 1;
-    fe_sq(&p.T, &p.Y); fe_mul(&p.T, &p.T, &D); fe_add(&p.T, &p.T, &p.Z);
-    fe_sub(&p.T, &p.T, &p.Z); fe_mul(&p.T, &p.T, &p.Y);
+    point p; if (point_from_bytes(&p, point_bytes) != 0) return -1;
     point r; point_scalar_mult(&r, scalar, 32, &p);
     fe_to_bytes(result, &r.Y);
     result[31] |= (uint8_t)((r.X.v[0] & 1) << 7);
