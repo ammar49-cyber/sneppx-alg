@@ -27,7 +27,11 @@ static void fe_add(field* r, const field* a, const field* b) {
 }
 
 static void fe_sub(field* r, const field* a, const field* b) {
-    for (int i = 0; i < 5; i++) r->v[i] = a->v[i] - b->v[i] + (uint64_t)0xfffffffffffdaULL;
+    static const uint64_t k[5] = {
+        0xFFFFFFFFFFFDAULL, 0xFFFFFFFFFFFFEULL,
+        0xFFFFFFFFFFFFEULL, 0xFFFFFFFFFFFFEULL, 0xFFFFFFFFFFFFEULL
+    };
+    for (int i = 0; i < 5; i++) r->v[i] = a->v[i] - b->v[i] + k[i];
 }
 
 static void fe_mul(field* r, const field* a, const field* b) {
