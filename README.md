@@ -149,6 +149,7 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 | 🐍 **Python API** | ✅ **Real** | Full pybind11 module: Tensor (70+ ops), Model, Trainer, Optimizers, Crypto | Docs |
 | 🔐 **Security S2** | ⚠️ Partial | Control flow flattening, string encryption stubs | Full obfuscation |
 | 🔐 **Security S3** | ⚠️ Partial | Behavioral monitor structure | Real anomaly detection |
+| 🏗️ **Skeleton Infrastructure** | ✅ **Real** | 75 files: kernel internals, mem mgmt, net, drivers, lib, fuzz, tools, samples, bindings (C/C++/Python/Rust) | Full implementation (v0.5+) |
 
 ### 📏 Lines of Code Breakdown
 
@@ -169,7 +170,8 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 | 🔐 S1 Secure Mem | ~800 | 3 | ✅ |
 | 🔐 S2 Obfuscation | ~1,500 | 4 | ⚠️ |
 | 🔐 S3 Monitor | ~100 | 0 | ⚠️ |
-| **📊 Total** | **~15,000** | **~150** | — |
+| 🏗️ **Skeleton Infrastructure** | **~3,400** | — | ✅ Stubs |
+| **📊 Total** | **~18,900** | **~150** | — |
 
 ---
 
@@ -183,6 +185,7 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 - ✅ **Contribute** — Email patches welcome, see [CONTRIBUTING.md](CONTRIBUTING.md)
 - ✅ **Use the tensor ops** — 80+ operations on 13 data types
 - ✅ **Run benchmarks** — Compare tensor and autodiff performance
+- ✅ **Browse skeleton infrastructure** — 75 stubs for kernel internals, memory mgmt, networking, drivers, generic libs, fuzzing, tools, samples, and language bindings (C/C++/Python/Rust)
 
 ## ❌ What You Cannot Do (Yet)
 
@@ -450,7 +453,8 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 
 | Metric | Value |
 |--------|-------|
-| 📝 C/C++ Source | **~15,500 lines** |
+| 📝 C/C++ Source | **~18,900 lines** |
+| 📁 Source Files | **~180** (75 skeleton infrastructure stubs) |
 | 🧪 Registered Tests | **56** (54 pass, 2 pre-existing crypto edge cases) |
 | 🔧 Build Time | **~30s** (Release, 8 cores) |
 | 📦 Dependencies | **0** for C core |
@@ -493,7 +497,6 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 │   └── bench_npe.c             # 🤖 NPE benchmarks
 ├── 📁 security/                # 🔐 S0+S1 crypto + S2 obfuscation tests
 ├── 📁 fuzz/                    # 🎲 Fuzz testing (future)
-├── 📁 integration/             # 🔗 Multi-component integration tests
 └── 📁 python/                  # 🐍 Python tests (stubs)
 ```
 
@@ -539,12 +542,12 @@ cmake --preset asan               # 🛡️ Debug + AddressSanitizer
 |----------|-------------|
 | 📖 [docs/index.md](docs/index.md) | Documentation landing page |
 | 🔧 [docs/installation.md](docs/installation.md) | Platform-specific build guides |
-| 🏗️ [docs/architecture.md](docs/architecture.md) | Full architecture with math |
+| 🏗️ [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture with math |
 | 🔐 [docs/security.md](docs/security.md) | Security architecture deep dive |
-| 🗺️ [docs/roadmap.md](docs/roadmap.md) | Detailed project roadmap |
+| 🗺️ [docs/ROADMAP.md](docs/ROADMAP.md) | Detailed project roadmap |
 | 📘 [docs/api/c.md](docs/api/c.md) | C API reference |
 | 📗 [docs/api/python.md](docs/api/python.md) | Python API reference |
-| 🤝 [docs/contributing.md](docs/contributing.md) | Development workflow |
+| 🤝 [CONTRIBUTING.md](CONTRIBUTING.md) | Development workflow |
 
 ---
 
@@ -628,5 +631,5 @@ ARIX-Algo stands on the shoulders of giants. We are grateful to:
 </p>
 
 <p align="center">
-  <a href="#">⬆️ Back to Top</a>
+  <a href="#-arix-algo">⬆️ Back to Top</a>
 </p>
