@@ -129,14 +129,25 @@ static void point_add(point* r, const point* p, const point* q) {
 }
 
 static void point_double(point* r, const point* p) {
-    field a, b, c, d, e, f;
+    field a, b, c, d, e, f, g, h;
     fe_sq(&a, &p->X); fe_sq(&b, &p->Y); fe_sq(&c, &p->Z);
     fe_add(&c, &c, &c); fe_add(&d, &p->X, &p->Y); fe_sq(&d, &d);
-    fe_sub(&d, &d, &a); fe_sub(&d, &d, &b); fe_add(&e, &b, &a);
-    fe_sub(&f, &d, &c); fe_mul(&r->X, &d, &f);
-    fe_mul(&r->Y, &e, &b); fe_mul(&r->Y, &r->Y, &a);
-    fe_mul(&r->T, &d, &e); fe_mul(&r->T, &r->T, &f);
-    fe_mul(&r->Z, &c, &a); fe_mul(&r->Z, &r->Z, &b);
+    fe_sub(&d, &d, &a); fe_sub(&d, &d, &b);
+    fe_add(&e, &b, &a);
+    fe_sub(&f, &d, &c);
+    fe_add(&g, &d, &c);
+    fe_sub(&h, &b, &a);
+    fe_mul(&r->X, &d, &f);
+    fe_mul(&r->Y, &e, &g);
+    fe_mul(&r->T, &f, &g);
+    fe_mul(&r->Z, &d, &h);
+    /* Identity guard: if X == 0, force output to (0,1,1,0) */
+    { uint8_t xb[32]; fe_to_bytes(xb, &p->X); uint64_t idm = (uint64_t)(-(int)arix_ct_is_zero(xb, 32));
+      for (int i = 0; i < 5; i++) {
+          r->X.v[i] &= ~idm; r->Y.v[i] = (r->Y.v[i] & ~idm) | (idm & 1ULL);
+          r->Z.v[i] = (r->Z.v[i] & ~idm) | (idm & 1ULL); r->T.v[i] &= ~idm;
+      }
+    }
 }
 
 static point B;
