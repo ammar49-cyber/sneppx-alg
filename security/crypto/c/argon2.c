@@ -3,33 +3,34 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void blake2b_round(uint64_t v[16]) {
+static void blake2b_round(uint64_t v[16], const uint64_t m[16]) {
     #define B2B_G(a,b,c,d,x,y) do { \
         v[a] += v[b] + x; v[d] ^= v[a]; v[d] = (v[d] >> 32) | (v[d] << 32); \
         v[c] += v[d]; v[b] ^= v[c]; v[b] = (v[b] >> 24) | (v[b] << 40); \
         v[a] += v[b] + y; v[d] ^= v[a]; v[d] = (v[d] >> 16) | (v[d] << 48); \
         v[c] += v[d]; v[b] ^= v[c]; v[b] = (v[b] >> 63) | (v[b] << 1); \
     } while(0)
-    B2B_G(0,4,8,12,  v[0], v[1]);
-    B2B_G(1,5,9,13,  v[2], v[3]);
-    B2B_G(2,6,10,14, v[4], v[5]);
-    B2B_G(3,7,11,15, v[6], v[7]);
-    B2B_G(0,5,10,15, v[8], v[9]);
-    B2B_G(1,6,11,12, v[10], v[11]);
-    B2B_G(2,7,8,13,  v[12], v[13]);
-    B2B_G(3,4,9,14,  v[14], v[15]);
+    B2B_G(0,4,8,12,  m[0],  m[1]);
+    B2B_G(1,5,9,13,  m[2],  m[3]);
+    B2B_G(2,6,10,14, m[4],  m[5]);
+    B2B_G(3,7,11,15, m[6],  m[7]);
+    B2B_G(0,5,10,15, m[8],  m[9]);
+    B2B_G(1,6,11,12, m[10], m[11]);
+    B2B_G(2,7,8,13,  m[12], m[13]);
+    B2B_G(3,4,9,14,  m[14], m[15]);
     #undef B2B_G
 }
 
 static void argon2_G(uint64_t out[128], const uint64_t in1[128], const uint64_t in2[128]) {
-    uint64_t z[128], v[16];
+    uint64_t z[128], v[16], m[16];
     for (int i = 0; i < 128; i++) z[i] = in1[i] ^ in2[i];
     memcpy(out, z, 128 * 8);
     for (int r = 0; r < 8; r++) {
         for (int slice = 0; slice < 8; slice++) {
             int s = slice * 16;
             memcpy(v, out + s, 16 * 8);
-            blake2b_round(v);
+            memcpy(m, z + s, 16 * 8);
+            blake2b_round(v, m);
             memcpy(out + s, v, 16 * 8);
         }
     }
@@ -64,10 +65,12 @@ int arix_argon2id(const uint8_t* password, size_t password_len, const uint8_t* s
     if (password_len > 0) memcpy(((uint8_t*)input) + 64, password, password_len < 64 ? password_len : 64);
     if (salt_len > 0) memcpy(((uint8_t*)input) + 64 + password_len, salt, salt_len < 64 ? salt_len : 32);
 
-    uint64_t h0[8], v[16];
+    uint64_t h0[8], v[16], msg[16];
     memcpy(v, input, 128);
     memcpy(v + 8, input, 64);
-    blake2b_round(v);
+    memcpy(msg, input, 128);
+    memcpy(msg + 8, input, 64);
+    blake2b_round(v, msg);
     memcpy(h0, v, 64);
 
     size_t blk = 0;

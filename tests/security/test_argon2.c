@@ -41,8 +41,8 @@ void test_timing(void) {
     uint8_t hash[32];
 
     ArixArgon2Config cfg;
-    cfg.memory_kb = 16;
-    cfg.iterations = 1;
+    cfg.memory_kb = 64;
+    cfg.iterations = 2;
     cfg.parallelism = 1;
     cfg.hash_len = 32;
 

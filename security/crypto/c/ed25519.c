@@ -79,14 +79,18 @@ static void fe_from_bytes(field* r, const uint8_t b[32]) {
 static void fe_to_bytes(uint8_t b[32], const field* r) {
     uint64_t t[5];
     memcpy(t, r->v, sizeof(t));
+    /* Fold: 19 * (t[4] >> 51) → t[0] */
     uint64_t c = 19 * (t[4] >> 51);
     t[0] += c; t[4] = mask51(t[4]);
-    uint64_t c0 = t[0] >> 51; t[1] += c0; t[0] = mask51(t[0]);
-    uint64_t c1 = t[1] >> 51; t[2] += c1; t[1] = mask51(t[1]);
-    uint64_t c2 = t[2] >> 51; t[3] += c2; t[2] = mask51(t[2]);
-    uint64_t c3 = t[3] >> 51; t[4] += c3; t[3] = mask51(t[3]);
-    uint64_t c4 = t[4] >> 51; t[0] += 19 * c4; t[4] = mask51(t[4]);
-    c0 = t[0] >> 51; t[1] += c0; t[0] = mask51(t[0]);
+    /* Full carry propagation (two rounds to ensure limbs < 2^51) */
+    for (int round = 0; round < 2; round++) {
+        uint64_t c0 = t[0] >> 51; t[1] += c0; t[0] = mask51(t[0]);
+        uint64_t c1 = t[1] >> 51; t[2] += c1; t[1] = mask51(t[1]);
+        uint64_t c2 = t[2] >> 51; t[3] += c2; t[2] = mask51(t[2]);
+        uint64_t c3 = t[3] >> 51; t[4] += c3; t[3] = mask51(t[3]);
+        uint64_t c4 = t[4] >> 51; t[0] += 19 * c4; t[4] = mask51(t[4]);
+    }
+    /* Write bytes, then subtract p if value >= p */
     b[0] = (uint8_t)t[0]; b[1] = (uint8_t)(t[0] >> 8); b[2] = (uint8_t)(t[0] >> 16); b[3] = (uint8_t)(t[0] >> 24);
     b[4] = (uint8_t)(t[0] >> 32); b[5] = (uint8_t)(t[0] >> 40); b[6] = (uint8_t)(t[1] << 3) | (uint8_t)(t[0] >> 48);
     b[7] = (uint8_t)(t[1] >> 5); b[8] = (uint8_t)(t[1] >> 13); b[9] = (uint8_t)(t[1] >> 21);
