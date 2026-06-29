@@ -1,0 +1,5 @@
+[package]
+name = "arix_algo"
+version = "0.1.0"
+edition = "2021"
+description = "Rust bindings for ARIX-Algo tensor library"
