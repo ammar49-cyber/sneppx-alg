@@ -491,6 +491,70 @@ static void test_grad_clip_grad_norm(void) {
     arix_tape_destroy(tape);
 }
 
+static void test_grad_conv2d(void) {
+    size_t ishape[] = {1, 1, 4, 4};
+    size_t kshape[] = {1, 1, 2, 2};
+    ArixTensor* input = arix_tensor_zeros(ishape, 4, ARIX_FLOAT32);
+    ArixTensor* kernel = arix_tensor_zeros(kshape, 4, ARIX_FLOAT32);
+    float* xd = (float*)input->data;
+    float* kd = (float*)kernel->data;
+    for (size_t i = 0; i < 16; i++) xd[i] = (float)((i * 7 + 3) % 13) / 13.0f;
+    for (size_t i = 0; i < 4; i++) kd[i] = (float)((i * 13 + 7) % 11) / 11.0f;
+
+    ArixVariable *va = arix_variable_create(input, 1);
+    ArixVariable *vk = arix_variable_create(kernel, 1);
+    ArixTape* tape = arix_tape_create();
+    ArixVariable* conv = arix_conv2d(tape, va, vk, 1, 1, 0, 0);
+    size_t N_conv = conv->data->size;
+    ArixTensor* tgt_data = arix_tensor_zeros(conv->data->shape, conv->data->ndim, ARIX_FLOAT32);
+    ArixVariable* target = arix_variable_create(tgt_data, 0);
+    ArixVariable* loss = arix_mse_loss(tape, conv, target);
+    arix_tape_backward(tape, loss);
+
+    for (size_t idx = 0; idx < 16; idx++) {
+        float orig = xd[idx];
+        float eps = 1e-4f;
+        xd[idx] = orig + eps;
+        ArixTensor* out_p = arix_tensor_conv2d(input, kernel, 1, 1, 0, 0);
+        float lp = 0;
+        for (size_t i = 0; i < out_p->size; i++) { float v = ((float*)out_p->data)[i]; lp += v * v / (float)N_conv; }
+        arix_tensor_destroy(out_p);
+        xd[idx] = orig - eps;
+        ArixTensor* out_m = arix_tensor_conv2d(input, kernel, 1, 1, 0, 0);
+        float lm = 0;
+        for (size_t i = 0; i < out_m->size; i++) { float v = ((float*)out_m->data)[i]; lm += v * v / (float)N_conv; }
+        arix_tensor_destroy(out_m);
+        xd[idx] = orig;
+        float fd = (lp - lm) / (2.0f * eps);
+        float ad = ((float*)va->grad->data)[idx];
+        float ratio = fabsf(fd) > 1e-6f ? fabsf(ad - fd) / (fabsf(fd) + 1e-6f) : fabsf(ad - fd);
+        ASSERT(ratio < 0.15f, "conv2d input grad finite-diff match");
+    }
+
+    for (size_t idx = 0; idx < 4; idx++) {
+        float orig = kd[idx];
+        float eps = 1e-4f;
+        kd[idx] = orig + eps;
+        ArixTensor* out_p = arix_tensor_conv2d(input, kernel, 1, 1, 0, 0);
+        float lp = 0;
+        for (size_t i = 0; i < out_p->size; i++) { float v = ((float*)out_p->data)[i]; lp += v * v / (float)N_conv; }
+        arix_tensor_destroy(out_p);
+        kd[idx] = orig - eps;
+        ArixTensor* out_m = arix_tensor_conv2d(input, kernel, 1, 1, 0, 0);
+        float lm = 0;
+        for (size_t i = 0; i < out_m->size; i++) { float v = ((float*)out_m->data)[i]; lm += v * v / (float)N_conv; }
+        arix_tensor_destroy(out_m);
+        kd[idx] = orig;
+        float fd = (lp - lm) / (2.0f * eps);
+        float ad = ((float*)vk->grad->data)[idx];
+        float ratio = fabsf(fd) > 1e-6f ? fabsf(ad - fd) / (fabsf(fd) + 1e-6f) : fabsf(ad - fd);
+        ASSERT(ratio < 0.15f, "conv2d kernel grad finite-diff match");
+    }
+
+    arix_variable_destroy(target);
+    arix_tape_destroy(tape);
+}
+
 int main(void) {
     run_test("add grad",              test_grad_add);
     run_test("mul grad",              test_grad_mul);
@@ -523,6 +587,8 @@ int main(void) {
     run_test("tape zero_grad",        test_grad_tape_clear);
     run_test("global norm",           test_grad_global_norm);
     run_test("clip grad norm",        test_grad_clip_grad_norm);
+
+    run_test("conv2d grad",           test_grad_conv2d);
 
     printf("\nResults: %d passed, %d failed out of %d\n",
            tests_passed, tests_failed, tests_passed + tests_failed);
