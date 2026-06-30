@@ -41,6 +41,9 @@ src/python/arix_algo/Debug/
 # Node
 node_modules/
 
+# opencode
+.opencode/
+
 # IDE
 .vscode/
 .idea/

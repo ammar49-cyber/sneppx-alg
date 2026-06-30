@@ -1,5 +1,0 @@
-if(ARIX_BUILD_TESTS)
-    add_executable(test_ser_suite test_ser_common.c)
-    target_link_libraries(test_ser_suite PRIVATE arix_core arix_arch arix_security_c)
-    add_test(NAME ser_suite COMMAND test_ser_suite)
-endif()

@@ -1,5 +1,0 @@
-if(ARIX_BUILD_TESTS)
-    add_executable(test_npe_suite test_npe_common.c)
-    target_link_libraries(test_npe_suite PRIVATE arix_core arix_arch arix_security_c)
-    add_test(NAME npe_suite COMMAND test_npe_suite)
-endif()

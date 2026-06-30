@@ -1,5 +1,0 @@
-if(ARIX_BUILD_TESTS)
-    add_executable(test_hss_suite test_hss_common.c)
-    target_link_libraries(test_hss_suite PRIVATE arix_core arix_arch arix_security_c)
-    add_test(NAME hss_suite COMMAND test_hss_suite)
-endif()

@@ -9,12 +9,20 @@
 ```c
 typedef struct ArixTensor ArixTensor;
 typedef enum {
-    ARIX_BOOL,      // int8_t (0/1)
-    ARIX_INT32,     // int32_t
-    ARIX_INT64,     // int64_t
-    ARIX_FLOAT32,   // float
-    ARIX_FLOAT64    // double
-} ArixDType;
+    ARIX_FLOAT32,
+    ARIX_FLOAT64,
+    ARIX_FLOAT16,
+    ARIX_BFLOAT16,
+    ARIX_FLOAT8,
+    ARIX_INT32,
+    ARIX_INT64,
+    ARIX_INT16,
+    ARIX_INT8,
+    ARIX_UINT8,
+    ARIX_BOOL,
+    ARIX_COMPLEX64,
+    ARIX_COMPLEX128,
+} ArixDtype;
 ```
 
 ### Creation
@@ -257,40 +265,51 @@ void arix_fm_model_destroy(ArixFMModel* model);
 
 ### S0 — Crypto
 
-**Header**: `#include "arix_s0_crypto.h"`
+**Header**: `#include "arix_crypto.h"` (includes all sub-headers)
 
 ```c
 // Ed25519
-void arix_ed25519_keypair(uint8_t pk[32], uint8_t sk[64]);
-void arix_ed25519_sign(uint8_t sig[64], const uint8_t msg[], size_t msglen,
-                       const uint8_t sk[64], const uint8_t pk[32]);
-int32_t arix_ed25519_verify(const uint8_t sig[64], const uint8_t msg[], size_t msglen,
-                            const uint8_t pk[32]);
-void arix_ed25519_pk_from_sk(uint8_t pk[32], const uint8_t sk[64]);
+int arix_ed25519_keypair_generate(ArixEd25519Keypair* kp);
+int arix_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed);
+int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size_t msg_len, ArixEd25519Signature* sig);
+int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const ArixEd25519Signature* sig);
+int arix_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point);
 
-// X25519
-void arix_x25519_keypair(uint8_t pk[32], uint8_t sk[32]);
-void arix_x25519_shared_secret(uint8_t shared[32], const uint8_t sk[32], const uint8_t pk[32]);
+// ChaCha20-Poly1305 (AEAD)
+int arix_aead_encrypt(uint8_t* ct, size_t* ctlen, const uint8_t* pt, size_t ptlen,
+                       const uint8_t key[32], const uint8_t nonce[12],
+                       const uint8_t* aad, size_t aadlen);
+int arix_aead_decrypt(uint8_t* pt, size_t* ptlen, const uint8_t* ct, size_t ctlen,
+                       const uint8_t key[32], const uint8_t nonce[12],
+                       const uint8_t* aad, size_t aadlen);
 
-// ChaCha20-Poly1305
-void arix_chacha20_poly1305_encrypt(uint8_t* ct, size_t* ctlen,
-                                     const uint8_t* pt, size_t ptlen,
-                                     const uint8_t key[32], const uint8_t nonce[12],
-                                     const uint8_t* aad, size_t aadlen);
-int32_t arix_chacha20_poly1305_decrypt(uint8_t* pt, size_t* ptlen,
-                                        const uint8_t* ct, size_t ctlen,
-                                        const uint8_t key[32], const uint8_t nonce[12],
-                                        const uint8_t* aad, size_t aadlen);
+// Hashing
+void arix_sha512(const uint8_t* input, size_t len, uint8_t* output);
+void arix_sha3_256(const uint8_t* input, size_t len, uint8_t* output);
+void arix_blake3(const uint8_t* input, size_t len, uint8_t* output, size_t output_len);
+
+// Key derivation
+int arix_argon2_hash(uint8_t* hash, size_t hash_len, const uint8_t* pwd, size_t pwd_len,
+                      const uint8_t* salt, size_t salt_len, uint32_t t_cost, uint32_t m_cost);
+
+// Random
+int arix_random_bytes(uint8_t* buffer, size_t len);
+
+// Constant-time comparison
+int arix_ct_is_zero(const uint8_t* b, size_t n);
+int arix_ct_equal(const uint8_t* a, const uint8_t* b, size_t n);
 ```
 
 ### S1 — Secure Memory
 
-**Header**: `#include "arix_s1_secure_memory.h"`
+**Header**: `#include "arix_secure_mem.h"`
 
 ```c
-void* arix_s1_alloc_locked(size_t size);
-void  arix_s1_free_locked(void* ptr, size_t size);
-int32_t arix_s1_memcmp_consttime(const void* a, const void* b, size_t n);
+void arix_secure_zero(void* ptr, size_t size);
+void* arix_secure_malloc(size_t size);
+void arix_secure_free(void* ptr, size_t size);
 ```
+
+See `docs/security.md` for full S0-S3 documentation.
 
 See also `docs/security.md` for full S0-S3 documentation.

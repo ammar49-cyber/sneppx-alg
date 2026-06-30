@@ -1,5 +1,0 @@
-if(ARIX_BUILD_TESTS)
-    add_executable(test_fm_suite test_fm_common.c)
-    target_link_libraries(test_fm_suite PRIVATE arix_core arix_arch arix_security_c)
-    add_test(NAME fm_suite COMMAND test_fm_suite)
-endif()

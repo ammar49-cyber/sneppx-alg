@@ -104,22 +104,20 @@ static void fe_from_bytes(field* r, const uint8_t b[32]) {
     r->v[0] = (uint64_t)b[0] | (uint64_t)b[1]<<8 | (uint64_t)b[2]<<16 | (uint64_t)b[3]<<24 |
               (uint64_t)b[4]<<32 | (uint64_t)b[5]<<40 | ((uint64_t)b[6]&7)<<48;
     r->v[1] = (uint64_t)b[6]>>3 | (uint64_t)b[7]<<5 | (uint64_t)b[8]<<13 | (uint64_t)b[9]<<21 |
-              (uint64_t)b[10]<<29 | (uint64_t)b[11]<<37 | ((uint64_t)b[12]&63)<<45;
+              (uint64_t)b[10]<<29 | (uint64_t)b[11]<<37 | ((uint64_t)b[12]&0x3F)<<45;
     r->v[2] = (uint64_t)b[12]>>6 | (uint64_t)b[13]<<2 | (uint64_t)b[14]<<10 | (uint64_t)b[15]<<18 |
-              (uint64_t)b[16]<<26 | (uint64_t)b[17]<<34 | ((uint64_t)b[18]&31)<<42;
-    r->v[3] = (uint64_t)b[18]>>5 | (uint64_t)b[19]<<3 | (uint64_t)b[20]<<11 | (uint64_t)b[21]<<19 |
-              (uint64_t)b[22]<<27 | (uint64_t)b[23]<<35 | ((uint64_t)b[24]&15)<<43;
-    r->v[4] = (uint64_t)b[24]>>4 | (uint64_t)b[25]<<4 | (uint64_t)b[26]<<12 | (uint64_t)b[27]<<20 |
-              (uint64_t)b[28]<<28 | (uint64_t)b[29]<<36 | ((uint64_t)b[30]&7)<<44;
+              (uint64_t)b[16]<<26 | (uint64_t)b[17]<<34 | (uint64_t)b[18]<<42 | ((uint64_t)b[19]&1)<<50;
+    r->v[3] = ((uint64_t)b[19]>>1)&0x7F | (uint64_t)b[20]<<7 | (uint64_t)b[21]<<15 | (uint64_t)b[22]<<23 |
+              (uint64_t)b[23]<<31 | (uint64_t)b[24]<<39 | ((uint64_t)b[25]&0x0F)<<47;
+    r->v[4] = (uint64_t)b[25]>>4 | (uint64_t)b[26]<<4 | (uint64_t)b[27]<<12 | (uint64_t)b[28]<<20 |
+              (uint64_t)b[29]<<28 | (uint64_t)b[30]<<36 | ((uint64_t)b[31]&0x7F)<<44;
 }
 
 static void fe_to_bytes(uint8_t b[32], const field* r) {
     uint64_t t[5];
     memcpy(t, r->v, sizeof(t));
-    /* Fold: 19 * (t[4] >> 51) → t[0] */
     uint64_t c = 19 * (t[4] >> 51);
     t[0] += c; t[4] = mask51(t[4]);
-    /* Full carry propagation (two rounds to ensure limbs < 2^51) */
     for (int round = 0; round < 2; round++) {
         uint64_t c0 = t[0] >> 51; t[1] += c0; t[0] = mask51(t[0]);
         uint64_t c1 = t[1] >> 51; t[2] += c1; t[1] = mask51(t[1]);
@@ -127,7 +125,6 @@ static void fe_to_bytes(uint8_t b[32], const field* r) {
         uint64_t c3 = t[3] >> 51; t[4] += c3; t[3] = mask51(t[3]);
         uint64_t c4 = t[4] >> 51; t[0] += 19 * c4; t[4] = mask51(t[4]);
     }
-    /* Write bytes, then subtract p from limbs if value >= p */
     { int ge = 1;
       for (int i = 4; i >= 1; i--) { if (t[i] != 0x7FFFFFFFFFFFFULL) { ge = 0; break; } }
       if (ge && t[0] >= 0x7FFFFFFFFFFEDULL) {
@@ -136,17 +133,20 @@ static void fe_to_bytes(uint8_t b[32], const field* r) {
       }
     }
     b[0] = (uint8_t)t[0]; b[1] = (uint8_t)(t[0] >> 8); b[2] = (uint8_t)(t[0] >> 16); b[3] = (uint8_t)(t[0] >> 24);
-    b[4] = (uint8_t)(t[0] >> 32); b[5] = (uint8_t)(t[0] >> 40); b[6] = (uint8_t)(t[1] << 3) | (uint8_t)(t[0] >> 48);
+    b[4] = (uint8_t)(t[0] >> 32); b[5] = (uint8_t)(t[0] >> 40);
+    b[6] = (uint8_t)(t[0] >> 48) | (uint8_t)((t[1] & 0x1F) << 3);
     b[7] = (uint8_t)(t[1] >> 5); b[8] = (uint8_t)(t[1] >> 13); b[9] = (uint8_t)(t[1] >> 21);
-    b[10] = (uint8_t)(t[1] >> 29); b[11] = (uint8_t)(t[1] >> 37); b[12] = (uint8_t)(t[2] << 6) | (uint8_t)(t[1] >> 45);
+    b[10] = (uint8_t)(t[1] >> 29); b[11] = (uint8_t)(t[1] >> 37);
+    b[12] = (uint8_t)(t[1] >> 45) | (uint8_t)((t[2] & 3) << 6);
     b[13] = (uint8_t)(t[2] >> 2); b[14] = (uint8_t)(t[2] >> 10); b[15] = (uint8_t)(t[2] >> 18);
-    b[16] = (uint8_t)(t[2] >> 26); b[17] = (uint8_t)(t[2] >> 34); b[18] = (uint8_t)(t[3] << 5) | (uint8_t)(t[2] >> 42);
-    b[19] = (uint8_t)(t[3] >> 3); b[20] = (uint8_t)(t[3] >> 11); b[21] = (uint8_t)(t[3] >> 19);
-    b[22] = (uint8_t)(t[3] >> 27); b[23] = (uint8_t)(t[3] >> 35); b[24] = (uint8_t)(t[4] << 4) | (uint8_t)(t[3] >> 43);
-    b[25] = (uint8_t)(t[4] >> 4); b[26] = (uint8_t)(t[4] >> 12); b[27] = (uint8_t)(t[4] >> 20);
-    b[28] = (uint8_t)(t[4] >> 28); b[29] = (uint8_t)(t[4] >> 36); b[30] = (uint8_t)(t[4] >> 44);
-    b[31] = 0;
-    /* Correct comparison: packed value >= p (2^255-19) */
+    b[16] = (uint8_t)(t[2] >> 26); b[17] = (uint8_t)(t[2] >> 34); b[18] = (uint8_t)(t[2] >> 42);
+    b[19] = (uint8_t)(t[2] >> 50) | (uint8_t)((t[3] & 0x7F) << 1);
+    b[20] = (uint8_t)(t[3] >> 7); b[21] = (uint8_t)(t[3] >> 15); b[22] = (uint8_t)(t[3] >> 23);
+    b[23] = (uint8_t)(t[3] >> 31); b[24] = (uint8_t)(t[3] >> 39);
+    b[25] = (uint8_t)(t[3] >> 47) | (uint8_t)((t[4] & 0x0F) << 4);
+    b[26] = (uint8_t)(t[4] >> 4); b[27] = (uint8_t)(t[4] >> 12); b[28] = (uint8_t)(t[4] >> 20);
+    b[29] = (uint8_t)(t[4] >> 28); b[30] = (uint8_t)(t[4] >> 36);
+    b[31] = (uint8_t)(t[4] >> 44);
     { int ge = 1;
       for (int i = 30; i >= 0; i--) {
           uint8_t p_byte = (i == 0) ? 0xED : 0xFF;

@@ -7,9 +7,9 @@ macro(add_arix_test test_src link_libs)
     add_executable(${test_name} ${test_src})
     target_link_libraries(${test_name} ${link_libs})
     target_include_directories(${test_name} PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/core/include
-        ${CMAKE_SOURCE_DIR}/src/arch/include
-        ${CMAKE_SOURCE_DIR}/src/security/c/include
+        ${CMAKE_SOURCE_DIR}/include/arix/core
+        ${CMAKE_SOURCE_DIR}/include/arix/arch
+        ${CMAKE_SOURCE_DIR}/include/arix/security
         ${CMAKE_SOURCE_DIR}/tests
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
@@ -34,10 +34,10 @@ macro(add_arix_cpp_test test_src link_libs)
     add_executable(${test_name} ${test_src})
     target_link_libraries(${test_name} ${link_libs})
     target_include_directories(${test_name} PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/core/include
-        ${CMAKE_SOURCE_DIR}/src/arch/include
-        ${CMAKE_SOURCE_DIR}/src/security/c/include
-        ${CMAKE_SOURCE_DIR}/src/security/cpp/include
+        ${CMAKE_SOURCE_DIR}/include/arix/core
+        ${CMAKE_SOURCE_DIR}/include/arix/arch
+        ${CMAKE_SOURCE_DIR}/include/arix/security
+        ${CMAKE_SOURCE_DIR}/include/arix/security
         ${CMAKE_SOURCE_DIR}/tests
     )
     add_test(NAME ${test_name} COMMAND ${test_name})

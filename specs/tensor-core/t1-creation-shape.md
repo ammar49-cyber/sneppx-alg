@@ -170,8 +170,8 @@ Read the existing implementations of each creation function. Fix any bugs found:
 - Calls `arix_tensor_create`, then fills all elements with the provided value pointer. The value pointer is cast to the appropriate dtype. Verify it handles all dtypes.
 
 #### `arix_tensor_arange`
-- **Bug**: The negative-step detection uses `(stop - start) / step < 0` which is wrong when both numerator and denominator are negative (result is positive from C's integer division). 
-- **Fix**: 
+- **Bug**: The negative-step detection uses `(stop - start) / step < 0` which is wrong when both numerator and denominator are negative (result is positive from C's integer division).
+- **Fix**:
   ```c
   if ((step > 0 && start >= stop) || (step < 0 && start <= stop)) return NULL;
   ```

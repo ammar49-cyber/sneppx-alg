@@ -4,7 +4,7 @@
   <img src="docs/logo.jpeg" alt="ARIX-Algo Logo" width="30%" style="mix-blend-mode: screen; background: transparent;"/>
 </p>
 
-> **Next-Generation AI Architecture** · Security built into the foundation.  
+> **Next-Generation AI Architecture** · Security built into the foundation.
 > Not patched later. Not bolted on. **In every instruction.**
 
 <p align="center">
