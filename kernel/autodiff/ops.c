@@ -115,8 +115,17 @@ static void backward_nop(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable *a, *b; } BinopCtx;
+static void free_ctx_BinopCtx(void* p) { arix_free(p, sizeof(BinopCtx)); }
+
 typedef struct { ArixVariable *a, *b; ArixTensor* result; } PowCtx;
+static void free_ctx_PowCtx(void* p) {
+    PowCtx* c = (PowCtx*)p;
+    if (c->result) arix_tensor_destroy(c->result);
+    arix_free(p, sizeof(PowCtx));
+}
+
 typedef struct { ArixVariable* a; } UnaryCtx;
+static void free_ctx_UnaryCtx(void* p) { arix_free(p, sizeof(UnaryCtx)); }
 
 static void backward_add(void* ctx, ArixTensor* grad_output) {
     BinopCtx* c = (BinopCtx*)ctx;
@@ -254,6 +263,7 @@ static void backward_matmul(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable* pred; ArixVariable* target; size_t N; } MSECtx;
+static void free_ctx_MSECtx(void* p) { arix_free(p, sizeof(MSECtx)); }
 
 static void backward_mse(void* ctx, ArixTensor* grad_output) {
     MSECtx* c = (MSECtx*)ctx;
@@ -330,6 +340,7 @@ static void backward_sigmoid(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable* a; size_t dim; } SoftmaxCtx;
+static void free_ctx_SoftmaxCtx(void* p) { arix_free(p, sizeof(SoftmaxCtx)); }
 
 static void backward_softmax(void* ctx, ArixTensor* grad_output) {
     SoftmaxCtx* c = (SoftmaxCtx*)ctx;
@@ -398,6 +409,7 @@ static void backward_tanh(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable* a; size_t dim; } DimCtx;
+static void free_ctx_DimCtx(void* p) { arix_free(p, sizeof(DimCtx)); }
 
 static void backward_sum(void* ctx, ArixTensor* grad_output) {
     DimCtx* c = (DimCtx*)ctx;
@@ -435,6 +447,7 @@ static void backward_mean(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable* a; size_t dim1, dim2; } TransposeCtx;
+static void free_ctx_TransposeCtx(void* p) { arix_free(p, sizeof(TransposeCtx)); }
 
 static void backward_transpose(void* ctx, ArixTensor* grad_output) {
     TransposeCtx* c = (TransposeCtx*)ctx;
@@ -444,6 +457,11 @@ static void backward_transpose(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable* a; ArixTensor* mask; float rate; } DropoutCtx;
+static void free_ctx_DropoutCtx(void* p) {
+    DropoutCtx* c = (DropoutCtx*)p;
+    if (c->mask) arix_tensor_destroy(c->mask);
+    arix_free(p, sizeof(DropoutCtx));
+}
 
 static void backward_dropout(void* ctx, ArixTensor* grad_output) {
     DropoutCtx* c = (DropoutCtx*)ctx;
@@ -456,6 +474,7 @@ static void backward_dropout(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable *a, *gamma, *beta; float eps; } LayerNormCtx;
+static void free_ctx_LayerNormCtx(void* p) { arix_free(p, sizeof(LayerNormCtx)); }
 
 static void backward_layer_norm(void* ctx, ArixTensor* grad_output) {
     LayerNormCtx* c = (LayerNormCtx*)ctx;
@@ -518,6 +537,7 @@ static void backward_layer_norm(void* ctx, ArixTensor* grad_output) {
 }
 
 typedef struct { ArixVariable *input, *kernel; size_t stride_h, stride_w, pad_h, pad_w; } Conv2DCtx;
+static void free_ctx_Conv2DCtx(void* p) { arix_free(p, sizeof(Conv2DCtx)); }
 
 static void backward_conv2d(void* ctx, ArixTensor* grad_output) {
     Conv2DCtx* c = (Conv2DCtx*)ctx;
@@ -577,6 +597,8 @@ static void set_parents(ArixVariable* var, ArixVariable** par, size_t n) {
     if (var->parents) {
         memcpy(var->parents, par, n * sizeof(ArixVariable*));
         var->num_parents = n;
+        for (size_t i = 0; i < n; i++)
+            if (par[i]) par[i]->ref_count++;
     }
 }
 
@@ -619,7 +641,7 @@ ArixVariable* arix_add(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
-        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_add; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_add; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
     }
@@ -636,7 +658,7 @@ ArixVariable* arix_sub(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
-        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_sub; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_sub; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
     }
@@ -653,7 +675,7 @@ ArixVariable* arix_mul(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
-        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_mul; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_mul; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
     }
@@ -670,7 +692,7 @@ ArixVariable* arix_div(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
-        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_div; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_div; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
     }
@@ -692,6 +714,7 @@ ArixVariable* arix_pow(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
             ctx->result = arix_tensor_copy(result);
             var->backward_fn = backward_pow;
             var->backward_ctx = ctx;
+            var->free_ctx = free_ctx_PowCtx;
         }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
@@ -709,7 +732,7 @@ ArixVariable* arix_neg(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_neg; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_neg; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -725,7 +748,7 @@ ArixVariable* arix_matmul(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
-        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_matmul; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_matmul; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
         ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
         set_parents(var, pars, 2);
     }
@@ -742,7 +765,7 @@ ArixVariable* arix_mse_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* ta
     int rg = requires_grad(pred, target);
     if (rg && g_grad_enabled) {
         MSECtx* ctx = (MSECtx*)arix_malloc(sizeof(MSECtx), 64);
-        if (ctx) { ctx->pred = pred; ctx->target = target; ctx->N = pred->data->size; var->backward_fn = backward_mse; var->backward_ctx = ctx; }
+        if (ctx) { ctx->pred = pred; ctx->target = target; ctx->N = pred->data->size; var->backward_fn = backward_mse; var->backward_ctx = ctx; var->free_ctx = free_ctx_MSECtx; }
         set_parents(var, &pred, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -758,7 +781,7 @@ ArixVariable* arix_relu(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_relu; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_relu; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -774,7 +797,7 @@ ArixVariable* arix_gelu(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_gelu; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_gelu; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -790,7 +813,7 @@ ArixVariable* arix_silu(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_silu; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_silu; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -806,7 +829,7 @@ ArixVariable* arix_sigmoid(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_sigmoid; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sigmoid; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -822,7 +845,7 @@ ArixVariable* arix_tanh(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_tanh; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_tanh; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -838,7 +861,7 @@ ArixVariable* arix_softmax(ArixTape* tape, ArixVariable* a, size_t dim) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         SoftmaxCtx* ctx = (SoftmaxCtx*)arix_malloc(sizeof(SoftmaxCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_softmax; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_softmax; var->backward_ctx = ctx; var->free_ctx = free_ctx_SoftmaxCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -854,7 +877,7 @@ ArixVariable* arix_exp(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_exp; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_exp; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -870,7 +893,7 @@ ArixVariable* arix_log(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_log; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_log; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -886,7 +909,7 @@ ArixVariable* arix_sum(ArixTape* tape, ArixVariable* a, size_t dim) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         DimCtx* ctx = (DimCtx*)arix_malloc(sizeof(DimCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_sum; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_sum; var->backward_ctx = ctx; var->free_ctx = free_ctx_DimCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -902,7 +925,7 @@ ArixVariable* arix_mean(ArixTape* tape, ArixVariable* a, size_t dim) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         DimCtx* ctx = (DimCtx*)arix_malloc(sizeof(DimCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_mean; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_mean; var->backward_ctx = ctx; var->free_ctx = free_ctx_DimCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -918,7 +941,7 @@ ArixVariable* arix_transpose(ArixTape* tape, ArixVariable* a, size_t dim1, size_
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         TransposeCtx* ctx = (TransposeCtx*)arix_malloc(sizeof(TransposeCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim1 = dim1; ctx->dim2 = dim2; var->backward_fn = backward_transpose; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim1 = dim1; ctx->dim2 = dim2; var->backward_fn = backward_transpose; var->backward_ctx = ctx; var->free_ctx = free_ctx_TransposeCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -942,6 +965,7 @@ ArixVariable* arix_dropout(ArixTape* tape, ArixVariable* a, float rate, unsigned
             for (size_t i = 0; i < ctx->mask->size; i++) md[i] = ((float*)result->data)[i] != 0.0f ? 1.0f : 0.0f;
             var->backward_fn = backward_dropout;
             var->backward_ctx = ctx;
+            var->free_ctx = free_ctx_DropoutCtx;
         }
         set_parents(var, &a, 1);
     }
@@ -958,7 +982,7 @@ ArixVariable* arix_layer_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gam
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         LayerNormCtx* ctx = (LayerNormCtx*)arix_malloc(sizeof(LayerNormCtx), 64);
-        if (ctx) { ctx->a = a; ctx->gamma = gamma; ctx->beta = beta; ctx->eps = eps; var->backward_fn = backward_layer_norm; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->gamma = gamma; ctx->beta = beta; ctx->eps = eps; var->backward_fn = backward_layer_norm; var->backward_ctx = ctx; var->free_ctx = free_ctx_LayerNormCtx; }
         ArixVariable** pars = (ArixVariable**)arix_malloc(3 * sizeof(ArixVariable*), 64);
         if (pars) { size_t np = 0; pars[np++] = a; if (gamma) pars[np++] = gamma; if (beta) pars[np++] = beta; set_parents(var, pars, np); }
     }
@@ -967,6 +991,12 @@ ArixVariable* arix_layer_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gam
 }
 
 typedef struct { ArixVariable** vars; size_t num_vars; size_t dim; size_t* splits; } ConcatCtx;
+static void free_ctx_ConcatCtx(void* p) {
+    ConcatCtx* c = (ConcatCtx*)p;
+    if (c->vars) arix_free(c->vars, c->num_vars * sizeof(ArixVariable*));
+    if (c->splits) arix_free(c->splits, c->num_vars * sizeof(size_t));
+    arix_free(p, sizeof(ConcatCtx));
+}
 
 static void backward_concat(void* ctx, ArixTensor* grad_output) {
     ConcatCtx* c = (ConcatCtx*)ctx;
@@ -1015,6 +1045,7 @@ ArixVariable* arix_concat(ArixTape* tape, ArixVariable** vars, size_t num_vars, 
         ctx->dim = dim;
         var->backward_fn = backward_concat;
         var->backward_ctx = ctx;
+        var->free_ctx = free_ctx_ConcatCtx;
         set_parents(var, vars, num_vars);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1030,7 +1061,7 @@ ArixVariable* arix_conv2d(ArixTape* tape, ArixVariable* input, ArixVariable* ker
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         Conv2DCtx* ctx = (Conv2DCtx*)arix_malloc(sizeof(Conv2DCtx), 64);
-        if (ctx) { ctx->input = input; ctx->kernel = kernel; ctx->stride_h = stride_h; ctx->stride_w = stride_w; ctx->pad_h = pad_h; ctx->pad_w = pad_w; var->backward_fn = backward_conv2d; var->backward_ctx = ctx; }
+        if (ctx) { ctx->input = input; ctx->kernel = kernel; ctx->stride_h = stride_h; ctx->stride_w = stride_w; ctx->pad_h = pad_h; ctx->pad_w = pad_w; var->backward_fn = backward_conv2d; var->backward_ctx = ctx; var->free_ctx = free_ctx_Conv2DCtx; }
         ArixVariable* pars[2]; pars[0] = input; pars[1] = kernel;
         set_parents(var, pars, 2);
     }
@@ -1063,7 +1094,7 @@ ArixVariable* arix_sqrt(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_sqrt; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sqrt; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1094,7 +1125,7 @@ ArixVariable* arix_abs(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_abs; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_abs; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1123,7 +1154,7 @@ ArixVariable* arix_sin(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_sin; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sin; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1152,7 +1183,7 @@ ArixVariable* arix_cos(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_cos; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_cos; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1184,7 +1215,7 @@ ArixVariable* arix_tan(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_tan; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_tan; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1216,7 +1247,7 @@ ArixVariable* arix_asin(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_asin; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_asin; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1248,7 +1279,7 @@ ArixVariable* arix_acos(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_acos; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_acos; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1277,7 +1308,7 @@ ArixVariable* arix_atan(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_atan; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_atan; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1306,7 +1337,7 @@ ArixVariable* arix_sinh(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_sinh; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sinh; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1335,7 +1366,7 @@ ArixVariable* arix_cosh(ArixTape* tape, ArixVariable* a) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         UnaryCtx* ctx = (UnaryCtx*)arix_malloc(sizeof(UnaryCtx), 64);
-        if (ctx) { ctx->a = a; var->backward_fn = backward_cosh; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; var->backward_fn = backward_cosh; var->backward_ctx = ctx; var->free_ctx = free_ctx_UnaryCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1379,7 +1410,7 @@ ArixVariable* arix_var(ArixTape* tape, ArixVariable* a, size_t dim) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         DimCtx* ctx = (DimCtx*)arix_malloc(sizeof(DimCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_var; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_var; var->backward_ctx = ctx; var->free_ctx = free_ctx_DimCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1431,7 +1462,7 @@ ArixVariable* arix_std(ArixTape* tape, ArixVariable* a, size_t dim) {
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         DimCtx* ctx = (DimCtx*)arix_malloc(sizeof(DimCtx), 64);
-        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_std; var->backward_ctx = ctx; }
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_std; var->backward_ctx = ctx; var->free_ctx = free_ctx_DimCtx; }
         set_parents(var, &a, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1440,6 +1471,7 @@ ArixVariable* arix_std(ArixTape* tape, ArixVariable* a, size_t dim) {
 
 /* ===== cross_entropy ===== */
 typedef struct { ArixVariable* pred; ArixVariable* target; size_t N; size_t num_classes; } CrossEntropyCtx;
+static void free_ctx_CrossEntropyCtx(void* p) { arix_free(p, sizeof(CrossEntropyCtx)); }
 
 static void backward_cross_entropy(void* ctx, ArixTensor* grad_output) {
     CrossEntropyCtx* c = (CrossEntropyCtx*)ctx;
@@ -1478,7 +1510,7 @@ ArixVariable* arix_cross_entropy(ArixTape* tape, ArixVariable* pred, ArixVariabl
             ctx->pred = pred; ctx->target = target;
             ctx->N = pred->data->size / pred->data->shape[1];
             ctx->num_classes = pred->data->shape[1];
-            var->backward_fn = backward_cross_entropy; var->backward_ctx = ctx;
+            var->backward_fn = backward_cross_entropy; var->backward_ctx = ctx; var->free_ctx = free_ctx_CrossEntropyCtx;
         }
         set_parents(var, &pred, 1);
     }
@@ -1488,6 +1520,7 @@ ArixVariable* arix_cross_entropy(ArixTape* tape, ArixVariable* pred, ArixVariabl
 
 /* ===== nll_loss ===== */
 typedef struct { ArixVariable* pred; ArixVariable* target; size_t N; } NLLCtx;
+static void free_ctx_NLLCtx(void* p) { arix_free(p, sizeof(NLLCtx)); }
 
 static void backward_nll(void* ctx, ArixTensor* grad_output) {
     NLLCtx* c = (NLLCtx*)ctx;
@@ -1519,7 +1552,7 @@ ArixVariable* arix_nll_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* ta
         NLLCtx* ctx = (NLLCtx*)arix_malloc(sizeof(NLLCtx), 64);
         if (ctx) {
             ctx->pred = pred; ctx->target = target; ctx->N = target->data->size;
-            var->backward_fn = backward_nll; var->backward_ctx = ctx;
+            var->backward_fn = backward_nll; var->backward_ctx = ctx; var->free_ctx = free_ctx_NLLCtx;
         }
         set_parents(var, &pred, 1);
     }
@@ -1529,6 +1562,7 @@ ArixVariable* arix_nll_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* ta
 
 /* ===== bce_loss ===== */
 typedef struct { ArixVariable* pred; ArixVariable* target; } BCECtx;
+static void free_ctx_BCECtx(void* p) { arix_free(p, sizeof(BCECtx)); }
 
 static void backward_bce(void* ctx, ArixTensor* grad_output) {
     BCECtx* c = (BCECtx*)ctx;
@@ -1557,7 +1591,7 @@ ArixVariable* arix_bce_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* ta
     int rg = requires_grad(pred, target);
     if (rg && g_grad_enabled) {
         BCECtx* ctx = (BCECtx*)arix_malloc(sizeof(BCECtx), 64);
-        if (ctx) { ctx->pred = pred; ctx->target = target; var->backward_fn = backward_bce; var->backward_ctx = ctx; }
+        if (ctx) { ctx->pred = pred; ctx->target = target; var->backward_fn = backward_bce; var->backward_ctx = ctx; var->free_ctx = free_ctx_BCECtx; }
         set_parents(var, &pred, 1);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
@@ -1566,6 +1600,7 @@ ArixVariable* arix_bce_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* ta
 
 /* ===== embedding ===== */
 typedef struct { ArixVariable* weight; ArixVariable* indices; } EmbeddingCtx;
+static void free_ctx_EmbeddingCtx(void* p) { arix_free(p, sizeof(EmbeddingCtx)); }
 
 static void backward_embedding(void* ctx, ArixTensor* grad_output) {
     EmbeddingCtx* c = (EmbeddingCtx*)ctx;
@@ -1573,12 +1608,12 @@ static void backward_embedding(void* ctx, ArixTensor* grad_output) {
         size_t vocab_size = c->weight->data->shape[0];
         size_t embed_dim = c->weight->data->shape[1];
         float* go = (float*)grad_output->data;
-        int32_t* idx = (int32_t*)c->indices->data->data;
+        size_t* idx = (size_t*)c->indices->data->data;
         size_t num_indices = c->indices->data->size;
         ArixTensor* g = arix_tensor_zeros(c->weight->data->shape, c->weight->data->ndim, ARIX_FLOAT32);
         float* gd = (float*)g->data;
         for (size_t i = 0; i < num_indices; i++) {
-            int32_t ix = idx[i];
+            size_t ix = idx[i];
             if (ix >= 0 && (size_t)ix < vocab_size) {
                 for (size_t d = 0; d < embed_dim; d++)
                     gd[(size_t)ix * embed_dim + d] += go[i * embed_dim + d];
@@ -1597,8 +1632,176 @@ ArixVariable* arix_embedding(ArixTape* tape, ArixVariable* weight, ArixVariable*
     if (!var) { arix_tensor_destroy(result); return NULL; }
     if (rg && g_grad_enabled) {
         EmbeddingCtx* ctx = (EmbeddingCtx*)arix_malloc(sizeof(EmbeddingCtx), 64);
-        if (ctx) { ctx->weight = weight; ctx->indices = indices; var->backward_fn = backward_embedding; var->backward_ctx = ctx; }
+        if (ctx) { ctx->weight = weight; ctx->indices = indices; var->backward_fn = backward_embedding; var->backward_ctx = ctx; var->free_ctx = free_ctx_EmbeddingCtx; }
         set_parents(var, &weight, 1);
+    }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
+/* ===== log_softmax ===== */
+static void backward_log_softmax(void* ctx, ArixTensor* grad_output) {
+    DimCtx* c = (DimCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    ArixTensor* sm = arix_tensor_softmax(c->a->data, c->dim);
+    float* sd = (float*)sm->data;
+    float* go = (float*)grad_output->data;
+    size_t outer = 1, inner = 1;
+    for (size_t i = 0; i < c->dim; i++) outer *= c->a->data->shape[i];
+    size_t dim_size = c->a->data->shape[c->dim];
+    for (size_t i = c->dim + 1; i < c->a->data->ndim; i++) inner *= c->a->data->shape[i];
+    ArixTensor* g = arix_tensor_zeros(c->a->data->shape, c->a->data->ndim, ARIX_FLOAT32);
+    float* gd = (float*)g->data;
+    for (size_t o = 0; o < outer; o++) {
+        for (size_t i = 0; i < inner; i++) {
+            float sum_grad = 0.0f;
+            for (size_t d = 0; d < dim_size; d++)
+                sum_grad += go[o * dim_size * inner + d * inner + i];
+            for (size_t d = 0; d < dim_size; d++) {
+                size_t idx = o * dim_size * inner + d * inner + i;
+                gd[idx] = go[idx] - sd[idx] * sum_grad;
+            }
+        }
+    }
+    grad_accum(&c->a->grad, g);
+    arix_tensor_destroy(sm);
+}
+
+ArixVariable* arix_log_softmax(ArixTape* tape, ArixVariable* a, size_t dim) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    ArixTensor* result = arix_tensor_log_softmax(a->data, dim);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, rg);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (rg && g_grad_enabled) {
+        DimCtx* ctx = (DimCtx*)arix_malloc(sizeof(DimCtx), 64);
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_log_softmax; var->backward_ctx = ctx; var->free_ctx = free_ctx_DimCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
+/* ===== sign (zero grad) ===== */
+static void backward_zero(void* ctx, ArixTensor* grad_output) {
+    (void)ctx; (void)grad_output;
+}
+
+static ArixVariable* op_zero_grad(ArixTape* tape, ArixVariable* a,
+                                   ArixTensor* (*tensor_fn)(const ArixTensor*)) {
+    if (!a || !a->data) return NULL;
+    ArixTensor* result = tensor_fn(a->data);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, 0);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
+ArixVariable* arix_sign(ArixTape* tape, ArixVariable* a) { return op_zero_grad(tape, a, arix_tensor_sign); }
+ArixVariable* arix_floor(ArixTape* tape, ArixVariable* a) { return op_zero_grad(tape, a, arix_tensor_floor); }
+ArixVariable* arix_ceil(ArixTape* tape, ArixVariable* a) { return op_zero_grad(tape, a, arix_tensor_ceil); }
+ArixVariable* arix_round(ArixTape* tape, ArixVariable* a) { return op_zero_grad(tape, a, arix_tensor_round); }
+ArixVariable* arix_trunc(ArixTape* tape, ArixVariable* a) { return op_zero_grad(tape, a, arix_tensor_trunc); }
+
+/* ===== batch_norm ===== */
+typedef struct { ArixVariable *a, *gamma, *beta, *running_mean, *running_var; float eps; size_t C; } BatchNormCtx;
+static void free_ctx_BatchNormCtx(void* p) { arix_free(p, sizeof(BatchNormCtx)); }
+
+static void backward_batch_norm(void* ctx, ArixTensor* grad_output) {
+    BatchNormCtx* c = (BatchNormCtx*)ctx;
+    float* xd = (float*)c->a->data->data;
+    float* gd = (float*)grad_output->data;
+    size_t N = c->a->data->shape[0], C = c->C;
+    size_t H = 1, W = 1;
+    size_t ndim = c->a->data->ndim;
+    if (ndim == 4) { H = c->a->data->shape[2]; W = c->a->data->shape[3]; }
+    else if (ndim == 3) { H = c->a->data->shape[2]; W = 1; }
+    else if (ndim == 2) { H = 1; W = 1; }
+    size_t spatial = H * W;
+    size_t n = N * spatial;
+    float eps = c->eps;
+    size_t total = c->a->data->size;
+
+    if (c->a->requires_grad) {
+        ArixTensor* gx = arix_tensor_zeros(c->a->data->shape, ndim, ARIX_FLOAT32);
+        float* gxd = (float*)gx->data;
+        for (size_t c_ = 0; c_ < C; c_++) {
+            float mean = 0, var = 0;
+            for (size_t i = 0; i < n; i++) mean += xd[i * C + c_];
+            mean /= (float)n;
+            for (size_t i = 0; i < n; i++) { float d = xd[i * C + c_] - mean; var += d * d; }
+            var /= (float)n;
+            float inv_std = 1.0f / sqrtf(var + eps);
+            float gamma_val = c->gamma && c->gamma->data ? ((float*)c->gamma->data->data)[c_] : 1.0f;
+            float dnorm_sum = 0, dnorm_dot = 0;
+            for (size_t i = 0; i < n; i++) {
+                size_t idx = i * C + c_;
+                float x_hat = (xd[idx] - mean) * inv_std;
+                float dnorm = gd[idx] * gamma_val;
+                dnorm_sum += dnorm;
+                dnorm_dot += dnorm * x_hat;
+            }
+            for (size_t i = 0; i < n; i++) {
+                size_t idx = i * C + c_;
+                float x_hat = (xd[idx] - mean) * inv_std;
+                float dnorm = gd[idx] * gamma_val;
+                gxd[idx] = (dnorm - dnorm_sum / (float)n - x_hat * dnorm_dot / (float)n) * inv_std;
+            }
+        }
+        grad_accum(&c->a->grad, gx);
+    }
+    if (c->gamma && c->gamma->requires_grad) {
+        ArixTensor* gg = arix_tensor_zeros(c->gamma->data->shape, c->gamma->data->ndim, ARIX_FLOAT32);
+        float* ggd = (float*)gg->data;
+        for (size_t c_ = 0; c_ < C; c_++) {
+            float mean = 0;
+            for (size_t i = 0; i < n; i++) mean += xd[i * C + c_];
+            mean /= (float)n;
+            float var = 0;
+            for (size_t i = 0; i < n; i++) { float d = xd[i * C + c_] - mean; var += d * d; }
+            var /= (float)n;
+            float inv_std = 1.0f / sqrtf(var + eps);
+            for (size_t i = 0; i < n; i++) {
+                size_t idx = i * C + c_;
+                float x_hat = (xd[idx] - mean) * inv_std;
+                ggd[c_] += gd[idx] * x_hat;
+            }
+        }
+        grad_accum(&c->gamma->grad, gg);
+    }
+    if (c->beta && c->beta->requires_grad) {
+        ArixTensor* gb = arix_tensor_zeros(c->beta->data->shape, c->beta->data->ndim, ARIX_FLOAT32);
+        float* gbd = (float*)gb->data;
+        for (size_t c_ = 0; c_ < C; c_++)
+            for (size_t i = 0; i < n; i++)
+                gbd[c_] += gd[i * C + c_];
+        grad_accum(&c->beta->grad, gb);
+    }
+}
+
+ArixVariable* arix_batch_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gamma, ArixVariable* beta, ArixVariable* running_mean, ArixVariable* running_var, float eps) {
+    int rg = requires_grad1(a) || (gamma && gamma->requires_grad) || (beta && beta->requires_grad);
+    if (!a || !a->data) return NULL;
+    ArixTensor* result = arix_tensor_batch_norm(a->data, gamma ? gamma->data : NULL, beta ? beta->data : NULL, running_mean ? running_mean->data : NULL, running_var ? running_var->data : NULL, eps);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, rg);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (rg && g_grad_enabled) {
+        BatchNormCtx* ctx = (BatchNormCtx*)arix_malloc(sizeof(BatchNormCtx), 64);
+        if (ctx) {
+            ctx->a = a; ctx->gamma = gamma; ctx->beta = beta;
+            ctx->running_mean = running_mean; ctx->running_var = running_var;
+            ctx->eps = eps; ctx->C = a->data->shape[1];
+            var->backward_fn = backward_batch_norm; var->backward_ctx = ctx;
+            var->free_ctx = free_ctx_BatchNormCtx;
+        }
+        size_t np = 1;
+        ArixVariable* pars[5]; pars[0] = a;
+        if (gamma) pars[np++] = gamma;
+        if (beta) pars[np++] = beta;
+        set_parents(var, pars, np);
     }
     if (tape && g_grad_enabled) arix_tape_record(tape, var);
     return var;

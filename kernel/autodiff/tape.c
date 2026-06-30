@@ -2,6 +2,8 @@
 #include "arix_memory.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
 
 ArixTape* arix_tape_create(void) {
     ArixTape* tape = (ArixTape*)arix_malloc(sizeof(ArixTape), 64);
@@ -45,10 +47,59 @@ static void tape_topological_sort(ArixTape* tape, ArixVariable** sorted, size_t*
     memset(visited, 0, n * sizeof(int));
     *num_sorted = 0;
 
+    /* DFS-based topological sort: for each node, visit all parents first */
     for (size_t i = 0; i < n; i++) {
         if (visited[i]) continue;
-        visited[i] = 1;
-        sorted[(*num_sorted)++] = tape->vars[i];
+        /* Simple stack-based DFS post-order */
+        size_t stack_cap = 64;
+        size_t* stack = (size_t*)arix_malloc(stack_cap * sizeof(size_t), 64);
+        int* on_stack = (int*)arix_malloc(n * sizeof(int), 64);
+        if (!stack || !on_stack) { arix_free(stack, stack_cap*sizeof(size_t)); arix_free(on_stack, n*sizeof(int)); break; }
+        memset(on_stack, 0, n * sizeof(int));
+        size_t sp = 0;
+        stack[sp++] = i;
+        on_stack[i] = 1;
+
+        while (sp > 0) {
+            size_t idx = stack[sp - 1];
+            ArixVariable* var = tape->vars[idx];
+            int all_parents_visited = 1;
+            if (var && var->parents) {
+                for (size_t p = 0; p < var->num_parents; p++) {
+                    ArixVariable* parent = var->parents[p];
+                    if (!parent) continue;
+                    /* Find parent index in tape vars */
+                    for (size_t pi = 0; pi < n; pi++) {
+                        if (tape->vars[pi] == parent && !visited[pi]) {
+                            if (!on_stack[pi]) {
+                                /* Grow stack if needed */
+                                if (sp >= stack_cap) {
+                                    stack_cap *= 2;
+                                    size_t* ns = (size_t*)arix_malloc(stack_cap * sizeof(size_t), 64);
+                                    if (!ns) break;
+                                    memcpy(ns, stack, sp * sizeof(size_t));
+                                    arix_free(stack, stack_cap/2 * sizeof(size_t));
+                                    stack = ns;
+                                }
+                                stack[sp++] = pi;
+                                on_stack[pi] = 1;
+                                all_parents_visited = 0;
+                            }
+                            break;
+                        }
+                    }
+                    if (!all_parents_visited) break;
+                }
+            }
+            if (all_parents_visited) {
+                visited[idx] = 1;
+                sorted[(*num_sorted)++] = var;
+                on_stack[idx] = 0;
+                sp--;
+            }
+        }
+        arix_free(on_stack, n * sizeof(int));
+        arix_free(stack, stack_cap * sizeof(size_t));
     }
     arix_free(visited, n * sizeof(int));
 }
@@ -73,6 +124,15 @@ void arix_tape_backward(ArixTape* tape, ArixVariable* loss) {
         ArixVariable* var = sorted ? sorted[i - 1] : tape->vars[i - 1];
         if (!var || !var->backward_fn || !var->grad) continue;
         var->backward_fn(var->backward_ctx, var->grad);
+        if (var->backward_ctx && var->free_ctx) {
+            var->free_ctx(var->backward_ctx);
+            var->backward_ctx = NULL;
+        }
+        for (size_t p = 0; p < var->num_parents; p++) {
+            ArixVariable* parent = var->parents[p];
+            if (!parent) continue;
+            parent->ref_count--;
+        }
     }
 
     if (sorted) arix_free(sorted, n * sizeof(ArixVariable*));
@@ -95,7 +155,8 @@ float arix_tape_global_norm(ArixTape* tape) {
         ArixVariable* var = tape->vars[i];
         if (!var || !var->grad) continue;
         float* gd = (float*)var->grad->data;
-        for (size_t j = 0; j < var->grad->size; j++) sum_sq += gd[j] * gd[j];
+        size_t sz = var->grad->size;
+        for (size_t j = 0; j < sz; j++) sum_sq += gd[j] * gd[j];
     }
     return sqrtf(sum_sq);
 }

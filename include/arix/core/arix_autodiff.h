@@ -12,6 +12,8 @@ typedef struct ArixVariable {
     int requires_grad;
     BackwardFn backward_fn;
     void* backward_ctx;
+    void (*free_ctx)(void*);
+    int ref_count;
     struct ArixVariable** parents;
     size_t num_parents;
 } ArixVariable;
@@ -83,5 +85,13 @@ ArixVariable* arix_cross_entropy(ArixTape* tape, ArixVariable* pred, ArixVariabl
 ArixVariable* arix_nll_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* target);
 ArixVariable* arix_bce_loss(ArixTape* tape, ArixVariable* pred, ArixVariable* target);
 ArixVariable* arix_embedding(ArixTape* tape, ArixVariable* weight, ArixVariable* indices);
+
+ArixVariable* arix_log_softmax(ArixTape* tape, ArixVariable* a, size_t dim);
+ArixVariable* arix_sign(ArixTape* tape, ArixVariable* a);
+ArixVariable* arix_floor(ArixTape* tape, ArixVariable* a);
+ArixVariable* arix_ceil(ArixTape* tape, ArixVariable* a);
+ArixVariable* arix_round(ArixTape* tape, ArixVariable* a);
+ArixVariable* arix_trunc(ArixTape* tape, ArixVariable* a);
+ArixVariable* arix_batch_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gamma, ArixVariable* beta, ArixVariable* running_mean, ArixVariable* running_var, float eps);
 
 #endif

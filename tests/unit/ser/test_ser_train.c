@@ -142,8 +142,6 @@ static void test_ser_train_convergence(void) {
         arix_tape_destroy(tape);
         free(wv);
     }
-    free(params);
-
     float final_loss = 0.0f;
     {
         ArixTape* tape = arix_tape_create();
@@ -173,6 +171,7 @@ static void test_ser_train_convergence(void) {
     arix_tensor_destroy(target);
     arix_optimizer_destroy(opt);
     arix_model_destroy(model);
+    free(params);
 }
 
 int main(void) {
