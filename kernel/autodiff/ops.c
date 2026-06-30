@@ -739,6 +739,96 @@ ArixVariable* arix_neg(ArixTape* tape, ArixVariable* a) {
     return var;
 }
 
+static void backward_minimum(void* ctx, ArixTensor* grad_output) {
+    BinopCtx* c = (BinopCtx*)ctx;
+    if (c->a->requires_grad) {
+        ArixTensor* g = arix_tensor_zeros(c->a->data->shape, c->a->data->ndim, ARIX_FLOAT32);
+        float* gd = (float*)g->data;
+        float* ad = (float*)c->a->data->data;
+        float* bd = (float*)c->b->data->data;
+        float* go = (float*)grad_output->data;
+        size_t sz = c->a->data->size < c->b->data->size ? c->a->data->size : c->b->data->size;
+        for (size_t i = 0; i < sz; i++)
+            gd[i] = (ad[i] <= bd[i]) ? go[i % grad_output->size] : 0.0f;
+        reduce_grad_to_shape(&g, c->a->data);
+        grad_accum(&c->a->grad, g);
+    }
+    if (c->b->requires_grad) {
+        ArixTensor* g = arix_tensor_zeros(c->b->data->shape, c->b->data->ndim, ARIX_FLOAT32);
+        float* gd = (float*)g->data;
+        float* ad = (float*)c->a->data->data;
+        float* bd = (float*)c->b->data->data;
+        float* go = (float*)grad_output->data;
+        size_t sz = c->a->data->size < c->b->data->size ? c->a->data->size : c->b->data->size;
+        for (size_t i = 0; i < sz; i++)
+            gd[i] = (ad[i] > bd[i]) ? go[i % grad_output->size] : 0.0f;
+        reduce_grad_to_shape(&g, c->b->data);
+        grad_accum(&c->b->grad, g);
+    }
+}
+
+static void backward_maximum(void* ctx, ArixTensor* grad_output) {
+    BinopCtx* c = (BinopCtx*)ctx;
+    if (c->a->requires_grad) {
+        ArixTensor* g = arix_tensor_zeros(c->a->data->shape, c->a->data->ndim, ARIX_FLOAT32);
+        float* gd = (float*)g->data;
+        float* ad = (float*)c->a->data->data;
+        float* bd = (float*)c->b->data->data;
+        float* go = (float*)grad_output->data;
+        size_t sz = c->a->data->size < c->b->data->size ? c->a->data->size : c->b->data->size;
+        for (size_t i = 0; i < sz; i++)
+            gd[i] = (ad[i] >= bd[i]) ? go[i % grad_output->size] : 0.0f;
+        reduce_grad_to_shape(&g, c->a->data);
+        grad_accum(&c->a->grad, g);
+    }
+    if (c->b->requires_grad) {
+        ArixTensor* g = arix_tensor_zeros(c->b->data->shape, c->b->data->ndim, ARIX_FLOAT32);
+        float* gd = (float*)g->data;
+        float* ad = (float*)c->a->data->data;
+        float* bd = (float*)c->b->data->data;
+        float* go = (float*)grad_output->data;
+        size_t sz = c->a->data->size < c->b->data->size ? c->a->data->size : c->b->data->size;
+        for (size_t i = 0; i < sz; i++)
+            gd[i] = (ad[i] < bd[i]) ? go[i % grad_output->size] : 0.0f;
+        reduce_grad_to_shape(&g, c->b->data);
+        grad_accum(&c->b->grad, g);
+    }
+}
+
+ArixVariable* arix_minimum(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
+    int rg = requires_grad(a, b);
+    if (!a || !b || !a->data || !b->data) return NULL;
+    ArixTensor* result = arix_tensor_minimum(a->data, b->data);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, rg);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (rg && g_grad_enabled) {
+        BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_minimum; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
+        ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
+        set_parents(var, pars, 2);
+    }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
+ArixVariable* arix_maximum(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
+    int rg = requires_grad(a, b);
+    if (!a || !b || !a->data || !b->data) return NULL;
+    ArixTensor* result = arix_tensor_maximum(a->data, b->data);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, rg);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (rg && g_grad_enabled) {
+        BinopCtx* ctx = (BinopCtx*)arix_malloc(sizeof(BinopCtx), 64);
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_maximum; var->backward_ctx = ctx; var->free_ctx = free_ctx_BinopCtx; }
+        ArixVariable* pars[2]; pars[0] = a; pars[1] = b;
+        set_parents(var, pars, 2);
+    }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
 ArixVariable* arix_matmul(ArixTape* tape, ArixVariable* a, ArixVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;

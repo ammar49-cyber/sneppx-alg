@@ -69,6 +69,8 @@ ArixVariable* arix_layer_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gam
 ArixVariable* arix_conv2d(ArixTape* tape, ArixVariable* input, ArixVariable* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w);
 ArixVariable* arix_concat(ArixTape* tape, ArixVariable** vars, size_t num_vars, size_t dim);
 
+ArixVariable* arix_minimum(ArixTape* tape, ArixVariable* a, ArixVariable* b);
+ArixVariable* arix_maximum(ArixTape* tape, ArixVariable* a, ArixVariable* b);
 ArixVariable* arix_sqrt(ArixTape* tape, ArixVariable* a);
 ArixVariable* arix_abs(ArixTape* tape, ArixVariable* a);
 ArixVariable* arix_sin(ArixTape* tape, ArixVariable* a);

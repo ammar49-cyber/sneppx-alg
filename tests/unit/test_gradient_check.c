@@ -491,6 +491,46 @@ static void test_grad_clip_grad_norm(void) {
     arix_tape_destroy(tape);
 }
 
+static void test_grad_minimum(void) {
+    size_t sh[] = {3};
+    float ad[] = {1.0f, 5.0f, 3.0f};
+    float bd[] = {4.0f, 2.0f, 6.0f};
+    ArixTensor* ta = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
+    ArixTensor* tb = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
+    memcpy(ta->data, ad, 12); memcpy(tb->data, bd, 12);
+    ArixVariable *a = arix_variable_create(ta, 1), *b = arix_variable_create(tb, 1);
+    ArixTape* tape = arix_tape_create();
+    ArixVariable* c = arix_minimum(tape, a, b);
+    arix_tape_backward(tape, c);
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[0], 1.0f), "min a[0]=1 (< b[0])");
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[1], 0.0f), "min a[1]=0 (> b[1])");
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[2], 1.0f), "min a[2]=1 (< b[2])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[0], 0.0f), "min b[0]=0 (> a[0])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[1], 1.0f), "min b[1]=1 (< a[1])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[2], 0.0f), "min b[2]=0 (> a[2])");
+    arix_tape_destroy(tape);
+}
+
+static void test_grad_maximum(void) {
+    size_t sh[] = {3};
+    float ad[] = {1.0f, 5.0f, 3.0f};
+    float bd[] = {4.0f, 2.0f, 6.0f};
+    ArixTensor* ta = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
+    ArixTensor* tb = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
+    memcpy(ta->data, ad, 12); memcpy(tb->data, bd, 12);
+    ArixVariable *a = arix_variable_create(ta, 1), *b = arix_variable_create(tb, 1);
+    ArixTape* tape = arix_tape_create();
+    ArixVariable* c = arix_maximum(tape, a, b);
+    arix_tape_backward(tape, c);
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[0], 0.0f), "max a[0]=0 (< b[0])");
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[1], 1.0f), "max a[1]=1 (> b[1])");
+    ASSERT(FLOAT_CLOSE(((float*)a->grad->data)[2], 0.0f), "max a[2]=0 (< b[2])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[0], 1.0f), "max b[0]=1 (> a[0])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[1], 0.0f), "max b[1]=0 (< a[1])");
+    ASSERT(FLOAT_CLOSE(((float*)b->grad->data)[2], 1.0f), "max b[2]=1 (> a[2])");
+    arix_tape_destroy(tape);
+}
+
 static void test_grad_conv2d(void) {
     size_t ishape[] = {1, 1, 4, 4};
     size_t kshape[] = {1, 1, 2, 2};
@@ -588,6 +628,8 @@ int main(void) {
     run_test("global norm",           test_grad_global_norm);
     run_test("clip grad norm",        test_grad_clip_grad_norm);
 
+    run_test("min grad",              test_grad_minimum);
+    run_test("max grad",              test_grad_maximum);
     run_test("conv2d grad",           test_grad_conv2d);
 
     printf("\nResults: %d passed, %d failed out of %d\n",

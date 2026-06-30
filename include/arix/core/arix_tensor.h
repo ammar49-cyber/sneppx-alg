@@ -118,6 +118,8 @@ ArixTensor* arix_tensor_add(const ArixTensor* a, const ArixTensor* b);
 ArixTensor* arix_tensor_sub(const ArixTensor* a, const ArixTensor* b);
 ArixTensor* arix_tensor_mul(const ArixTensor* a, const ArixTensor* b);
 ArixTensor* arix_tensor_div(const ArixTensor* a, const ArixTensor* b);
+ArixTensor* arix_tensor_minimum(const ArixTensor* a, const ArixTensor* b);
+ArixTensor* arix_tensor_maximum(const ArixTensor* a, const ArixTensor* b);
 ArixTensor* arix_tensor_pow(const ArixTensor* a, const ArixTensor* b);
 
 ArixTensor* arix_tensor_neg(const ArixTensor* src);

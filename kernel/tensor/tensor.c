@@ -833,6 +833,30 @@ ArixTensor* arix_tensor_div(const ArixTensor* a, const ArixTensor* b) {
     return result;
 }
 
+ArixTensor* arix_tensor_minimum(const ArixTensor* a, const ArixTensor* b) {
+    if (!a || !b) return NULL;
+    size_t sz = a->size < b->size ? a->size : b->size;
+    ArixTensor* result = arix_tensor_create(a->shape, a->ndim, ARIX_FLOAT32);
+    if (!result) return NULL;
+    float* rd = (float*)result->data;
+    float* ad = (float*)a->data;
+    float* bd = (float*)b->data;
+    for (size_t i = 0; i < sz; i++) rd[i] = ad[i] < bd[i] ? ad[i] : bd[i];
+    return result;
+}
+
+ArixTensor* arix_tensor_maximum(const ArixTensor* a, const ArixTensor* b) {
+    if (!a || !b) return NULL;
+    size_t sz = a->size < b->size ? a->size : b->size;
+    ArixTensor* result = arix_tensor_create(a->shape, a->ndim, ARIX_FLOAT32);
+    if (!result) return NULL;
+    float* rd = (float*)result->data;
+    float* ad = (float*)a->data;
+    float* bd = (float*)b->data;
+    for (size_t i = 0; i < sz; i++) rd[i] = ad[i] > bd[i] ? ad[i] : bd[i];
+    return result;
+}
+
 ArixTensor* arix_tensor_pow(const ArixTensor* a, const ArixTensor* b) {
     if (!a || !b) return NULL;
     size_t sz = a->size < b->size ? a->size : b->size;
