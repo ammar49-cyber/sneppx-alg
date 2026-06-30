@@ -1,8 +1,8 @@
 #ifndef ARIX_ATTENTION_H
 #define ARIX_ATTENTION_H
 
-#include "arix_tensor.h"
-#include "arix_autodiff.h"
+#include "multidimensional_tensor_engine.h"
+#include "automatic_differentiation_framework.h"
 
 typedef struct {
     size_t num_heads;

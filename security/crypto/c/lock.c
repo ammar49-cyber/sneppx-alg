@@ -1,4 +1,4 @@
-#include "arix_lock.h"
+#include "synchronization_lock_interface.h"
 #include <stdio.h>
 
 #if defined(_WIN32)

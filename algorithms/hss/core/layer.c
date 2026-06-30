@@ -1,5 +1,5 @@
-#include "arix_hss.h"
-#include "arix_memory.h"
+#include "hierarchical_state_space.h"
+#include "polymorphic_memory_allocator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

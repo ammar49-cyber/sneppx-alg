@@ -1,4 +1,4 @@
-#include "arix_power.h"
+#include "power_analysis_mitigation.h"
 #include <stdint.h>
 
 static volatile uint64_t dummy_accumulator = 0;

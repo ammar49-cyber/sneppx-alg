@@ -11,7 +11,7 @@
  * Alerts are delivered via a registered callback (log, crash, or
  * secure attestation).
  *
- * DEPENDENCIES: arix_ct.h, arix_sha3.h
+ * DEPENDENCIES: constant_time_operations.h, keccak_sha3_hashing.h
  * VERSION: v3.0
  */
 

@@ -1,4 +1,4 @@
-#include "arix_blake3.h"
+#include "cryptographic_hashing_blake3.h"
 #include <string.h>
 
 #define ROTR32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))

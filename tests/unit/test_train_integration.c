@@ -1,6 +1,6 @@
-#include "arix_hss.h"
-#include "arix_autodiff.h"
-#include "arix_optimizer.h"
+#include "hierarchical_state_space.h"
+#include "automatic_differentiation_framework.h"
+#include "gradient_optimization_suite.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

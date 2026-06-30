@@ -1,6 +1,6 @@
-#include "arix_arch.h"
-#include "arix_train.h"
-#include "arix_autodiff.h"
+#include "system_architecture_definitions.h"
+#include "differentiable_training_pipeline.h"
+#include "automatic_differentiation_framework.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

@@ -8,7 +8,7 @@
  * Protobuf message definitions live in a separate .proto file compiled
  * by protoc; this header declares the C service stubs.
  *
- * DEPENDENCIES: arix_tensor.h, arix_thread.h
+ * DEPENDENCIES: multidimensional_tensor_engine.h, concurrent_workload_dispatch.h
  * VERSION: v1.0
  */
 

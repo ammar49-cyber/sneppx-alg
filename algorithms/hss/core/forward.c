@@ -1,4 +1,4 @@
-#include "arix_hss.h"
+#include "hierarchical_state_space.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>

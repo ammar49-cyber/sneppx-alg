@@ -7,7 +7,7 @@
  * transfers between training nodes.  Provides blocking and non-blocking
  * send/recv with length-prefixed message framing.
  *
- * DEPENDENCIES: arix_tensor.h
+ * DEPENDENCIES: multidimensional_tensor_engine.h
  * VERSION: v1.0
  */
 

@@ -1,5 +1,5 @@
-#include "arix_fm.h"
-#include "arix_memory.h"
+#include "fractal_memory_orchestrator.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 
 ArixFMNode* arix_fm_node_create(size_t node_id, size_t memory_dim, size_t capacity) {

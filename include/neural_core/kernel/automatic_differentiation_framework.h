@@ -1,7 +1,7 @@
 #ifndef ARIX_AUTODIFF_H
 #define ARIX_AUTODIFF_H
 
-#include "arix_tensor.h"
+#include "multidimensional_tensor_engine.h"
 #include <stddef.h>
 
 typedef void (*BackwardFn)(void* ctx, ArixTensor* grad_output);

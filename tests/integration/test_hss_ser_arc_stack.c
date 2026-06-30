@@ -1,6 +1,6 @@
-#include "arix_hss.h"
-#include "arix_ser.h"
-#include "arix_arc.h"
+#include "hierarchical_state_space.h"
+#include "sparse_expert_routing.h"
+#include "adversarial_robustness_certification.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

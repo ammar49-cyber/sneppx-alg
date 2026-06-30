@@ -3,19 +3,19 @@
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 
-#include "arix_tensor.h"
-#include "arix_memory.h"
-#include "arix_thread.h"
-#include "arix_autodiff.h"
-#include "arix_optimizer.h"
-#include "arix_arch.h"
-#include "arix_train.h"
-#include "arix_hss.h"
-#include "arix_ser.h"
-#include "arix_arc.h"
-#include "arix_npe.h"
-#include "arix_fm.h"
-#include "arix_crypto.h"
+#include "multidimensional_tensor_engine.h"
+#include "polymorphic_memory_allocator.h"
+#include "concurrent_workload_dispatch.h"
+#include "automatic_differentiation_framework.h"
+#include "gradient_optimization_suite.h"
+#include "system_architecture_definitions.h"
+#include "differentiable_training_pipeline.h"
+#include "hierarchical_state_space.h"
+#include "sparse_expert_routing.h"
+#include "adversarial_robustness_certification.h"
+#include "neural_programming_engine.h"
+#include "fractal_memory_orchestrator.h"
+#include "cryptographic_primitives_bundle.h"
 
 #include <cstring>
 #include <string>
@@ -980,7 +980,7 @@ namespace py_crypto {
         std::string k = key, n = nonce, p = plaintext;
         std::string out(p.size(), 0);
         // arix_chacha20_xor(const uint8_t key[32], const uint8_t nonce[12], uint32_t counter, const uint8_t* in, uint8_t* out, size_t len);
-        // extern declaration needed — assume prototype from arix_chacha20.h
+        // extern declaration needed — assume prototype from chacha20_stream_cipher.h
         // For binding completeness we include the call; actual linking resolves.
         // arix_chacha20_xor((const uint8_t*)k.data(), (const uint8_t*)n.data(), counter, (const uint8_t*)p.data(), (uint8_t*)out.data(), p.size());
         return py::bytes(out);
@@ -1100,7 +1100,7 @@ namespace py_crypto {
 // ---------------------------------------------------------------------------
 // Python module
 // ---------------------------------------------------------------------------
-PYBIND11_MODULE(_arix_c, m) {
+PYBIND11_MODULE(_neural_engine_bridge, m) {
     m.doc() = "ARIX Algo - Python bindings";
 
     // ---- Enums ----

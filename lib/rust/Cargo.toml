@@ -1,5 +1,5 @@
 [package]
-name = "arix_algo"
+name = "neural_core_algo"
 version = "0.1.0"
 edition = "2021"
-description = "Rust bindings for ARIX-Algo tensor library"
+description = "Rust bindings for neural_core-Algo tensor library"

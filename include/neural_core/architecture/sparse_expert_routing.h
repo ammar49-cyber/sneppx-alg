@@ -1,8 +1,8 @@
 #ifndef ARIX_SER_H
 #define ARIX_SER_H
 
-#include "arix_tensor.h"
-#include "arix_autodiff.h"
+#include "multidimensional_tensor_engine.h"
+#include "automatic_differentiation_framework.h"
 #include <stddef.h>
 
 typedef enum {

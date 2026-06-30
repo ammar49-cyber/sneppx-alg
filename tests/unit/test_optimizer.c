@@ -1,5 +1,5 @@
-#include "arix_optimizer.h"
-#include "arix_tensor.h"
+#include "gradient_optimization_suite.h"
+#include "multidimensional_tensor_engine.h"
 #include <stdio.h>
 #include <math.h>
 

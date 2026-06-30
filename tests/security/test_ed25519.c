@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "arix_ed25519.h"
-#include "arix_random.h"
+#include "ed25519_signature_verification.h"
+#include "cryptographic_random_generator.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

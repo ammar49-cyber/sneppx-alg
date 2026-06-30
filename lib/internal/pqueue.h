@@ -6,7 +6,7 @@
  * PURPOSE: Binary max-heap for task scheduling (thread pool),
  * gradient compression priority, and timer management.
  *
- * DEPENDENCIES: arix_memory.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

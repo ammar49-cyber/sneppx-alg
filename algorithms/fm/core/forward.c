@@ -1,5 +1,5 @@
-#include "arix_fm.h"
-#include "arix_memory.h"
+#include "fractal_memory_orchestrator.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>

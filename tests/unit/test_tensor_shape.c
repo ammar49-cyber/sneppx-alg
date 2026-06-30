@@ -1,6 +1,6 @@
 #include "test_common.h"
-#include "arix_tensor.h"
-#include "arix_memory.h"
+#include "multidimensional_tensor_engine.h"
+#include "polymorphic_memory_allocator.h"
 
 static void test_copy_independent(void) {
     ArixTensor* a = arix_tensor_arange(0.0f, 6.0f, 1.0f, ARIX_FLOAT32);

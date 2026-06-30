@@ -1,4 +1,4 @@
-#include "arix_sha512.h"
+#include "sha512_hashing_implementation.h"
 #include <string.h>
 
 #define ROTR64(x, n) (((x) >> (n)) | ((x) << (64 - (n))))

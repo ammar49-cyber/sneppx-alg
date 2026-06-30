@@ -1,4 +1,4 @@
-#include "arix_chacha20.h"
+#include "chacha20_stream_cipher.h"
 #include <string.h>
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))

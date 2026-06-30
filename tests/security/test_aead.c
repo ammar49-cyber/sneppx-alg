@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "arix_aead.h"
+#include "authenticated_encryption_module.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

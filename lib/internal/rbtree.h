@@ -13,7 +13,7 @@
  *   4. Red nodes have black children.
  *   5. Every path from root to leaf has the same black height.
  *
- * DEPENDENCIES: arix_memory.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

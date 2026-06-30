@@ -1,10 +1,10 @@
 #ifndef ARIX_TRAIN_H
 #define ARIX_TRAIN_H
 
-#include "arix_arch.h"
-#include "arix_autodiff.h"
-#include "arix_optimizer.h"
-#include "arix_tensor.h"
+#include "system_architecture_definitions.h"
+#include "automatic_differentiation_framework.h"
+#include "gradient_optimization_suite.h"
+#include "multidimensional_tensor_engine.h"
 #include <stddef.h>
 
 typedef struct {

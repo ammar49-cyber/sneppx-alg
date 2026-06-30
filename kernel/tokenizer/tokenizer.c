@@ -1,5 +1,5 @@
-#include "arix_tokenizer.h"
-#include "arix_memory.h"
+#include "subword_tokenization_pipeline.h"
+#include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

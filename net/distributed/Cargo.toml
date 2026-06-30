@@ -1,9 +1,9 @@
 [package]
-name = "arix-distributed"
+name = "neural_core-distributed"
 version = "0.1.0"
 edition = "2021"
-authors = ["Ammar [ARIX] <algoarix@gmail.com>"]
-description = "Distributed training coordination for ARIX-Algo: node discovery, ring all-reduce, parameter sync, fault tolerance, differential privacy"
+authors = ["Ammar [neural_core] <algoneural_core@gmail.com>"]
+description = "Distributed training coordination for neural_core-Algo: node discovery, ring all-reduce, parameter sync, fault tolerance, differential privacy"
 license = "MIT"
 
 [lib]

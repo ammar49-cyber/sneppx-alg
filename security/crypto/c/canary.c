@@ -1,6 +1,6 @@
-#include "arix_canary.h"
-#include "arix_random.h"
-#include "arix_ct.h"
+#include "stack_canary_protection.h"
+#include "cryptographic_random_generator.h"
+#include "constant_time_operations.h"
 #include <string.h>
 
 static uint64_t generation_counter = 0;

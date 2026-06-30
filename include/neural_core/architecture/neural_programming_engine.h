@@ -1,7 +1,7 @@
 #ifndef ARIX_NPE_H
 #define ARIX_NPE_H
 
-#include "arix_tensor.h"
+#include "multidimensional_tensor_engine.h"
 #include <stddef.h>
 
 typedef enum {

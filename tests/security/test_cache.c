@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "arix_cache.h"
+#include "secure_cache_management.h"
 
 static int tests_passed = 0, tests_failed = 0;
 

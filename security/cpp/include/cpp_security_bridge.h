@@ -7,7 +7,7 @@
  * exception-safe handles for AEAD ciphers, hashers, and secure memory
  * buffers.  Used internally by the obfuscation layer and by C++ examples.
  *
- * DEPENDENCIES: arix_aead.h, arix_blake3.h, arix_secure_mem.h
+ * DEPENDENCIES: authenticated_encryption_module.h, cryptographic_hashing_blake3.h, protected_memory_manager.h
  * VERSION: v0.5
  */
 

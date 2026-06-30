@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_argon2.h"
-#include "arix_ct.h"
+#include "memory_hard_key_derivation.h"
+#include "constant_time_operations.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

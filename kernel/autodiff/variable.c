@@ -1,5 +1,5 @@
-#include "arix_autodiff.h"
-#include "arix_memory.h"
+#include "automatic_differentiation_framework.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 
 ArixVariable* arix_variable_create(ArixTensor* data, int requires_grad) {

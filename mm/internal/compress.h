@@ -11,7 +11,7 @@
  * BFP: groups elements into blocks, shared exponent per block.
  * Sparse: bitmask of non-zero elements + values array.
  *
- * DEPENDENCIES: arix_tensor.h
+ * DEPENDENCIES: multidimensional_tensor_engine.h
  * VERSION: v0.5
  */
 

@@ -1,7 +1,7 @@
-#include "arix_aead.h"
-#include "arix_chacha20.h"
-#include "arix_poly1305.h"
-#include "arix_ct.h"
+#include "authenticated_encryption_module.h"
+#include "chacha20_stream_cipher.h"
+#include "polynomial_authentication_mac.h"
+#include "constant_time_operations.h"
 #include <string.h>
 #include <stdlib.h>
 

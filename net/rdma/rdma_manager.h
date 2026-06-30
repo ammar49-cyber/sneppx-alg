@@ -8,7 +8,7 @@
  * manage send/receive work requests.  Completion queues (CQs) notify
  * the thread pool when transfers finish.
  *
- * DEPENDENCIES: arix_memory.h, arix_thread.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h, concurrent_workload_dispatch.h
  * VERSION: v1.0
  */
 

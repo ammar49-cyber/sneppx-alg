@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "arix_secure_mem.h"
-#include "arix_canary.h"
+#include "protected_memory_manager.h"
+#include "stack_canary_protection.h"
 
 static int tests_passed = 0, tests_failed = 0;
 

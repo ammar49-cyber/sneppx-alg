@@ -8,7 +8,7 @@
  * handles OOM via registered callbacks, and supports eviction of
  * cold tensor pages to disk (swap).
  *
- * DEPENDENCIES: arix_memory.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

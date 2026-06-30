@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "arix_sha3.h"
+#include "keccak_sha3_hashing.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

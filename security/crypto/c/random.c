@@ -1,4 +1,4 @@
-#include "arix_random.h"
+#include "cryptographic_random_generator.h"
 
 #ifdef _WIN32
 #include <windows.h>

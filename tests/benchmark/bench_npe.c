@@ -1,5 +1,5 @@
 #include "bench_common.h"
-#include "arix_npe.h"
+#include "neural_programming_engine.h"
 
 static void bench_npe_create(void) {
     BENCH_INIT(bs);

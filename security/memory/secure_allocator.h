@@ -9,7 +9,7 @@
  * detect buffer overflows.  A red-black tree tracks all live allocations
  * for audit and crash-report enumeration.
  *
- * DEPENDENCIES: arix_memory.h, arix_ct.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h, constant_time_operations.h
  * VERSION: v3.0
  */
 

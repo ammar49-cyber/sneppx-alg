@@ -1,12 +1,12 @@
 import os
 from typing import List, Optional
-from . import _arix_c
+from . import _neural_engine_bridge
 from .tensor import Tensor, _to_shape
 
 
 class ModelConfig:
     def __init__(self):
-        self._c = _arix_c.ArixArchConfig()
+        self._c = _neural_engine_bridge.ArixArchConfig()
         self._c.default()
 
     @property
@@ -38,7 +38,7 @@ class Model:
     def __init__(self, config: Optional[ModelConfig] = None):
         if config is None:
             config = ModelConfig()
-        self._m = _arix_c._Model.create(config._c)
+        self._m = _neural_engine_bridge._Model.create(config._c)
         self._config = config
 
     def forward(self, input: Tensor) -> Tensor:
@@ -77,7 +77,7 @@ class Model:
 # ---- HSS Model ----
 class HSSConfig:
     def __init__(self):
-        self._c = _arix_c.ArixHSSConfig()
+        self._c = _neural_engine_bridge.ArixHSSConfig()
         self._c.default()
 
     @property
@@ -139,7 +139,7 @@ class HSSConfig:
 
 class HSSModel:
     def __init__(self, config: HSSConfig, seed: int = 42):
-        self._m = _arix_c._HSSModel.create(config._c, seed)
+        self._m = _neural_engine_bridge._HSSModel.create(config._c, seed)
         self._config = config
 
     def forward(self, input: Tensor) -> Tensor:
@@ -158,7 +158,7 @@ class HSSModel:
 # ---- SER Model ----
 class SERConfig:
     def __init__(self):
-        self._c = _arix_c.ArixSERConfig()
+        self._c = _neural_engine_bridge.ArixSERConfig()
         self._c.default()
 
     @property
@@ -220,7 +220,7 @@ class SERConfig:
 
 class SERModel:
     def __init__(self, config: SERConfig, seed: int = 42, num_layers: int = 1):
-        self._m = _arix_c._SERModel.create(config._c, seed, num_layers)
+        self._m = _neural_engine_bridge._SERModel.create(config._c, seed, num_layers)
         self._config = config
 
     def parameters(self) -> List[Tensor]:
@@ -236,7 +236,7 @@ class SERModel:
 # ---- ARC Model ----
 class ARCConfig:
     def __init__(self):
-        self._c = _arix_c.ArixARCConfig()
+        self._c = _neural_engine_bridge.ArixARCConfig()
         self._c.default()
 
     @property
@@ -298,7 +298,7 @@ class ARCConfig:
 
 class ARCModel:
     def __init__(self, config: ARCConfig, input_dim: int, output_dim: int, seed: int = 42):
-        self._m = _arix_c._ARCLayer.create(config._c, input_dim, output_dim, seed)
+        self._m = _neural_engine_bridge._ARCLayer.create(config._c, input_dim, output_dim, seed)
         self._config = config
 
     def forward(self, input: Tensor) -> Tensor:
@@ -308,7 +308,7 @@ class ARCModel:
 # ---- NPE Model ----
 class NPEConfig:
     def __init__(self):
-        self._c = _arix_c.ArixNPEConfig()
+        self._c = _neural_engine_bridge.ArixNPEConfig()
         self._c.default()
 
     @property
@@ -349,11 +349,11 @@ class NPEConfig:
 
 class NPEModel:
     def __init__(self, config: NPEConfig):
-        self._vm = _arix_c._NPEVM.create(config._c)
+        self._vm = _neural_engine_bridge._NPEVM.create(config._c)
         self._config = config
 
     def load_program(self, program):
-        from . import _arix_c as c
+        from . import _neural_engine_bridge as c
         pass
 
     def run(self, input: Tensor) -> Tensor:
@@ -369,7 +369,7 @@ class NPEModel:
 # ---- FM Model ----
 class FMConfig:
     def __init__(self):
-        self._c = _arix_c.ArixFMConfig()
+        self._c = _neural_engine_bridge.ArixFMConfig()
         self._c.default()
 
     @property
@@ -424,7 +424,7 @@ class FMConfig:
 
 class FMModel:
     def __init__(self, config: FMConfig):
-        self._ctrl = _arix_c._FMController.create(config._c)
+        self._ctrl = _neural_engine_bridge._FMController.create(config._c)
         self._config = config
 
     def forward(self, node_id: int, input: Tensor) -> Tensor:

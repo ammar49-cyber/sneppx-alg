@@ -7,7 +7,7 @@
  * TPUs use a different programming model (XLA / PjRt) than GPUs; this
  * interface wraps the PjRt client, executed programs, and device memory.
  *
- * DEPENDENCIES: arix_memory.h, arix_tensor.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h, multidimensional_tensor_engine.h
  * VERSION: v2.0 — production-scale distributed training
  */
 

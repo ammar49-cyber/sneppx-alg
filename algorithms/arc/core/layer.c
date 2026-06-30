@@ -1,5 +1,5 @@
-#include "arix_arc.h"
-#include "arix_memory.h"
+#include "adversarial_robustness_certification.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 
 ArixARCLayer* arix_arc_layer_create(const ArixARCConfig* config, size_t input_dim, size_t output_dim, unsigned int seed) {

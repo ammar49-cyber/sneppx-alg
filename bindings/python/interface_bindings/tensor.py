@@ -1,10 +1,10 @@
 import numpy as np
-from . import _arix_c
+from . import _neural_engine_bridge
 from typing import List, Tuple, Optional, Union, Sequence
 
-Dtype = _arix_c.ArixDtype
-Device = _arix_c.ArixDevice
-Layout = _arix_c.ArixLayout
+Dtype = _neural_engine_bridge.ArixDtype
+Device = _neural_engine_bridge.ArixDevice
+Layout = _neural_engine_bridge.ArixLayout
 
 _NP_TO_ARIX = {
     np.dtype('float32'): Dtype.FLOAT32,
@@ -43,7 +43,7 @@ class Tensor:
     __slots__ = ('_t',)
 
     def __init__(self):
-        self._t = _arix_c._Tensor()
+        self._t = _neural_engine_bridge._Tensor()
 
     @classmethod
     def _from_ptr(cls, ptr):
@@ -57,35 +57,35 @@ class Tensor:
     # ---- Factory methods ----
     @classmethod
     def empty(cls, shape, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.empty(_to_shape(shape), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.empty(_to_shape(shape), _resolve_dtype(dtype)))
 
     @classmethod
     def zeros(cls, shape, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.zeros(_to_shape(shape), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.zeros(_to_shape(shape), _resolve_dtype(dtype)))
 
     @classmethod
     def ones(cls, shape, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.ones(_to_shape(shape), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.ones(_to_shape(shape), _resolve_dtype(dtype)))
 
     @classmethod
     def full(cls, shape, value, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.full(_to_shape(shape), _resolve_dtype(dtype), value))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.full(_to_shape(shape), _resolve_dtype(dtype), value))
 
     @classmethod
     def arange(cls, start, stop, step=1.0, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.arange(float(start), float(stop), float(step), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.arange(float(start), float(stop), float(step), _resolve_dtype(dtype)))
 
     @classmethod
     def linspace(cls, start, stop, steps, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.linspace(float(start), float(stop), int(steps), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.linspace(float(start), float(stop), int(steps), _resolve_dtype(dtype)))
 
     @classmethod
     def eye(cls, n, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.eye(int(n), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.eye(int(n), _resolve_dtype(dtype)))
 
     @classmethod
     def randn(cls, shape, dtype=None):
-        return cls._from_ptr(_arix_c._Tensor.randn(_to_shape(shape), _resolve_dtype(dtype)))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.randn(_to_shape(shape), _resolve_dtype(dtype)))
 
     @classmethod
     def from_numpy(cls, arr: np.ndarray):
@@ -97,7 +97,7 @@ class Tensor:
 
     @classmethod
     def load(cls, path: str):
-        return cls._from_ptr(_arix_c._Tensor.load(path))
+        return cls._from_ptr(_neural_engine_bridge._Tensor.load(path))
 
     # ---- Properties ----
     @property
@@ -430,7 +430,7 @@ class Tensor:
         if not tensors:
             raise ValueError("empty tensor list")
         tlist = [t._t for t in tensors]
-        return Tensor._from_ptr(_arix_c._Tensor.concat(tlist, dim))
+        return Tensor._from_ptr(_neural_engine_bridge._Tensor.concat(tlist, dim))
 
     def split(self, num_splits, dim=0):
         splits = self._t.split(num_splits, dim)
@@ -474,7 +474,7 @@ class Tensor:
             x = Tensor.from_numpy(x)
         if isinstance(y, np.ndarray):
             y = Tensor.from_numpy(y)
-        return Tensor._from_ptr(_arix_c._Tensor.where(condition._t, x._t, y._t))
+        return Tensor._from_ptr(_neural_engine_bridge._Tensor.where(condition._t, x._t, y._t))
 
     # ---- Cast / Device / Layout ----
     def cast(self, dtype):

@@ -2,7 +2,7 @@
 // VERSION: v0.5
 //
 // High-level Rust API for tensor creation, model building, and training.
-// Wraps the C API via FFI (arix_tensor.h, arix_arch.h, arix_train.h).
+// Wraps the C API via FFI (multidimensional_tensor_engine.h, system_architecture_definitions.h, differentiable_training_pipeline.h).
 
 pub mod tensor;
 pub mod model;

@@ -1,4 +1,4 @@
-#include "arix_thread.h"
+#include "concurrent_workload_dispatch.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>

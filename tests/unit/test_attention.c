@@ -1,5 +1,5 @@
-#include "arix_attention.h"
-#include "arix_memory.h"
+#include "multi_head_attention_module.h"
+#include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

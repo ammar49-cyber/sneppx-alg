@@ -1,5 +1,5 @@
 #include "bench_common.h"
-#include "arix_tensor.h"
+#include "multidimensional_tensor_engine.h"
 
 static void bench_create_ops(void) {
     BENCH_INIT(bs);

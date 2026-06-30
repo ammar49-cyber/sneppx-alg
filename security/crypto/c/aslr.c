@@ -1,5 +1,5 @@
-#include "arix_aslr.h"
-#include "arix_random.h"
+#include "address_space_randomization.h"
+#include "cryptographic_random_generator.h"
 
 size_t arix_aslr_random_offset(size_t max_offset) {
     if (max_offset == 0) return 0;

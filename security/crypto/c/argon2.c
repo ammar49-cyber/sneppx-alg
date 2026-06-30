@@ -1,5 +1,5 @@
-#include "arix_argon2.h"
-#include "arix_ct.h"
+#include "memory_hard_key_derivation.h"
+#include "constant_time_operations.h"
 #include <string.h>
 #include <stdlib.h>
 

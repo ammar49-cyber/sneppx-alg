@@ -1,5 +1,5 @@
 #include "test_common.h"
-#include "arix_tensor.h"
+#include "multidimensional_tensor_engine.h"
 
 static void test_create_0d(void) {
     size_t shape[] = {1};

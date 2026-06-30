@@ -1,4 +1,4 @@
-#include "arix_obf_string.h"
+#include "string_obfuscation_technique.h"
 #include <cstring>
 #include <algorithm>
 #include <random>

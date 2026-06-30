@@ -1,5 +1,5 @@
-#include "arix_arch.h"
-#include "arix_train.h"
+#include "system_architecture_definitions.h"
+#include "differentiable_training_pipeline.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

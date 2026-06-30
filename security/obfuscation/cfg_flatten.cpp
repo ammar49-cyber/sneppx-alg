@@ -1,4 +1,4 @@
-#include "arix_obf_cfg.h"
+#include "control_flow_obfuscation.h"
 #include <algorithm>
 #include <cstring>
 #include <sstream>

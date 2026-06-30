@@ -1,4 +1,4 @@
-#include "arix_hss.h"
+#include "hierarchical_state_space.h"
 
 void arix_hss_hierarchical_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* y_seq) {
     /* For v0.1, hierarchical scan delegates to standard scan.

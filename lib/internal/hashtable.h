@@ -9,7 +9,7 @@
  * Load factor threshold triggers automatic resize (2×).  Hash
  * function is pluggable via the `hash_fn` callback.
  *
- * DEPENDENCIES: arix_memory.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_sc.h"
+#include "side_channel_resistant_primitives.h"
 
 static int tests_passed = 0, tests_failed = 0;
 

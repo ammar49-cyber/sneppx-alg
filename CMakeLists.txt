@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(arix-algo VERSION 0.1.0 LANGUAGES C CXX)
+project(cognitive_processing_system VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -69,54 +69,54 @@ if(ARIX_USE_LTO)
     endif()
 endif()
 
-file(GLOB_RECURSE ARIX_CORE_SRC kernel/*.c)
-file(GLOB_RECURSE ARIX_SECURITY_C_SRC security/crypto/c/*.c)
+file(GLOB_RECURSE CORE_KERNEL_SRC kernel/*.c)
+file(GLOB_RECURSE CORE_SECURITY_C_SRC security/crypto/c/*.c)
 
-add_library(arix_core STATIC ${ARIX_CORE_SRC})
-target_include_directories(arix_core PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/arix/core
-    ${CMAKE_SOURCE_DIR}/include/arix/security
-    ${CMAKE_SOURCE_DIR}/include/arix/arch
+add_library(neural_core_kernel STATIC ${CORE_KERNEL_SRC})
+target_include_directories(neural_core_kernel PUBLIC
+    ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
+    ${CMAKE_SOURCE_DIR}/include/neural_core/security
+    ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
 )
 
-file(GLOB_RECURSE ARIX_ARCH_SRC algorithms/*/core/*.c)
+file(GLOB_RECURSE NEURAL_ARCHITECTURE_SRC algorithms/*/core/*.c)
 
-add_library(arix_arch STATIC ${ARIX_ARCH_SRC})
-target_include_directories(arix_arch PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/arix/arch
-    ${CMAKE_SOURCE_DIR}/include/arix/core
-    ${CMAKE_SOURCE_DIR}/include/arix/security
+add_library(neural_architecture_layer STATIC ${NEURAL_ARCHITECTURE_SRC})
+target_include_directories(neural_architecture_layer PUBLIC
+    ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
+    ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
+    ${CMAKE_SOURCE_DIR}/include/neural_core/security
 )
-target_link_libraries(arix_arch PUBLIC arix_core)
+target_link_libraries(neural_architecture_layer PUBLIC neural_core_kernel)
 
-if(ARIX_SECURITY_C_SRC)
-    add_library(arix_security_c STATIC ${ARIX_SECURITY_C_SRC})
-    target_include_directories(arix_security_c PUBLIC ${CMAKE_SOURCE_DIR}/include/arix/security)
-    target_compile_definitions(arix_security_c PRIVATE $<$<CONFIG:Release>:ARIX_S1_SECURE_MEMORY>)
+if(CORE_SECURITY_C_SRC)
+    add_library(neural_security_c STATIC ${CORE_SECURITY_C_SRC})
+    target_include_directories(neural_security_c PUBLIC ${CMAKE_SOURCE_DIR}/include/neural_core/security)
+    target_compile_definitions(neural_security_c PRIVATE $<$<CONFIG:Release>:ARIX_S1_SECURE_MEMORY>)
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" AND NOT MSVC)
         file(GLOB ARIX_ASM_X86_64 security/crypto/asm/x86_64/*.asm security/crypto/asm/x86_64/*.S)
         if(ARIX_ASM_X86_64)
             set_source_files_properties(${ARIX_ASM_X86_64} PROPERTIES LANGUAGE ASM)
-            target_sources(arix_security_c PRIVATE ${ARIX_ASM_X86_64})
+            target_sources(neural_security_c PRIVATE ${ARIX_ASM_X86_64})
         endif()
     endif()
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_libraries(arix_security_c PRIVATE rt)
+        target_link_libraries(neural_security_c PRIVATE rt)
     endif()
 endif()
 
-file(GLOB_RECURSE ARIX_SECURITY_CPP_SRC security/obfuscation/*.cpp)
+file(GLOB_RECURSE NEURAL_SECURITY_CPP_SRC security/obfuscation/*.cpp)
 
-if(ARIX_SECURITY_CPP_SRC)
-    add_library(arix_security_cpp STATIC ${ARIX_SECURITY_CPP_SRC})
-    target_include_directories(arix_security_cpp PUBLIC ${CMAKE_SOURCE_DIR}/include/arix/security)
-    target_include_directories(arix_security_cpp PRIVATE ${CMAKE_SOURCE_DIR}/include/arix/security)
-    target_link_libraries(arix_security_cpp PUBLIC arix_security_c arix_core arix_arch)
-    target_compile_definitions(arix_security_cpp PRIVATE ARIX_S2_OBFUSCATION)
+if(NEURAL_SECURITY_CPP_SRC)
+    add_library(neural_security_cpp STATIC ${NEURAL_SECURITY_CPP_SRC})
+    target_include_directories(neural_security_cpp PUBLIC ${CMAKE_SOURCE_DIR}/include/neural_core/security)
+    target_include_directories(neural_security_cpp PRIVATE ${CMAKE_SOURCE_DIR}/include/neural_core/security)
+    target_link_libraries(neural_security_cpp PUBLIC neural_security_c neural_core_kernel neural_architecture_layer)
+    target_compile_definitions(neural_security_cpp PRIVATE ARIX_S2_OBFUSCATION)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_libraries(arix_security_cpp PRIVATE dl)
+        target_link_libraries(neural_security_cpp PRIVATE dl)
     endif()
 endif()
 

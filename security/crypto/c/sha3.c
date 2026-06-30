@@ -1,4 +1,4 @@
-#include "arix_sha3.h"
+#include "keccak_sha3_hashing.h"
 #include <string.h>
 
 #define ROTL64(x, n) (((x) << (n)) | ((x) >> (64 - (n))))

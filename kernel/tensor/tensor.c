@@ -1,5 +1,5 @@
-#include "arix_tensor.h"
-#include "arix_memory.h"
+#include "multidimensional_tensor_engine.h"
+#include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

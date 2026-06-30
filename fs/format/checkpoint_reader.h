@@ -13,7 +13,7 @@
  * Endianness: little-endian.  Alignment: 8-byte boundaries.
  * Forward compat: version field allows readers to reject newer formats.
  *
- * DEPENDENCIES: arix_tensor.h
+ * DEPENDENCIES: multidimensional_tensor_engine.h
  * VERSION: v0.5
  */
 

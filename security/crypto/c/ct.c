@@ -1,4 +1,4 @@
-#include "arix_ct.h"
+#include "constant_time_operations.h"
 
 int arix_ct_equal(const uint8_t* a, const uint8_t* b, size_t len) {
     uint8_t diff = 0;

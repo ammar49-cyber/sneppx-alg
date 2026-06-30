@@ -8,7 +8,7 @@
  * a work-stealing algorithm: each worker has a double-ended queue (deque)
  * of tasks; idle workers steal from the tail of another worker's deque.
  *
- * DEPENDENCIES: arix_thread.h, arix_memory.h
+ * DEPENDENCIES: concurrent_workload_dispatch.h, polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

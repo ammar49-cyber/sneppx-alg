@@ -4,11 +4,11 @@
  * Autodiff Internal Implementation — v0.5
  *
  * PURPOSE: Internal gradient graph representation, tape node structures,
- * and backward-pass scheduler.  The external API (arix_autodiff.h) exposes
+ * and backward-pass scheduler.  The external API (automatic_differentiation_framework.h) exposes
  * a high-level Variable/GradFn interface; this header defines the internal
  * graph topology, reference-counted tensors, and topological sort utilities.
  *
- * DEPENDENCIES: arix_autodiff.h, arix_tensor.h
+ * DEPENDENCIES: automatic_differentiation_framework.h, multidimensional_tensor_engine.h
  * VERSION: v0.5
  */
 

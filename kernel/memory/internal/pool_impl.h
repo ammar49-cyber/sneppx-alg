@@ -7,7 +7,7 @@
  * operations for the arix_memory pool allocator.  Implements the
  * Treiber-stack free lists, chunk carving, and per-thread caching.
  *
- * DEPENDENCIES: arix_memory.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h
  * VERSION: v0.5
  */
 

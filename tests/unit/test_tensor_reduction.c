@@ -1,4 +1,4 @@
-#include "arix_tensor.h"
+#include "multidimensional_tensor_engine.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

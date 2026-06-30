@@ -8,7 +8,7 @@
  * Functions here delegate to the implementations in security/crypto/c/
  * (aead.c, blake3.c, chacha20.c, etc.) with additional input validation.
  *
- * DEPENDENCIES: arix_aead.h, arix_chacha20.h, arix_blake3.h, arix_sha3.h
+ * DEPENDENCIES: authenticated_encryption_module.h, chacha20_stream_cipher.h, cryptographic_hashing_blake3.h, keccak_sha3_hashing.h
  * VERSION: v0.5
  */
 

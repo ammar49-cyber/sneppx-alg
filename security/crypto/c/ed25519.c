@@ -1,6 +1,6 @@
-#include "arix_ed25519.h"
-#include "arix_sha512.h"
-#include "arix_ct.h"
+#include "ed25519_signature_verification.h"
+#include "sha512_hashing_implementation.h"
+#include "constant_time_operations.h"
 #include <string.h>
 #include <intrin.h>
 #include <stdio.h>

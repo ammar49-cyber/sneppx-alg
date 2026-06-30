@@ -1,5 +1,5 @@
 #include "bench_common.h"
-#include "arix_hss.h"
+#include "hierarchical_state_space.h"
 
 static void bench_hss_create(void) {
     BENCH_INIT(bs);

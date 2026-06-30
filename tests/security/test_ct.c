@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_ct.h"
+#include "constant_time_operations.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

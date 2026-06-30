@@ -1,8 +1,8 @@
-#include "arix_secure_mem.h"
-#include "arix_canary.h"
-#include "arix_aslr.h"
-#include "arix_lock.h"
-#include "arix_random.h"
+#include "protected_memory_manager.h"
+#include "stack_canary_protection.h"
+#include "address_space_randomization.h"
+#include "synchronization_lock_interface.h"
+#include "cryptographic_random_generator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

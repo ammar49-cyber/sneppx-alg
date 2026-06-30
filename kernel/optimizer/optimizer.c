@@ -1,5 +1,5 @@
-#include "arix_optimizer.h"
-#include "arix_memory.h"
+#include "gradient_optimization_suite.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>

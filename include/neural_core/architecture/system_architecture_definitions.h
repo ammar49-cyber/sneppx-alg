@@ -1,11 +1,11 @@
 #ifndef ARIX_ARCH_H
 #define ARIX_ARCH_H
 
-#include "arix_hss.h"
-#include "arix_ser.h"
-#include "arix_arc.h"
-#include "arix_npe.h"
-#include "arix_fm.h"
+#include "hierarchical_state_space.h"
+#include "sparse_expert_routing.h"
+#include "adversarial_robustness_certification.h"
+#include "neural_programming_engine.h"
+#include "fractal_memory_orchestrator.h"
 
 typedef struct {
     ArixHSSConfig hss_config;

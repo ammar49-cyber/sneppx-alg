@@ -8,7 +8,7 @@
  * optimizer struct; this header holds the step implementations and state
  * tracking for SGD, Adam, AdamW, and LAMB.
  *
- * DEPENDENCIES: arix_optimizer.h, arix_tensor.h
+ * DEPENDENCIES: gradient_optimization_suite.h, multidimensional_tensor_engine.h
  * VERSION: v0.5
  */
 

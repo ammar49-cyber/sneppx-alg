@@ -1,4 +1,4 @@
-#include "arix_poly1305.h"
+#include "polynomial_authentication_mac.h"
 #include <string.h>
 
 #define MASK26 0x3ffffffULL

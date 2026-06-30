@@ -1,4 +1,4 @@
-#include "arix_sc.h"
+#include "side_channel_resistant_primitives.h"
 
 uint32_t arix_sc_select_u32(uint32_t condition, uint32_t a, uint32_t b) {
     uint32_t mask = (uint32_t)((int32_t)condition >> 31);

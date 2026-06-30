@@ -2,12 +2,12 @@
 #ifndef ARIX_OBF_H
 #define ARIX_OBF_H
 
-#include "arix_obf_cfg.h"
-#include "arix_obf_string.h"
-#include "arix_obf_inst.h"
-#include "arix_obf_opaque.h"
-#include "arix_obf_vm.h"
-#include "arix_obf_anti.h"
+#include "control_flow_obfuscation.h"
+#include "string_obfuscation_technique.h"
+#include "instruction_obfuscation_engine.h"
+#include "opaque_predicate_generator.h"
+#include "virtualized_code_execution.h"
+#include "anti_debugging_countermeasure.h"
 
 namespace arix {
 

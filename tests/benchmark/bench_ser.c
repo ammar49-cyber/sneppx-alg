@@ -1,5 +1,5 @@
 #include "bench_common.h"
-#include "arix_ser.h"
+#include "sparse_expert_routing.h"
 
 static void bench_ser_create(void) {
     BENCH_INIT(bs);

@@ -1,5 +1,5 @@
-#include "arix_npe.h"
-#include "arix_memory.h"
+#include "neural_programming_engine.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
 

@@ -1,4 +1,4 @@
-from . import _arix_c
+from . import _neural_engine_bridge
 
 from .tensor import (
     Tensor,
@@ -55,5 +55,5 @@ __all__ = [
     'StepLR', 'ExponentialLR', 'CosineLR', 'ReduceLROnPlateau',
     'MSELoss', 'CrossEntropyLoss', 'MAELoss', 'NLLLoss', 'KLDivLoss', 'BCELoss',
     'Dataset', 'TensorDataset', 'DataLoader',
-    '_arix_c',
+    '_neural_engine_bridge',
 ]

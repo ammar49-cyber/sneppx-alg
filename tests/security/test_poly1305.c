@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_poly1305.h"
+#include "polynomial_authentication_mac.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

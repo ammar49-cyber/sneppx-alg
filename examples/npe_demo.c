@@ -1,4 +1,4 @@
-#include "arix_npe.h"
+#include "neural_programming_engine.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

@@ -3,7 +3,7 @@
  * VERSION: v0.5
  */
 
-#include "arix_security_cpp.h"
+#include "cpp_security_bridge.h"
 #include <cstring>
 #include <stdexcept>
 

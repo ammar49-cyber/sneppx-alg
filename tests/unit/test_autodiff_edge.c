@@ -1,5 +1,5 @@
 #include "test_common.h"
-#include "arix_autodiff.h"
+#include "automatic_differentiation_framework.h"
 
 static void test_variable_null_data(void) {
     ArixVariable* v = arix_variable_create(NULL, 1);

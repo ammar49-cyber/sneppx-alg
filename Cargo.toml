@@ -7,5 +7,5 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Ammar [ARIX] <algoarix@gmail.com>"]
+authors = ["Ammar [neural_core] <algoneural_core@gmail.com>"]
 license = "MIT"

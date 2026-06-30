@@ -1,4 +1,4 @@
-#include "arix_obf_opaque.h"
+#include "opaque_predicate_generator.h"
 #include <sstream>
 #include <algorithm>
 

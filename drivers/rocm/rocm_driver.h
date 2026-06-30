@@ -7,7 +7,7 @@
  * structure.  Mirrors the CUDA driver interface so that tensor operations
  * can be dispatched to either NVIDIA or AMD hardware transparently.
  *
- * DEPENDENCIES: arix_memory.h, arix_tensor.h
+ * DEPENDENCIES: polymorphic_memory_allocator.h, multidimensional_tensor_engine.h
  * VERSION: v1.0
  */
 

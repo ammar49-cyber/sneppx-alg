@@ -1,4 +1,4 @@
-#include "arix_obf.h"
+#include "code_obfuscation_interface.h"
 #include <cstdio>
 #include <cstdlib>
 #include <chrono>

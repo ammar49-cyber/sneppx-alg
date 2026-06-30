@@ -2,7 +2,7 @@
 #ifndef ARIX_OBF_OPAQUE_H
 #define ARIX_OBF_OPAQUE_H
 
-#include "arix_obf_cfg.h"
+#include "control_flow_obfuscation.h"
 #include <random>
 
 namespace arix {

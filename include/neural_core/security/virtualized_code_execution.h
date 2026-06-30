@@ -2,7 +2,7 @@
 #ifndef ARIX_OBF_VM_H
 #define ARIX_OBF_VM_H
 
-#include "arix_obf_cfg.h"
+#include "control_flow_obfuscation.h"
 #include <cstdint>
 #include <vector>
 #include <array>

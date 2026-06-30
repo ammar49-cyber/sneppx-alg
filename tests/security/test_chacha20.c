@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "arix_chacha20.h"
+#include "chacha20_stream_cipher.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

@@ -1,6 +1,6 @@
-#include "arix_hss.h"
-#include "arix_autodiff.h"
-#include "arix_memory.h"
+#include "hierarchical_state_space.h"
+#include "automatic_differentiation_framework.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

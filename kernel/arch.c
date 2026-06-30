@@ -1,5 +1,5 @@
-#include "arix_arch.h"
-#include "arix_memory.h"
+#include "system_architecture_definitions.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_blake3.h"
+#include "cryptographic_hashing_blake3.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;

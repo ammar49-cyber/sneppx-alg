@@ -3,7 +3,7 @@
  * VERSION: v0.5
  */
 
-#include "arix_c.h"
+#include "c_binding_interface.h"
 #include <string.h>
 
 int arix_c_hash_blake3(const uint8_t* data, size_t len, uint8_t* out, size_t out_len) {

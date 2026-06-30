@@ -7,7 +7,7 @@
  * structure.  This header declares the CUDA driver registration, device context,
  * stream/event management, and kernel dispatch interface.
  *
- * DEPENDENCIES: arix_memory.h (device allocator), arix_tensor.h (tensor struct)
+ * DEPENDENCIES: polymorphic_memory_allocator.h (device allocator), multidimensional_tensor_engine.h (tensor struct)
  * VERSION: v1.0 — GPU training
  *
  * IMPLEMENTATION STATUS: SKELETON — no real CUDA calls

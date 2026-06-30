@@ -1,5 +1,5 @@
-#include "arix_ser.h"
-#include "arix_memory.h"
+#include "sparse_expert_routing.h"
+#include "polymorphic_memory_allocator.h"
 #include <string.h>
 
 ArixSERModel* arix_ser_model_create(const ArixSERConfig* config, unsigned int seed, size_t num_layers) {

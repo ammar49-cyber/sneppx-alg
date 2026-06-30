@@ -8,7 +8,7 @@
  * These are called by the public arix_tensor_* API but are factored
  * out for reuse by the autodiff and driver layers.
  *
- * DEPENDENCIES: arix_tensor.h, arix_thread.h
+ * DEPENDENCIES: multidimensional_tensor_engine.h, concurrent_workload_dispatch.h
  * VERSION: v0.5
  */
 

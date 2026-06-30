@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arix_timing.h"
+#include "timing_attack_countermeasure.h"
 
 static int tests_passed = 0, tests_failed = 0;
 

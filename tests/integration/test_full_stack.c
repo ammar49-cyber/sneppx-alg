@@ -1,7 +1,7 @@
-#include "arix_hss.h"
-#include "arix_ser.h"
-#include "arix_arc.h"
-#include "arix_npe.h"
+#include "hierarchical_state_space.h"
+#include "sparse_expert_routing.h"
+#include "adversarial_robustness_certification.h"
+#include "neural_programming_engine.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

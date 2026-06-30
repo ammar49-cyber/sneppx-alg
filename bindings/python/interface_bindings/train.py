@@ -1,12 +1,12 @@
 from typing import Optional, Callable, List, Tuple, Iterator
-from . import _arix_c
+from . import _neural_engine_bridge
 from .tensor import Tensor, Device
 from .model import Model
 
 
 class TrainConfig:
     def __init__(self):
-        self._c = _arix_c.ArixTrainConfig()
+        self._c = _neural_engine_bridge.ArixTrainConfig()
         self._c.default()
 
     @property
@@ -71,7 +71,7 @@ class SGD(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.01, momentum: float = 0.0,
                  weight_decay: float = 0.0):
         super().__init__(params, lr)
-        self._opt = _arix_c._Optimizer.sgd_create(lr, momentum, weight_decay)
+        self._opt = _neural_engine_bridge._Optimizer.sgd_create(lr, momentum, weight_decay)
 
     def step(self):
         self._opt.step(self._params, self._grads)
@@ -81,7 +81,7 @@ class Adam(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.001, betas: Tuple[float, float] = (0.9, 0.999),
                  eps: float = 1e-8, weight_decay: float = 0.0):
         super().__init__(params, lr)
-        self._opt = _arix_c._Optimizer.adam_create(lr, betas[0], betas[1], eps, weight_decay)
+        self._opt = _neural_engine_bridge._Optimizer.adam_create(lr, betas[0], betas[1], eps, weight_decay)
 
     def step(self):
         self._opt.step(self._params, self._grads)
@@ -91,7 +91,7 @@ class AdamW(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.001, betas: Tuple[float, float] = (0.9, 0.999),
                  eps: float = 1e-8, weight_decay: float = 0.01):
         super().__init__(params, lr)
-        self._opt = _arix_c._Optimizer.adamw_create(lr, betas[0], betas[1], eps, weight_decay)
+        self._opt = _neural_engine_bridge._Optimizer.adamw_create(lr, betas[0], betas[1], eps, weight_decay)
 
     def step(self):
         self._opt.step(self._params, self._grads)
@@ -108,7 +108,7 @@ class LRScheduler:
 class StepLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, step_size: int, gamma: float = 0.1):
         super().__init__(optimizer)
-        self._sched = _arix_c._LRScheduler.step_lr(0.01, gamma, step_size)
+        self._sched = _neural_engine_bridge._LRScheduler.step_lr(0.01, gamma, step_size)
 
     def step(self, current_loss: float = 0.0):
         self._sched.step()
@@ -117,7 +117,7 @@ class StepLR(LRScheduler):
 class ExponentialLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, gamma: float = 0.9):
         super().__init__(optimizer)
-        self._sched = _arix_c._LRScheduler.exponential(0.01, gamma)
+        self._sched = _neural_engine_bridge._LRScheduler.exponential(0.01, gamma)
 
     def step(self, current_loss: float = 0.0):
         self._sched.step()
@@ -127,7 +127,7 @@ class CosineLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, min_lr: float = 0.0, max_lr: float = 0.01,
                  total_steps: int = 100):
         super().__init__(optimizer)
-        self._sched = _arix_c._LRScheduler.cosine(0.01, min_lr, max_lr, total_steps)
+        self._sched = _neural_engine_bridge._LRScheduler.cosine(0.01, min_lr, max_lr, total_steps)
 
     def step(self, current_loss: float = 0.0):
         self._sched.step()
@@ -138,7 +138,7 @@ class ReduceLROnPlateau(LRScheduler):
                  mode: str = 'min'):
         super().__init__(optimizer)
         mode_min = 1 if mode == 'min' else 0
-        self._sched = _arix_c._LRScheduler.reduce_on_plateau(0.01, factor, patience, mode_min)
+        self._sched = _neural_engine_bridge._LRScheduler.reduce_on_plateau(0.01, factor, patience, mode_min)
 
     def step(self, current_loss: float = 0.0):
         self._sched.step(current_loss)
@@ -234,7 +234,7 @@ class Trainer:
             config = TrainConfig()
         self._config = config
         self._model = model
-        self._trainer = _arix_c._Trainer.create(model, config._c)
+        self._trainer = _neural_engine_bridge._Trainer.create(model, config._c)
         self._optimizer = None
         self._loss_fn = None
 

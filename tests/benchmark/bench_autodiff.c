@@ -1,5 +1,5 @@
 #include "bench_common.h"
-#include "arix_autodiff.h"
+#include "automatic_differentiation_framework.h"
 
 static void bench_variable_ops(void) {
     BENCH_INIT(bs);

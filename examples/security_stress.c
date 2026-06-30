@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "arix_secure_mem.h"
-#include "arix_canary.h"
-#include "arix_timing.h"
+#include "protected_memory_manager.h"
+#include "stack_canary_protection.h"
+#include "timing_attack_countermeasure.h"
 
 int main(void) {
     printf("=== ARIX S1 Secure Memory Stress Test ===\n\n");

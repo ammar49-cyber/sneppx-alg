@@ -1,7 +1,7 @@
-#include "arix_timing.h"
-#include "arix_sc.h"
-#include "arix_ct.h"
-#include "arix_random.h"
+#include "timing_attack_countermeasure.h"
+#include "side_channel_resistant_primitives.h"
+#include "constant_time_operations.h"
+#include "cryptographic_random_generator.h"
 
 #if defined(_MSC_VER)
 #include <intrin.h>

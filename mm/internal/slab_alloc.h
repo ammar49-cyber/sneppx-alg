@@ -11,7 +11,7 @@
  * Cache coloring offsets slab bases by a per-CPU stride to reduce
  * false sharing on frequently-accessed objects.
  *
- * DEPENDENCIES: arix_memory.h (ArixMemPool, ArixMemNode)
+ * DEPENDENCIES: polymorphic_memory_allocator.h (ArixMemPool, ArixMemNode)
  * VERSION: v0.5
  */
 
