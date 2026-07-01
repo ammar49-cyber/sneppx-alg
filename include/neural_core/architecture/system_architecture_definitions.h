@@ -6,6 +6,7 @@
 #include "adversarial_robustness_certification.h"
 #include "neural_programming_engine.h"
 #include "fractal_memory_orchestrator.h"
+#include "multi_head_attention_module.h"
 
 typedef struct {
     ArixHSSConfig hss_config;
@@ -13,8 +14,16 @@ typedef struct {
     ArixARCConfig arc_config;
     ArixNPEConfig npe_config;
     ArixFMConfig fm_config;
+    ArixAttentionConfig attention_config;
+    int enable_attention;
+    int enable_hss;
+    int enable_ser;
+    int enable_arc;
+    int enable_npe;
+    int enable_fm;
     size_t input_dim;
     size_t output_dim;
+    size_t vocab_size;
     unsigned int seed;
 } ArixArchConfig;
 
@@ -25,6 +34,9 @@ typedef struct {
     ArixNPEVM* npe_vm;
     ArixNPEProgram* npe_program;
     ArixFMController* fm_controller;
+    ArixAttentionWeights* attention;
+    ArixTensor* embed_weight;
+    ArixTensor* unembed_weight;
     ArixArchConfig config;
 } ArixModel;
 
