@@ -2,75 +2,71 @@
 
 ## Prerequisites
 
-- **C11/C++17 compiler** (MSVC 19.44+ on Windows, GCC 11+ or Clang 14+ on Linux)
-- **CMake 3.20+**
-- **Python 3.11+** with pybind11 3.0+ (for Python bindings)
-- **Git**
+- **CMake** 3.16+
+- **C11 compiler** (MSVC 2022, GCC 11+, Clang 14+)
+- **C++20** for S2 obfuscation (optional)
+- **Python 3.11+** for bindings (optional)
+- **Git** with GPG or Ed25519 signing configured
 
-## Build (C only)
+## Quick Start
 
 ```bash
-# Configure
+git clone https://github.com/ammar49-cyber/arixalgo.git
+cd arixalgo
 mkdir build && cd build
-cmake .. -G "Visual Studio 17 2022" -DBUILD_TYPE=Release
-
-# Build
-cmake --build . --config Release
-
-# Test
-ctest --output-on-failure -C Release
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON
+cmake --build . -j$(nproc)
+ctest --output-on-failure
 ```
 
-## Build (with Python bindings)
+## Workflow
 
-```bash
-cd build
-cmake .. -G "Visual Studio 17 2022" -DBUILD_TYPE=Release `
-  -DARIX_BUILD_PYTHON=ON `
-  -DPython_EXECUTABLE=$(which python) `
-  -Dpybind11_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
-cmake --build . --config Release --target arix_algo_core
+1. **Branch**: feature branches from `main`
+2. **Develop**: write code, add tests, run locally
+3. **Format**: `clang-format -i -style=file <files>`
+4. **Test**: `ctest --output-on-failure`
+5. **Commit**: `git commit -s -m "component: message"`
+6. **Patch**: `git format-patch -1 HEAD`
+7. **Submit**: email to [algoarix@gmail.com](mailto:algoarix@gmail.com)
 
-# Copy .pyd to package dir (Windows)
-Copy-Item "src/python/arix_algo/Release/arix_algo_core.cp311-win_amd64.pyd" `
-          "src/python/arix_algo/arix_algo_core.pyd"
+## Project Layout
 
-# Run Python tests
-$env:PYTHONPATH="src\python;$env:PYTHONPATH"
-pytest tests/python/ -v
+```
+include/neural_core/     # Public headers (kernel, architecture, security)
+kernel/                   # Core implementations (arch, tensor, attention, etc.)
+tests/                    # Unit, integration, benchmark, security tests
+examples/                 # Demo programs
+bindings/                 # Python (pybind11) and Rust bindings
+tools/                    # CLI utilities and benchmarks
+scripts/                  # Build and development scripts
+cmake/                    # CMake modules
+docs/                     # Documentation
+security/                 # S0-S3 security layer source
 ```
 
-## Test Suites
+## Build Options
 
-| Suite | Count | Command |
-|-------|-------|---------|
-| C Unit Tests | 21 | `ctest -C Release` |
-| C Integration Tests | 4 | `ctest -C Release` |
-| Python Tests | 5 | `pytest tests/python/ -v` |
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ARIX_BUILD_TESTS` | ON | Build test suite |
+| `ARIX_BUILD_BENCHMARKS` | ON | Build benchmarks |
+| `ARIX_BUILD_PYTHON` | OFF | Build Python bindings |
+| `ARIX_BUILD_CUDA` | OFF | Build CUDA kernels |
+| `ARIX_USE_ASAN` | OFF | AddressSanitizer |
+| `ARIX_USE_UBSAN` | OFF | UndefinedBehaviorSanitizer |
+| `ARIX_USE_LTO` | OFF | Link-Time Optimization |
 
-All tests use a simple counter-based runner (no test framework dependency).
+## Testing
 
-## Code Style
+- All new features must include tests
+- Run full suite before submitting patches
+- Pre-existing failures: Argon2id (1 timing edge case), SER training (1 edge case)
+- Timeouts: Ed25519 (slow test vectors), thread pool (sleep-based timing)
 
-- **C**: K&R indentation, `snake_case` for functions/variables, `PascalCase` for types
-- **C++**: pybind11 extension only — `camelCase` for methods, same C style for wrapped calls
-- **Python**: `snake_case` following PEP 8
-- No memory leaks: every `arix_malloc` has a matching `arix_free`, every `arix_tensor_create` has a `arix_tensor_destroy`
-- All structs are zero-initialized via `memset`
-- No BLAS dependency — all matmul uses nested loops
+## Code Review
 
-## Adding a New Component
-
-1. Create header in `src/arch/include/arix_<name>.h`
-2. Create implementation in `src/arch/src/<name>/`
-3. Create tests in `tests/unit/<name>/`
-4. Add CMake glob for sources (they're auto-discovered via `GLOB_RECURSE`)
-5. Register in `ArixArchConfig` / `ArixModel` in `src/arch/include/arix_arch.h`
-6. Wire into `arix_model_create` and `arix_model_forward` in `src/arch/src/arch/arch.c`
-
-## Key Conventions
-
-- Memory: `arix_malloc(size, alignment)` / `arix_free(ptr, size)` — aligned, secure-zero on free
-- Errors: return non-zero on failure, NULL on allocation failure
-- Ownership: caller is responsible for destroying any `ArixTensor*` returned from `*_forward` functions
-- Thread safety: not guaranteed in v0.1 (single-threaded)
+Patches are reviewed for:
+- Correctness: does the code do what it claims?
+- Style: does it follow STYLE_GUIDE.md?
+- Safety: are all allocations checked? No buffer overflows?
+- Tests: are new features adequately tested?

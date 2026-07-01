@@ -1,5 +1,5 @@
-ARIX-Algo v0.1.0
-Release Date: 2026-06-24
-Status: Beta — Core Architecture
+ARIX-Algo v0.1.1
+Release Date: 2026-06-30
+Status: Beta — Core Architecture + Attention + Inference
 Security: S0-S3 Complete | S4-S9 In Progress
-Build: cmake 3.20+, C11/C++20, Python 3.11+
+Build: cmake 3.16+, C11/C++20, Python 3.11+

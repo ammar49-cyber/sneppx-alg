@@ -1,0 +1,25 @@
+name: CodeQL
+
+on:
+  workflow_call:
+  schedule:
+    - cron: '0 12 * * 1'
+
+jobs:
+  analyze:
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [c-cpp]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{matrix.language}}
+          build-mode: manual
+      - run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON
+      - run: cmake --build build -j$(nproc)
+      - uses: github/codeql-action/analyze@v3

@@ -8,14 +8,14 @@
 > Not patched later. Not bolted on. **In every instruction.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0--alpha-blueviolet?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.1.1--alpha-blueviolet?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/C-11-00599C?style=for-the-badge&logo=c" alt="C11"/>
   <img src="https://img.shields.io/badge/C++-20-f34b7d?style=for-the-badge&logo=cplusplus" alt="C++20"/>
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python" alt="Python 3.11"/>
   <img src="https://img.shields.io/badge/CMake-3.16-064F8C?style=for-the-badge&logo=cmake" alt="CMake 3.16"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License MIT"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing"/>
-  <img src="https://img.shields.io/badge/tests-54%2F56%20passing-success?style=for-the-badge" alt="54/56 Tests Passing"/>
+  <img src="https://img.shields.io/badge/tests-62%2F64%20passing-success?style=for-the-badge" alt="62/64 Tests Passing"/>
   <img src="https://img.shields.io/badge/security-S0%2FS1%20complete-important?style=for-the-badge" alt="Security S0/S1 Complete"/>
 </p>
 
@@ -62,24 +62,30 @@ ARIX-Algo is built for researchers, engineers, and security professionals who be
 
 ---
 
-## 🧩 The Five Components
+## 🧩 The Components
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                     🔐 SECURITY LAYER                          │
-│  S0 Crypto · S1 Secure Mem · S2 Obfuscation · S3 Monitor      │
-└────────────────────────────────────────────────────────────────┘
-                                │
-┌────────────────────────────────────────────────────────────────┐
-│                   🧠 ALGORITHM PIPELINE                        │
-│  HSS  ──▶  SER  ──▶  ARC  ──▶  NPE  ──▶  FM                   │
-│  (SSM)    (MoE)    (Guard)   (VM)     (Fed Mem)               │
-└────────────────────────────────────────────────────────────────┘
-                                │
-┌────────────────────────────────────────────────────────────────┐
-│                   🛡️ INTEGRITY LAYER (Future)                  │
-│  ZK Proofs · Formal Verification · On-Device Attestation      │
-└────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                        🔐 SECURITY LAYER                             │
+│  S0 Crypto · S1 Secure Mem · S2 Obfuscation · S3 Monitor             │
+└──────────────────────────────────────────────────────────────────────┘
+                                    │
+┌──────────────────────────────────────────────────────────────────────┐
+│                      🧠 MODEL PIPELINE (Modular)                     │
+│  Attn ──▶ HSS ──▶ SER ──▶ ARC ──▶ NPE ──▶ FM                        │
+│  (MHA)   (SSM)   (MoE)   (Guard)  (VM)    (Fed Mem)                 │
+│  Each module individually enable/disable via ArixArchConfig          │
+└──────────────────────────────────────────────────────────────────────┘
+                                    │
+┌──────────────────────────────────────────────────────────────────────┐
+│                       🏭 DATA & INFRASTRUCTURE                       │
+│  Data Pipeline · Inference Engine · Tokenizer (BPE) · KV-Cache      │
+└──────────────────────────────────────────────────────────────────────┘
+                                    │
+┌──────────────────────────────────────────────────────────────────────┐
+│                     🛡️ INTEGRITY LAYER (Future)                      │
+│  ZK Proofs · Formal Verification · On-Device Attestation              │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 🔷 HSS — Hierarchical State Space Model
@@ -150,6 +156,9 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 | 🔐 **Security S2** | ⚠️ Partial | Control flow flattening, string encryption stubs | Full obfuscation |
 | 🔐 **Security S3** | ⚠️ Partial | Behavioral monitor structure | Real anomaly detection |
 | 🏗️ **Skeleton Infrastructure** | ✅ **Real** | 75 files: kernel internals, mem mgmt, net, drivers, lib, fuzz, tools, samples, bindings (C/C++/Python/Rust) | Full implementation (v0.5+) |
+| 🎯 **Attention (MHA)** | ✅ **Real** | Multi-head attention, RoPE, causal mask, KV-cache, batched matmul 3D | Flash attention |
+| 🏭 **Data Pipeline** | ✅ **Real** | TextDataset (file → tokenize → batch), BPE tokenizer | Streaming, shuffle |
+| ⚙️ **Inference Engine** | ✅ **Real** | Autoregressive generation, top-k/top-p sampling, temperature, KV-cached gen | Beam search, batch gen |
 
 ### 📏 Lines of Code Breakdown
 
@@ -165,13 +174,16 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 | 🌐 FM | ~600 | 4 | ⚠️ |
 | 🔄 Autodiff | ~400 | 1 | ❌ |
 | ⚡ Optimizer | ~300 | 1 | ❌ |
+| 🎯 **Attention (MHA)** | **~500** | **6** | **✅** |
+| 🏭 **Data Pipeline** | **~200** | **2** | **✅** |
+| ⚙️ **Inference Engine** | **~300** | **4** | **✅** |
 | 🐍 Python API | ~500 | 3 | ❌ |
 | 🔐 S0 Crypto | ~2,000 | 10 | ✅ |
 | 🔐 S1 Secure Mem | ~800 | 3 | ✅ |
 | 🔐 S2 Obfuscation | ~1,500 | 4 | ⚠️ |
 | 🔐 S3 Monitor | ~100 | 0 | ⚠️ |
 | 🏗️ **Skeleton Infrastructure** | **~3,400** | — | ✅ Stubs |
-| **📊 Total** | **~18,900** | **~150** | — |
+| **📊 Total** | **~22,400** | **~162** | — |
 
 ---
 
@@ -186,11 +198,13 @@ Per-node memory banks with euclidean similarity search, LRU eviction, and trust-
 - ✅ **Use the tensor ops** — 80+ operations on 13 data types
 - ✅ **Run benchmarks** — Compare tensor and autodiff performance
 - ✅ **Browse skeleton infrastructure** — 75 stubs for kernel internals, memory mgmt, networking, drivers, generic libs, fuzzing, tools, samples, and language bindings (C/C++/Python/Rust)
+- ✅ **Run multi-head attention** — RoPE, causal mask, KV-cache, batched matmul 3D
+- ✅ **Generate text** — autoregressive generation with top-k/top-p/temperature sampling
+- ✅ **Load data** — TextDataset from file with BPE tokenization and batching
 
 ## ❌ What You Cannot Do (Yet)
 
 - ❌ **Train a model** — autodiff backward pass is not implemented
-- ❌ **Generate text** — no training → no inference
 - ❌ **Benchmark against GPT-2** — wait for v1.0
 - ❌ **Use as PyTorch replacement** — not the goal
 - ❌ **Deploy to production** — v0.1.0 is a research prototype
@@ -232,51 +246,47 @@ ctest --output-on-failure
 ### 💻 C Example
 
 ```c
-#include "arix_tensor.h"
-#include "arix_hss.h"
-#include "arix_ser.h"
-#include "arix_arc.h"
+#include "multidimensional_tensor_engine.h"
+#include "multi_head_attention_module.h"
+#include "data_pipeline.h"
+#include "inference_engine.h"
 
 int main() {
-    // 📐 Create input tensor: batch=4, seq=8, dim=16
-    size_t shape[] = {4, 8, 16};
+    // 🧮 Multi-head attention forward
+    ArixAttentionConfig attn_cfg = arix_attn_config_default();
+    attn_cfg.d_model = 64; attn_cfg.num_heads = 4; attn_cfg.head_dim = 16;
+    attn_cfg.use_rope = 1; attn_cfg.use_causal_mask = 1;
+
+    ArixAttentionWeights* attn = arix_attn_weights_create(attn_cfg, 42);
+
+    size_t shape[] = {1, 8, 64};
     ArixTensor* input = arix_tensor_randn(shape, 3, ARIX_FLOAT32);
+    ArixTensor* cos_t = arix_rope_precompute(8, 16, 10000.0f);
 
-    // 🌀 HSS forward pass
-    ArixHSSConfig hss_cfg = arix_hss_config_default();
-    ArixHSSModel* hss = arix_hss_model_create(&hss_cfg, 42);
-    ArixTensor* hss_out;
-    arix_hss_forward(hss, input, &hss_out);
+    ArixTensor* output = arix_attn_forward(attn, input, cos_t, cos_t);
 
-    // 🎯 SER forward pass
-    ArixSERConfig ser_cfg = arix_ser_config_default();
-    ArixSERModel* ser = arix_ser_model_create(&ser_cfg, 42);
-    ArixTensor* ser_out;
-    arix_ser_forward(ser, hss_out, &ser_out);
-
-    // 🛡️ ARC forward pass (guard + verify)
-    ArixARCConfig arc_cfg = arix_arc_config_default();
-    ArixARCModel* arc = arix_arc_model_create(&arc_cfg);
-    ArixTensor* arc_out;
-    ArixTensor* anomaly_scores;
-    arix_arc_forward(arc, ser_out, &arc_out, &anomaly_scores);
-
-    // 📊 Print results
-    printf("🔷 Output shape: ");
-    for (size_t i = 0; i < arix_tensor_ndim(arc_out); i++)
-        printf("%zu ", arix_tensor_shape(arc_out)[i]);
+    printf("🔷 Attention output shape: ");
+    for (size_t i = 0; i < arix_tensor_ndim(output); i++)
+        printf("%zu ", arix_tensor_shape(output)[i]);
     printf("\n");
 
-    // 🧹 Cleanup
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(hss_out);
-    arix_tensor_destroy(ser_out);
-    arix_tensor_destroy(arc_out);
-    arix_tensor_destroy(anomaly_scores);
-    arix_hss_model_destroy(hss);
-    arix_ser_model_destroy(ser);
-    arix_arc_model_destroy(arc);
+    // 🤖 Autoregressive generation
+    size_t vs = 16, dm = 16;
+    size_t es[] = {vs, dm}, us[] = {dm, vs};
+    ArixTensor* embed = arix_tensor_empty(es, 2, ARIX_FLOAT32);
+    ArixTensor* unembed = arix_tensor_empty(us, 2, ARIX_FLOAT32);
+    int input_ids[] = {0, 1, 2, 3}, output_ids[32];
+    ArixGenerationConfig gen_cfg = arix_generation_config_default();
+    gen_cfg.max_new_tokens = 10; gen_cfg.top_k = 1;
 
+    int n = arix_generate_tokens(embed, unembed, attn, input_ids, 4,
+                                  output_ids, 32, &gen_cfg);
+    printf("🔤 Generated %d tokens\n", n);
+
+    // 🧹 Cleanup
+    arix_tensor_destroy(input); arix_tensor_destroy(cos_t);
+    arix_tensor_destroy(output); arix_tensor_destroy(embed);
+    arix_tensor_destroy(unembed); arix_attn_weights_destroy(attn);
     return 0;
 }
 ```
@@ -453,15 +463,15 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 
 | Metric | Value |
 |--------|-------|
-| 📝 C/C++ Source | **~18,900 lines** |
-| 📁 Source Files | **~180** (75 skeleton infrastructure stubs) |
-| 🧪 Registered Tests | **56** (54 pass, 2 pre-existing crypto edge cases) |
-| 🔧 Build Time | **~30s** (Release, 8 cores) |
+| 📝 C/C++ Source | **~22,400 lines** |
+| 📁 Source Files | **~190** (75 skeleton infrastructure stubs) |
+| 🧪 Registered Tests | **64** (62 pass, 2 pre-existing crypto edge cases) |
+| 🔧 Build Time | **~35s** (Release, 8 cores) |
 | 📦 Dependencies | **0** for C core |
 | 🖥️ Platforms | **Windows** (MSVC) · **Linux** (GCC/Clang) · **macOS** (Clang) |
 | 🐍 Python | **3.11+** (optional, via pybind11) |
 | 🔐 Security Layers | **3 of 10** implemented (S0-S2 complete, S3 partial) |
-| 🧩 Components | **11** (5 algorithm + 4 security + 2 foundation) |
+| 🧩 Components | **14** (6 algorithm + 4 security + 4 infrastructure) |
 
 ---
 
@@ -487,7 +497,10 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 │   ├── arc/                    # 🛡️ ARC tests
 │   ├── npe/                    # 🤖 NPE tests
 │   ├── fm/                     # 🌐 FM tests
-│   └── train/                  # 🏋️ Trainer tests
+│   ├── train/                  # 🏋️ Trainer tests
+│   ├── test_attention.c        # 🎯 Multi-head attention (6 tests)
+│   ├── test_inference.c        # ⚙️ Inference engine + data pipeline (6 tests)
+│   └── test_tokenizer.c        # 🔤 Tokenizer + BPE (6 tests)
 ├── 📁 integration/             # 🔗 Multi-component integration tests
 ├── 📁 benchmark/               # ⏱️ Performance benchmarks
 │   ├── bench_tensor.c          # 🧮 Tensor benchmarks (7 groups)

@@ -55,6 +55,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(CompilerOptions)
+include(Sanitizers)
 
 if(ARIX_USE_LTO)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
