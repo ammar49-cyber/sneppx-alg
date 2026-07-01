@@ -16,10 +16,10 @@ jobs:
         language: [c-cpp]
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{matrix.language}}
           build-mode: manual
       - run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON
       - run: cmake --build build -j$(nproc)
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
