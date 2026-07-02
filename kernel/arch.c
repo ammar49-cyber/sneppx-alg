@@ -133,7 +133,27 @@ int arix_model_forward(ArixModel* model, const ArixTensor* input, ArixTensor** o
     if (!model || !input || !output) return 1;
 
     ArixTensor* current = NULL;
-    if (input->ndim == 3) {
+
+    /* For attention models with embedding, do embedding lookup on token indices */
+    if (model->attention && model->embed_weight && input->ndim == 2) {
+        /* Input: [B, S] token IDs stored as floats */
+        size_t B = input->shape[0], S = input->shape[1];
+        size_t D = model->attention->config.d_model;
+        (void)D;
+        ArixTensor* idx_t = arix_tensor_create(input->shape, input->ndim, ARIX_INT32);
+        if (!idx_t) return 1;
+        size_t n = B * S;
+        int* id = (int*)idx_t->data;
+        float* fd = (float*)input->data;
+        for (size_t i = 0; i < n; i++) id[i] = (int)fd[i];
+        current = arix_tensor_embedding(model->embed_weight, idx_t);
+        arix_tensor_destroy(idx_t);
+        if (current) {
+            size_t sh3[] = {B, S, D};
+            ArixTensor* r = arix_tensor_reshape(current, sh3, 3);
+            if (r) { arix_tensor_destroy(current); current = r; }
+        }
+    } else if (input->ndim == 3) {
         size_t b = input->shape[0], s = input->shape[1], d = input->shape[2];
         size_t sh[] = {b * s, d};
         current = arix_tensor_create(sh, 2, ARIX_FLOAT32);
@@ -145,9 +165,7 @@ int arix_model_forward(ArixModel* model, const ArixTensor* input, ArixTensor** o
     if (!current) return 1;
 
     if (model->attention && model->embed_weight) {
-        ArixTensor cos_t;
-        /* Use RoPE cos/sin table for fixed length */
-        size_t S = input->ndim == 3 ? input->shape[1] : input->shape[0];
+        size_t S = current->ndim >= 3 ? current->shape[1] : current->shape[0];
         ArixTensor* cos_full = arix_rope_precompute(S, model->attention->config.head_dim, model->attention->config.rope_base);
         if (cos_full) {
             ArixTensor* attn_out = arix_attn_forward(model->attention, current, cos_full, cos_full);
@@ -220,7 +238,7 @@ size_t arix_model_get_params(const ArixModel* model, ArixTensor** out, size_t ma
     size_t total = 0;
 
     if (model->attention) {
-        total += arix_attn_num_params(model->attention);
+        total += 8; /* 8 weight tensors: w_q, b_q, w_k, b_k, w_v, b_v, w_o, b_o */
     }
     if (model->hss_model) {
         total += arix_hss_get_params(model->hss_model, NULL, 0);
@@ -250,4 +268,58 @@ size_t arix_model_get_params(const ArixModel* model, ArixTensor** out, size_t ma
         if (model->unembed_weight && idx < max_out) out[idx++] = model->unembed_weight;
     }
     return total;
+}
+
+int arix_model_build_train_graph(ArixModel* model, ArixTape* tape,
+                                  ArixVariable* input_var,
+                                  ArixVariable** weight_vars, size_t num_weights,
+                                  ArixVariable** output_var) {
+    if (!model || !tape || !input_var || !output_var) return -1;
+    (void)num_weights;
+    ArixVariable* current = input_var;
+    size_t woff = 0;
+
+    if (model->attention) {
+        size_t S = current->data->ndim >= 2 ? current->data->shape[1] : current->data->shape[0];
+        ArixTensor* cos_t = arix_rope_precompute(S, model->attention->config.head_dim, model->attention->config.rope_base);
+        ArixTensor* sin_t = cos_t ? arix_tensor_copy(cos_t) : NULL;
+        ArixVariable* attn_out = NULL;
+        int ret = arix_attn_build_train_graph(model->attention, tape, current,
+                                               weight_vars + woff, 8, &attn_out,
+                                               cos_t, sin_t);
+        if (cos_t) arix_tensor_destroy(cos_t);
+        if (sin_t) arix_tensor_destroy(sin_t);
+        if (ret != 0 || !attn_out) return -1;
+        current = attn_out;
+        woff += 8;
+    }
+
+    /* Flatten 3D -> 2D for HSS/SER */
+    if ((model->hss_model || model->ser_model) && current->data->ndim == 3) {
+        size_t flat_sh[] = {current->data->shape[0] * current->data->shape[1], current->data->shape[2]};
+        current = arix_reshape(tape, current, flat_sh, 2);
+    }
+
+    if (model->hss_model) {
+        size_t nhss = arix_hss_get_params(model->hss_model, NULL, 0);
+        ArixVariable* hss_out = NULL;
+        int ret = arix_hss_build_train_graph(model->hss_model, tape, current,
+                                              weight_vars + woff, nhss, &hss_out);
+        if (ret != 0 || !hss_out) return -1;
+        current = hss_out;
+        woff += nhss;
+    }
+
+    if (model->ser_model) {
+        size_t nser = arix_ser_get_params(model->ser_model, NULL, 0);
+        ArixVariable* ser_out = NULL;
+        int ret = arix_ser_build_train_graph(model->ser_model, tape, current,
+                                              weight_vars + woff, nser, &ser_out);
+        if (ret != 0 || !ser_out) return -1;
+        current = ser_out;
+        woff += nser;
+    }
+
+    *output_var = current;
+    return 0;
 }

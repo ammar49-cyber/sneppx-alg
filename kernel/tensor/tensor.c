@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <float.h>
 
 static size_t compute_offset(const ArixTensor* tensor, const size_t* indices) {
@@ -1577,11 +1578,19 @@ ArixTensor* arix_tensor_instance_norm(const ArixTensor* src, const ArixTensor* g
     return result;
 }
 
+static size_t read_index(const ArixTensor* t, size_t i) {
+    switch (t->dtype) {
+        case ARIX_INT32:  return (size_t)((int32_t*)t->data)[i];
+        case ARIX_INT64:  return (size_t)((int64_t*)t->data)[i];
+        case ARIX_FLOAT32: return (size_t)((float*)t->data)[i];
+        default: return ((size_t*)t->data)[i];
+    }
+}
+
 ArixTensor* arix_tensor_embedding(const ArixTensor* weight, const ArixTensor* indices) {
     if (!weight || !indices || weight->ndim != 2) return NULL;
     size_t num_embeddings = weight->shape[0];
     size_t embedding_dim = weight->shape[1];
-    size_t* idx_data = (size_t*)indices->data;
     size_t n = indices->size;
     size_t out_shape[] = {n, embedding_dim};
     ArixTensor* result = arix_tensor_empty(out_shape, 2, weight->dtype);
@@ -1590,7 +1599,7 @@ ArixTensor* arix_tensor_embedding(const ArixTensor* weight, const ArixTensor* in
     unsigned char* rd = (unsigned char*)result->data;
     size_t is = weight->item_size;
     for (size_t i = 0; i < n; i++) {
-        size_t emb_idx = idx_data[i];
+        size_t emb_idx = read_index(indices, i);
         if (emb_idx >= num_embeddings) emb_idx = 0;
         memcpy(rd + i * embedding_dim * is, wd + emb_idx * embedding_dim * is, embedding_dim * is);
     }

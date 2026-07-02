@@ -1,5 +1,6 @@
 #include "automatic_differentiation_framework.h"
 #include "polymorphic_memory_allocator.h"
+#include "multi_head_attention_module.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
@@ -1161,6 +1162,37 @@ ArixVariable* arix_dropout(ArixTape* tape, ArixVariable* a, float rate, unsigned
             var->backward_fn = backward_dropout;
             var->backward_ctx = ctx;
             var->free_ctx = free_ctx_DropoutCtx;
+        }
+        set_parents(var, &a, 1);
+    }
+    if (tape && g_grad_enabled) arix_tape_record(tape, var);
+    return var;
+}
+
+/* ========== RoPE ========== */
+typedef struct { ArixVariable* a; ArixTensor* cos; } RoPECtx;
+static void free_ctx_RoPECtx(void* p) { RoPECtx* c = (RoPECtx*)p; arix_tensor_destroy(c->cos); arix_free(c, sizeof(RoPECtx)); }
+static void backward_rope(void* ctx, ArixTensor* grad_output) {
+    RoPECtx* c = (RoPECtx*)ctx;
+    if (!c->a->requires_grad) return;
+    /* Inverse RoPE: transpose of rotation matrix applied to grad */
+    ArixTensor* g = arix_tensor_rope(grad_output, c->cos);
+    grad_accum(&c->a->grad, g);
+}
+ArixVariable* arix_rope(ArixTape* tape, ArixVariable* a, ArixTensor* cos_table) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data || !cos_table) return NULL;
+    ArixTensor* result = arix_tensor_rope(a->data, cos_table);
+    if (!result) return NULL;
+    ArixVariable* var = arix_variable_create(result, rg);
+    if (!var) { arix_tensor_destroy(result); return NULL; }
+    if (rg && g_grad_enabled) {
+        RoPECtx* ctx = (RoPECtx*)arix_malloc(sizeof(RoPECtx), 64);
+        if (ctx) {
+            ctx->a = a;
+            ctx->cos = arix_tensor_copy(cos_table);
+            var->backward_fn = backward_rope; var->backward_ctx = ctx;
+            var->free_ctx = free_ctx_RoPECtx;
         }
         set_parents(var, &a, 1);
     }

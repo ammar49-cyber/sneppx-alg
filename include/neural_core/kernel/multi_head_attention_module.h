@@ -46,6 +46,7 @@ void arix_kv_cache_clear(ArixKVCache* cache);
 ArixTensor* arix_rope_precompute(size_t seq_len, size_t head_dim, float base);
 void arix_rope_apply(ArixTensor* q, ArixTensor* k, const ArixTensor* cos, const ArixTensor* sin,
                      size_t offset);
+ArixTensor* arix_tensor_rope(const ArixTensor* x, const ArixTensor* cos_table);
 
 ArixTensor* arix_batched_matmul(const ArixTensor* a, const ArixTensor* b,
                                  int transpose_b, int transpose_a);

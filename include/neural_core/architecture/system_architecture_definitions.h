@@ -45,5 +45,9 @@ ArixModel* arix_model_create(const ArixArchConfig* config);
 void arix_model_destroy(ArixModel* model);
 int arix_model_forward(ArixModel* model, const ArixTensor* input, ArixTensor** output);
 size_t arix_model_get_params(const ArixModel* model, ArixTensor** out_params, size_t max_params);
+int arix_model_build_train_graph(ArixModel* model, ArixTape* tape,
+                                  ArixVariable* input_var,
+                                  ArixVariable** weight_vars, size_t num_weights,
+                                  ArixVariable** output_var);
 
 #endif /* ARIX_ARCH_H */

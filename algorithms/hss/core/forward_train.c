@@ -106,11 +106,7 @@ int arix_hss_build_train_graph(ArixHSSModel* model, ArixTape* tape,
             yts[t] = yt;
         }
 
-        if (l == model->config.num_layers - 1) {
-            ArixVariable* sum_out = arix_sum(tape, yts[seq_len - 1], 1);
-            arix_free(yts, seq_len * sizeof(ArixVariable*));
-            *output_var = sum_out;
-        } else {
+        {
             ArixVariable** yt_rows = (ArixVariable**)arix_malloc(seq_len * sizeof(ArixVariable*), 64);
             if (!yt_rows) { arix_free(yts, seq_len * sizeof(ArixVariable*)); return -1; }
             for (size_t t = 0; t < seq_len; t++) {
@@ -120,8 +116,12 @@ int arix_hss_build_train_graph(ArixHSSModel* model, ArixTape* tape,
             arix_free(yt_rows, seq_len * sizeof(ArixVariable*));
             arix_free(yts, seq_len * sizeof(ArixVariable*));
             if (!layer_out) return -1;
-            layer_input = layer_out;
-            cur_dim = o_dim;
+            if (l == model->config.num_layers - 1) {
+                *output_var = layer_out;
+            } else {
+                layer_input = layer_out;
+                cur_dim = o_dim;
+            }
         }
     }
     return 0;

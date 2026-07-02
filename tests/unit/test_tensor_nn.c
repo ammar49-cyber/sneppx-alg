@@ -234,9 +234,9 @@ static void test_embedding_basic(void) {
     ArixTensor* w = arix_tensor_create(wshape, 2, ARIX_FLOAT32);
     memcpy(w->data, wdata, 12 * sizeof(float));
     size_t idx_shape[] = {2};
-    size_t idx_data[] = {1, 3};
-    ArixTensor* idx = arix_tensor_create(idx_shape, 1, ARIX_FLOAT32);
-    memcpy(idx->data, idx_data, 2 * sizeof(size_t));
+    int32_t idx_data[] = {1, 3};
+    ArixTensor* idx = arix_tensor_create(idx_shape, 1, ARIX_INT32);
+    memcpy(idx->data, idx_data, 2 * sizeof(int32_t));
     ArixTensor* e = arix_tensor_embedding(w, idx);
     ASSERT(e != NULL, "embedding result not null");
     ASSERT(e->shape[0] == 2 && e->shape[1] == 3, "embedding shape 2x3");

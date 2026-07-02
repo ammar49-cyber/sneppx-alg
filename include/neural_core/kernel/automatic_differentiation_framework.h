@@ -75,6 +75,7 @@ ArixVariable* arix_sum(ArixTape* tape, ArixVariable* a, size_t dim);
 ArixVariable* arix_mean(ArixTape* tape, ArixVariable* a, size_t dim);
 ArixVariable* arix_transpose(ArixTape* tape, ArixVariable* a, size_t dim1, size_t dim2);
 ArixVariable* arix_reshape(ArixTape* tape, ArixVariable* a, const size_t* shape, size_t ndim);
+ArixVariable* arix_rope(ArixTape* tape, ArixVariable* a, ArixTensor* cos_table);
 ArixVariable* arix_dropout(ArixTape* tape, ArixVariable* a, float rate, unsigned int seed);
 ArixVariable* arix_layer_norm(ArixTape* tape, ArixVariable* a, ArixVariable* gamma, ArixVariable* beta, float eps);
 ArixVariable* arix_conv2d(ArixTape* tape, ArixVariable* input, ArixVariable* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w);

@@ -8,6 +8,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+
+
 ArixTrainConfig arix_train_config_default(void) {
     ArixTrainConfig cfg;
     cfg.num_epochs = 10;
@@ -26,7 +28,6 @@ ArixTrainer* arix_trainer_create(ArixModel* model, const ArixTrainConfig* config
     memset(trainer, 0, sizeof(ArixTrainer));
 
     trainer->model = model;
-    trainer->config = *config;
 
     ArixOptimizerConfig opt_cfg = arix_optimizer_config_default();
     opt_cfg.learning_rate = config->learning_rate;
@@ -69,67 +70,52 @@ float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_inpu
         wv[i] = arix_variable_create(params[i], 1);
     }
 
-    size_t in_shape2[2];
-    size_t in_ndim;
-    size_t in_size;
-    const size_t* in_shape;
-    if (batch_input->ndim == 3) {
-        in_shape2[0] = batch_input->shape[0] * batch_input->shape[1];
-        in_shape2[1] = batch_input->shape[2];
-        in_shape = in_shape2;
-        in_ndim = 2;
-        in_size = in_shape2[0] * in_shape2[1];
-    } else {
-        in_shape = batch_input->shape;
-        in_ndim = batch_input->ndim;
-        in_size = batch_input->size;
-    }
-    ArixTensor* inv_t = arix_tensor_create(in_shape, in_ndim, ARIX_FLOAT32);
-    memcpy(inv_t->data, ((ArixTensor*)batch_input)->data, in_size * sizeof(float));
-    ArixVariable* inv = arix_variable_create(inv_t, 0);
-
-    ArixVariable* outv = NULL;
-    int ret = -1;
-    if (trainer->model->attention && trainer->model->embed_weight) {
-        /* Use the 3D input directly for attention */
-        ArixTensor* inv_3d = (ArixTensor*)batch_input;
-        if (inv_3d->ndim == 3) {
-            arix_variable_destroy(inv);
-            inv_t = arix_tensor_create(inv_3d->shape, 3, ARIX_FLOAT32);
-            memcpy(inv_t->data, inv_3d->data, inv_3d->size * sizeof(float));
-            inv = arix_variable_create(inv_t, 0);
-        }
-        /* Embedding lookup */
-        size_t input_shape[] = {batch_input->shape[0], batch_input->shape[1]};
-        ArixTensor* idx_t = arix_tensor_create(input_shape, 2, ARIX_INT32);
+    /* Prepare input variable: for attention models, do embedding lookup */
+    ArixVariable* inv = NULL;
+    if (trainer->model->attention && trainer->model->embed_weight && batch_input->ndim >= 2) {
+        /* Input is token indices [B, S] — do embedding lookup */
+        float* fdata = (float*)batch_input->data;
+        size_t n = batch_input->shape[0] * batch_input->shape[1];
+        ArixTensor* idx_t = arix_tensor_create(batch_input->shape, batch_input->ndim, ARIX_INT32);
         if (!idx_t) return -1.0f;
         int* id = (int*)idx_t->data;
-        float* fd = (float*)inv->data;
-        size_t n = batch_input->shape[0] * batch_input->shape[1];
-        for (size_t i = 0; i < n; i++) id[i] = (int)fd[i];
+        for (size_t i = 0; i < n; i++) id[i] = (int)fdata[i];
         ArixVariable* idx_v = arix_variable_create(idx_t, 0);
         arix_tape_record(tape, idx_v);
-        ArixVariable* emb = arix_embedding(tape, wv[nw - 2], idx_v);
+        inv = arix_embedding(tape, wv[nw - 2], idx_v);
+        /* Embedding returns 2D [B*S, D]; reshape to 3D [B, S, D] for attention */
+        if (inv && inv->data && inv->data->ndim == 2) {
+            size_t b = batch_input->shape[0], s = batch_input->shape[1];
+            size_t d = inv->data->shape[1];
+            size_t sh3[] = {b, s, d};
+            inv = arix_reshape(tape, inv, sh3, 3);
+        }
+    } else {
+        /* Input is raw float features */
+        size_t in_size = batch_input->size;
+        ArixTensor* inv_t = arix_tensor_create(batch_input->shape, batch_input->ndim, ARIX_FLOAT32);
+        if (!inv_t) return -1.0f;
+        memcpy(inv_t->data, batch_input->data, in_size * sizeof(float));
+        inv = arix_variable_create(inv_t, 0);
+    }
 
-        /* Attention params: 0-7 are attention, nw-2 is embed, nw-1 is unembed */
-        ArixTensor* cos_t = arix_rope_precompute(batch_input->shape[1],
-            trainer->model->attention->config.head_dim,
-            trainer->model->attention->config.rope_base);
-        ArixTensor* sin_t = arix_tensor_copy(cos_t); /* reuse cos for sin in training graph */
-        ret = arix_attn_build_train_graph(trainer->model->attention, tape, emb,
-                                           wv, 8, &outv, cos_t, sin_t);
-        arix_tensor_destroy(cos_t); arix_tensor_destroy(sin_t);
+    /* Build the unified train graph */
+    ArixVariable* outv = NULL;
+    int ret = arix_model_build_train_graph(trainer->model, tape, inv, wv, nw, &outv);
 
-        /* Unembed to vocab logits */
-        if (ret == 0 && outv && nw > 8) {
+    /* For decoder models (attention), unembed to vocab logits */
+    if (ret == 0 && outv && trainer->model->embed_weight && trainer->model->unembed_weight && nw >= 2) {
+        if (outv->data->ndim == 3) {
             size_t outf_sh[] = {outv->data->shape[0] * outv->data->shape[1], outv->data->shape[2]};
             ArixVariable* outf = arix_reshape(tape, outv, outf_sh, 2);
             outv = arix_matmul(tape, outf, wv[nw - 1]);
+        } else if (outv->data->ndim == 2) {
+            outv = arix_matmul(tape, outv, wv[nw - 1]);
+        } else if (outv->data->ndim == 1) {
+            size_t unsq_sh[] = {1, outv->data->shape[0]};
+            ArixVariable* unsq = arix_reshape(tape, outv, unsq_sh, 2);
+            outv = arix_matmul(tape, unsq, wv[nw - 1]);
         }
-    } else if (trainer->model->hss_model && trainer->model->hss_model->config.num_layers > 0) {
-        ret = arix_hss_build_train_graph(trainer->model->hss_model, tape, inv, wv, nw, &outv);
-    } else if (trainer->model->ser_model && trainer->model->ser_model->num_layers > 0) {
-        ret = arix_ser_build_train_graph(trainer->model->ser_model, tape, inv, wv, nw, &outv);
     }
 
     float loss_val = -1.0f;
@@ -145,6 +131,7 @@ float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_inpu
         ArixVariable* loss = arix_mse_loss(tape, outv, tgv);
 
         if (loss) {
+            loss_val = arix_variable_item(loss);
             arix_tape_backward(tape, loss);
 
             ArixTensor** grads = (ArixTensor**)arix_malloc(nw * sizeof(ArixTensor*), 64);
@@ -155,8 +142,6 @@ float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_inpu
                 arix_optimizer_step(trainer->optimizer, params, grads, nw);
                 arix_free(grads, nw * sizeof(ArixTensor*));
             }
-
-            loss_val = ((float*)loss->data)[0];
         }
 
         tgv->data = NULL; arix_variable_destroy(tgv);
@@ -170,7 +155,7 @@ float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_inpu
     trainer->step_count++;
 
     for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
-    arix_variable_destroy(inv);
+    /* inv was recorded on the tape (has gradient), so tape handles its destruction without explicit destroy */
     arix_free(wv, nw * sizeof(ArixVariable*));
     arix_free(params, nw * sizeof(ArixTensor*));
     arix_tape_destroy(tape);
