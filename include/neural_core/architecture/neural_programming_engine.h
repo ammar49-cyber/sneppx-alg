@@ -2,6 +2,7 @@
 #define ARIX_NPE_H
 
 #include "multidimensional_tensor_engine.h"
+#include "automatic_differentiation_framework.h"
 #include <stddef.h>
 
 typedef enum {
@@ -57,6 +58,10 @@ typedef struct {
     ArixTensor* registers[16];
     ArixTensor* memory;
     size_t pc;
+    ArixTensor* param_w1;
+    ArixTensor* param_b1;
+    ArixTensor* param_w2;
+    ArixTensor* param_b2;
 } ArixNPEProgram;
 
 typedef struct {
@@ -87,6 +92,13 @@ int arix_npe_vm_step(ArixNPEVM* vm);
 ArixNPEProgram* arix_npe_compile_attention(size_t seq_len, size_t dim);
 ArixNPEProgram* arix_npe_compile_mlp(size_t dim, size_t hidden_dim);
 int arix_npe_verify_program(const ArixNPEProgram* prog, char** error_msg, size_t* error_len);
+
+// Training graph support
+size_t arix_npe_get_params(ArixNPEProgram* prog, ArixTensor** out_params, size_t max_params);
+int arix_npe_build_train_graph(ArixNPEProgram* prog, ArixTape* tape,
+                                ArixVariable* input_var,
+                                ArixVariable** weight_vars, size_t num_weights,
+                                ArixVariable** output_var);
 
 // JIT profiling data
 typedef struct ArixNPEJITProfile {

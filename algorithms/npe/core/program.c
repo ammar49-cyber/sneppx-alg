@@ -40,6 +40,10 @@ void arix_npe_program_destroy(ArixNPEProgram* prog) {
         if (prog->registers[i]) arix_tensor_destroy(prog->registers[i]);
     }
     if (prog->memory) arix_tensor_destroy(prog->memory);
+    if (prog->param_w1) arix_tensor_destroy(prog->param_w1);
+    if (prog->param_b1) arix_tensor_destroy(prog->param_b1);
+    if (prog->param_w2) arix_tensor_destroy(prog->param_w2);
+    if (prog->param_b2) arix_tensor_destroy(prog->param_b2);
     arix_free(prog->instructions, prog->max_instructions * sizeof(ArixNPEInstruction));
     arix_free(prog, sizeof(ArixNPEProgram));
 }

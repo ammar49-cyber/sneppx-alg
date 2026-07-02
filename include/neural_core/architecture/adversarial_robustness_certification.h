@@ -2,6 +2,7 @@
 #define ARIX_ARC_H
 
 #include "multidimensional_tensor_engine.h"
+#include "automatic_differentiation_framework.h"
 #include <stddef.h>
 
 typedef enum {
@@ -73,5 +74,10 @@ void arix_arc_obfuscate_gradients(ArixGradientObfuscator* obf, ArixTensor* gradi
 void arix_arc_verify_output(ArixOutputVerifier* verifier, const ArixTensor* output, ArixTensor** verified_output, float* confidence);
 void arix_arc_forward(ArixARCLayer* layer, const ArixTensor* input, ArixTensor** output, float* security_metrics);
 void arix_arc_simulate_attack(const ArixTensor* clean_input, int attack_type, float epsilon, ArixTensor** adversarial);
+size_t arix_arc_get_params(const ArixARCLayer* layer, ArixTensor** out_params, size_t max_params);
+int arix_arc_build_train_graph(ArixARCLayer* layer, ArixTape* tape,
+                                ArixVariable* input_var,
+                                ArixVariable** weight_vars, size_t num_weights,
+                                ArixVariable** output_var);
 
 #endif /* ARIX_ARC_H */

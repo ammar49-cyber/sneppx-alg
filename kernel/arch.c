@@ -246,6 +246,15 @@ size_t arix_model_get_params(const ArixModel* model, ArixTensor** out, size_t ma
     if (model->ser_model) {
         total += arix_ser_get_params(model->ser_model, NULL, 0);
     }
+    if (model->arc_layer) {
+        total += arix_arc_get_params(model->arc_layer, NULL, 0);
+    }
+    if (model->npe_program) {
+        total += arix_npe_get_params(model->npe_program, NULL, 0);
+    }
+    if (model->fm_controller) {
+        total += arix_fm_get_params(model->fm_controller, NULL, 0);
+    }
     if (model->embed_weight) total++;
     if (model->unembed_weight) total++;
 
@@ -262,6 +271,18 @@ size_t arix_model_get_params(const ArixModel* model, ArixTensor** out, size_t ma
         }
         if (model->ser_model) {
             size_t n = arix_ser_get_params(model->ser_model, out + idx, max_out > idx ? max_out - idx : 0);
+            idx += n;
+        }
+        if (model->arc_layer) {
+            size_t n = arix_arc_get_params(model->arc_layer, out + idx, max_out > idx ? max_out - idx : 0);
+            idx += n;
+        }
+        if (model->npe_program) {
+            size_t n = arix_npe_get_params(model->npe_program, out + idx, max_out > idx ? max_out - idx : 0);
+            idx += n;
+        }
+        if (model->fm_controller) {
+            size_t n = arix_fm_get_params(model->fm_controller, out + idx, max_out > idx ? max_out - idx : 0);
             idx += n;
         }
         if (model->embed_weight && idx < max_out) out[idx++] = model->embed_weight;
@@ -294,8 +315,8 @@ int arix_model_build_train_graph(ArixModel* model, ArixTape* tape,
         woff += 8;
     }
 
-    /* Flatten 3D -> 2D for HSS/SER */
-    if ((model->hss_model || model->ser_model) && current->data->ndim == 3) {
+    /* Flatten 3D -> 2D for HSS/SER/ARC */
+    if ((model->hss_model || model->ser_model || model->arc_layer) && current->data->ndim == 3) {
         size_t flat_sh[] = {current->data->shape[0] * current->data->shape[1], current->data->shape[2]};
         current = arix_reshape(tape, current, flat_sh, 2);
     }
@@ -318,6 +339,40 @@ int arix_model_build_train_graph(ArixModel* model, ArixTape* tape,
         if (ret != 0 || !ser_out) return -1;
         current = ser_out;
         woff += nser;
+    }
+
+    if (model->arc_layer) {
+        size_t narc = arix_arc_get_params(model->arc_layer, NULL, 0);
+        ArixVariable* arc_out = NULL;
+        int ret = arix_arc_build_train_graph(model->arc_layer, tape, current,
+                                              weight_vars + woff, narc, &arc_out);
+        if (ret != 0 || !arc_out) return -1;
+        current = arc_out;
+        woff += narc;
+    }
+
+    if (model->npe_program) {
+        if (current->data->ndim == 3) {
+            size_t flat_sh[] = {current->data->shape[0] * current->data->shape[1], current->data->shape[2]};
+            current = arix_reshape(tape, current, flat_sh, 2);
+        }
+        size_t nnpe = arix_npe_get_params(model->npe_program, NULL, 0);
+        ArixVariable* npe_out = NULL;
+        int ret = arix_npe_build_train_graph(model->npe_program, tape, current,
+                                              weight_vars + woff, nnpe, &npe_out);
+        if (ret != 0 || !npe_out) return -1;
+        current = npe_out;
+        woff += nnpe;
+    }
+
+    if (model->fm_controller) {
+        size_t nfm = arix_fm_get_params(model->fm_controller, NULL, 0);
+        ArixVariable* fm_out = NULL;
+        int ret = arix_fm_build_train_graph(model->fm_controller, tape, current,
+                                             weight_vars + woff, nfm, &fm_out);
+        if (ret != 0 || !fm_out) return -1;
+        current = fm_out;
+        woff += nfm;
     }
 
     *output_var = current;

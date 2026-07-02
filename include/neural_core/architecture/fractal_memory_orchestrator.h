@@ -2,6 +2,7 @@
 #define ARIX_FM_H
 
 #include "multidimensional_tensor_engine.h"
+#include "automatic_differentiation_framework.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -72,6 +73,13 @@ int arix_fm_sync_topology(ArixFMController* ctrl);
 ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio);
 void arix_fm_add_privacy_noise(ArixTensor* data, float epsilon);
 int arix_fm_forward(ArixFMController* ctrl, size_t node_id, const ArixTensor* input, ArixTensor** output);
+
+// Training graph support (FM has no trainable params, pass-through only)
+size_t arix_fm_get_params(const ArixFMController* ctrl, ArixTensor** out_params, size_t max_params);
+int arix_fm_build_train_graph(ArixFMController* ctrl, ArixTape* tape,
+                               ArixVariable* input_var,
+                               ArixVariable** weight_vars, size_t num_weights,
+                               ArixVariable** output_var);
 
 // ── Error-compensated gradient compression (EF-SGD) ──────────────────────────
 
