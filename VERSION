@@ -1,5 +1,5 @@
-ARIX-Algo v0.1.1
-Release Date: 2026-06-30
-Status: Beta — Core Architecture + Attention + Inference
+ARIX-Algo algo0.5
+Release Date: 2026-07-01
+Status: Trainable on CPU — Unified Differentiable Pipeline
 Security: S0-S3 Complete | S4-S9 In Progress
 Build: cmake 3.16+, C11/C++20, Python 3.11+
