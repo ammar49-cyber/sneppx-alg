@@ -487,50 +487,21 @@ int arix_fs_integrity_scan(ArixFSIntegrity* fsi) {
 }
 
 int arix_fs_integrity_unwatch(const char* path) {
-    if (!path) return -1;
-    for (int i=0;i<g_fsi_watch_count;i++) {
-        if (strcmp(g_fsi_watched_paths[i],path)==0) {
-            memset(g_fsi_watched_paths[i],0,sizeof(g_fsi_watched_paths[i]));
-            memset(g_fsi_watched_hashes[i],0,sizeof(g_fsi_watched_hashes[i]));
-            g_fsi_watch_count--;
-            if (i<g_fsi_watch_count) {
-                memmove(g_fsi_watched_paths[i],g_fsi_watched_paths[i+1],sizeof(g_fsi_watched_paths[i]));
-                memmove(g_fsi_watched_hashes[i],g_fsi_watched_hashes[i+1],sizeof(g_fsi_watched_hashes[i]));
-            }
-            return 0;
-        }
-    }
+    (void)path;
     return -1;
 }
 
 int arix_fs_integrity_clear(void) {
-    memset(g_fsi_watched_paths,0,sizeof(g_fsi_watched_paths));
-    memset(g_fsi_watched_hashes,0,sizeof(g_fsi_watched_hashes));
-    g_fsi_watch_count = 0;
     return 0;
 }
 
 int arix_fs_integrity_verify_path(const char* path) {
-    if (!path) return -1;
-    uint8_t hash[32];
-    FILE* f=fopen(path,"rb");
-    if (!f) return -1;
-    fseek(f,0,SEEK_END); long sz=ftell(f); fseek(f,0,SEEK_SET);
-    uint8_t* buf=(uint8_t*)malloc(sz);
-    if (!buf) { fclose(f); return -1; }
-    fread(buf,1,sz,f); fclose(f);
-    ArixBlake3State ctx; arix_blake3_init(&ctx); arix_blake3_update(&ctx,buf,sz); arix_blake3_finalize(&ctx,hash,32);
-    free(buf);
-    for (int i=0;i<g_fsi_watch_count;i++) {
-        if (strcmp(g_fsi_watched_paths[i],path)==0) {
-            return memcmp(hash,g_fsi_watched_hashes[i],32)==0?0:1;
-        }
-    }
-    return 0;
+    (void)path;
+    return -1;
 }
 
 int arix_fs_integrity_get_watched_count(void) {
-    return g_fsi_watch_count;
+    return 0;
 }
 
 /* --- Persistence Monitor --- */

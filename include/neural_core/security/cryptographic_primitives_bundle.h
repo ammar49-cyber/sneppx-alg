@@ -31,6 +31,17 @@
 #include "timing_attack_countermeasure.h"
 #include "secure_cache_management.h"
 #include "power_analysis_mitigation.h"
+#include "sha256.h"
+#include "kyber.h"
+#include "dilithium.h"
+#include "sphincsplus.h"
+#include "ddos_mitigation.h"
+#include "container_security.h"
+#include "differential_privacy.h"
+#include "memory_leak_detector.h"
+#include "container_breakout.h"
+#include "network_fuzzer.h"
+#include "rlhf_safety.h"
 
 /* S4-S9 Security Extensions */
 #include "transport_security.h"

@@ -20,6 +20,7 @@ typedef enum {
     ARIX_ATTENTION,
     ARIX_BRANCH,
     ARIX_HALT,
+    ARIX_NEG,
     ARIX_EXP,
     ARIX_LOG,
     ARIX_SQRT,

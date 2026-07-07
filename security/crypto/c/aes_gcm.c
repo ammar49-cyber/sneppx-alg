@@ -78,7 +78,7 @@ void arix_aes256_decrypt_block(const uint32_t rk[60], const uint8_t in[16], uint
     arix_aes256_encrypt_block(rk,in,out);
 }
 
-static void gcm_ghash(uint8_t* y, const uint8_t* h, const uint8_t* x, size_t len) {
+static void gcm_ghash(uint8_t* y, uint8_t* h, const uint8_t* x, size_t len) {
     for (size_t i=0;i<len;i+=16) {
         xor_block(y,x+i);
         uint8_t z[16]={0};

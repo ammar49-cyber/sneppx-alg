@@ -695,22 +695,7 @@ static int lean_write_theorem_file(const char* path, const char* name, const cha
     return arix_lean_export_proof(name, proof, path);
 }
 
-static int tla_eval_invariant_on_state(const char* invariant, const ArixBMCState* state) {
-    if (!invariant || !state) return -1;
-    if (strcmp(invariant, "valid_memory") == 0) return (state->valid_memory) ? 1 : 0;
-    if (strcmp(invariant, "no_overflow") == 0) return (state->no_overflow) ? 1 : 0;
-    if (strcmp(invariant, "valid_pointer") == 0) return (state->valid_pointer) ? 1 : 0;
-    if (strcmp(invariant, "no_leak") == 0) return (state->no_leak) ? 1 : 0;
-    return -1;
-}
-
-static int tla_generate_state_counterexample(const ArixBMCState* state, char* out, size_t out_size) {
-    if (!state || !out || out_size == 0) return -1;
-    snprintf(out, out_size,
-        "Counterexample state: vm=%d, nof=%d, vp=%d, nl=%d, mem=%zu",
-        state->valid_memory, state->no_overflow, state->valid_pointer, state->no_leak, state->memory_bytes);
-    return 0;
-}
+/* tla_eval_invariant_on_state and tla_generate_state_counterexample removed - type not available */
 
 static int ltl_negate_formula(const char* formula, char* negated, size_t size) {
     if (!formula || !negated || size == 0) return -1;
@@ -795,14 +780,7 @@ static int tla_validate_invariant_name(const char* name) {
     return 1;
 }
 
-static int tla_count_invariants(const ArixTLASpec* spec) {
-    if (!spec) return 0;
-    int count = 0;
-    for (int i = 0; i < spec->invariant_count; i++) {
-        if (spec->invariants[i] && spec->invariants[i][0]) count++;
-    }
-    return count;
-}
+/* tla_count_invariants removed - type not available */
 
 static int symex_is_supported_opcode(uint8_t op) {
     switch (op) {
@@ -852,12 +830,4 @@ static int lean_evaluate_proof_length_score(const char* proof) {
     return 40;
 }
 
-static int bmc_evaluate_condition(ArixBMCState* s) {
-    if (!s) return -1;
-    return (s->valid_memory && s->no_overflow && s->valid_pointer) ? 1 : 0;
-}
-
-static int bmc_reach_max_depth(ArixBMCState* s, int max_depth) {
-    if (!s) return 0;
-    return (s->depth >= max_depth) ? 1 : 0;
-}
+/* bmc_evaluate_condition and bmc_reach_max_depth removed - type not available */

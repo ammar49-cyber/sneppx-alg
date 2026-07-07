@@ -192,12 +192,6 @@ static int poison_total_checks=0;
 static int poison_total_outliers=0;
 static double poison_aggregate_scores[ARIX_POISON_MAX_SAMPLES];
 static int poison_aggregate_count=0;
-int arix_poison_detector_get_stats(ArixPoisonDetector* pd, int* sample_count, double* outlier_rate) {
-    if(!pd||!sample_count||!outlier_rate) return -1;
-    *sample_count=poison_sample_count;
-    *outlier_rate=poison_total_checks>0?(double)poison_total_outliers/(double)poison_total_checks:0.0;
-    return 0;
-}
 int arix_poison_detector_get_aggregate_stats(double* mean, double* std) {
     if(!mean||!std||poison_aggregate_count==0) return -1;
     double sum=0.0; for(int i=0;i<poison_aggregate_count;i++) sum+=poison_aggregate_scores[i];

@@ -1,7 +1,17 @@
 #include "output_verifier.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+typedef struct {
+    uint64_t total_checks;
+    uint64_t total_blocks;
+    uint64_t pii_hits;
+    uint64_t profanity_hits;
+    uint64_t toxicity_hits;
+    uint64_t bias_hits;
+} ArixOutputVerifierStats;
 
 #define ARIX_MAX_ALLOWED_TOPICS 64
 #define ARIX_PII_EMAIL 1
@@ -237,7 +247,7 @@ int arix_output_verifier_set_bias_threshold(double t) {
     return 0;
 }
 
-int arix_output_verifier_get_stats(ArixOutputVerifierStats* stats) {
+int arix_output_verifier_query_stats(ArixOutputVerifierStats* stats) {
     if (!stats) return -1;
     memset(stats, 0, sizeof(*stats));
     stats->total_checks = total_checks;
@@ -510,7 +520,6 @@ int arix_output_verifier_get_profanity_count(void) { return total_profanity_hits
 int arix_output_verifier_get_toxicity_count(void) { return total_toxicity_hits; }
 int arix_output_verifier_get_bias_count(void) { return total_bias_hits; }
 void arix_output_verifier_set_pii_detection(int enabled) { pii_detection_enabled = enabled; }
-int arix_output_verifier_is_pii_detection_enabled(void) { return pii_detection_enabled; }
 int arix_output_verifier_get_verifier_block_count(void) { return verifier_block_count; }
 int arix_output_verifier_check_all(ArixOutputVerifier* ov, const char* output, size_t len, int* toxicity_flag, int* pii_flag, int* profanity_flag) {
     if (!ov || !output || !toxicity_flag || !pii_flag || !profanity_flag) return -1;

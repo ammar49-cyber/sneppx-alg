@@ -805,7 +805,6 @@ int arix_model_inversion_get_clip_norm(void) {
     ArixModelInversionDefense mid; arix_model_inversion_init(&mid);
     return (int)(mid.clip_norm*100);
 }
-int arix_membership_inference_defense_set_epsilon(double e) { if(e<=0.0) return -1; membership_epsilon=e; return 0; }
 double arix_membership_inference_defense_get_epsilon(void) { return membership_epsilon; }
 int arix_membership_inference_defense_apply_batch(double** logits_batch, size_t batch_size, size_t logit_count, double epsilon, double** clipped_batch) {
     if(!logits_batch||!clipped_batch||batch_size==0) return -1;
@@ -932,12 +931,6 @@ int arix_prompt_policy_get_policy_at(ArixPromptPolicy* pp, int index, char* buff
     strncpy(buffer,pp->policies[index],buf_size-1); buffer[buf_size-1]=0;
     return (int)strlen(buffer);
 }
-int arix_semantic_injection_get_threshold(ArixSemanticInjectionDetector* sid) {
-    if(!sid) return -1; return (int)(sid->threshold*1000);
-}
-int arix_semantic_injection_set_threshold_direct(ArixSemanticInjectionDetector* sid, double t) {
-    if(!sid||t<0.0||t>1.0) return -1; sid->threshold=t; return 0;
-}
 int arix_semantic_injection_has_attacks(ArixSemanticInjectionDetector* sid) {
     if(!sid) return -1; return sid->attack_count>0?1:0;
 }
@@ -960,7 +953,6 @@ int arix_token_anomaly_check_warning(double score) {
 }
 int arix_token_anomaly_get_warning_count(void) { return token_anomaly_warning_count; }
 void arix_token_anomaly_reset_warnings(void) { token_anomaly_warning_count=0; }
-double arix_token_anomaly_get_threshold(void) { return token_anomaly_threshold; }
 int arix_model_inversion_set_noise_scale(ArixModelInversionDefense* mid, double scale) {
     if(!mid||scale<0.0) return -1; mid->noise_scale=scale; return 0;
 }
@@ -973,8 +965,6 @@ double arix_model_inversion_get_noise_scale_from_mid(ArixModelInversionDefense* 
 double arix_model_inversion_get_clip_norm_from_mid(ArixModelInversionDefense* mid) {
     if(!mid) return -1.0; return mid->clip_norm;
 }
-int arix_membership_inference_defense_set_epsilon(double e) { if(e<=0.0) return -1; membership_epsilon=e; return 0; }
-double arix_membership_inference_defense_get_epsilon(void) { return membership_epsilon; }
 int arix_membership_inference_defense_apply_with_eps(double* logits, size_t count, double* clipped_out) {
     return arix_membership_inference_defense_apply(logits,count,membership_epsilon,clipped_out);
 }
@@ -987,16 +977,10 @@ int arix_training_sanitize_all(const char* text, size_t len, char* out, size_t* 
     if(arix_training_sanitize_ips(buf3,l3,out,out_len)!=0) return -1;
     return 0;
 }
-int arix_factuality_score_set_threshold(double t) { if(t<0.0||t>1.0) return -1; factuality_threshold=t; return 0; }
 double arix_factuality_score_get_threshold(void) { return factuality_threshold; }
 int arix_factuality_score_compare_threshold(const char* statement, const char* reference) {
     double s=arix_factuality_score(statement,reference);
     return s>=factuality_threshold?1:0;
-}
-double arix_factuality_score_batch(const char** statements, const char** references, int count) {
-    if(!statements||!references||count<=0) return 0.0;
-    double sum=0.0; for(int i=0;i<count;i++) sum+=arix_factuality_score(statements[i],references[i]);
-    return sum/(double)count;
 }
 int arix_adversarial_smooth_get_epsilon_int(void) { return (int)(adversarial_epsilon*10000); }
 int arix_adversarial_smooth_apply(double* input, size_t input_dim) {

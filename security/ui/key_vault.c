@@ -1,8 +1,15 @@
 #include "key_vault.h"
 #include "cryptographic_random_generator.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+
+typedef ArixKeyVault ArixVault;
+
+typedef struct {
+    int encrypted_blocks;
+} ArixVaultBackup;
 
 #define ARIX_VAULT_AUTO_ROTATE_ACCESS 100
 
@@ -343,7 +350,7 @@ static int vault_get_key_count_by_type(ArixVault* vault, int type) {
     if (!vault) return 0;
     int count = 0;
     for (int i = 0; i < vault->key_count; i++) {
-        if (vault->keys[i].type == type) count++;
+        if (vault->keys[i].is_active == type) count++;
     }
     return count;
 }

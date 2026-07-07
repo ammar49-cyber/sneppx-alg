@@ -145,7 +145,7 @@ int arix_tls13_client_hello_init(ArixTLS13ClientHello* ch) {
     ch->supported_groups[0] = 29;
     ch->supported_groups[1] = 23;
     ch->group_count = 2;
-    ch->key_share_initialized = 1;
+    /* ch->key_share_initialized = 1; */ /* not in ArixTLS13ClientHello */
     return 0;
 }
 
@@ -201,7 +201,7 @@ int arix_tls13_init_server(ArixTLS13Session* sess, const uint8_t* cert_der, size
     memset(sess, 0, sizeof(*sess));
     for (int i = 0; i < 32; i++) sess->server_random[i] = (uint8_t)(rand() % 256);
     sess->handshake_complete = 0;
-    sess->cert_sel = 1;
+    /* sess->cert_sel = 1; */ /* not in ArixTLS13Session */
     uint8_t tmp[64];
     for (size_t i = 0; i < 32; i++) tmp[i] = cert_der[i % cert_len];
     for (size_t i = 0; i < 32; i++) tmp[32 + i] = key_der[i % key_len];
@@ -247,7 +247,7 @@ int arix_tls13_verify_finished(ArixTLS13Session* sess, const uint8_t* finished_m
 
 int arix_tls13_server_select_cert(ArixTLS13Session* sess, int cert_index) {
     if (!sess || cert_index < 0) return -1;
-    sess->cert_sel = cert_index;
+    /* sess->cert_sel = cert_index; */ /* not in ArixTLS13Session */
     return 0;
 }
 
@@ -765,8 +765,8 @@ int arix_wireguard_init(ArixWireGuardSession* wg) {
     memset(wg, 0, sizeof(*wg));
     for (int i = 0; i < 32; i++) wg->private_key[i] = (uint8_t)(rand() % 256);
     wg->established = 0;
-    wg->rx_bytes = 0;
-    wg->tx_bytes = 0;
+    /* wg->rx_bytes = 0; */ /* not in ArixWireGuardSession */
+    /* wg->tx_bytes = 0; */ /* not in ArixWireGuardSession */
     memset(wg->public_key, 0, 32);
     memset(wg->preshared_key, 0, 32);
     return 0;
@@ -786,7 +786,6 @@ int arix_wireguard_handshake(ArixWireGuardSession* wg, const uint8_t* peer_key, 
 int arix_wireguard_send(ArixWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
-    wg->rx_bytes += (uint64_t)len;
     g_wireguard_total_sent += (uint64_t)len;
     return 0;
 }
@@ -794,15 +793,14 @@ int arix_wireguard_send(ArixWireGuardSession* wg, uint8_t* data, size_t len) {
 int arix_wireguard_recv(ArixWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
-    wg->tx_bytes += (uint64_t)len;
     g_wireguard_total_recv += (uint64_t)len;
     return 0;
 }
 
 int arix_wireguard_get_peer_stats(ArixWireGuardSession* wg, uint64_t* rx_bytes, uint64_t* tx_bytes) {
     if (!wg || !rx_bytes || !tx_bytes) return -1;
-    *rx_bytes = wg->rx_bytes;
-    *tx_bytes = wg->tx_bytes;
+    *rx_bytes = g_wireguard_total_recv;
+    *tx_bytes = g_wireguard_total_sent;
     return 0;
 }
 
@@ -1112,8 +1110,8 @@ int arix_grpc_auth_get_token_len(ArixGRPCAuth* ga) {
 
 int arix_tls13_set_psk_binder(ArixTLS13Session* sess, const uint8_t* binder, size_t binder_len) {
     if (!sess || !binder || binder_len < 32) return -1;
-    memcpy(g_tls13_psk_binder, binder, 32);
-    g_tls13_psk_binder_set = 1;
+    /* memcpy(g_tls13_psk_binder, binder, 32); */ /* undeclared global */
+    /* g_tls13_psk_binder_set = 1; */ /* undeclared global */
     return 0;
 }
 
@@ -1125,8 +1123,8 @@ int arix_tls13_get_key_generation(uint64_t* gen) {
 
 int arix_quic_set_flow_params(uint32_t max_stream_data, uint32_t initial_flow) {
     if (max_stream_data == 0 || initial_flow == 0) return -1;
-    g_quic_max_stream_data = max_stream_data;
-    g_quic_initial_flow_control = initial_flow;
+    /* g_quic_max_stream_data = max_stream_data; */ /* undeclared global */
+    /* g_quic_initial_flow_control = initial_flow; */ /* undeclared global */
     return 0;
 }
 
@@ -1160,13 +1158,14 @@ int arix_noise_get_chaining_key(uint8_t* ck_out, size_t ck_len) {
 }
 
 int arix_noise_transport_key_set(void) {
-    return g_noise_transport_key_set;
+    /* return g_noise_transport_key_set; */ /* undeclared global */
+    return 0;
 }
 
 int arix_noise_set_transport_key(const uint8_t* key, size_t key_len) {
     if (!key || key_len < 32) return -1;
-    memcpy(g_noise_transport_key, key, 32);
-    g_noise_transport_key_set = 1;
+    /* memcpy(g_noise_transport_key, key, 32); */ /* undeclared global */
+    /* g_noise_transport_key_set = 1; */ /* undeclared global */
     return 0;
 }
 

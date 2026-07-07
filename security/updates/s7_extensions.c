@@ -219,7 +219,7 @@ int arix_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_t*
 int arix_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, size_t* data_len, uint32_t pcr_mask) {
     if (!sealed || !data || !data_len || sealed_len < 8) return -1;
     (void)pcr_mask;
-    if (!(sealed[sealed_len - 4] == 0xSE && sealed[sealed_len - 3] == 0xA1 && sealed[sealed_len - 2] == 0x1E && sealed[sealed_len - 1] == 0xD))
+    if (!(sealed[sealed_len - 4] == 0x5E && sealed[sealed_len - 3] == 0xA1 && sealed[sealed_len - 2] == 0x1E && sealed[sealed_len - 1] == 0xD))
         return -1;
     size_t payload_len = sealed_len - 8;
     if (*data_len < payload_len) return -1;
@@ -709,12 +709,7 @@ static int tuf_fetch_metadata_from_path(const char* path, uint8_t* out, size_t* 
     return (r > 0) ? 0 : -1;
 }
 
-static void tuf_set_root_key_from_buffer(ArixTufRootMetadata* root, const uint8_t* buf, size_t len) {
-    if (!root || !buf) return;
-    size_t cplen = (len < 32) ? len : 32;
-    memcpy(root->root_key, buf, cplen);
-    root->key_count = 1;
-}
+/* tuf_set_root_key_from_buffer removed - type not available */
 
 static void ab_mark_slot_unbootable(int slot) {
     (void)slot;
@@ -771,18 +766,7 @@ static int dep_resolver_count_upgrades_available(ArixDepResolver* dr) {
     return dr->resolved ? 1 : 0;
 }
 
-static int tuf_check_root_metadata_version(ArixTufRootMetadata* root, int required) {
-    if (!root) return -1;
-    return root->version >= required ? 0 : -1;
-}
-
-static int tuf_snapshot_has_target(ArixTufSnapshotMetadata* snap, const char* target_name) {
-    if (!snap || !target_name) return 0;
-    for (int i = 0; i < snap->target_count; i++) {
-        if (strcmp(snap->targets[i], target_name) == 0) return 1;
-    }
-    return 0;
-}
+/* tuf_check_root_metadata_version and tuf_snapshot_has_target removed - types not available */
 
 static int bsdiff_patch_is_empty(const uint8_t* patch, size_t len) {
     if (!patch || len == 0) return 1;

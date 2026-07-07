@@ -5,6 +5,15 @@
 #include <stdlib.h>
 #include <time.h>
 
+typedef struct {
+    int session_id;
+    uint32_t rekey_count;
+    int handshake_complete;
+    uint32_t timeout_seconds;
+    uint64_t creation_time;
+    uint64_t last_used_time;
+} ArixTransportSessionInfo;
+
 static int use_aes_gcm = 0;
 
 static uint64_t session_rekey_time[ARIX_TLS_MAX_SESSIONS];
@@ -101,7 +110,8 @@ int arix_transport_encrypt(ArixTransportSecurity* ts, int session_id,
     } else {
         ArixChaCha20State state;
         arix_chacha20_init(&state, s->session_key, nonce, 0);
-        arix_chacha20_encrypt(&state, plaintext, ciphertext, len);
+        memcpy(ciphertext, plaintext, len);
+        arix_chacha20_encrypt(&state, ciphertext, len);
     }
     s->last_used = (uint64_t)time(NULL);
     session_rekey_counter[session_id]++;
@@ -134,7 +144,8 @@ int arix_transport_decrypt(ArixTransportSecurity* ts, int session_id,
     } else {
         ArixChaCha20State state;
         arix_chacha20_init(&state, s->session_key, nonce, 0);
-        arix_chacha20_decrypt(&state, ciphertext, plaintext, len);
+        memcpy(plaintext, ciphertext, len);
+        arix_chacha20_encrypt(&state, plaintext, len);
     }
     s->last_used = (uint64_t)time(NULL);
     g_total_decrypted += (uint64_t)len;
@@ -252,7 +263,8 @@ int arix_transport_encrypt_with_aad(ArixTransportSecurity* ts, int session_id,
         for (size_t i = 0; i < aad_len && i < 12; i++)
             aad_nonce[i] ^= aad[i];
         arix_chacha20_init(&state, s->session_key, aad_nonce, 0);
-        arix_chacha20_encrypt(&state, plaintext, ciphertext, len);
+        memcpy(ciphertext, plaintext, len);
+        arix_chacha20_encrypt(&state, ciphertext, len);
     }
     s->last_used = (uint64_t)time(NULL);
     memcpy(session_aad_keys[session_id], aad, aad_len < 16 ? aad_len : 16);

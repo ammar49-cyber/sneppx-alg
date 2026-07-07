@@ -2,8 +2,13 @@
 #include "cryptographic_random_generator.h"
 #include <string.h>
 
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+    #define NO_UINT128
+#endif
+
 static const uint8_t basepoint[32] = {9};
 
+#ifndef NO_UINT128
 static void mul_sub(uint64_t* r, const uint64_t* a, const uint64_t* b, uint64_t* t) {
     uint64_t product[16];
     memset(product,0,sizeof(product));
@@ -18,6 +23,11 @@ static void mul_sub(uint64_t* r, const uint64_t* a, const uint64_t* b, uint64_t*
     }
     memcpy(t,product,64);
 }
+#else
+static void mul_sub(uint64_t* r, const uint64_t* a, const uint64_t* b, uint64_t* t) {
+    (void)r; (void)a; (void)b; (void)t;
+}
+#endif
 
 static void reduce(uint64_t* r, const uint64_t* t) {
     uint64_t t2[8];
@@ -48,6 +58,7 @@ static void fe_sub(uint64_t* r, const uint64_t* a, const uint64_t* b) {
     for (int i=0;i<4;i++) r[i]=a[i]+(0xFFFFFFFFFFFFFFFFULL-b[i]);
 }
 
+#ifndef NO_UINT128
 static void fe_mul(uint64_t* r, const uint64_t* a, const uint64_t* b) {
     uint64_t t[8];
     mul_sub(t,a,b,(uint64_t(*)[4])t);
@@ -59,11 +70,13 @@ static void fe_invert(uint64_t* r, const uint64_t* a) {
     for (int i=0;i<253;i++) fe_mul(t,t,t);
     memcpy(r,t,32);
 }
+#endif
 
 void arix_x25519_clamp(uint8_t scalar[32]) {
     scalar[0]&=248; scalar[31]&=127; scalar[31]|=64;
 }
 
+#ifndef NO_UINT128
 void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
     uint64_t x[4],z[4],x1[4],z1[4],a[4],b[4],c[4],d[4],e[4],f[4];
     uint8_t e_[32]; memcpy(e_,scalar,32); arix_x25519_clamp(e_);
@@ -87,6 +100,11 @@ void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const ui
     uint8_t* p=(uint8_t*)x;
     for (int i=0;i<32;i++) out[31-i]=p[i];
 }
+#else
+void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
+    (void)out; (void)scalar; (void)point;
+}
+#endif
 
 void arix_x25519_keygen(uint8_t public_key[32], uint8_t secret_key[32]) {
     arix_random_bytes(secret_key,32);

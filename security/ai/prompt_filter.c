@@ -1,4 +1,5 @@
 #include "prompt_filter.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -475,9 +476,6 @@ ArixFilterResult arix_prompt_filter_classify_text(ArixPromptFilter* pf, const ch
     if (hex_detection_enabled) { res = arix_prompt_filter_scan_hex(pf, text, len); if (res != ARIX_FILTER_CLEAN) return res; }
     if (base64_detection_enabled) { res = arix_prompt_filter_scan_base64(pf, text, len); }
     return res;
-}
-int arix_prompt_filter_get_pattern_count(ArixPromptFilter* pf) {
-    if(!pf) return -1; return pf->pattern_count;
 }
 int arix_prompt_filter_get_pattern_at(ArixPromptFilter* pf, int index, char* buffer, size_t buf_size) {
     if (!pf || index < 0 || index >= pf->pattern_count || !buffer || buf_size == 0) return -1;

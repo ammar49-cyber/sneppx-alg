@@ -435,8 +435,8 @@ int arix_mem_enforce_wx_strict(void) {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     MEMORY_BASIC_INFORMATION mbi;
-    uint8_t* addr = (uint8_t*)si.lpApplicationBase;
-    while (addr < (uint8_t*)si.lpApplicationBase + (size_t)si.dwTotalVirtual) {
+    uint8_t* addr = (uint8_t*)si.lpMinimumApplicationAddress;
+    while (addr < (uint8_t*)si.lpMaximumApplicationAddress) {
         size_t query = VirtualQuery((void*)addr, &mbi, sizeof(mbi));
         if (query == 0) break;
         if (mbi.State == MEM_COMMIT && (mbi.Protect & 0xF0) != 0) {
@@ -489,8 +489,8 @@ int arix_mem_enforce_wx_check(void) {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
     MEMORY_BASIC_INFORMATION mbi;
-    uint8_t* addr = (uint8_t*)si.lpApplicationBase;
-    while (addr < (uint8_t*)si.lpApplicationBase + (size_t)si.dwTotalVirtual) {
+    uint8_t* addr = (uint8_t*)si.lpMinimumApplicationAddress;
+    while (addr < (uint8_t*)si.lpMaximumApplicationAddress) {
         if (VirtualQuery((void*)addr, &mbi, sizeof(mbi)) == 0) break;
         if (mbi.State == MEM_COMMIT && (mbi.Protect & 0xF0) != 0) {
             if ((mbi.Protect & PAGE_EXECUTE_READWRITE) == PAGE_EXECUTE_READWRITE) {
@@ -623,13 +623,15 @@ int arix_mem_pool_free(ArixMemPool* pool, void* ptr) {
 
 /* === Page Alignment === */
 
+static size_t arix_mem_page_size(void);
+
 int arix_mem_is_page_aligned(const void* addr) {
     if (!addr) return 0;
     size_t ps = arix_mem_page_size();
     return (((uintptr_t)addr & (ps - 1)) == 0) ? 1 : 0;
 }
 
-size_t arix_mem_page_size(void) {
+static size_t arix_mem_page_size(void) {
 #ifdef _WIN32
     SYSTEM_INFO si;
     GetSystemInfo(&si);

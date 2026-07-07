@@ -1,8 +1,16 @@
 #include "identity_management.h"
 #include "cryptographic_hashing_blake3.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+
+typedef struct {
+    uint64_t current_count;
+    uint64_t limit;
+    uint64_t window_ms;
+    uint64_t total_blocks;
+} ArixDDoSStats;
 
 #define ARIX_OCSP_CACHE_TTL 3600
 #define ARIX_OCSP_CACHE_MAX 32
@@ -605,12 +613,6 @@ int arix_identity_get_cert_fingerprint_by_index(ArixIdentityManager* mgr, int in
     return 0;
 }
 
-int arix_identity_get_cert_expiry_by_index(ArixIdentityManager* mgr, int index, uint64_t* expiry) {
-    if (!mgr || !expiry || index < 0 || index >= mgr->cert_count) return -1;
-    *expiry = mgr->certs[index].expiry;
-    return 0;
-}
-
 int arix_identity_get_cert_is_active(ArixIdentityManager* mgr, int index) {
     if (!mgr || index < 0 || index >= mgr->cert_count) return 0;
     return mgr->certs[index].is_active ? 1 : 0;
@@ -703,8 +705,4 @@ int arix_identity_clear_ocsp_cache(void) {
 
 void arix_identity_reset_ddos_peak(void) {
     g_ddos_peak = 0;
-}
-
-int arix_identity_is_revocation_checking_enabled(void) {
-    return g_revocation_checking_enabled;
 }
