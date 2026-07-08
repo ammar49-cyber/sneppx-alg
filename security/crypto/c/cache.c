@@ -32,7 +32,7 @@ void arix_cache_prefetch(const void* ptr) {
 #elif defined(__x86_64__) || defined(__amd64__)
     _mm_prefetch((const char*)ptr, _MM_HINT_T0);
 #elif defined(__aarch64__)
-    __asm__ volatile("prfm pldl1keep, %0" :: "r"(ptr));
+    __asm__ volatile("prfm pldl1keep, [%0]" :: "r"(ptr));
 #else
     (void)ptr;
 #endif

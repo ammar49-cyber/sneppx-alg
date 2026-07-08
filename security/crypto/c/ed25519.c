@@ -16,9 +16,16 @@ typedef struct { uint64_t lo, hi; } uint128;
 static uint128 add128(uint128 a, uint128 b) {
     uint128 r; r.lo = a.lo + b.lo; r.hi = a.hi + b.hi + (r.lo < a.lo ? 1 : 0); return r;
 }
+#ifdef _MSC_VER
 static uint128 mul64_64(uint64_t a, uint64_t b) {
     uint128 r; r.lo = _umul128(a, b, &r.hi); return r;
 }
+#else
+static uint128 mul64_64(uint64_t a, uint64_t b) {
+    unsigned __int128 r = (unsigned __int128)a * b;
+    uint128 result; result.lo = (uint64_t)r; result.hi = (uint64_t)(r >> 64); return result;
+}
+#endif
 
 static const field D = {{
     0x00034DCA135978A3ULL, 0x0001A8283B156EBDULL, 0x0005E7A26001C029ULL,
@@ -225,6 +232,8 @@ static int point_from_bytes(point* p, const uint8_t b[32]) {
     fe_mul(&p->T, &p->X, &p->Y);
     return 0;
 }
+
+static int point_is_on_curve(const point* p);
 
 static point B;
 
