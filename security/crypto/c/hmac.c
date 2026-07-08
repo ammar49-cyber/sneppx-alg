@@ -8,7 +8,7 @@ static void sha256_hash(const uint8_t* data, size_t len, uint8_t out[32]) {
     arix_sha512_init(&ctx);
     arix_sha512_update(&ctx,data,len);
     uint8_t full[64];
-    arix_sha512_finalize(&ctx,full);
+    arix_sha512_finish(&ctx,full);
     memcpy(out,full,32);
 }
 
@@ -18,7 +18,7 @@ static void hmac_compute(const uint8_t* key, size_t key_len, const uint8_t* data
     size_t hash_size=use_sha512?64:32;
     memset(k,0,block_size);
     if (key_len>block_size) {
-        if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,key,key_len); uint8_t h[64]; arix_sha512_finalize(&ctx,h); memcpy(k,h,hash_size); }
+        if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,key,key_len); uint8_t h[64]; arix_sha512_finish(&ctx,h); memcpy(k,h,hash_size); }
         else sha256_hash(key,key_len,k);
     } else memcpy(k,key,key_len);
     for (size_t i=0;i<block_size;i++) { ipad[i]=k[i]^0x36; opad[i]=k[i]^0x5C; }
@@ -26,12 +26,12 @@ static void hmac_compute(const uint8_t* key, size_t key_len, const uint8_t* data
     memcpy(inner,ipad,block_size);
     memcpy(inner+block_size,data,data_len);
     uint8_t inner_hash[64];
-    if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,inner,block_size+data_len); arix_sha512_finalize(&ctx,inner_hash); }
+    if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,inner,block_size+data_len); arix_sha512_finish(&ctx,inner_hash); }
     else sha256_hash(inner,block_size+data_len,inner_hash);
     uint8_t outer[256];
     memcpy(outer,opad,block_size);
     memcpy(outer+block_size,inner_hash,hash_size);
-    if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,outer,block_size+hash_size); arix_sha512_finalize(&ctx,out); }
+    if (use_sha512) { ArixSHA512Context ctx; arix_sha512_init(&ctx); arix_sha512_update(&ctx,outer,block_size+hash_size); arix_sha512_finish(&ctx,out); }
     else sha256_hash(outer,block_size+hash_size,out);
     memset(k,0,sizeof(k)); memset(ipad,0,sizeof(ipad)); memset(opad,0,sizeof(opad));
 }
