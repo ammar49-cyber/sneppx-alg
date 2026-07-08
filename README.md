@@ -8,7 +8,7 @@
 > Not patched later. Not bolted on. **In every instruction.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-algo0.7-blueviolet?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-algo0.7.8-blueviolet?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/C-11-00599C?style=for-the-badge&logo=c" alt="C11"/>
   <img src="https://img.shields.io/badge/C++-20-f34b7d?style=for-the-badge&logo=cplusplus" alt="C++20"/>
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python" alt="Python 3.11"/>
@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License MIT"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build Passing"/>
   <img src="https://img.shields.io/badge/security-S0--S9%20complete-important?style=for-the-badge" alt="Security S0-S9 Complete"/>
-  <img src="https://img.shields.io/badge/total%20lines-64%2C589-success?style=for-the-badge" alt="64,589 Lines"/>
+  <img src="https://img.shields.io/badge/total%20lines-65%2C000-success?style=for-the-badge" alt="65,000 Lines"/>
 </p>
 
 ---
@@ -55,10 +55,10 @@ directly into its foundation.
 - **15-year roadmap** — from Seed (v0.1) through Gaia (v5.0)
 - **Open source** — MIT license, developed in public
 
-The current release is **algo0.7 (Sprout stage)**: a trainable system with
-all six architectural modules wired into a unified differentiable pipeline
-and a complete ten-phase security system (S0-S9) spanning 21,809 lines of
-real, non-stub implementation code.
+The current release is **algo0.7.8 (Sprout stage)**: a trainable system with
+all six architectural modules wired into a unified differentiable pipeline,
+a complete ten-phase security system (S0-S9), Python bindings for the full
+tensor/model/trainer API, and post-quantum crypto benchmarks (Kyber, Dilithium, SPHINCS+).
 
 ---
 
@@ -198,7 +198,7 @@ S14 cooperative AI, S15 recursive oversight — planned for versions 2.0–4.0.
 
 ---
 
-## What Works Now (algo0.7)
+## What Works Now (algo0.7.8)
 
 | Component | Status | What Works |
 |-----------|--------|------------|
@@ -216,7 +216,8 @@ S14 cooperative AI, S15 recursive oversight — planned for versions 2.0–4.0.
 | FM | ✅ Complete | Memory banks, sync protocols, gradient compression |
 | Data Pipeline | ✅ Complete | TextDataset, BPE tokenizer, batching |
 | Inference Engine | ✅ Complete | Autoregressive gen, top-k/p sampling, temperature |
-| Python API | ✅ Complete | pybind11 bindings, full tensor/model/trainer API |
+| Python API | ✅ Complete | pybind11 bindings, 107 public symbols, full tensor/model/trainer/crypto API |
+| PQ Benchmarks | ✅ Complete | Kyber-768 (0.29ms keygen), Dilithium-3 (1.50ms keygen), SPHINCS+-128s |
 | S0 Crypto | ✅ Complete | AES-GCM, X25519, Ed25519, ChaCha20-Poly1305, SHA-3, BLAKE3, Argon2id, BigNum, DRBG |
 | S1 Memory | ✅ Complete | Guard pages, canaries, ASLR, W^X, seccomp, PAC, CFG, shadow stack |
 | S2 Obfuscation | ✅ Complete | CF flattening, string encryption, VM obfuscation, white-box AES, anti-debug |
@@ -248,6 +249,15 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
 cmake --build .
 ctest --output-on-failure
+
+# Build with Python bindings
+cmake -B build_py -DARIX_BUILD_PYTHON=ON -Dpybind11_DIR=</path/to/pybind11>
+cmake --build build_py --target _arix_c --config Release
+
+# Build and run PQ crypto benchmarks
+cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF
+cmake --build build_bench --target bench_pq_crypto --config Release
+./build_bench/tests/benchmark/Release/bench_pq_crypto
 ```
 
 ### C Example
@@ -286,21 +296,21 @@ int main() {
 ### Python Example
 
 ```python
-import arix_algo as ax
+import numpy as np
+from arix_algo import _arix_c as ax
 
 # Create tensors
-t = ax.Tensor.randn((4, 8, 16), dtype=ax.float32)
+t = ax._Tensor.randn(np.array([4, 8, 16]), ax.FLOAT32)
 
-# Create an HSS model
-model = ax.HSSModel(d_model=64, d_state=16, num_layers=2)
+# Arithmetic
+t2 = t.add(t)
 
-# Forward pass
-output = model(t)
+# Create a model
+m = ax.model_create(ax.ArixArchConfig())
 
-# Training
-loss = model.train_step(t, target)
-loss.backward()
-model.optimizer.step()
+# Crypto
+h = ax.crypto.sha3_256(b"hello world")
+sig = ax.crypto.ed25519_sign(sk, b"message")
 ```
 
 ---
@@ -309,15 +319,16 @@ model.optimizer.step()
 
 | Metric | Value |
 |--------|-------|
-| Total Source | **64,589 lines** |
-| C Source | 45,025 lines |
-| Headers | 5,840 lines |
-| C++ Source | 4,906 lines |
-| Python | 1,677 lines |
-| Source Files | **434** |
-| Security Implementation | **21,809 lines** (S0-S9) |
+| Total Source | **~65,000 lines** |
+| C Source | ~45,200 lines |
+| Headers | ~5,900 lines |
+| C++ Source | ~4,900 lines |
+| Python | ~1,700 lines |
+| Source Files | **~440** |
+| Security Implementation | **21,809+ lines** (S0-S9) |
 | Security Levels | **10 of 10** implemented |
 | Registered Tests | **180+** |
+| PQ Benchmarks | Kyber-768, Dilithium-3, SPHINCS+-128s |
 | Build Time | ~35s (Release, 8 cores) |
 | Dependencies | **0** for C core |
 | Platforms | Windows (MSVC), Linux (GCC/Clang), macOS (Clang) |
@@ -332,7 +343,7 @@ model.optimizer.step()
 | Stage | Version | Params | Context | Capability | Timeframe |
 |-------|---------|--------|---------|------------|-----------|
 | Seed | v0.1 | 0 | 1K | Structural proof of architecture | 2026 — released |
-| **Sprout** | **algo0.7** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 security complete** | **2026 — current** |
+| **Sprout** | **algo0.7.8** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 complete, Python bindings, PQ benchmarks** | **2026 — current** |
 | Sapling | v1.0 | 7B | 128K | Competitive language modeling | 2027 H2 |
 | Young Tree | v2.0 | 70B | 1M | Proto-AGI with reasoning and planning | 2029 |
 | Mature Tree | v2.5 | 140B | 2M | Multimodal AGI | 2030 |
