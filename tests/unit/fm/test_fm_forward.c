@@ -38,7 +38,9 @@ static void test_fm_forward_simple(void) {
 
     size_t shape[] = {2, cfg.memory_dim};
     ArixTensor* input = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* output = arix_fm_forward(ctrl, input);
+    ArixTensor* output = NULL;
+    int ret = arix_fm_forward(ctrl, 0, input, &output);
+    ASSERT(ret == 0, "forward returned 0");
     ASSERT(output != NULL, "forward output created");
     ASSERT(output->shape[0] == input->shape[0], "forward batch dim matches");
     ASSERT(output->shape[1] == input->shape[1], "forward feat dim matches");
@@ -56,11 +58,15 @@ static void test_fm_forward_memory_write(void) {
 
     size_t shape[] = {1, cfg.memory_dim};
     ArixTensor* input = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* output1 = arix_fm_forward(ctrl, input);
+    ArixTensor* output1 = NULL;
+    int ret = arix_fm_forward(ctrl, 0, input, &output1);
+    ASSERT(ret == 0, "first forward returned 0");
     ASSERT(output1 != NULL, "first forward");
 
     ArixTensor* input2 = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* output2 = arix_fm_forward(ctrl, input2);
+    ArixTensor* output2 = NULL;
+    ret = arix_fm_forward(ctrl, 0, input2, &output2);
+    ASSERT(ret == 0, "second forward returned 0");
     ASSERT(output2 != NULL, "second forward");
 
     arix_tensor_destroy(output2);
@@ -81,7 +87,9 @@ static void test_fm_forward_batch(void) {
     float* d = (float*)input->data;
     for (size_t i = 0; i < 12; i++) d[i] = (float)(i % 4) * 0.25f;
 
-    ArixTensor* output = arix_fm_forward(ctrl, input);
+    ArixTensor* output = NULL;
+    int ret = arix_fm_forward(ctrl, 0, input, &output);
+    ASSERT(ret == 0, "batch forward returned 0");
     ASSERT(output != NULL, "batch forward created");
     ASSERT(output->shape[0] == 3, "batch dim preserved");
 

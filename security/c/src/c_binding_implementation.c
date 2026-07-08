@@ -21,7 +21,7 @@ int arix_c_hash_sha3_256(const uint8_t* data, size_t len, uint8_t out[32]) {
     ArixSHA3State ctx;
     arix_sha3_256_init(&ctx);
     arix_sha3_update(&ctx, data, len);
-    arix_sha3_finalize(&ctx, out, 32);
+    arix_sha3_finish(&ctx, out);
     return 0;
 }
 
@@ -30,7 +30,7 @@ int arix_c_hash_sha3_512(const uint8_t* data, size_t len, uint8_t out[64]) {
     ArixSHA3State ctx;
     arix_sha3_512_init(&ctx);
     arix_sha3_update(&ctx, data, len);
-    arix_sha3_finalize(&ctx, out, 64);
+    arix_sha3_finish(&ctx, out);
     return 0;
 }
 

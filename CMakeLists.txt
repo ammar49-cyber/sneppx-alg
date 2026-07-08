@@ -91,7 +91,9 @@ target_include_directories(neural_core_kernel PUBLIC
     $<INSTALL_INTERFACE:include/neural_core/security>
     $<INSTALL_INTERFACE:include/neural_core/architecture>
 )
-target_link_libraries(neural_core_kernel PUBLIC m)
+if(NOT MSVC)
+    target_link_libraries(neural_core_kernel PUBLIC m)
+endif()
 
 file(GLOB_RECURSE NEURAL_ARCHITECTURE_SRC algorithms/*/core/*.c)
 
