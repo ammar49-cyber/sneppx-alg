@@ -18,7 +18,7 @@ jobs:
   windows-msvc:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure CMake
         run: cmake -B build -DARIX_USE_LTO=OFF
       - name: Build libraries
@@ -27,7 +27,7 @@ jobs:
   windows-python:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -54,7 +54,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure CMake for benchmarks
         run: cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF -DARIX_USE_LTO=OFF
       - name: Build benchmarks
@@ -66,7 +66,7 @@ jobs:
   ubuntu-gcc:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install GCC 12
         run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
       - name: Configure CMake (Debug + ASAN)
@@ -79,7 +79,7 @@ jobs:
   ubuntu-gcc-release:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install GCC 12
         run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
       - name: Configure CMake (Release)
@@ -92,7 +92,7 @@ jobs:
   ubuntu-clang:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Clang 14
         run: sudo apt-get update && sudo apt-get install -y clang-14 libomp-14-dev
       - name: Configure CMake
@@ -106,7 +106,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install clang-tidy
         run: |
           sudo apt-get update
@@ -127,7 +127,7 @@ jobs:
   macos:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DARIX_USE_LTO=OFF
       - name: Build
@@ -139,7 +139,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install deps
         run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12 lcov
       - name: Configure with coverage
@@ -163,7 +163,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install GCC 12
         run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
       - name: Configure benchmarks
