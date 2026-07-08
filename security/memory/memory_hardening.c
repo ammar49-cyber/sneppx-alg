@@ -10,9 +10,9 @@
 #else
 #include <sys/mman.h>
 #include <unistd.h>
-#include <sys/prctl.h>
 #endif
 #ifdef __linux__
+#include <sys/prctl.h>
 #include <linux/filter.h>
 #include <linux/seccomp.h>
 #include <asm/unistd.h>
