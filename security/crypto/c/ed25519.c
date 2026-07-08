@@ -2,7 +2,9 @@
 #include "sha512_hashing_implementation.h"
 #include "constant_time_operations.h"
 #include <string.h>
+#ifdef _MSC_VER
 #include <intrin.h>
+#endif
 #include <stdio.h>
 
 extern int arix_random_bytes(uint8_t* buffer, size_t len);

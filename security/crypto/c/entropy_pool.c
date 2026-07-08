@@ -9,6 +9,7 @@
 #else
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdio.h>
 #endif
 
 static uint64_t get_tsc(void) {
