@@ -15,7 +15,7 @@
 #ifdef __linux__
 #include <linux/filter.h>
 #include <linux/seccomp.h>
-#include <sys/syscall.h>
+#include <asm/unistd.h>
 #endif
 
 /* --- Quarantine --- */
