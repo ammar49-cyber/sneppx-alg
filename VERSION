@@ -1,6 +1,6 @@
-ARIX-Algo algo0.7.8
+ARIX-Algo algo0.8.0
 Release Date: 2026-07-08
-Status: Trainable on CPU/GPU — Full S0-S9 Security System — Python bindings available
+Status: Infrastructure — Build system fixes, CI/CD expansion, dev tooling, project organization
 Security: S0-S9 Complete — 21,809+ lines of security implementation
-Build: cmake 3.16+, C11/C++20, Python 3.11+
-Total Codebase: ~65,000 lines across 440+ files
+Build: cmake 3.16+, C11/C++20, Python 3.11+, macOS/Linux/Windows
+Total Codebase: ~65,000 lines across 450+ files

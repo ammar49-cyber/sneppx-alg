@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cognitive_processing_system VERSION 0.5.4 LANGUAGES C CXX)
+project(cognitive_processing_system VERSION 0.7.8 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -10,6 +10,7 @@ option(ARIX_BUILD_TESTS "Build test suite" ON)
 option(ARIX_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(ARIX_BUILD_PYTHON "Build Python bindings" OFF)
 option(ARIX_BUILD_CUDA "Build CUDA kernels" OFF)
+option(ARIX_BUILD_TOOLS "Build CLI tools" OFF)
 option(ARIX_USE_ASAN "Enable AddressSanitizer (GCC/Clang only)" OFF)
 option(ARIX_USE_UBSAN "Enable UndefinedBehaviorSanitizer (GCC/Clang only)" OFF)
 option(ARIX_USE_LTO "Enable Link-Time Optimization (Release only)" OFF)
@@ -56,6 +57,9 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(CompilerOptions)
 include(Sanitizers)
+include(StandardSettings)
+include(StaticAnalyzers)
+include(CodeCoverage)
 
 if(ARIX_USE_LTO)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -75,24 +79,33 @@ file(GLOB_RECURSE CORE_SECURITY_C_SRC security/crypto/c/*.c)
 
 add_library(neural_core_kernel STATIC ${CORE_KERNEL_SRC})
 target_include_directories(neural_core_kernel PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
-    ${CMAKE_SOURCE_DIR}/include/neural_core/security
-    ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
+    $<INSTALL_INTERFACE:include/neural_core/kernel>
+    $<INSTALL_INTERFACE:include/neural_core/security>
+    $<INSTALL_INTERFACE:include/neural_core/architecture>
 )
 
 file(GLOB_RECURSE NEURAL_ARCHITECTURE_SRC algorithms/*/core/*.c)
 
 add_library(neural_architecture_layer STATIC ${NEURAL_ARCHITECTURE_SRC})
 target_include_directories(neural_architecture_layer PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
-    ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
-    ${CMAKE_SOURCE_DIR}/include/neural_core/security
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
+    $<INSTALL_INTERFACE:include/neural_core/architecture>
+    $<INSTALL_INTERFACE:include/neural_core/kernel>
+    $<INSTALL_INTERFACE:include/neural_core/security>
 )
 target_link_libraries(neural_architecture_layer PUBLIC neural_core_kernel)
 
 if(CORE_SECURITY_C_SRC)
     add_library(neural_security_c STATIC ${CORE_SECURITY_C_SRC})
-    target_include_directories(neural_security_c PUBLIC ${CMAKE_SOURCE_DIR}/include/neural_core/security)
+    target_include_directories(neural_security_c PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
+        $<INSTALL_INTERFACE:include/neural_core/security>
+    )
     target_compile_definitions(neural_security_c PRIVATE $<$<CONFIG:Release>:ARIX_S1_SECURE_MEMORY>)
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" AND NOT MSVC)
@@ -112,8 +125,10 @@ file(GLOB_RECURSE NEURAL_SECURITY_CPP_SRC security/obfuscation/*.cpp)
 
 if(NEURAL_SECURITY_CPP_SRC)
     add_library(neural_security_cpp STATIC ${NEURAL_SECURITY_CPP_SRC})
-    target_include_directories(neural_security_cpp PUBLIC ${CMAKE_SOURCE_DIR}/include/neural_core/security)
-    target_include_directories(neural_security_cpp PRIVATE ${CMAKE_SOURCE_DIR}/include/neural_core/security)
+    target_include_directories(neural_security_cpp PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
+        $<INSTALL_INTERFACE:include/neural_core/security>
+    )
     target_link_libraries(neural_security_cpp PUBLIC neural_security_c neural_core_kernel neural_architecture_layer)
     target_compile_definitions(neural_security_cpp PRIVATE ARIX_S2_OBFUSCATION)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -143,9 +158,12 @@ if(ARIX_BUILD_CUDA)
     if(ARIX_CUDA_KERNEL_SRC)
         add_library(neural_cuda_kernels STATIC ${ARIX_CUDA_KERNEL_SRC})
         target_include_directories(neural_cuda_kernels PUBLIC
-            ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
-            ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
-            ${CMAKE_SOURCE_DIR}/include/neural_core/security
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
+            $<INSTALL_INTERFACE:include/neural_core/architecture>
+            $<INSTALL_INTERFACE:include/neural_core/kernel>
+            $<INSTALL_INTERFACE:include/neural_core/security>
             ${CUDAToolkit_INCLUDE_DIRS}
         )
         target_compile_definitions(neural_cuda_kernels PRIVATE ARIX_HAS_CUDA)
@@ -213,3 +231,46 @@ file(GLOB_RECURSE ARIX_CPP_BRIDGE_SRC security/cpp/src/*.cpp)
 if(ARIX_CPP_BRIDGE_SRC)
     target_sources(neural_security_cpp PRIVATE ${ARIX_CPP_BRIDGE_SRC})
 endif()
+
+# ---- Tools ----
+if(ARIX_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
+
+# ---- Install ----
+include(GNUInstallDirs)
+
+install(TARGETS neural_core_kernel neural_architecture_layer neural_security_c
+    EXPORT ARIXTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(DIRECTORY include/neural_core/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/neural_core
+    FILES_MATCHING PATTERN "*.h"
+)
+install(EXPORT ARIXTargets
+    FILE ARIXTargets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ARIX
+)
+
+# ---- CPack ----
+set(CPACK_PACKAGE_NAME "ARIX-Algo")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_VENDOR "Ammar [ARIX]")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Cognitive architecture for secure AI")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+set(CPACK_GENERATOR "TGZ;ZIP")
+set(CPACK_SOURCE_IGNORE_FILES
+    "/build/"
+    "/build_py/"
+    "/build_bench/"
+    "/.git/"
+    "/target/"
+    ".*.tar.gz"
+    ".*.zip"
+)
+include(CPack)

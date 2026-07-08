@@ -1,9 +1,19 @@
-# BDFL ownership. No default reviewers.
+# BDFL ownership
 * @ammar49-cyber
 
-# Security-critical paths require BDFL review
-src/security/ @ammar49-cyber
-src/core/ @ammar49-cyber
+# Security-critical paths
+security/ @ammar49-cyber
+include/neural_core/security/ @ammar49-cyber
+include/neural_core/architecture/ @ammar49-cyber
+kernel/ @ammar49-cyber
 
-# Documentation review
+# Build system
+CMakeLists.txt @ammar49-cyber
+cmake/ @ammar49-cyber
+
+# CI/CD
+.github/workflows/ @ammar49-cyber
+
+# Documentation
 *.md @ammar49-cyber
+docs/ @ammar49-cyber

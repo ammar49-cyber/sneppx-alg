@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "algo*"
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create source tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME#algo}"
+          git archive --format=tar.gz -o "arixalgo-${VERSION}.tar.gz" HEAD
+          git archive --format=zip -o "arixalgo-${VERSION}.zip" HEAD
+      - name: Generate release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#algo}"
+          echo "## ARIX-Algo ${VERSION}" > release_notes.md
+          echo "" >> release_notes.md
+          git log --oneline "$(git tag --sort=-v:refname | head -2 | tail -1)..HEAD" 2>/dev/null \
+            | sed 's/^/- /' >> release_notes.md || true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "ARIX-Algo ${{ github.ref_name }}"
+          body_path: release_notes.md
+          files: |
+            arixalgo-*.tar.gz
+            arixalgo-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

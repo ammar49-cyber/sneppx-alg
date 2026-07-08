@@ -20,8 +20,29 @@ max_line_length = 88
 indent_style = space
 indent_size = 2
 
+[*.{cmake,txt,toml,cfg,ini}]
+indent_style = space
+indent_size = 2
+
+[*.{sh,bash}]
+indent_style = space
+indent_size = 4
+shell_variant = bash
+
+[*.{ps1,psm1}]
+indent_style = space
+indent_size = 4
+
+[*.bat]
+indent_style = tab
+end_of_line = crlf
+
 [Makefile]
 indent_style = tab
+
+[CMakeLists.txt]
+indent_style = space
+indent_size = 4
 
 [*.md]
 trim_trailing_whitespace = false

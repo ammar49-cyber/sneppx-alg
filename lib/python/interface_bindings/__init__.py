@@ -1,13 +1,13 @@
 """
-ARIX-Algo Python Library — SKELETON
-Version: v0.5.4
+ARIX-Algo Python Library
 
-High-level Python API for tensor operations, model construction,
-and training.  Wraps the C library via ctypes/cffi.
+This path is deprecated. Use bindings/python/ instead:
+    from arix_algo import _arix_c as ax
 """
 
-from .core import Tensor
-from .nn import Module, Linear, ReLU, Sequential
-from .optim import SGD, Adam
-
-__all__ = ["Tensor", "Module", "Linear", "ReLU", "Sequential", "SGD", "Adam"]
+import warnings
+warnings.warn(
+    "lib/python/ is deprecated. Use 'from arix_algo import _arix_c' from bindings/python/.",
+    DeprecationWarning,
+    stacklevel=2,
+)

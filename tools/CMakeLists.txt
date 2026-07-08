@@ -1,0 +1,3 @@
+add_executable(arix-cli command_line_interface/main.c)
+target_link_libraries(arix-cli PRIVATE neural_core_kernel neural_architecture_layer neural_security_c)
+apply_standard_settings(arix-cli)

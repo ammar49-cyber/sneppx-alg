@@ -1,5 +1,5 @@
 # Build artifacts
-build/
+build*/
 build_py/
 build_bench/
 build-coverage/
