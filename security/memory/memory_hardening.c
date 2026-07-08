@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <sys/prctl.h>
 #endif
+#ifdef __linux__
+#include <linux/filter.h>
+#include <linux/seccomp.h>
+#endif
 
 /* --- Quarantine --- */
 int arix_mem_quarantine_init(ArixMemQuarantine* q) {

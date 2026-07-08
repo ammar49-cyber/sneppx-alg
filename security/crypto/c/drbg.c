@@ -8,7 +8,7 @@ static void sha256_f(const uint8_t* in, size_t in_len, uint8_t out[32]) {
     arix_sha512_init(&ctx);
     arix_sha512_update(&ctx,in,in_len);
     uint8_t full[64];
-    arix_sha512_finalize(&ctx,full);
+    arix_sha512_finish(&ctx,full);
     memcpy(out,full,32);
 }
 
