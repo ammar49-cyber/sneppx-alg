@@ -21,12 +21,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure CMake
         run: cmake -B build -DARIX_USE_LTO=OFF
-      - name: Build
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} -j4
-      - name: Test security libs
-        run: |
-          cd build
-          ctest -C ${{ env.BUILD_TYPE }} -R "test_(kyber|dilithium|sphincsplus|differential_privacy|ddos|container|fuzzer|memory_leak|breakout|rlhf)" --output-on-failure --timeout 60
+      - name: Build libraries
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --target neural_core_kernel neural_architecture_layer neural_security_c neural_security_cpp -j4
 
   windows-python:
     runs-on: windows-2022

@@ -6,7 +6,9 @@
 
 typedef void (*BackwardFn)(void* ctx, ArixTensor* grad_output);
 
-typedef void* (*RecomputeCtxFn)(struct ArixVariable* var, size_t* params, size_t param_count);
+typedef struct ArixVariable ArixVariable;
+
+typedef void* (*RecomputeCtxFn)(ArixVariable* var, size_t* params, size_t param_count);
 
 typedef struct ArixVariable {
     ArixTensor* data;

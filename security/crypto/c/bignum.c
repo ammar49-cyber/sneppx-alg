@@ -11,6 +11,14 @@
    stubs that return -1 (not supported). The remaining functions work
    with 64-bit words only. */
 
+static unsigned clz64(uint64_t x) {
+#ifdef _MSC_VER
+    unsigned long idx; _BitScanReverse64(&idx,x); return 63-(unsigned)idx;
+#else
+    return (unsigned)__builtin_clzll(x);
+#endif
+}
+
 void arix_bn_init(ArixBigNum* bn) { if (bn) memset(bn,0,sizeof(*bn)); }
 
 void arix_bn_zero(ArixBigNum* bn) {
@@ -344,14 +352,6 @@ int arix_bn_sub(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
     if (r->used==0) { r->used=1; r->words[0]=0; }
     r->sign=0;
     return 0;
-}
-
-static unsigned clz64(uint64_t x) {
-#ifdef _MSC_VER
-    unsigned long idx; _BitScanReverse64(&idx,x); return 63-(unsigned)idx;
-#else
-    return (unsigned)__builtin_clzll(x);
-#endif
 }
 
 int arix_bn_mod(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* m) {
