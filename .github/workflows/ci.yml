@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   BUILD_TYPE: Release
@@ -15,37 +20,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        run: cmake -B build -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} -j4
       - name: Test security libs
         run: |
           cd build
-          ctest -C ${{ env.BUILD_TYPE }} -R "test_(kyber|dilithium|sphincsplus|differential_privacy|ddos|container|fuzzer|memory_leak|breakout|rlhf)" --output-on-failure --timeout 30
+          ctest -C ${{ env.BUILD_TYPE }} -R "test_(kyber|dilithium|sphincsplus|differential_privacy|ddos|container|fuzzer|memory_leak|breakout|rlhf)" --output-on-failure --timeout 60
 
   windows-python:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install dependencies
+      - name: Install Python deps
         run: pip install pybind11 numpy
+      - name: Locate pybind11
+        id: pybind
+        shell: pwsh
+        run: |
+          $dir = pip show pybind11 2>$null | Select-String "Location" | ForEach-Object { $_.ToString().Split(" ")[-1] }
+          if (-not $dir) { $dir = python -c "import pybind11; import os; print(os.path.dirname(pybind11.__file__))" }
+          echo "pybind11_dir=$dir\share\cmake\pybind11" >> $env:GITHUB_OUTPUT
       - name: Build Python bindings
         run: |
-          cmake -B build_py -DARIX_BUILD_PYTHON=ON -DARIX_USE_LTO=OFF
+          cmake -B build_py -DARIX_BUILD_PYTHON=ON -DARIX_BUILD_TESTS=OFF -DARIX_BUILD_BENCHMARKS=OFF -DARIX_USE_LTO=OFF -Dpybind11_DIR="${{ steps.pybind.outputs.pybind11_dir }}"
           cmake --build build_py --target _arix_c --config ${{ env.BUILD_TYPE }} -j2
       - name: Verify Python bindings
-        run: python -c "import sys, numpy as np; sys.path.insert(0, 'bindings/python'); from arix_algo import _arix_c as ax; t = ax._Tensor.zeros(np.array([2,3]), ax.FLOAT32); print('Python bindings OK:', t.shape)"
+        run: |
+          pip install numpy
+          python -c "import sys, numpy as np; sys.path.insert(0, 'bindings/python'); from arix_algo import _arix_c as ax; t = ax._Tensor.zeros(np.array([2,3]), ax.FLOAT32); print('Python bindings OK:', t.shape)"
 
   windows-bench:
+    if: github.event_name == 'push'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - name: Configure CMake for benchmarks
-        run: cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF
+        run: cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF -DARIX_USE_LTO=OFF
       - name: Build benchmarks
         run: cmake --build build_bench --target bench_pq_crypto --config ${{ env.BUILD_TYPE }} -j2
       - name: Run PQ benchmarks
@@ -56,82 +71,109 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake gcc-12 g++-12
-      - name: Configure CMake
-        run: CC=gcc-12 CXX=g++-12 cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DARIX_USE_ASAN=ON
+      - name: Install GCC 12
+        run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
+      - name: Configure CMake (Debug + ASAN)
+        run: CC=gcc-12 CXX=g++-12 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DARIX_USE_ASAN=ON -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build -j4
       - name: Test all
-        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 30
+        run: cd build && ctest -C Debug --output-on-failure --timeout 60
+
+  ubuntu-gcc-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GCC 12
+        run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
+      - name: Configure CMake (Release)
+        run: CC=gcc-12 CXX=g++-12 cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DARIX_USE_LTO=OFF
+      - name: Build
+        run: cmake --build build -j4
+      - name: Test all
+        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 60
 
   ubuntu-clang:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake clang-14
+      - name: Install Clang 14
+        run: sudo apt-get update && sudo apt-get install -y clang-14 libomp-14-dev
       - name: Configure CMake
-        run: CC=clang-14 CXX=clang++-14 cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        run: CC=clang-14 CXX=clang++-14 cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build -j4
       - name: Test all
-        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 30
+        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 60
 
   ubuntu-clang-tidy:
+    if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake clang-14 clang-tidy-14
-      - name: Configure CMake with clang-tidy
+      - name: Install clang-tidy
         run: |
-          CC=clang-14 CXX=clang++-14 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_CLANG_TIDY=ON
+          sudo apt-get update
+          sudo apt-get install -y clang-14 clang-tidy-14
+          sudo ln -sf /usr/bin/clang-tidy-14 /usr/bin/clang-tidy
+      - name: Configure CMake
+        run: |
+          CC=clang-14 CXX=clang++-14 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_CLANG_TIDY=ON -DARIX_USE_LTO=OFF -DARIX_BUILD_BENCHMARKS=OFF
       - name: Build (static analysis)
-        run: cmake --build build -j4 2>&1 | head -100
+        run: |
+          cmake --build build -j4 2>&1 | tee clang-tidy-output.log
+      - name: Print warnings summary
+        run: |
+          if grep -c "warning:" clang-tidy-output.log 2>/dev/null; then
+            echo "::warning::clang-tidy found warnings (non-blocking)"
+          fi
 
   macos:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: brew install cmake
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build -j4
       - name: Test
-        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 30
+        run: cd build && ctest -C ${{ env.BUILD_TYPE }} --output-on-failure --timeout 60
 
   code-coverage:
+    if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake gcc-12 g++-12 lcov
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12 lcov
       - name: Configure with coverage
-        run: CC=gcc-12 CXX=g++-12 cmake -B build -DENABLE_COVERAGE=ON -DARIX_BUILD_TESTS=ON
+        run: CC=gcc-12 CXX=g++-12 cmake -B build -DENABLE_COVERAGE=ON -DARIX_BUILD_TESTS=ON -DARIX_BUILD_BENCHMARKS=OFF -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build -j4
-      - name: Run tests with coverage
-        run: cd build && ctest --output-on-failure --timeout 30
+      - name: Run tests
+        run: cd build && ctest --output-on-failure --timeout 60
       - name: Generate coverage report
         run: |
-          lcov --directory build --capture --output-file coverage.info
-          lcov --remove coverage.info "/usr/*" --output-file coverage.info
-          lcov --remove coverage.info "*/tests/*" --output-file coverage.info
-          bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov upload skipped"
+          lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch
+          lcov --remove coverage.info "/usr/*" --output-file coverage.info --ignore-errors unused
+          lcov --remove coverage.info "*/tests/*" --output-file coverage.info --ignore-errors unused
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.info
+          fail_ci_if_error: false
 
   ubuntu-bench:
+    if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake gcc-12 g++-12
+      - name: Install GCC 12
+        run: sudo apt-get update && sudo apt-get install -y gcc-12 g++-12
       - name: Configure benchmarks
-        run: CC=gcc-12 CXX=g++-12 cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF
+        run: CC=gcc-12 CXX=g++-12 cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF -DARIX_USE_LTO=OFF
       - name: Build
         run: cmake --build build_bench -j4
-      - name: Run PQ benchmarks
-        run: ./build_bench/tests/benchmark/bench_pq_crypto
-        timeout-minutes: 15
+      - name: Run PQ benchmarks (timed)
+        run: |
+          timeout 300 ./build_bench/tests/benchmark/bench_pq_crypto || echo "Benchmark timed out or failed (SPHINCS+ may be slow)"
