@@ -13,9 +13,9 @@ If you need help with SneppX-ALG, here are the available channels:
 ## Community
 
 - **Email**: [algoSNEPPX@gmail.com](mailto:algoSNEPPX@gmail.com) — patches, questions, security reports
-- **GitHub Issues**: [https://github.com/ammar49-cyber/SNEPPX_ALG/issues](https://github.com/ammar49-cyber/SNEPPX_ALG/issues)
+- **GitHub Issues**: [https://github.com/ammar49-cyber/sneppx-alg/issues](https://github.com/ammar49-cyber/sneppx-alg/issues)
 - **Twitter / X**: [@SNEPPXdrv](https://x.com/SNEPPXdrv)
-- **YouTube**: [SNEPPX_ALG](https://www.youtube.com/@SNEPPX_ALG)
+- **YouTube**: [sneppx-alg](https://www.youtube.com/@sneppx-alg)
 
 ## Scope
 

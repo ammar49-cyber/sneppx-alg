@@ -29,6 +29,6 @@
             }
         }
     },
-    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y lcov clang-tidy && git config --global --add safe.directory /workspaces/SNEPPX_ALG",
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y lcov clang-tidy && git config --global --add safe.directory /workspaces/sneppx-alg",
     "remoteUser": "vscode"
 }

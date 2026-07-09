@@ -9,7 +9,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full contributor agreement, pa
 ### Setup
 
 ```bash
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
 cd SneppX-ALG
 mkdir build && cd build
 

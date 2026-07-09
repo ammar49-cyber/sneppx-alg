@@ -11,8 +11,8 @@ Prerequisites
 
 Quick Install
   1. Clone the repository:
-       git clone https://github.com/ammar49-cyber/arixalgo.git
-       cd arixalgo
+       git clone https://github.com/ammar49-cyber/sneppx-alg.git
+       cd sneppx-alg
 
   2. Create build directory and configure:
        mkdir build && cd build

@@ -3,8 +3,8 @@
   "language": "en",
   "words": [
     "SNEPPX",
-    "SNEPPX_ALG",
-    "SNEPPX_ALG",
+    "sneppx-alg",
+    "sneppx-alg",
     "autodiff",
     "BDFL",
     "CMakePresets",

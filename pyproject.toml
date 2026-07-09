@@ -3,22 +3,22 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
-name = "arix-algo"
+name = "sneppx-alg"
 version = "0.7.8"
 description = "Next-generation AI architecture with security built into the foundation"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Ammar [ARIX]", email = "algoarix@gmail.com"}
+    {name = "Ammar [SNEPPX]", email = "algoSNEPPX@gmail.com"}
 ]
 keywords = ["ai", "machine-learning", "neural-networks", "security", "post-quantum", "cryptography"]
 
 [project.urls]
-Homepage = "https://github.com/ammar49-cyber/arixalgo"
-Repository = "https://github.com/ammar49-cyber/arixalgo.git"
+Homepage = "https://github.com/ammar49-cyber/sneppx-alg"
+Repository = "https://github.com/ammar49-cyber/sneppx-alg.git"
 
 [tool.setuptools.packages.find]
 where = ["bindings/python"]
 
 [tool.setuptools.package-data]
-arix_algo = ["_arix_c*.pyd", "_arix_c*.so"]
+SneppX_ALG = ["_arix_c*.pyd", "_arix_c*.so"]

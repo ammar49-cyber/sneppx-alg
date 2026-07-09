@@ -253,8 +253,8 @@ S14 cooperative AI, S15 recursive oversight — planned for versions 2.0–4.0.
 - CUDA Toolkit 12.0+ (for GPU acceleration, optional)
 
 ```bash
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SNEPPX_ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build .
@@ -376,7 +376,7 @@ sig = ax.crypto.ed25519_sign(sk, b"message")
 | [docs/api/python.md](docs/api/python.md) | Python API reference |
 | [docs/installation.md](docs/installation.md) | Platform-specific build guides |
 
-Full documentation is available at [SNEPPXsite.vercel.app](https://SNEPPXsite.vercel.app).
+Full documentation is available at [sneppxsite.vercel.app](https://sneppxsite.vercel.app).
 
 ---
 
@@ -412,11 +412,11 @@ and testing requirements.
 ## Links
 
 <p align="center">
-  <a href="https://SNEPPXsite.vercel.app"><b>Website</b></a> ·
-  <a href="https://github.com/ammar49-cyber/SNEPPX_ALG"><b>GitHub</b></a> ·
+  <a href="https://sneppxsite.vercel.app"><b>Website</b></a> ·
+  <a href="https://github.com/ammar49-cyber/sneppx-alg"><b>GitHub</b></a> ·
   <a href="https://x.com/SNEPPXdrv"><b>Twitter / X</b></a> ·
   <a href="https://www.instagram.com/algoSNEPPX/"><b>Instagram</b></a> ·
-  <a href="https://www.youtube.com/@SNEPPX_ALG"><b>YouTube</b></a>
+  <a href="https://www.youtube.com/@sneppx-alg"><b>YouTube</b></a>
 </p>
 
 ---
@@ -424,10 +424,10 @@ and testing requirements.
 ## Citation
 
 ```bibtex
-@software{SneppX_ALG_2026,
+@software{sneppx-alg_2026,
   author = {Ammar [SNEPPX]},
   title = {{SneppX-ALG}: Cognitive Architecture for Secure Artificial General Intelligence},
-  url = {https://github.com/ammar49-cyber/SNEPPX_ALG},
+  url = {https://github.com/ammar49-cyber/sneppx-alg},
   year = {2026}
 }
 ```

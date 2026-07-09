@@ -20,8 +20,8 @@ sudo apt-get update
 sudo apt-get install -y build-essential cmake git
 
 # Build
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SneppX-ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
@@ -59,8 +59,8 @@ sudo pacman -S gcc cmake git
 brew install cmake gcc
 
 # Build
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SneppX-ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(sysctl -n hw.ncpu)
@@ -79,8 +79,8 @@ ctest --output-on-failure
 brew install cmake
 
 # Build (using Apple Clang; ARM NEON optimizations auto-detected)
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SneppX-ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(sysctl -n hw.ncpu)
@@ -98,8 +98,8 @@ ctest --output-on-failure
 # CMake 3.16+ (included with VS 2022)
 
 # Open "Developer Command Prompt for VS 2022"
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SneppX-ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build
 cd build
 cmake .. -G "Visual Studio 17 2022" -A x64 -DSNEPPX_BUILD_TESTS=ON

@@ -9,8 +9,8 @@ SneppX-ALG is a composable 5-component AI algorithm pipeline wrapped in 4 securi
 ### Build from source
 
 ```bash
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SneppX-ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)

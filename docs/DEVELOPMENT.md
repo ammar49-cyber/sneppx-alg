@@ -11,8 +11,8 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
-cd SNEPPX_ALG
+git clone https://github.com/ammar49-cyber/sneppx-alg.git
+cd sneppx-alg
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
