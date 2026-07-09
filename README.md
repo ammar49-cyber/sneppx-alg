@@ -8,7 +8,7 @@
 > Not patched later. Not bolted on. **In every instruction.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-algo0.7.8-blueviolet?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-algo0.8.2-blueviolet?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/C-11-00599C?style=for-the-badge&logo=c" alt="C11"/>
   <img src="https://img.shields.io/badge/C++-20-f34b7d?style=for-the-badge&logo=cplusplus" alt="C++20"/>
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python" alt="Python 3.11"/>
@@ -55,10 +55,14 @@ directly into its foundation.
 - **15-year roadmap** — from Seed (v0.1) through Gaia (v5.0)
 - **Open source** — MIT license, developed in public
 
-The current release is **algo0.7.8 (Sprout stage)**: a trainable system with
+The current release is **algo0.8.2 (Sprout stage)**: a trainable system with
 all six architectural modules wired into a unified differentiable pipeline,
 a complete ten-phase security system (S0-S9), Python bindings for the full
-tensor/model/trainer API, and post-quantum crypto benchmarks (Kyber, Dilithium, SPHINCS+).
+tensor/model/trainer API, post-quantum crypto benchmarks (Kyber, Dilithium, SPHINCS+),
+and **3,258 lines of hand-optimized x86-64 assembly** across 15 files covering
+AES-NI, SHA-NI, ChaCha20 AVX2, Poly1305 SSE, Ed25519, Curve25519, Montgomery
+multiplication, Barrett reduction, Keccak-f[1600] AVX2, constant-time operations,
+secure memory wiping, and cache-constant table lookups.
 
 ---
 
@@ -111,10 +115,16 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 ```
 
 ### S0 — Cryptographic Core
-AES-256-GCM (AES-NI accelerated), X25519 key exchange, Ed25519 signatures,
-ChaCha20-Poly1305, SHA-3 (224/256/384/512), BLAKE3, Argon2id, HKDF, HMAC,
-PBKDF2, Hash_DRBG, BigNum arithmetic (add/sub/mul/div/mod/exp/GCD/inv_mod/
-Miller-Rabin), Entropy Pool, SipHash, secure random from OS entropy source.
+AES-256-GCM (AES-NI accelerated with constant-time key wipe), X25519 key exchange,
+Ed25519 signatures (Montgomery ladder, point ops, field arithmetic), ChaCha20-Poly1305
+(AVX2 accelerated), SHA-256 (SHA-NI accelerated, HMAC), SHA-3 (224/256/384/512),
+BLAKE3, Argon2id, HKDF, HMAC, PBKDF2, Hash_DRBG, BigNum arithmetic
+(add/sub/mul/div/mod/exp/GCD/inv_mod/Miller-Rabin), Montgomery multiplication,
+Barrett reduction, GF(256) arithmetic, Keccak-f[1600] (AVX2), Entropy Pool,
+SipHash, random from OS entropy source, constant-time operations (select/compare/
+swap/negate), cache-constant table lookups (S-box/T-table), secure memory wiping
+(3-pass register/page/XMM). All x86-64 assembly is **constant-time, speculation-safe
+(lfence), and cache-timing resistant**.
 
 ### S1 — Secure Memory
 Guard pages with PROT_NONE boundaries, 128-bit stack canaries with generation
@@ -319,13 +329,14 @@ sig = ax.crypto.ed25519_sign(sk, b"message")
 
 | Metric | Value |
 |--------|-------|
-| Total Source | **~65,000 lines** |
+| Total Source | **~69,000 lines** |
+| Assembly (x86-64) | **3,258 lines across 15 files** |
 | C Source | ~45,200 lines |
 | Headers | ~5,900 lines |
 | C++ Source | ~4,900 lines |
 | Python | ~1,700 lines |
-| Source Files | **~440** |
-| Security Implementation | **21,809+ lines** (S0-S9) |
+| Source Files | **~455** |
+| Security Implementation | **25,067+ lines** (S0-S9 + assembly) |
 | Security Levels | **10 of 10** implemented |
 | Registered Tests | **180+** |
 | PQ Benchmarks | Kyber-768, Dilithium-3, SPHINCS+-128s |
@@ -343,7 +354,7 @@ sig = ax.crypto.ed25519_sign(sk, b"message")
 | Stage | Version | Params | Context | Capability | Timeframe |
 |-------|---------|--------|---------|------------|-----------|
 | Seed | v0.1 | 0 | 1K | Structural proof of architecture | 2026 — released |
-| **Sprout** | **algo0.7.8** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 complete, Python bindings, PQ benchmarks** | **2026 — current** |
+| **Sprout** | **algo0.8.2** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 complete, 3,258 lines x86-64 asm, Python bindings, PQ benchmarks** | **2026 — current** |
 | Sapling | v1.0 | 7B | 128K | Competitive language modeling | 2027 H2 |
 | Young Tree | v2.0 | 70B | 1M | Proto-AGI with reasoning and planning | 2029 |
 | Mature Tree | v2.5 | 140B | 2M | Multimodal AGI | 2030 |
