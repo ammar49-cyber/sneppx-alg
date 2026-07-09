@@ -1,4 +1,4 @@
-from . import _neural_engine_bridge
+from .. import _neural_engine_bridge
 
 from .tensor import (
     Tensor,

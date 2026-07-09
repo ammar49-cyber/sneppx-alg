@@ -1,5 +1,5 @@
 from typing import Optional, Callable, List, Tuple, Iterator
-from . import _neural_engine_bridge
+from .. import _neural_engine_bridge
 from .tensor import Tensor, Device
 from .model import Model
 

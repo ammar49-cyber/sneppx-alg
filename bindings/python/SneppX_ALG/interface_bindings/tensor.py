@@ -1,5 +1,5 @@
 import numpy as np
-from . import _neural_engine_bridge
+from .. import _neural_engine_bridge
 from typing import List, Tuple, Optional, Union, Sequence
 
 Dtype = _neural_engine_bridge.SNEPPXDtype

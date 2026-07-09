@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional
-from . import _neural_engine_bridge
+from .. import _neural_engine_bridge
 from .tensor import Tensor, _to_shape
 
 
@@ -302,7 +302,7 @@ class ARCModel:
         self._config = config
 
     def forward(self, input: Tensor) -> Tensor:
-        from . import _neural_engine_bridge as c
+        from .. import _neural_engine_bridge as c
         out_ptr = c._Tensor.create((1, 1), c.SNEPPXDtype.FLOAT32)
         metrics = [0.0, 0.0, 0.0, 0.0]
         self._m.forward(input._t, out_ptr, metrics)
