@@ -1,40 +1,40 @@
-#ifndef ARIX_TOKENIZER_H
-#define ARIX_TOKENIZER_H
+#ifndef SNEPPX_TOKENIZER_H
+#define SNEPPX_TOKENIZER_H
 
 #include "multidimensional_tensor_engine.h"
 #include <stddef.h>
 
 typedef enum {
-    ARIX_TOK_BPE,
-} ArixTokenizerType;
+    SNEPPX_TOK_BPE,
+} SNEPPXTokenizerType;
 
 typedef struct {
     int pad_id;
     int bos_id;
     int eos_id;
     int unk_id;
-} ArixSpecialTokens;
+} SNEPPXSpecialTokens;
 
-typedef struct ArixTokenizer ArixTokenizer;
+typedef struct SNEPPXTokenizer SNEPPXTokenizer;
 
-ArixTokenizer*  arix_tokenizer_create(int vocab_size);
-void            arix_tokenizer_destroy(ArixTokenizer* tok);
+SNEPPXTokenizer*  SNEPPX_tokenizer_create(int vocab_size);
+void            SNEPPX_tokenizer_destroy(SNEPPXTokenizer* tok);
 
-int             arix_tokenizer_vocab_size(const ArixTokenizer* tok);
-ArixSpecialTokens arix_tokenizer_special(const ArixTokenizer* tok);
-void            arix_tokenizer_set_special(ArixTokenizer* tok, ArixSpecialTokens sp);
+int             SNEPPX_tokenizer_vocab_size(const SNEPPXTokenizer* tok);
+SNEPPXSpecialTokens SNEPPX_tokenizer_special(const SNEPPXTokenizer* tok);
+void            SNEPPX_tokenizer_set_special(SNEPPXTokenizer* tok, SNEPPXSpecialTokens sp);
 
-int             arix_tokenizer_add_token(ArixTokenizer* tok, const char* token, int id);
+int             SNEPPX_tokenizer_add_token(SNEPPXTokenizer* tok, const char* token, int id);
 
-int             arix_tokenizer_encode(const ArixTokenizer* tok, const char* text, int* out_ids, size_t max_len);
-char*           arix_tokenizer_decode(const ArixTokenizer* tok, const int* ids, size_t len);
+int             SNEPPX_tokenizer_encode(const SNEPPXTokenizer* tok, const char* text, int* out_ids, size_t max_len);
+char*           SNEPPX_tokenizer_decode(const SNEPPXTokenizer* tok, const int* ids, size_t len);
 
-ArixTokenizer*  arix_tokenizer_train_bpe(const char** texts, size_t num_texts, size_t vocab_size);
+SNEPPXTokenizer*  SNEPPX_tokenizer_train_bpe(const char** texts, size_t num_texts, size_t vocab_size);
 
-int             arix_tokenizer_save(const ArixTokenizer* tok, const char* path);
-ArixTokenizer*  arix_tokenizer_load(const char* path);
+int             SNEPPX_tokenizer_save(const SNEPPXTokenizer* tok, const char* path);
+SNEPPXTokenizer*  SNEPPX_tokenizer_load(const char* path);
 
-ArixTensor*     arix_tokenizer_ids_to_tensor(const ArixTokenizer* tok, const int* ids, size_t len);
-int*            arix_tokenizer_tensor_to_ids(const ArixTensor* t, size_t* out_len);
+SNEPPXTensor*     SNEPPX_tokenizer_ids_to_tensor(const SNEPPXTokenizer* tok, const int* ids, size_t len);
+int*            SNEPPX_tokenizer_tensor_to_ids(const SNEPPXTensor* t, size_t* out_len);
 
 #endif

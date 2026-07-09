@@ -20,10 +20,10 @@ sudo apt-get update
 sudo apt-get install -y build-essential cmake git
 
 # Build
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
 
 # Test
@@ -59,10 +59,10 @@ sudo pacman -S gcc cmake git
 brew install cmake gcc
 
 # Build
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(sysctl -n hw.ncpu)
 
 # Test
@@ -79,10 +79,10 @@ ctest --output-on-failure
 brew install cmake
 
 # Build (using Apple Clang; ARM NEON optimizations auto-detected)
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(sysctl -n hw.ncpu)
 
 # Test
@@ -98,11 +98,11 @@ ctest --output-on-failure
 # CMake 3.16+ (included with VS 2022)
 
 # Open "Developer Command Prompt for VS 2022"
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build
 cd build
-cmake .. -G "Visual Studio 17 2022" -A x64 -DARIX_BUILD_TESTS=ON
+cmake .. -G "Visual Studio 17 2022" -A x64 -DSNEPPX_BUILD_TESTS=ON
 cmake --build . --config Release
 
 # Test
@@ -128,13 +128,13 @@ ctest -C Release --output-on-failure
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `ARIX_BUILD_TESTS` | ON | Build test suite |
-| `ARIX_BUILD_BENCHMARKS` | ON | Build benchmarks |
-| `ARIX_BUILD_PYTHON` | OFF | Build Python bindings |
-| `ARIX_BUILD_CUDA` | OFF | Build CUDA kernels (future) |
-| `ARIX_USE_ASAN` | OFF | Enable AddressSanitizer |
-| `ARIX_USE_UBSAN` | OFF | Enable UndefinedBehaviorSanitizer |
-| `ARIX_USE_LTO` | OFF | Enable Link-Time Optimization |
+| `SNEPPX_BUILD_TESTS` | ON | Build test suite |
+| `SNEPPX_BUILD_BENCHMARKS` | ON | Build benchmarks |
+| `SNEPPX_BUILD_PYTHON` | OFF | Build Python bindings |
+| `SNEPPX_BUILD_CUDA` | OFF | Build CUDA kernels (future) |
+| `SNEPPX_USE_ASAN` | OFF | Enable AddressSanitizer |
+| `SNEPPX_USE_UBSAN` | OFF | Enable UndefinedBehaviorSanitizer |
+| `SNEPPX_USE_LTO` | OFF | Enable Link-Time Optimization |
 
 ## Build Configurations
 
@@ -178,7 +178,7 @@ Ensure the `.pyd` file is in the Python path:
 
 ```powershell
 # Windows
-copy build\Release\arix_algo_core.pyd src\python\arix_algo\
+copy build\Release\SneppX_ALG_core.pyd src\python\SneppX_ALG\
 ```
 
 ### CMake not found
@@ -196,4 +196,4 @@ brew install cmake
 
 ### "undefined reference to" errors
 
-Ensure you're linking against the correct libraries. Core tests link `arix_core;arix_arch`. Security tests additionally link `arix_security_c` or `arix_security_cpp`.
+Ensure you're linking against the correct libraries. Core tests link `SNEPPX_core;SNEPPX_arch`. Security tests additionally link `SNEPPX_security_c` or `SNEPPX_security_cpp`.

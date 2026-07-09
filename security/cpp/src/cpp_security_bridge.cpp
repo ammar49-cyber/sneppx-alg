@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace arix {
+namespace SNEPPX {
 
 /* ---------- SecureBuffer ---------- */
 SecureBuffer::SecureBuffer() : data_(nullptr), size_(0) {}
@@ -41,7 +41,7 @@ std::vector<uint8_t> AEADCipher::encrypt(const uint8_t* plaintext, size_t len,
     if (!plaintext || !key_ || !nonce) return std::vector<uint8_t>();
     std::vector<uint8_t> result(len);
     uint8_t tag[16];
-    int ret = arix_aead_encrypt(result.data(), tag, plaintext, len, aad, aad_len, key_, nonce);
+    int ret = SNEPPX_aead_encrypt(result.data(), tag, plaintext, len, aad, aad_len, key_, nonce);
     if (ret != 0) return std::vector<uint8_t>();
     result.insert(result.end(), tag, tag + 16);
     return result;
@@ -53,27 +53,27 @@ std::vector<uint8_t> AEADCipher::decrypt(const uint8_t* ciphertext, size_t len,
     if (!ciphertext || len < 16 || !key_ || !nonce || !tag) return std::vector<uint8_t>();
     size_t ct_len = len - 16;
     std::vector<uint8_t> result(ct_len);
-    int ret = arix_aead_decrypt(result.data(), ciphertext, ct_len, tag, aad, aad_len, key_, nonce);
+    int ret = SNEPPX_aead_decrypt(result.data(), ciphertext, ct_len, tag, aad, aad_len, key_, nonce);
     if (ret != 0) return std::vector<uint8_t>();
     return result;
 }
 
 /* ---------- Hasher ---------- */
 Hasher::Hasher() {
-    ctx_ = new ArixBlake3State();
-    arix_blake3_init(static_cast<ArixBlake3State*>(ctx_));
+    ctx_ = new SNEPPXBlake3State();
+    SNEPPX_blake3_init(static_cast<SNEPPXBlake3State*>(ctx_));
 }
 void Hasher::update(const uint8_t* data, size_t len) {
     if (data && len > 0 && ctx_) {
-        arix_blake3_update(static_cast<ArixBlake3State*>(ctx_), data, len);
+        SNEPPX_blake3_update(static_cast<SNEPPXBlake3State*>(ctx_), data, len);
     }
 }
 void Hasher::finalize(uint8_t* out, size_t out_len) {
     if (out && ctx_) {
-        arix_blake3_finish(static_cast<ArixBlake3State*>(ctx_), out);
+        SNEPPX_blake3_finish(static_cast<SNEPPXBlake3State*>(ctx_), out);
     }
-    delete static_cast<ArixBlake3State*>(ctx_);
+    delete static_cast<SNEPPXBlake3State*>(ctx_);
     ctx_ = nullptr;
 }
 
-} /* namespace arix */
+} /* namespace SNEPPX */

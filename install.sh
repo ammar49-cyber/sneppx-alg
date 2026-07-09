@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "=== ARIX-Algo v0.1.0 Installer ==="
+echo "=== SNEPPX-Algo v0.1.0 Installer ==="
 echo ""
 
 # Detect OS
@@ -79,10 +79,10 @@ echo ">> Building..."
 mkdir -p build && cd build
 
 if [ "${OS}" = "windows" ]; then
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON -DARIX_BUILD_PYTHON=OFF
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=OFF
     cmake --build . --config Release -j$(nproc 2>/dev/null || echo 4)
 else
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON -DARIX_BUILD_PYTHON=OFF
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=OFF
     cmake --build . -j$(nproc 2>/dev/null || echo 4)
 fi
 
@@ -92,6 +92,6 @@ echo ">> Running tests..."
 ctest --output-on-failure -C Release 2>/dev/null || ctest --output-on-failure 2>/dev/null || echo "  Tests skipped (build only)"
 
 echo ""
-echo "=== ARIX-Algo v0.1.0 installed ==="
+echo "=== SNEPPX-Algo v0.1.0 installed ==="
 echo "Run ./scripts/test.sh to verify."
 echo "See docs/ for documentation."

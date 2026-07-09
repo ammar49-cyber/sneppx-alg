@@ -1,4 +1,4 @@
-# ARIX-Algo Style Guide
+# SNEPPX-Algo Style Guide
 
 ## C Style
 
@@ -11,25 +11,25 @@
 - Enum names: PascalCase
 - Macro names: SCREAMING_SNAKE_CASE
 - File names: snake_case.c / .h
-- Include guards: `#ifndef ARIX_COMPONENT_H`, `#define ARIX_COMPONENT_H`
+- Include guards: `#ifndef SNEPPX_COMPONENT_H`, `#define SNEPPX_COMPONENT_H`
 
 ### Example
 
 ```c
-#ifndef ARIX_TENSOR_H
-#define ARIX_TENSOR_H
+#ifndef SNEPPX_TENSOR_H
+#define SNEPPX_TENSOR_H
 
-#define ARIX_MAX_NDIM 8
+#define SNEPPX_MAX_NDIM 8
 
 typedef struct {
     float* data;
-    size_t shape[ARIX_MAX_NDIM];
+    size_t shape[SNEPPX_MAX_NDIM];
     size_t ndim;
     size_t size;
-} ArixTensor;
+} SNEPPXTensor;
 
-ArixTensor* arix_tensor_create(const size_t* shape, size_t ndim, ArixDtype dtype);
-void arix_tensor_destroy(ArixTensor* t);
+SNEPPXTensor* SNEPPX_tensor_create(const size_t* shape, size_t ndim, SNEPPXDtype dtype);
+void SNEPPX_tensor_destroy(SNEPPXTensor* t);
 
 #endif
 ```
@@ -37,7 +37,7 @@ void arix_tensor_destroy(ArixTensor* t);
 ## C++ Style
 
 - Based on Google C++ Style with exceptions
-- Namespace: `arix`
+- Namespace: `SNEPPX`
 - Class names: PascalCase
 - Method names: snake_case
 - Variable names: snake_case
@@ -50,7 +50,7 @@ void arix_tensor_destroy(ArixTensor* t);
 ### Example
 
 ```cpp
-namespace arix {
+namespace SNEPPX {
 
 class Tensor {
 public:
@@ -66,7 +66,7 @@ private:
     size_t size_;
 };
 
-}  // namespace arix
+}  // namespace SNEPPX
 ```
 
 ## Python Style
@@ -131,11 +131,11 @@ Signed-off-by: Name <email>
 | Entity | Convention | Example |
 |--------|------------|---------|
 | C files | snake_case | `tensor_ops.c` |
-| C headers | snake_case | `arix_tensor.h` |
-| C functions | snake_case | `arix_tensor_create` |
-| C structs | PascalCase | `ArixTensor` |
-| C enums | PascalCase | `ArixDtype` |
-| C macros | SCREAMING_SNAKE_CASE | `ARIX_MAX_NDIM` |
+| C headers | snake_case | `SNEPPX_tensor.h` |
+| C functions | snake_case | `SNEPPX_tensor_create` |
+| C structs | PascalCase | `SNEPPXTensor` |
+| C enums | PascalCase | `SNEPPXDtype` |
+| C macros | SCREAMING_SNAKE_CASE | `SNEPPX_MAX_NDIM` |
 | C++ files | snake_case | `bindings.cpp` |
 | C++ classes | PascalCase | `Tensor` |
 | C++ methods | snake_case | `tensor_create` |

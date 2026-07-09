@@ -3,146 +3,146 @@
 
 static void test_empty_2d(void) {
     size_t shape[] = {2, 3};
-    ArixTensor* t = arix_tensor_empty(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_empty(shape, 2, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "empty 2d not null");
     ASSERT_EQ(t->ndim, 2, "ndim == 2");
     ASSERT_EQ(t->shape[0], 2, "shape[0] == 2");
     ASSERT_EQ(t->shape[1], 3, "shape[1] == 3");
     ASSERT_EQ(t->size, 6, "size == 6");
-    ASSERT_EQ(t->dtype, ARIX_FLOAT32, "dtype == float32");
+    ASSERT_EQ(t->dtype, SNEPPX_FLOAT32, "dtype == float32");
     ASSERT_NOT_NULL(t->data, "data not null");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_empty_3d(void) {
     size_t shape[] = {2, 3, 4};
-    ArixTensor* t = arix_tensor_empty(shape, 3, ARIX_FLOAT64);
+    SNEPPXTensor* t = SNEPPX_tensor_empty(shape, 3, SNEPPX_FLOAT64);
     ASSERT_NOT_NULL(t, "empty 3d not null");
     ASSERT_EQ(t->ndim, 3, "ndim == 3");
     ASSERT_EQ(t->size, 24, "size == 24");
-    ASSERT_EQ(t->dtype, ARIX_FLOAT64, "dtype == float64");
-    arix_tensor_destroy(t);
+    ASSERT_EQ(t->dtype, SNEPPX_FLOAT64, "dtype == float64");
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_empty_null_shape(void) {
-    ArixTensor* t = arix_tensor_empty(NULL, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_empty(NULL, 2, SNEPPX_FLOAT32);
     ASSERT_NULL(t, "empty NULL shape -> NULL");
 }
 
 static void test_empty_zero_ndim(void) {
-    ArixTensor* t = arix_tensor_empty(NULL, 0, ARIX_FLOAT32);
-    if (t) { ASSERT_EQ(t->ndim, 0, "ndim == 0"); ASSERT_EQ(t->size, 1, "size == 1"); arix_tensor_destroy(t); }
+    SNEPPXTensor* t = SNEPPX_tensor_empty(NULL, 0, SNEPPX_FLOAT32);
+    if (t) { ASSERT_EQ(t->ndim, 0, "ndim == 0"); ASSERT_EQ(t->size, 1, "size == 1"); SNEPPX_tensor_destroy(t); }
 }
 
 static void test_full_f32(void) {
     size_t shape[] = {2, 3};
     float val = 3.14f;
-    ArixTensor* t = arix_tensor_full(shape, 2, ARIX_FLOAT32, &val);
+    SNEPPXTensor* t = SNEPPX_tensor_full(shape, 2, SNEPPX_FLOAT32, &val);
     ASSERT_NOT_NULL(t, "full f32 not null");
     float* d = (float*)t->data;
     for (size_t i = 0; i < 6; i++) ASSERT_NEAR(d[i], 3.14f, 1e-4f, "full f32 value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_full_f64(void) {
     size_t shape[] = {3};
     double val = 2.71;
-    ArixTensor* t = arix_tensor_full(shape, 1, ARIX_FLOAT64, &val);
+    SNEPPXTensor* t = SNEPPX_tensor_full(shape, 1, SNEPPX_FLOAT64, &val);
     ASSERT_NOT_NULL(t, "full f64 not null");
     double* d = (double*)t->data;
     for (size_t i = 0; i < 3; i++) ASSERT_NEAR(d[i], 2.71, 1e-4, "full f64 value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_full_null_value(void) {
     size_t shape[] = {2, 2};
-    ArixTensor* t = arix_tensor_full(shape, 2, ARIX_FLOAT32, NULL);
+    SNEPPXTensor* t = SNEPPX_tensor_full(shape, 2, SNEPPX_FLOAT32, NULL);
     ASSERT_NOT_NULL(t, "full NULL value returns tensor");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_full_int32(void) {
     size_t shape[] = {4};
     int32_t val = 42;
-    ArixTensor* t = arix_tensor_full(shape, 1, ARIX_INT32, &val);
+    SNEPPXTensor* t = SNEPPX_tensor_full(shape, 1, SNEPPX_INT32, &val);
     ASSERT_NOT_NULL(t, "full int32 not null");
     int32_t* d = (int32_t*)t->data;
     for (size_t i = 0; i < 4; i++) ASSERT_EQ(d[i], 42, "full int32 value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_arange_f32(void) {
-    ArixTensor* t = arix_tensor_arange(0.0f, 5.0f, 1.0f, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_arange(0.0f, 5.0f, 1.0f, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "arange f32 not null");
     ASSERT_EQ(t->size, 5, "arange size == 5");
     float* d = (float*)t->data;
     for (size_t i = 0; i < 5; i++) ASSERT_NEAR(d[i], (float)i, 1e-4f, "arange f32 value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_arange_f64(void) {
-    ArixTensor* t = arix_tensor_arange(1.0f, 10.0f, 3.0f, ARIX_FLOAT64);
+    SNEPPXTensor* t = SNEPPX_tensor_arange(1.0f, 10.0f, 3.0f, SNEPPX_FLOAT64);
     ASSERT_NOT_NULL(t, "arange f64 not null");
     double* d = (double*)t->data;
     ASSERT_NEAR(d[0], 1.0, 1e-4, "arange f64 [0]");
     ASSERT_NEAR(d[1], 4.0, 1e-4, "arange f64 [1]");
     ASSERT_NEAR(d[2], 7.0, 1e-4, "arange f64 [2]");
     ASSERT_EQ(t->size, 3, "arange f64 size == 3");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_arange_int32(void) {
-    ArixTensor* t = arix_tensor_arange(0.0f, 5.0f, 1.0f, ARIX_INT32);
+    SNEPPXTensor* t = SNEPPX_tensor_arange(0.0f, 5.0f, 1.0f, SNEPPX_INT32);
     ASSERT_NOT_NULL(t, "arange int32 not null");
     ASSERT_EQ(t->size, 5, "arange int32 size == 5");
     int32_t* d = (int32_t*)t->data;
     for (size_t i = 0; i < 5; i++) ASSERT_EQ(d[i], (int32_t)i, "arange int32 value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_arange_zero_step(void) {
-    ArixTensor* t = arix_tensor_arange(0.0f, 5.0f, 0.0f, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_arange(0.0f, 5.0f, 0.0f, SNEPPX_FLOAT32);
     ASSERT_NULL(t, "arange zero step -> NULL");
 }
 
 static void test_arange_negative_step(void) {
-    ArixTensor* t = arix_tensor_arange(5.0f, 0.0f, -1.0f, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_arange(5.0f, 0.0f, -1.0f, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "arange negative step not null");
     ASSERT_EQ(t->size, 5, "arange negative step size == 5");
     float* d = (float*)t->data;
     ASSERT_NEAR(d[0], 5.0f, 1e-4f, "arange negative [0]");
     ASSERT_NEAR(d[4], 1.0f, 1e-4f, "arange negative [4]");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_linspace_f32(void) {
-    ArixTensor* t = arix_tensor_linspace(0.0f, 1.0f, 5, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_linspace(0.0f, 1.0f, 5, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "linspace f32 not null");
     ASSERT_EQ(t->size, 5, "linspace size == 5");
     float* d = (float*)t->data;
     ASSERT_NEAR(d[0], 0.0f, 1e-4f, "linspace f32 start");
     ASSERT_NEAR(d[4], 1.0f, 1e-4f, "linspace f32 end");
     ASSERT_NEAR(d[2], 0.5f, 1e-4f, "linspace f32 mid");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_linspace_f64(void) {
-    ArixTensor* t = arix_tensor_linspace(1.0f, 3.0f, 3, ARIX_FLOAT64);
+    SNEPPXTensor* t = SNEPPX_tensor_linspace(1.0f, 3.0f, 3, SNEPPX_FLOAT64);
     ASSERT_NOT_NULL(t, "linspace f64 not null");
     double* d = (double*)t->data;
     ASSERT_NEAR(d[0], 1.0, 1e-4, "linspace f64 [0]");
     ASSERT_NEAR(d[1], 2.0, 1e-4, "linspace f64 [1]");
     ASSERT_NEAR(d[2], 3.0, 1e-4, "linspace f64 [2]");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_linspace_zero_steps(void) {
-    ArixTensor* t = arix_tensor_linspace(0.0f, 1.0f, 0, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_linspace(0.0f, 1.0f, 0, SNEPPX_FLOAT32);
     ASSERT_NULL(t, "linspace zero steps -> NULL");
 }
 
 static void test_eye_2d(void) {
-    ArixTensor* t = arix_tensor_eye(3, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_eye(3, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "eye 3 not null");
     ASSERT_EQ(t->ndim, 2, "eye ndim == 2");
     ASSERT_EQ(t->shape[0], 3, "eye shape[0] == 3");
@@ -151,26 +151,26 @@ static void test_eye_2d(void) {
     for (size_t i = 0; i < 3; i++)
         for (size_t j = 0; j < 3; j++)
             ASSERT_NEAR(d[i * 3 + j], (i == j) ? 1.0f : 0.0f, 1e-6f, "eye value");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_eye_1(void) {
-    ArixTensor* t = arix_tensor_eye(1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_eye(1, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "eye 1 not null");
     float* d = (float*)t->data;
     ASSERT_NEAR(d[0], 1.0f, 1e-6f, "eye 1x1 = 1");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_eye_f64(void) {
-    ArixTensor* t = arix_tensor_eye(2, ARIX_FLOAT64);
+    SNEPPXTensor* t = SNEPPX_tensor_eye(2, SNEPPX_FLOAT64);
     ASSERT_NOT_NULL(t, "eye f64 not null");
     double* d = (double*)t->data;
     ASSERT_NEAR(d[0], 1.0, 1e-6, "eye f64 [0,0]");
     ASSERT_NEAR(d[1], 0.0, 1e-6, "eye f64 [0,1]");
     ASSERT_NEAR(d[2], 0.0, 1e-6, "eye f64 [1,0]");
     ASSERT_NEAR(d[3], 1.0, 1e-6, "eye f64 [1,1]");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 int main(void) {

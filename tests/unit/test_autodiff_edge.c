@@ -2,321 +2,321 @@
 #include "automatic_differentiation_framework.h"
 
 static void test_variable_null_data(void) {
-    ArixVariable* v = arix_variable_create(NULL, 1);
+    SNEPPXVariable* v = SNEPPX_variable_create(NULL, 1);
     ASSERT_NOT_NULL(v, "var with NULL data is allowed");
     ASSERT_NULL(v->data, "data is NULL");
     ASSERT_EQ(v->requires_grad, 1, "requires_grad set");
     v->data = NULL;
-    arix_variable_destroy(v);
+    SNEPPX_variable_destroy(v);
 }
 
 static void test_variable_no_grad(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* v = arix_variable_create(t, 0);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* v = SNEPPX_variable_create(t, 0);
     ASSERT_NOT_NULL(v, "var requires_grad=0");
     ASSERT_EQ(v->requires_grad, 0, "requires_grad == 0");
     ASSERT_NULL(v->grad, "grad is NULL");
-    arix_variable_destroy(v);
+    SNEPPX_variable_destroy(v);
 }
 
 static void test_tape_destroy_null(void) {
-    arix_tape_destroy(NULL);
+    SNEPPX_tape_destroy(NULL);
 }
 
 static void test_variable_destroy_null(void) {
-    arix_variable_destroy(NULL);
+    SNEPPX_variable_destroy(NULL);
 }
 
 static void test_add_null_vars(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_add(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_add(tape, a, NULL);
     ASSERT_NULL(c, "add with NULL b");
-    c = arix_add(tape, NULL, a);
+    c = SNEPPX_add(tape, NULL, a);
     ASSERT_NULL(c, "add with NULL a");
-    c = arix_add(tape, NULL, NULL);
+    c = SNEPPX_add(tape, NULL, NULL);
     ASSERT_NULL(c, "add NULL NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_sub_null_vars(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_sub(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_sub(tape, a, NULL);
     ASSERT_NULL(c, "sub with NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_mul_null_vars(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_mul(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_mul(tape, a, NULL);
     ASSERT_NULL(c, "mul with NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_matmul_null_vars(void) {
     size_t sh[] = {2, 3};
     size_t sh2[] = {3, 4};
-    ArixTensor* ta = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* tb = arix_tensor_ones(sh2, 2, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixVariable* b = arix_variable_create(tb, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_matmul(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* tb = SNEPPX_tensor_ones(sh2, 2, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXVariable* b = SNEPPX_variable_create(tb, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_matmul(tape, a, NULL);
     ASSERT_NULL(c, "matmul NULL b");
-    c = arix_matmul(tape, NULL, b);
+    c = SNEPPX_matmul(tape, NULL, b);
     ASSERT_NULL(c, "matmul NULL a");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL; b->data = NULL;
-    arix_variable_destroy(a); arix_variable_destroy(b);
+    SNEPPX_variable_destroy(a); SNEPPX_variable_destroy(b);
 }
 
 static void test_matmul_mismatched_dims(void) {
     size_t sh1[] = {2, 3};
     size_t sh2[] = {5, 4};
-    ArixTensor* ta = arix_tensor_ones(sh1, 2, ARIX_FLOAT32);
-    ArixTensor* tb = arix_tensor_ones(sh2, 2, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixVariable* b = arix_variable_create(tb, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_matmul(tape, a, b);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh1, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* tb = SNEPPX_tensor_ones(sh2, 2, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXVariable* b = SNEPPX_variable_create(tb, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_matmul(tape, a, b);
     ASSERT_NULL(c, "matmul mismatched inner");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL; b->data = NULL;
-    arix_variable_destroy(a); arix_variable_destroy(b);
+    SNEPPX_variable_destroy(a); SNEPPX_variable_destroy(b);
 }
 
 static void test_mse_loss_null(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_mse_loss(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_mse_loss(tape, a, NULL);
     ASSERT_NULL(c, "mse_loss NULL target");
-    c = arix_mse_loss(tape, NULL, a);
+    c = SNEPPX_mse_loss(tape, NULL, a);
     ASSERT_NULL(c, "mse_loss NULL pred");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_mse_loss_mismatched(void) {
     size_t sh1[] = {3};
     size_t sh2[] = {4};
-    ArixTensor* ta = arix_tensor_ones(sh1, 1, ARIX_FLOAT32);
-    ArixTensor* tb = arix_tensor_ones(sh2, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixVariable* b = arix_variable_create(tb, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_mse_loss(tape, a, b);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh1, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* tb = SNEPPX_tensor_ones(sh2, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXVariable* b = SNEPPX_variable_create(tb, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_mse_loss(tape, a, b);
     ASSERT_NULL(c, "mse_loss mismatched sizes");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL; b->data = NULL;
-    arix_variable_destroy(a); arix_variable_destroy(b);
+    SNEPPX_variable_destroy(a); SNEPPX_variable_destroy(b);
 }
 
 static void test_relu_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_relu(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_relu(tape, NULL);
     ASSERT_NULL(c, "relu NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_gelu_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_gelu(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_gelu(tape, NULL);
     ASSERT_NULL(c, "gelu NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_sigmoid_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_sigmoid(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_sigmoid(tape, NULL);
     ASSERT_NULL(c, "sigmoid NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_silu_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_silu(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_silu(tape, NULL);
     ASSERT_NULL(c, "silu NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_div_null(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_div(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_div(tape, a, NULL);
     ASSERT_NULL(c, "div NULL b");
-    c = arix_div(tape, NULL, a);
+    c = SNEPPX_div(tape, NULL, a);
     ASSERT_NULL(c, "div NULL a");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_pow_null(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_pow(tape, a, NULL);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_pow(tape, a, NULL);
     ASSERT_NULL(c, "pow NULL b");
-    c = arix_pow(tape, NULL, a);
+    c = SNEPPX_pow(tape, NULL, a);
     ASSERT_NULL(c, "pow NULL a");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_neg_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_neg(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_neg(tape, NULL);
     ASSERT_NULL(c, "neg NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_tanh_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_tanh(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_tanh(tape, NULL);
     ASSERT_NULL(c, "tanh NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_softmax_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_softmax(tape, NULL, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_softmax(tape, NULL, 0);
     ASSERT_NULL(c, "softmax NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_exp_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_exp(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_exp(tape, NULL);
     ASSERT_NULL(c, "exp NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_log_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_log(tape, NULL);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_log(tape, NULL);
     ASSERT_NULL(c, "log NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_sum_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_sum(tape, NULL, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_sum(tape, NULL, 0);
     ASSERT_NULL(c, "sum NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_mean_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_mean(tape, NULL, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_mean(tape, NULL, 0);
     ASSERT_NULL(c, "mean NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_transpose_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_transpose(tape, NULL, 0, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_transpose(tape, NULL, 0, 1);
     ASSERT_NULL(c, "transpose NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_dropout_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_dropout(tape, NULL, 0.5f, 42);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_dropout(tape, NULL, 0.5f, 42);
     ASSERT_NULL(c, "dropout NULL");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_layer_norm_null(void) {
     size_t sh[] = {4};
-    ArixTensor* tg = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* tb = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
-    ArixVariable* g = arix_variable_create(tg, 0);
-    ArixVariable* b = arix_variable_create(tb, 0);
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_layer_norm(tape, NULL, g, b, 1e-5f);
+    SNEPPXTensor* tg = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* tb = SNEPPX_tensor_zeros(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* g = SNEPPX_variable_create(tg, 0);
+    SNEPPXVariable* b = SNEPPX_variable_create(tb, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_layer_norm(tape, NULL, g, b, 1e-5f);
     ASSERT_NULL(c, "layer_norm NULL input");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     g->data = NULL; b->data = NULL;
-    arix_variable_destroy(g); arix_variable_destroy(b);
+    SNEPPX_variable_destroy(g); SNEPPX_variable_destroy(b);
 }
 
 static void test_concat_null(void) {
-    ArixTape* tape = arix_tape_create();
-    ArixVariable* c = arix_concat(tape, NULL, 0, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable* c = SNEPPX_concat(tape, NULL, 0, 0);
     ASSERT_NULL(c, "concat NULL array");
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixVariable* arr[] = {a, NULL};
-    c = arix_concat(tape, arr, 2, 0);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXVariable* arr[] = {a, NULL};
+    c = SNEPPX_concat(tape, arr, 2, 0);
     ASSERT_NULL(c, "concat with NULL var");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_tape_backward_constant(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 0);
-    ArixTape* tape = arix_tape_create();
-    arix_tape_backward(tape, a);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 0);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPX_tape_backward(tape, a);
     ASSERT_NOT_NULL(a->grad, "backward sets grad (grad=ones)");
     if (a->grad) {
         float* gd = (float*)a->grad->data;
         ASSERT_EQ(gd[0], 1.0f, "grad == 1");
     }
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
     a->data = NULL; a->grad = NULL;
-    arix_variable_destroy(a);
+    SNEPPX_variable_destroy(a);
 }
 
 static void test_tape_record_null(void) {
-    ArixTape* tape = arix_tape_create();
-    arix_tape_record(tape, NULL);
-    arix_tape_destroy(tape);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPX_tape_record(tape, NULL);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_no_grad_scoping(void) {
     size_t sh[] = {3};
-    ArixTensor* ta = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* tb = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(ta, 1);
-    ArixVariable* b = arix_variable_create(tb, 1);
-    ArixTape* tape = arix_tape_create();
-    arix_no_grad_enter();
-    ArixVariable* c = arix_add(tape, a, b);
+    SNEPPXTensor* ta = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* tb = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(ta, 1);
+    SNEPPXVariable* b = SNEPPX_variable_create(tb, 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPX_no_grad_enter();
+    SNEPPXVariable* c = SNEPPX_add(tape, a, b);
     ASSERT_NOT_NULL(c, "add in no_grad mode");
     ASSERT(c->requires_grad == 0 || c->requires_grad == 0, "result requires_grad=0");
-    ASSERT_EQ(arix_no_grad_is_active(), 1, "no_grad active");
-    arix_no_grad_exit();
-    ASSERT_EQ(arix_no_grad_is_active(), 0, "no_grad inactive after exit");
-    arix_tape_destroy(tape);
+    ASSERT_EQ(SNEPPX_no_grad_is_active(), 1, "no_grad active");
+    SNEPPX_no_grad_exit();
+    ASSERT_EQ(SNEPPX_no_grad_is_active(), 0, "no_grad inactive after exit");
+    SNEPPX_tape_destroy(tape);
     a->data = NULL; b->data = NULL;
-    if (c) { c->data = NULL; c->grad = NULL; arix_variable_destroy(c); }
-    arix_variable_destroy(a); arix_variable_destroy(b);
+    if (c) { c->data = NULL; c->grad = NULL; SNEPPX_variable_destroy(c); }
+    SNEPPX_variable_destroy(a); SNEPPX_variable_destroy(b);
 }
 
 int main(void) {

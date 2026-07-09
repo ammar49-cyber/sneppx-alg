@@ -7,10 +7,10 @@
 #include "timing_attack_countermeasure.h"
 
 int main(void) {
-    printf("=== ARIX S1 Secure Memory Stress Test ===\n\n");
+    printf("=== SNEPPX S1 Secure Memory Stress Test ===\n\n");
 
-    ArixSecureAllocConfig cfg = {1, 1, 0, 1};
-    ArixSecurePool* pool = arix_secure_pool_create(100 * 1024 * 1024, &cfg);
+    SNEPPXSecureAllocConfig cfg = {1, 1, 0, 1};
+    SNEPPXSecurePool* pool = SNEPPX_secure_pool_create(100 * 1024 * 1024, &cfg);
     if (!pool) {
         printf("FAIL: could not create 100MB pool\n");
         return 1;
@@ -33,9 +33,9 @@ int main(void) {
     for (int i = 0; i < 10000; i++) {
         size_t sz = (size_t)((rand() % 4096) + 1);
         sizes[i] = sz;
-        uint64_t t0 = arix_timing_start();
-        ptrs[i] = arix_secure_malloc(pool, sz, 16);
-        uint64_t t1 = arix_timing_end();
+        uint64_t t0 = SNEPPX_timing_start();
+        ptrs[i] = SNEPPX_secure_malloc(pool, sz, 16);
+        uint64_t t1 = SNEPPX_timing_end();
         total_alloc_time += (t1 - t0);
         if (ptrs[i]) {
             alloc_ok++;
@@ -55,14 +55,14 @@ int main(void) {
 
     for (int i = 0; i < 10000; i++) {
         if (!ptrs[i]) continue;
-        uint64_t t0 = arix_timing_start();
-        arix_secure_free(pool, ptrs[i], sizes[i]);
-        uint64_t t1 = arix_timing_end();
+        uint64_t t0 = SNEPPX_timing_start();
+        SNEPPX_secure_free(pool, ptrs[i], sizes[i]);
+        uint64_t t1 = SNEPPX_timing_end();
         total_free_time += (t1 - t0);
     }
 
     size_t total, used, peak;
-    arix_secure_pool_stats(pool, &total, &used, &peak);
+    SNEPPX_secure_pool_stats(pool, &total, &used, &peak);
     printf("\n  Peak usage: %zu bytes (%.1f%% of %zu)\n",
            peak, (double)peak/total*100, total);
 
@@ -72,7 +72,7 @@ int main(void) {
     printf("  Avg alloc latency: %.0f ns\n", avg_alloc);
     printf("  Avg free latency:  %.0f ns\n", avg_free);
 
-    arix_secure_pool_destroy(pool);
+    SNEPPX_secure_pool_destroy(pool);
     free(ptrs);
     free(sizes);
 

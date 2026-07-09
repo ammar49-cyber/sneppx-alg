@@ -5,18 +5,18 @@
 
 static uint64_t generation_counter = 0;
 
-void arix_canary_generate(ArixCanary* canary) {
+void SNEPPX_canary_generate(SNEPPXCanary* canary) {
     if (!canary) return;
-    arix_random_bytes(canary->value, ARIX_CANARY_SIZE);
+    SNEPPX_random_bytes(canary->value, SNEPPX_CANARY_SIZE);
     canary->generation = generation_counter++;
 }
 
-int arix_canary_verify(const ArixCanary* expected, const uint8_t* memory) {
+int SNEPPX_canary_verify(const SNEPPXCanary* expected, const uint8_t* memory) {
     if (!expected || !memory) return 0;
-    return arix_ct_equal(expected->value, memory, ARIX_CANARY_SIZE);
+    return SNEPPX_ct_equal(expected->value, memory, SNEPPX_CANARY_SIZE);
 }
 
-void arix_canary_write(const ArixCanary* canary, uint8_t* memory) {
+void SNEPPX_canary_write(const SNEPPXCanary* canary, uint8_t* memory) {
     if (!canary || !memory) return;
-    memcpy(memory, canary->value, ARIX_CANARY_SIZE);
+    memcpy(memory, canary->value, SNEPPX_CANARY_SIZE);
 }

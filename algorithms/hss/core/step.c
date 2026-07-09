@@ -1,6 +1,6 @@
 #include "hierarchical_state_space.h"
 
-void arix_hss_step(const ArixHSSLayer* layer, const ArixTensor* x, ArixTensor* h_next) {
+void SNEPPX_hss_step(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x, SNEPPXTensor* h_next) {
     size_t s_dim = layer->A_bar->shape[0];
     size_t i_dim = x->size;
 

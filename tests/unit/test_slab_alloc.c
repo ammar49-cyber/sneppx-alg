@@ -22,30 +22,30 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_slab_create_destroy(void) {
-    ArixSlabAllocator* slab = arix_slab_create(64, 16);
+    SNEPPXSlabAllocator* slab = SNEPPX_slab_create(64, 16);
     ASSERT(slab != NULL, "slab allocator created");
-    arix_slab_destroy(slab);
+    SNEPPX_slab_destroy(slab);
 }
 
 static void test_slab_alloc_free(void) {
-    ArixSlabAllocator* slab = arix_slab_create(32, 8);
-    void* p = arix_slab_alloc(slab);
+    SNEPPXSlabAllocator* slab = SNEPPX_slab_create(32, 8);
+    void* p = SNEPPX_slab_alloc(slab);
     ASSERT(p != NULL, "slab alloc returned memory");
     memset(p, 0x42, 32);
     unsigned char* buf = (unsigned char*)p;
     ASSERT(buf[0] == 0x42, "memory writable");
-    arix_slab_free(slab, p);
-    arix_slab_destroy(slab);
+    SNEPPX_slab_free(slab, p);
+    SNEPPX_slab_destroy(slab);
 }
 
 static void test_slab_multiple_allocs(void) {
-    ArixSlabAllocator* slab = arix_slab_create(16, 4);
-    void* p1 = arix_slab_alloc(slab);
-    void* p2 = arix_slab_alloc(slab);
+    SNEPPXSlabAllocator* slab = SNEPPX_slab_create(16, 4);
+    void* p1 = SNEPPX_slab_alloc(slab);
+    void* p2 = SNEPPX_slab_alloc(slab);
     ASSERT(p1 != p2, "distinct allocations");
-    arix_slab_free(slab, p2);
-    arix_slab_free(slab, p1);
-    arix_slab_destroy(slab);
+    SNEPPX_slab_free(slab, p2);
+    SNEPPX_slab_free(slab, p1);
+    SNEPPX_slab_destroy(slab);
 }
 
 int main(void) {

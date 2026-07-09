@@ -20,8 +20,8 @@ typedef struct {
     int cap;
 } IntArray;
 
-struct ArixTokenizer {
-    ArixTokenizerType type;
+struct SNEPPXTokenizer {
+    SNEPPXTokenizerType type;
     int vocab_size;
     int capacity;
     char* token_bytes;
@@ -29,28 +29,28 @@ struct ArixTokenizer {
     BpeMerge* merges;
     int num_merges;
     int merge_capacity;
-    ArixSpecialTokens special;
+    SNEPPXSpecialTokens special;
 };
 
 static IntArray* intarr_create(int cap) {
-    IntArray* a = arix_malloc(sizeof(IntArray), 64);
+    IntArray* a = SNEPPX_malloc(sizeof(IntArray), 64);
     if (!a) return NULL;
-    a->ids = arix_malloc((size_t)cap * sizeof(int), 64);
+    a->ids = SNEPPX_malloc((size_t)cap * sizeof(int), 64);
     a->len = 0; a->cap = cap;
-    if (!a->ids) { arix_free(a, sizeof(IntArray)); return NULL; }
+    if (!a->ids) { SNEPPX_free(a, sizeof(IntArray)); return NULL; }
     return a;
 }
 
 static void intarr_free(IntArray* a) {
     if (!a) return;
-    arix_free(a->ids, (size_t)a->cap * sizeof(int));
-    arix_free(a, sizeof(IntArray));
+    SNEPPX_free(a->ids, (size_t)a->cap * sizeof(int));
+    SNEPPX_free(a, sizeof(IntArray));
 }
 
 static int intarr_push(IntArray* a, int id) {
     if (a->len >= a->cap) {
         int new_cap = a->cap ? a->cap * 2 : 256;
-        int* new_ids = arix_realloc(a->ids, (size_t)a->cap * sizeof(int), (size_t)new_cap * sizeof(int), 64);
+        int* new_ids = SNEPPX_realloc(a->ids, (size_t)a->cap * sizeof(int), (size_t)new_cap * sizeof(int), 64);
         if (!new_ids) return -1;
         a->ids = new_ids; a->cap = new_cap;
     }
@@ -58,20 +58,20 @@ static int intarr_push(IntArray* a, int id) {
     return 0;
 }
 
-ArixTokenizer* arix_tokenizer_create(int vocab_size) {
-    ArixTokenizer* tok = arix_malloc(sizeof(ArixTokenizer), 64);
+SNEPPXTokenizer* SNEPPX_tokenizer_create(int vocab_size) {
+    SNEPPXTokenizer* tok = SNEPPX_malloc(sizeof(SNEPPXTokenizer), 64);
     if (!tok) return NULL;
-    tok->type = ARIX_TOK_BPE;
+    tok->type = SNEPPX_TOK_BPE;
     tok->vocab_size = 0;
     tok->capacity = vocab_size > 256 ? vocab_size : 256;
-    tok->token_bytes = arix_malloc((size_t)tok->capacity * MAX_TOKEN_LEN, 64);
-    tok->token_lens = arix_malloc((size_t)tok->capacity * sizeof(int), 64);
+    tok->token_bytes = SNEPPX_malloc((size_t)tok->capacity * MAX_TOKEN_LEN, 64);
+    tok->token_lens = SNEPPX_malloc((size_t)tok->capacity * sizeof(int), 64);
     tok->merges = NULL;
     tok->num_merges = 0; tok->merge_capacity = 0;
     if (!tok->token_bytes || !tok->token_lens) {
-        arix_free(tok->token_bytes, (size_t)tok->capacity * MAX_TOKEN_LEN);
-        arix_free(tok->token_lens, (size_t)tok->capacity * sizeof(int));
-        arix_free(tok, sizeof(ArixTokenizer)); return NULL;
+        SNEPPX_free(tok->token_bytes, (size_t)tok->capacity * MAX_TOKEN_LEN);
+        SNEPPX_free(tok->token_lens, (size_t)tok->capacity * sizeof(int));
+        SNEPPX_free(tok, sizeof(SNEPPXTokenizer)); return NULL;
     }
     tok->special.pad_id = -1; tok->special.bos_id = -1;
     tok->special.eos_id = -1; tok->special.unk_id = -1;
@@ -83,26 +83,26 @@ ArixTokenizer* arix_tokenizer_create(int vocab_size) {
     return tok;
 }
 
-void arix_tokenizer_destroy(ArixTokenizer* tok) {
+void SNEPPX_tokenizer_destroy(SNEPPXTokenizer* tok) {
     if (!tok) return;
-    arix_free(tok->token_bytes, (size_t)tok->capacity * MAX_TOKEN_LEN);
-    arix_free(tok->token_lens, (size_t)tok->capacity * sizeof(int));
-    if (tok->merges) arix_free(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge));
-    arix_free(tok, sizeof(ArixTokenizer));
+    SNEPPX_free(tok->token_bytes, (size_t)tok->capacity * MAX_TOKEN_LEN);
+    SNEPPX_free(tok->token_lens, (size_t)tok->capacity * sizeof(int));
+    if (tok->merges) SNEPPX_free(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge));
+    SNEPPX_free(tok, sizeof(SNEPPXTokenizer));
 }
 
-int arix_tokenizer_vocab_size(const ArixTokenizer* tok) { return tok ? tok->vocab_size : 0; }
-ArixSpecialTokens arix_tokenizer_special(const ArixTokenizer* tok) { return tok ? tok->special : (ArixSpecialTokens){-1,-1,-1,-1}; }
-void arix_tokenizer_set_special(ArixTokenizer* tok, ArixSpecialTokens sp) { if (tok) tok->special = sp; }
+int SNEPPX_tokenizer_vocab_size(const SNEPPXTokenizer* tok) { return tok ? tok->vocab_size : 0; }
+SNEPPXSpecialTokens SNEPPX_tokenizer_special(const SNEPPXTokenizer* tok) { return tok ? tok->special : (SNEPPXSpecialTokens){-1,-1,-1,-1}; }
+void SNEPPX_tokenizer_set_special(SNEPPXTokenizer* tok, SNEPPXSpecialTokens sp) { if (tok) tok->special = sp; }
 
-static int find_token(const ArixTokenizer* tok, const char* bytes, int len) {
+static int find_token(const SNEPPXTokenizer* tok, const char* bytes, int len) {
     for (int i = 0; i < tok->vocab_size; i++)
         if (tok->token_lens[i] == len && memcmp(tok->token_bytes + (size_t)i * MAX_TOKEN_LEN, bytes, (size_t)len) == 0)
             return i;
     return -1;
 }
 
-int arix_tokenizer_add_token(ArixTokenizer* tok, const char* token, int id) {
+int SNEPPX_tokenizer_add_token(SNEPPXTokenizer* tok, const char* token, int id) {
     if (!tok || id < 0 || id >= tok->capacity) return -1;
     int len = (int)strlen(token);
     if (len > MAX_TOKEN_LEN - 1 || find_token(tok, token, len) >= 0) return 0;
@@ -113,7 +113,7 @@ int arix_tokenizer_add_token(ArixTokenizer* tok, const char* token, int id) {
     return 0;
 }
 
-int arix_tokenizer_encode(const ArixTokenizer* tok, const char* text, int* out_ids, size_t max_len) {
+int SNEPPX_tokenizer_encode(const SNEPPXTokenizer* tok, const char* text, int* out_ids, size_t max_len) {
     if (!tok || !text || !out_ids || max_len == 0) return -1;
     size_t text_len = strlen(text);
     IntArray* ids = intarr_create((int)(text_len + 1));
@@ -149,13 +149,13 @@ int arix_tokenizer_encode(const ArixTokenizer* tok, const char* text, int* out_i
     return result;
 }
 
-char* arix_tokenizer_decode(const ArixTokenizer* tok, const int* ids, size_t len) {
+char* SNEPPX_tokenizer_decode(const SNEPPXTokenizer* tok, const int* ids, size_t len) {
     if (!tok || !ids || len == 0) return NULL;
     size_t total = 0;
     for (size_t i = 0; i < len; i++)
         if (ids[i] >= 0 && ids[i] < tok->vocab_size)
             total += (size_t)tok->token_lens[ids[i]];
-    char* out = arix_malloc(total + 1, 64);
+    char* out = SNEPPX_malloc(total + 1, 64);
     if (!out) return NULL;
     size_t pos = 0;
     for (size_t i = 0; i < len; i++) {
@@ -169,7 +169,7 @@ char* arix_tokenizer_decode(const ArixTokenizer* tok, const int* ids, size_t len
     return out;
 }
 
-static IntArray* text_to_ids_bytewise(ArixTokenizer* tok, const char* text) {
+static IntArray* text_to_ids_bytewise(SNEPPXTokenizer* tok, const char* text) {
     size_t len = strlen(text);
     IntArray* ids = intarr_create((int)(len + 1));
     if (!ids) return NULL;
@@ -207,25 +207,25 @@ static void count_pairs(IntArray** corpus, size_t num_texts, long long* pair_cou
     }
 }
 
-ArixTokenizer* arix_tokenizer_train_bpe(const char** texts, size_t num_texts, size_t target_vocab) {
+SNEPPXTokenizer* SNEPPX_tokenizer_train_bpe(const char** texts, size_t num_texts, size_t target_vocab) {
     if (!texts || num_texts == 0 || target_vocab <= 256) return NULL;
-    ArixTokenizer* tok = arix_tokenizer_create((int)target_vocab + 256);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create((int)target_vocab + 256);
     if (!tok) return NULL;
-    IntArray** corpus = arix_malloc(num_texts * sizeof(IntArray*), 64);
-    if (!corpus) { arix_tokenizer_destroy(tok); return NULL; }
+    IntArray** corpus = SNEPPX_malloc(num_texts * sizeof(IntArray*), 64);
+    if (!corpus) { SNEPPX_tokenizer_destroy(tok); return NULL; }
     for (size_t t = 0; t < num_texts; t++) {
         corpus[t] = text_to_ids_bytewise(tok, texts[t]);
         if (!corpus[t]) {
             for (size_t k = 0; k < t; k++) intarr_free(corpus[k]);
-            arix_free(corpus, num_texts * sizeof(IntArray*));
-            arix_tokenizer_destroy(tok); return NULL;
+            SNEPPX_free(corpus, num_texts * sizeof(IntArray*));
+            SNEPPX_tokenizer_destroy(tok); return NULL;
         }
     }
     int max_merges = (int)target_vocab - 256;
     int current_max_id = 256;
     for (int m = 0; m < max_merges; m++) {
         int pair_dim = current_max_id;
-        long long* pair_counts = arix_malloc((size_t)pair_dim * (size_t)pair_dim * sizeof(long long), 64);
+        long long* pair_counts = SNEPPX_malloc((size_t)pair_dim * (size_t)pair_dim * sizeof(long long), 64);
         if (!pair_counts) break;
         memset(pair_counts, 0, (size_t)pair_dim * (size_t)pair_dim * sizeof(long long));
         count_pairs(corpus, num_texts, pair_counts, pair_dim, NULL);
@@ -237,7 +237,7 @@ ArixTokenizer* arix_tokenizer_train_bpe(const char** texts, size_t num_texts, si
                 if (c > best_count) { best_count = c; best_l = l; best_r = r; }
             }
         }
-        arix_free(pair_counts, (size_t)pair_dim * (size_t)pair_dim * sizeof(long long));
+        SNEPPX_free(pair_counts, (size_t)pair_dim * (size_t)pair_dim * sizeof(long long));
         if (best_l < 0 || best_count == 0) break;
         int new_id = tok->vocab_size;
         if (new_id >= tok->capacity) break;
@@ -251,7 +251,7 @@ ArixTokenizer* arix_tokenizer_train_bpe(const char** texts, size_t num_texts, si
         tok->vocab_size++;
         if (tok->num_merges >= tok->merge_capacity) {
             int nc = tok->merge_capacity ? tok->merge_capacity * 2 : 1024;
-            BpeMerge* nm = arix_realloc(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge),
+            BpeMerge* nm = SNEPPX_realloc(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge),
                                          (size_t)nc * sizeof(BpeMerge), 64);
             if (!nm) break;
             tok->merges = nm; tok->merge_capacity = nc;
@@ -265,11 +265,11 @@ ArixTokenizer* arix_tokenizer_train_bpe(const char** texts, size_t num_texts, si
             apply_merge(corpus[t], best_l, best_r, new_id);
     }
     for (size_t t = 0; t < num_texts; t++) intarr_free(corpus[t]);
-    arix_free(corpus, num_texts * sizeof(IntArray*));
+    SNEPPX_free(corpus, num_texts * sizeof(IntArray*));
     return tok;
 }
 
-int arix_tokenizer_save(const ArixTokenizer* tok, const char* path) {
+int SNEPPX_tokenizer_save(const SNEPPXTokenizer* tok, const char* path) {
     if (!tok || !path) return -1;
     FILE* f = fopen(path, "wb");
     if (!f) return -1;
@@ -293,7 +293,7 @@ int arix_tokenizer_save(const ArixTokenizer* tok, const char* path) {
     return 0;
 }
 
-ArixTokenizer* arix_tokenizer_load(const char* path) {
+SNEPPXTokenizer* SNEPPX_tokenizer_load(const char* path) {
     if (!path) return NULL;
     FILE* f = fopen(path, "rb");
     if (!f) return NULL;
@@ -301,27 +301,27 @@ ArixTokenizer* arix_tokenizer_load(const char* path) {
     if (fread(&magic, sizeof(magic), 1, f) != 1 || magic != 0x4250544F) { fclose(f); return NULL; }
     int vs, nm;
     if (fread(&vs, sizeof(vs), 1, f) != 1 || fread(&nm, sizeof(nm), 1, f) != 1) { fclose(f); return NULL; }
-    ArixTokenizer* tok = arix_tokenizer_create(vs > 256 ? vs : 256);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create(vs > 256 ? vs : 256);
     if (!tok) { fclose(f); return NULL; }
     fread(&tok->special, sizeof(tok->special), 1, f);
     tok->vocab_size = vs;
     for (int i = 0; i < vs; i++) {
         int len;
-        if (fread(&len, sizeof(int), 1, f) != 1) { arix_tokenizer_destroy(tok); fclose(f); return NULL; }
+        if (fread(&len, sizeof(int), 1, f) != 1) { SNEPPX_tokenizer_destroy(tok); fclose(f); return NULL; }
         tok->token_lens[i] = len;
         if (len > 0 && fread(tok->token_bytes + (size_t)i * MAX_TOKEN_LEN, 1, (size_t)len, f) != (size_t)len) {
-            arix_tokenizer_destroy(tok); fclose(f); return NULL;
+            SNEPPX_tokenizer_destroy(tok); fclose(f); return NULL;
         }
     }
     for (int i = 0; i < nm; i++) {
         BpeMerge m;
         if (fread(&m.left_id, sizeof(int), 1, f) != 1 || fread(&m.right_id, sizeof(int), 1, f) != 1
             || fread(&m.new_id, sizeof(int), 1, f) != 1) {
-            arix_tokenizer_destroy(tok); fclose(f); return NULL;
+            SNEPPX_tokenizer_destroy(tok); fclose(f); return NULL;
         }
         if (tok->num_merges >= tok->merge_capacity) {
             int nc = tok->merge_capacity ? tok->merge_capacity * 2 : 1024;
-            BpeMerge* nm2 = arix_realloc(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge),
+            BpeMerge* nm2 = SNEPPX_realloc(tok->merges, (size_t)tok->merge_capacity * sizeof(BpeMerge),
                                           (size_t)nc * sizeof(BpeMerge), 64);
             if (!nm2) break;
             tok->merges = nm2; tok->merge_capacity = nc;
@@ -332,19 +332,19 @@ ArixTokenizer* arix_tokenizer_load(const char* path) {
     return tok;
 }
 
-ArixTensor* arix_tokenizer_ids_to_tensor(const ArixTokenizer* tok, const int* ids, size_t len) {
+SNEPPXTensor* SNEPPX_tokenizer_ids_to_tensor(const SNEPPXTokenizer* tok, const int* ids, size_t len) {
     (void)tok;
     size_t shape[] = {1, len};
-    ArixTensor* t = arix_tensor_create(shape, 2, ARIX_INT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 2, SNEPPX_INT32);
     if (!t) return NULL;
     memcpy(t->data, ids, len * sizeof(int));
     return t;
 }
 
-int* arix_tokenizer_tensor_to_ids(const ArixTensor* t, size_t* out_len) {
-    if (!t || t->dtype != ARIX_INT32) return NULL;
+int* SNEPPX_tokenizer_tensor_to_ids(const SNEPPXTensor* t, size_t* out_len) {
+    if (!t || t->dtype != SNEPPX_INT32) return NULL;
     size_t n = t->size;
-    int* ids = arix_malloc(n * sizeof(int), 64);
+    int* ids = SNEPPX_malloc(n * sizeof(int), 64);
     if (!ids) return NULL;
     memcpy(ids, t->data, n * sizeof(int));
     *out_len = n;

@@ -7,7 +7,7 @@
 #endif
 #include <stdio.h>
 
-extern int arix_random_bytes(uint8_t* buffer, size_t len);
+extern int SNEPPX_random_bytes(uint8_t* buffer, size_t len);
 
 /* GF(2^255-19) field element: 5 limbs of 51 bits */
 typedef struct { uint64_t v[5]; } field;
@@ -212,9 +212,9 @@ static int point_from_bytes(point* p, const uint8_t b[32]) {
     fe_sq(&vxx, &p->X); fe_mul(&vxx, &vxx, &v);
     fe_sub(&check, &vxx, &u);
     uint8_t ck[32]; fe_to_bytes(ck, &check);
-    if (!arix_ct_is_zero(ck, 32)) {
+    if (!SNEPPX_ct_is_zero(ck, 32)) {
         fe_add(&check, &vxx, &u); fe_to_bytes(ck, &check);
-        if (!arix_ct_is_zero(ck, 32)) {
+        if (!SNEPPX_ct_is_zero(ck, 32)) {
             fprintf(stderr, "DBG: sqrt fail — vxx==u? no, vxx==-u? no\n");
             { uint8_t ub[32], vxxb[32]; fe_to_bytes(ub, &u); fe_to_bytes(vxxb, &vxx);
               fprintf(stderr, "  u="); for(int i=0;i<32;i++) fprintf(stderr,"%02x",ub[i]); fprintf(stderr,"\n");
@@ -255,9 +255,9 @@ static void init_base_point(void) {
       fe_sq(&vxx, &B.X); fe_mul(&vxx, &vxx, &v);
       fe_sub(&check, &vxx, &u);
       uint8_t ck[32]; fe_to_bytes(ck, &check);
-      if (!arix_ct_is_zero(ck, 32)) {
+      if (!SNEPPX_ct_is_zero(ck, 32)) {
           fe_add(&check, &vxx, &u); fe_to_bytes(ck, &check);
-          if (!arix_ct_is_zero(ck, 32)) { fprintf(stderr, "DBG: B sqrt fail\n"); return; }
+          if (!SNEPPX_ct_is_zero(ck, 32)) { fprintf(stderr, "DBG: B sqrt fail\n"); return; }
           fe_mul(&B.X, &B.X, &SQRTM1);
       }
     }
@@ -299,7 +299,7 @@ static void point_double(point* r, const point* p) {
     /* Identity guard: if X == 0 and Y == Z, force output to (0,1,1,0) */
     { uint8_t xb[32], yzb[32]; fe_to_bytes(xb, &p->X);
       fe_sub(&t, &p->Y, &p->Z); fe_to_bytes(yzb, &t);
-      uint64_t idm = (uint64_t)(-(int)(arix_ct_is_zero(xb, 32) && arix_ct_is_zero(yzb, 32)));
+      uint64_t idm = (uint64_t)(-(int)(SNEPPX_ct_is_zero(xb, 32) && SNEPPX_ct_is_zero(yzb, 32)));
       for (int i = 0; i < 5; i++) {
           r->X.v[i] &= ~idm; r->Y.v[i] = (r->Y.v[i] & ~idm) | (idm & 1ULL);
           r->Z.v[i] = (r->Z.v[i] & ~idm) | (idm & 1ULL); r->T.v[i] &= ~idm;
@@ -313,7 +313,7 @@ static int point_is_on_curve(const point* p) {
     fe_sq(&v, &p->Z); fe_sub(&lhs, &lhs, &v);
     fe_sq(&v, &p->T); fe_mul(&v, &v, &D); fe_sub(&lhs, &lhs, &v);
     uint8_t b[32]; fe_to_bytes(b, &lhs);
-    return arix_ct_is_zero(b, 32);
+    return SNEPPX_ct_is_zero(b, 32);
 }
 
 static void point_scalar_mult(point* r, const uint8_t* scalar, size_t sc_len, const point* base) {
@@ -408,22 +408,22 @@ static void sc_mul256(uint8_t p[64], const uint8_t a[32], const uint8_t b[32]) {
     }
 }
 
-int arix_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed) {
+int SNEPPX_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed) {
     if (!seed || !expanded_sk) return -1;
     uint8_t hash[64];
-    arix_sha512(seed, 32, hash);
+    SNEPPX_sha512(seed, 32, hash);
     memcpy(expanded_sk, hash, 64);
     clamp_scalar(expanded_sk);
     return 0;
 }
 
-int arix_ed25519_keypair_generate(ArixEd25519Keypair* kp) {
+int SNEPPX_ed25519_keypair_generate(SNEPPXEd25519Keypair* kp) {
     if (!kp) return -1;
     init_base_point();
-    memset(kp, 0, sizeof(ArixEd25519Keypair));
+    memset(kp, 0, sizeof(SNEPPXEd25519Keypair));
     uint8_t seed[32];
-    if (arix_random_bytes(seed, 32) != 0) return -1;
-    if (arix_ed25519_secret_key_expand(kp->private_key, seed) != 0) return -1;
+    if (SNEPPX_random_bytes(seed, 32) != 0) return -1;
+    if (SNEPPX_ed25519_secret_key_expand(kp->private_key, seed) != 0) return -1;
     /* DEBUG: test identity + B */
     { point id; point_set_neutral(&id);
       point z; point_add(&z, &id, &B);
@@ -455,16 +455,16 @@ int arix_ed25519_keypair_generate(ArixEd25519Keypair* kp) {
     return 0;
 }
 
-int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size_t msg_len, ArixEd25519Signature* sig) {
+int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, size_t msg_len, SNEPPXEd25519Signature* sig) {
     if (!kp || !message || !sig) return -1;
     init_base_point();
     uint8_t r_seed[64], r_scalar[32], h_scalar[32], hram[64], product[64], sum[64];
     /* r = SHA-512(nonce_seed || message) */
-    ArixSHA512Context ctx;
-    arix_sha512_init(&ctx);
-    arix_sha512_update(&ctx, kp->private_key + 32, 32);
-    arix_sha512_update(&ctx, message, msg_len);
-    arix_sha512_finish(&ctx, r_seed);
+    SNEPPXSHA512Context ctx;
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx, kp->private_key + 32, 32);
+    SNEPPX_sha512_update(&ctx, message, msg_len);
+    SNEPPX_sha512_finish(&ctx, r_seed);
     sc_reduce64(r_scalar, r_seed);
     /* R = r_scalar * B */
     { uint8_t d2[32]; fe_to_bytes(d2, &B.X);
@@ -476,11 +476,11 @@ int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size
     fe_to_bytes(sig->data, &R.Y);
     sig->data[31] |= (uint8_t)((R.X.v[0] & 1) << 7);
     /* h = SHA-512(R || A || message) */
-    arix_sha512_init(&ctx);
-    arix_sha512_update(&ctx, sig->data, 32);
-    arix_sha512_update(&ctx, kp->public_key, 32);
-    arix_sha512_update(&ctx, message, msg_len);
-    arix_sha512_finish(&ctx, hram);
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx, sig->data, 32);
+    SNEPPX_sha512_update(&ctx, kp->public_key, 32);
+    SNEPPX_sha512_update(&ctx, message, msg_len);
+    SNEPPX_sha512_finish(&ctx, hram);
     memcpy(h_scalar, hram, 32);
     /* Reduce h_scalar mod L (copy 32 bytes into 64-byte buffer) */
     { uint8_t h64[64]; memset(h64, 0, 64); memcpy(h64, h_scalar, 32);
@@ -501,16 +501,16 @@ int arix_ed25519_sign(const ArixEd25519Keypair* kp, const uint8_t* message, size
     return 0;
 }
 
-int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const ArixEd25519Signature* sig) {
+int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig) {
     if (!public_key || !message || !sig) return -1;
     init_base_point();
     uint8_t hram[64];
-    ArixSHA512Context ctx;
-    arix_sha512_init(&ctx);
-    arix_sha512_update(&ctx, sig->data, 32);
-    arix_sha512_update(&ctx, public_key, 32);
-    arix_sha512_update(&ctx, message, msg_len);
-    arix_sha512_finish(&ctx, hram);
+    SNEPPXSHA512Context ctx;
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx, sig->data, 32);
+    SNEPPX_sha512_update(&ctx, public_key, 32);
+    SNEPPX_sha512_update(&ctx, message, msg_len);
+    SNEPPX_sha512_finish(&ctx, hram);
     point A; int ret_A = point_from_bytes(&A, public_key); printf("DBG: point_from_bytes(A)=%d\n", ret_A);
     if (ret_A != 0) { printf("DBG: A.public_key="); for(int i=0;i<32;i++) printf("%02x",public_key[i]); printf("\n"); return -1; }
     point R; int ret_R = point_from_bytes(&R, sig->data); printf("DBG: point_from_bytes(R)=%d\n", ret_R);
@@ -544,10 +544,10 @@ int arix_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_
     uint8_t bx[32], cx[32], by[32], cy[32];
     fe_to_bytes(bx, &lhs_x); fe_to_bytes(cx, &rhs_x);
     fe_to_bytes(by, &lhs_y); fe_to_bytes(cy, &rhs_y);
-    return arix_ct_equal(bx, cx, 32) && arix_ct_equal(by, cy, 32);
+    return SNEPPX_ct_equal(bx, cx, 32) && SNEPPX_ct_equal(by, cy, 32);
 }
 
-int arix_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point_bytes) {
+int SNEPPX_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point_bytes) {
     if (!result || !scalar || !point_bytes) return -1;
     point p; if (point_from_bytes(&p, point_bytes) != 0) return -1;
     point r; point_scalar_mult(&r, scalar, 32, &p);

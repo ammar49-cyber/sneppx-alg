@@ -48,41 +48,41 @@ static void inc_func(void* arg) {
 /* ── Pool create / destroy ────────────────────────────────── */
 
 static void test_pool_create_destroy(void) {
-    ArixThreadPool* pool = arix_threadpool_create(2);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(2);
     ASSERT(pool != NULL, "pool created");
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Default count at least 2 ─────────────────────────────── */
 
 static void test_default_count(void) {
-    size_t n = arix_threadpool_default_count();
+    size_t n = SNEPPX_threadpool_default_count();
     ASSERT(n >= 2, "default count >= 2");
 }
 
 /* ── Submit and execute one task ──────────────────────────── */
 
 static void test_submit_one(void) {
-    ArixThreadPool* pool = arix_threadpool_create(2);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(2);
     ASSERT(pool != NULL, "pool created");
 
     int counter = 0;
     IncArg arg = { &counter, 1000, 0 };
-    ArixTask task;
+    SNEPPXTask task;
     task.func = inc_func;
     task.arg  = &arg;
 
-    ASSERT(arix_threadpool_submit(pool, task) == 0, "submit ok");
-    arix_threadpool_wait(pool);
+    ASSERT(SNEPPX_threadpool_submit(pool, task) == 0, "submit ok");
+    SNEPPX_threadpool_wait(pool);
     ASSERT(counter == 1000, "counter == 1000");
 
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Multiple tasks ───────────────────────────────────────── */
 
 static void test_multiple_tasks(void) {
-    ArixThreadPool* pool = arix_threadpool_create(4);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(4);
     ASSERT(pool != NULL, "pool created");
 
     int counter = 0;
@@ -93,16 +93,16 @@ static void test_multiple_tasks(void) {
         arg->counter    = &counter;
         arg->iterations = 1000;
         arg->tid        = (size_t)i;
-        ArixTask task;
+        SNEPPXTask task;
         task.func = inc_func;
         task.arg  = arg;
-        arix_threadpool_submit(pool, task);
+        SNEPPX_threadpool_submit(pool, task);
     }
 
-    arix_threadpool_wait(pool);
+    SNEPPX_threadpool_wait(pool);
     ASSERT(counter == N * 1000, "counter == N*1000");
 
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Future ───────────────────────────────────────────────── */
@@ -117,42 +117,42 @@ static void fut_func(void* arg) {
 }
 
 static void test_future(void) {
-    ArixThreadPool* pool = arix_threadpool_create(2);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(2);
     ASSERT(pool != NULL, "pool created");
 
-    ArixFuture* fut = arix_future_create();
+    SNEPPXFuture* fut = SNEPPX_future_create();
     ASSERT(fut != NULL, "future created");
 
     FutArg arg;
     arg.value = 0;
 
-    ArixTask task;
+    SNEPPXTask task;
     task.func = fut_func;
     task.arg  = &arg;
 
-    ASSERT(!arix_future_is_ready(fut), "future not ready yet");
-    arix_threadpool_submit_future(pool, task, fut);
+    ASSERT(!SNEPPX_future_is_ready(fut), "future not ready yet");
+    SNEPPX_threadpool_submit_future(pool, task, fut);
 
-    arix_future_wait(fut);
-    ASSERT(arix_future_is_ready(fut), "future ready after wait");
+    SNEPPX_future_wait(fut);
+    ASSERT(SNEPPX_future_is_ready(fut), "future ready after wait");
     ASSERT(arg.value == 42, "future task executed");
 
-    arix_future_destroy(fut);
-    arix_threadpool_destroy(pool);
+    SNEPPX_future_destroy(fut);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Future without pool ──────────────────────────────────── */
 
 static void test_future_solo(void) {
-    ArixFuture* fut = arix_future_create();
+    SNEPPXFuture* fut = SNEPPX_future_create();
     ASSERT(fut != NULL, "future created");
-    ASSERT(!arix_future_is_ready(fut), "not ready");
+    ASSERT(!SNEPPX_future_is_ready(fut), "not ready");
 
-    arix_future_set_result(fut, (void*)(intptr_t)99);
-    ASSERT(arix_future_is_ready(fut), "ready");
-    ASSERT(arix_future_get_result(fut) == (void*)(intptr_t)99, "result == 99");
+    SNEPPX_future_set_result(fut, (void*)(intptr_t)99);
+    ASSERT(SNEPPX_future_is_ready(fut), "ready");
+    ASSERT(SNEPPX_future_get_result(fut) == (void*)(intptr_t)99, "result == 99");
 
-    arix_future_destroy(fut);
+    SNEPPX_future_destroy(fut);
 }
 
 /* ── Parallel For ─────────────────────────────────────────── */
@@ -170,7 +170,7 @@ static void for_func(size_t start, size_t end, void* arg) {
 }
 
 static void test_parallel_for(void) {
-    ArixThreadPool* pool = arix_threadpool_create(4);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(4);
     ASSERT(pool != NULL, "pool created");
 
     enum { N = 10000 };
@@ -181,13 +181,13 @@ static void test_parallel_for(void) {
     arg.array = arr;
     arg.value = 7;
 
-    arix_parallel_for(pool, 0, N, for_func, &arg);
+    SNEPPX_parallel_for(pool, 0, N, for_func, &arg);
     for (int i = 0; i < N; i++) {
         ASSERT(arr[i] == 7, "array[i] == 7");
     }
 
     free(arr);
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Parallel Reduce (sum) ────────────────────────────────── */
@@ -210,7 +210,7 @@ static void combine_int(void* dst, const void* src) {
 }
 
 static void test_parallel_reduce(void) {
-    ArixThreadPool* pool = arix_threadpool_create(4);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(4);
     ASSERT(pool != NULL, "pool created");
 
     enum { N = 10000 };
@@ -229,37 +229,37 @@ static void test_parallel_reduce(void) {
 
     int result = 0;
     int init   = 0;
-    arix_parallel_reduce(pool, 0, N, &init, sizeof(int),
+    SNEPPX_parallel_reduce(pool, 0, N, &init, sizeof(int),
                          sum_func, combine_int, &result, &rarg);
     ASSERT(result == expected, "reduce sum matches expected");
 
     free(arr);
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Single-threaded pool (1 thread) ──────────────────────── */
 
 static void test_single_thread_pool(void) {
-    ArixThreadPool* pool = arix_threadpool_create(1);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(1);
     ASSERT(pool != NULL, "pool created");
 
     int counter = 0;
     IncArg arg = { &counter, 500, 0 };
-    ArixTask task;
+    SNEPPXTask task;
     task.func = inc_func;
     task.arg  = &arg;
 
-    arix_threadpool_submit(pool, task);
-    arix_threadpool_wait(pool);
+    SNEPPX_threadpool_submit(pool, task);
+    SNEPPX_threadpool_wait(pool);
     ASSERT(counter == 500, "counter == 500");
 
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Many iterations (stress) ─────────────────────────────── */
 
 static void test_stress(void) {
-    ArixThreadPool* pool = arix_threadpool_create(4);
+    SNEPPXThreadPool* pool = SNEPPX_threadpool_create(4);
     ASSERT(pool != NULL, "pool created");
 
     enum { N = 500, ITERS = 500 };
@@ -272,25 +272,25 @@ static void test_stress(void) {
         arg->counter    = &counters[i];
         arg->iterations = ITERS;
         arg->tid        = (size_t)i;
-        ArixTask task;
+        SNEPPXTask task;
         task.func = inc_func;
         task.arg  = arg;
-        arix_threadpool_submit(pool, task);
+        SNEPPX_threadpool_submit(pool, task);
     }
 
-    arix_threadpool_wait(pool);
+    SNEPPX_threadpool_wait(pool);
     for (int i = 0; i < N; i++) {
         ASSERT(counters[i] == ITERS, "counter == ITERS");
     }
 
     free(counters);
-    arix_threadpool_destroy(pool);
+    SNEPPX_threadpool_destroy(pool);
 }
 
 /* ── Null-safe destroy ────────────────────────────────────── */
 
 static void test_null_destroy(void) {
-    arix_threadpool_destroy(NULL);
+    SNEPPX_threadpool_destroy(NULL);
 }
 
 /* ─────────────────────────────────────────────────────────── */

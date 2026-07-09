@@ -1,5 +1,5 @@
-#ifndef ARIX_TEST_COMMON_H
-#define ARIX_TEST_COMMON_H
+#ifndef SNEPPX_TEST_COMMON_H
+#define SNEPPX_TEST_COMMON_H
 
 #include <stdio.h>
 #include <math.h>

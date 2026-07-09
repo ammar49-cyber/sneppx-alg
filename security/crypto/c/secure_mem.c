@@ -14,14 +14,14 @@
 #include <unistd.h>
 #endif
 
-struct ArixSecurePool {
+struct SNEPPXSecurePool {
     uint8_t* base;
     size_t capacity;
     size_t used;
     size_t peak;
     int has_guards;
     int use_canaries;
-    ArixCanary pool_canary;
+    SNEPPXCanary pool_canary;
     uint64_t alloc_count;
 };
 
@@ -37,12 +37,12 @@ static size_t get_page_size(void) {
 }
 #endif
 
-void arix_secure_zero(void* ptr, size_t len) {
+void SNEPPX_secure_zero(void* ptr, size_t len) {
     volatile uint8_t* p = (volatile uint8_t*)ptr;
     for (size_t i = 0; i < len; i++) p[i] = 0;
 }
 
-ArixSecurePool* arix_secure_pool_create(size_t size, const ArixSecureAllocConfig* config) {
+SNEPPXSecurePool* SNEPPX_secure_pool_create(size_t size, const SNEPPXSecureAllocConfig* config) {
     size_t page = get_page_size();
     size_t alloc_size = size + (config && config->guard_pages ? 2 * page : 0);
     size_t random_off = 0;
@@ -67,7 +67,7 @@ ArixSecurePool* arix_secure_pool_create(size_t size, const ArixSecureAllocConfig
     }
 #endif
 
-    ArixSecurePool* pool = (ArixSecurePool*)malloc(sizeof(ArixSecurePool));
+    SNEPPXSecurePool* pool = (SNEPPXSecurePool*)malloc(sizeof(SNEPPXSecurePool));
     if (!pool) {
 #if defined(_WIN32)
         VirtualFree(base, 0, MEM_RELEASE);
@@ -83,13 +83,13 @@ ArixSecurePool* arix_secure_pool_create(size_t size, const ArixSecureAllocConfig
     if (config && config->randomize_layout) {
         size_t max_off = usable_size / 4;
         if (max_off > page) max_off = page;
-        random_off = arix_aslr_random_offset(max_off);
+        random_off = SNEPPX_aslr_random_offset(max_off);
         usable += random_off;
         usable_size -= random_off;
     }
 
     if (config && config->lock_memory) {
-        arix_mlock(usable, usable_size);
+        SNEPPX_mlock(usable, usable_size);
     }
 
     pool->base = usable;
@@ -99,14 +99,14 @@ ArixSecurePool* arix_secure_pool_create(size_t size, const ArixSecureAllocConfig
     pool->has_guards = (config && config->guard_pages) ? 1 : 0;
     pool->use_canaries = (config && config->canaries) ? 1 : 0;
     pool->alloc_count = 0;
-    arix_canary_generate(&pool->pool_canary);
+    SNEPPX_canary_generate(&pool->pool_canary);
     return pool;
 }
 
-void arix_secure_pool_destroy(ArixSecurePool* pool) {
+void SNEPPX_secure_pool_destroy(SNEPPXSecurePool* pool) {
     if (!pool) return;
-    arix_secure_zero(pool->base, pool->capacity);
-    arix_munlock(pool->base, pool->capacity);
+    SNEPPX_secure_zero(pool->base, pool->capacity);
+    SNEPPX_munlock(pool->base, pool->capacity);
     size_t page = get_page_size();
     uint8_t* raw_base = pool->base - (pool->has_guards ? page : 0);
     size_t total = pool->capacity + (pool->has_guards ? 2 * page : 0);
@@ -115,23 +115,23 @@ void arix_secure_pool_destroy(ArixSecurePool* pool) {
 #else
     munmap(raw_base, total);
 #endif
-    arix_secure_zero((void*)pool, sizeof(ArixSecurePool));
+    SNEPPX_secure_zero((void*)pool, sizeof(SNEPPXSecurePool));
     free(pool);
 }
 
-void* arix_secure_malloc(ArixSecurePool* pool, size_t size, size_t alignment) {
+void* SNEPPX_secure_malloc(SNEPPXSecurePool* pool, size_t size, size_t alignment) {
     if (!pool || !size) return NULL;
     if (alignment < 16) alignment = 16;
-    size_t header = pool->use_canaries ? ARIX_CANARY_SIZE : 0;
+    size_t header = pool->use_canaries ? SNEPPX_CANARY_SIZE : 0;
     size_t aligned_offset = (pool->used + alignment - 1) & ~(alignment - 1);
     size_t needed = aligned_offset + header + size + header;
     if (needed > pool->capacity) return NULL;
     uint8_t* ptr = pool->base + aligned_offset + header;
     if (pool->use_canaries) {
-        ArixCanary canary;
-        arix_canary_generate(&canary);
-        arix_canary_write(&canary, ptr - ARIX_CANARY_SIZE);
-        arix_canary_write(&canary, ptr + size);
+        SNEPPXCanary canary;
+        SNEPPX_canary_generate(&canary);
+        SNEPPX_canary_write(&canary, ptr - SNEPPX_CANARY_SIZE);
+        SNEPPX_canary_write(&canary, ptr + size);
     }
     pool->used = needed;
     if (pool->used > pool->peak) pool->peak = pool->used;
@@ -139,36 +139,36 @@ void* arix_secure_malloc(ArixSecurePool* pool, size_t size, size_t alignment) {
     return ptr;
 }
 
-void arix_secure_free(ArixSecurePool* pool, void* ptr, size_t size) {
+void SNEPPX_secure_free(SNEPPXSecurePool* pool, void* ptr, size_t size) {
     if (!pool || !ptr) return;
     if (pool->use_canaries) {
         uint8_t* mem = (uint8_t*)ptr;
-        ArixCanary* lead = (ArixCanary*)(mem - ARIX_CANARY_SIZE);
-        ArixCanary* trail = (ArixCanary*)(mem + size);
-        if (!arix_canary_verify(lead, lead->value)) {
+        SNEPPXCanary* lead = (SNEPPXCanary*)(mem - SNEPPX_CANARY_SIZE);
+        SNEPPXCanary* trail = (SNEPPXCanary*)(mem + size);
+        if (!SNEPPX_canary_verify(lead, lead->value)) {
             fprintf(stderr, "HEAP CORRUPTION: leading canary mismatch at %p\n", ptr);
             abort();
         }
-        if (!arix_canary_verify(trail, trail->value)) {
+        if (!SNEPPX_canary_verify(trail, trail->value)) {
             fprintf(stderr, "HEAP CORRUPTION: trailing canary mismatch at %p\n", ptr);
             abort();
         }
     }
-    arix_secure_zero(ptr, size);
+    SNEPPX_secure_zero(ptr, size);
 }
 
-void* arix_secure_realloc(ArixSecurePool* pool, void* ptr, size_t old_size, size_t new_size, size_t alignment) {
+void* SNEPPX_secure_realloc(SNEPPXSecurePool* pool, void* ptr, size_t old_size, size_t new_size, size_t alignment) {
     if (!pool) return NULL;
-    if (!ptr) return arix_secure_malloc(pool, new_size, alignment);
-    void* new_ptr = arix_secure_malloc(pool, new_size, alignment);
+    if (!ptr) return SNEPPX_secure_malloc(pool, new_size, alignment);
+    void* new_ptr = SNEPPX_secure_malloc(pool, new_size, alignment);
     if (!new_ptr) return NULL;
     size_t copy = old_size < new_size ? old_size : new_size;
     memcpy(new_ptr, ptr, copy);
-    arix_secure_free(pool, ptr, old_size);
+    SNEPPX_secure_free(pool, ptr, old_size);
     return new_ptr;
 }
 
-void arix_secure_pool_stats(ArixSecurePool* pool, size_t* total, size_t* used, size_t* peak) {
+void SNEPPX_secure_pool_stats(SNEPPXSecurePool* pool, size_t* total, size_t* used, size_t* peak) {
     if (!pool) return;
     if (total) *total = pool->capacity;
     if (used) *used = pool->used;

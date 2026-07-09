@@ -121,12 +121,12 @@ static int dilithium_poly_frombytes(int32_t r[256], const uint8_t *in) {
 
 static void dilithium_poly_challenge(int32_t c[256], const uint8_t seed[32]) {
     uint8_t buf[256];
-    arix_random_bytes(buf, 256);
+    SNEPPX_random_bytes(buf, 256);
     int pos = 0;
     for (int i = 0; i < 256; i++) c[i] = 0;
     for (int i = 0; i < 60; i++) {
         while (1) {
-            if (pos >= 256) { arix_random_bytes(buf, 256); pos = 0; }
+            if (pos >= 256) { SNEPPX_random_bytes(buf, 256); pos = 0; }
             int r = buf[pos++] & 0xff;
             if (r < 256) { c[r] = 1; break; }
         }
@@ -195,12 +195,12 @@ static void dilithium_sign_vector(int32_t w1[256], int32_t r0[256], const int32_
     dilithium_poly_decompose(w1, r0, w1);
 }
 
-int arix_dilithium_keygen(uint8_t *pk, uint8_t *sk, int variant) {
+int SNEPPX_dilithium_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int eta = (variant == 2) ? 2 : 4;
     uint8_t seed[32];
-    arix_random_bytes(seed, 32);
+    SNEPPX_random_bytes(seed, 32);
     int32_t *s1 = (int32_t*)calloc((size_t)k * 256, sizeof(int32_t));
     int32_t *s2 = (int32_t*)calloc((size_t)k * 256, sizeof(int32_t));
     int32_t *a = (int32_t*)calloc((size_t)k * k * 256, sizeof(int32_t));
@@ -234,14 +234,14 @@ int arix_dilithium_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     return 0;
 }
 
-int arix_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
+int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
     if (!sig || !siglen || !m || !sk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int gamma1 = (variant == 2) ? 1 << 17 : 1 << 19;
     uint8_t rho[32], tr[32], mu[32];
-    arix_random_bytes(rho, 32);
-    arix_random_bytes(tr, 32);
-    arix_random_bytes(mu, 32);
+    SNEPPX_random_bytes(rho, 32);
+    SNEPPX_random_bytes(tr, 32);
+    SNEPPX_random_bytes(mu, 32);
     int32_t *s1 = (int32_t*)calloc((size_t)k * 256, sizeof(int32_t));
     int32_t *s2 = (int32_t*)calloc((size_t)k * 256, sizeof(int32_t));
     int32_t *t0 = (int32_t*)calloc((size_t)k * 256, sizeof(int32_t));
@@ -257,7 +257,7 @@ int arix_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t m
     }
     int32_t c[256];
     uint8_t c_seed[32];
-    arix_random_bytes(c_seed, 32);
+    SNEPPX_random_bytes(c_seed, 32);
     dilithium_poly_challenge(c, c_seed);
     for (int i = 0; i < k; i++) {
         int32_t ay[256];
@@ -283,7 +283,7 @@ int arix_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t m
     return 0;
 }
 
-int arix_dilithium_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk, int variant) {
+int SNEPPX_dilithium_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk, int variant) {
     if (!sig || !pk) return -1;
     return 0;
 }

@@ -1,15 +1,15 @@
-#ifndef ARIX_CRYPTO_H
-#define ARIX_CRYPTO_H
+#ifndef SNEPPX_CRYPTO_H
+#define SNEPPX_CRYPTO_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-#define ARIX_CRYPTO_VERSION "0.1.0"
+#define SNEPPX_CRYPTO_VERSION "0.1.0"
 
 #if defined(__x86_64__) || defined(_M_X64)
-#define ARIX_CRYPTO_ASM_X86_64 1
+#define SNEPPX_CRYPTO_ASM_X86_64 1
 #elif defined(__aarch64__) || defined(_M_ARM64)
-#define ARIX_CRYPTO_ASM_ARM64 1
+#define SNEPPX_CRYPTO_ASM_ARM64 1
 #endif
 
 #include "constant_time_operations.h"

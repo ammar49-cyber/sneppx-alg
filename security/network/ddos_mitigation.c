@@ -67,7 +67,7 @@ static int add_source(uint32_t ip) {
     return source_count++;
 }
 
-int arix_ddos_detect_syn_flood(uint32_t src_ip, uint32_t dst_ip) {
+int SNEPPX_ddos_detect_syn_flood(uint32_t src_ip, uint32_t dst_ip) {
     int idx = find_source(src_ip);
     if (idx < 0) idx = add_source(src_ip);
     if (idx < 0) return 0;
@@ -103,7 +103,7 @@ int arix_ddos_detect_syn_flood(uint32_t src_ip, uint32_t dst_ip) {
     return 0;
 }
 
-int arix_ddos_detect_app_layer(uint32_t src_ip, const uint8_t *payload, size_t len) {
+int SNEPPX_ddos_detect_app_layer(uint32_t src_ip, const uint8_t *payload, size_t len) {
     if (!active_config.enable_app_layer) return 0;
     int idx = find_source(src_ip);
     if (idx < 0) idx = add_source(src_ip);
@@ -125,7 +125,7 @@ int arix_ddos_detect_app_layer(uint32_t src_ip, const uint8_t *payload, size_t l
     return 0;
 }
 
-uint32_t arix_ddos_generate_syn_cookie(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
+uint32_t SNEPPX_ddos_generate_syn_cookie(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
     if (!active_config.enable_syn_cookies) return 0;
     time_t now = time(NULL);
     uint32_t cookie = src_ip ^ dst_ip ^ ((uint32_t)src_port << 16);
@@ -134,13 +134,13 @@ uint32_t arix_ddos_generate_syn_cookie(uint32_t src_ip, uint32_t dst_ip, uint16_
     return cookie & 0x00FFFFFF;
 }
 
-int arix_ddos_validate_syn_cookie(uint32_t cookie, uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
+int SNEPPX_ddos_validate_syn_cookie(uint32_t cookie, uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
     if (!active_config.enable_syn_cookies) return 1;
-    uint32_t expected = arix_ddos_generate_syn_cookie(src_ip, dst_ip, src_port);
+    uint32_t expected = SNEPPX_ddos_generate_syn_cookie(src_ip, dst_ip, src_port);
     return (cookie == expected) ? 1 : 0;
 }
 
-int arix_ddos_apply_rate_limit(uint32_t src_ip) {
+int SNEPPX_ddos_apply_rate_limit(uint32_t src_ip) {
     int idx = find_source(src_ip);
     if (idx < 0) idx = add_source(src_ip);
     if (idx < 0) return 0;
@@ -157,7 +157,7 @@ int arix_ddos_apply_rate_limit(uint32_t src_ip) {
     return 0;
 }
 
-int arix_ddos_track_connection(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port, uint16_t dst_port, uint64_t bytes) {
+int SNEPPX_ddos_track_connection(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port, uint16_t dst_port, uint64_t bytes) {
     if (flow_count < DDOS_MAX_CONNECTIONS) {
         flows[flow_count].src_ip = src_ip;
         flows[flow_count].dst_ip = dst_ip;
@@ -173,7 +173,7 @@ int arix_ddos_track_connection(uint32_t src_ip, uint32_t dst_ip, uint16_t src_po
     return 0;
 }
 
-int arix_ddos_get_stats(ddos_stats_t *stats) {
+int SNEPPX_ddos_get_stats(ddos_stats_t *stats) {
     if (!stats) return -1;
     stats->total_packets_dropped = total_packets_dropped;
     stats->total_blocks_issued = total_blocks_issued;
@@ -186,13 +186,13 @@ int arix_ddos_get_stats(ddos_stats_t *stats) {
     return 0;
 }
 
-int arix_ddos_update_config(const ddos_config_t *config) {
+int SNEPPX_ddos_update_config(const ddos_config_t *config) {
     if (!config) return -1;
     memcpy(&active_config, config, sizeof(ddos_config_t));
     return 0;
 }
 
-int arix_ddos_reset(void) {
+int SNEPPX_ddos_reset(void) {
     flow_count = 0;
     source_count = 0;
     total_packets_dropped = 0;

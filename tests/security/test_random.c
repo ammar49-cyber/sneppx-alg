@@ -16,7 +16,7 @@ void test_uniformity(void) {
     size_t len = 1024 * 1024;
     uint8_t* buf = (uint8_t*)malloc(len);
     if (!buf) { printf("SKIP: uniformity (malloc failed)\n"); return; }
-    int ret = arix_random_bytes(buf, len);
+    int ret = SNEPPX_random_bytes(buf, len);
     TEST("generate 1MB random", ret == 0);
     size_t zeros = 0, ones = 0;
     for (size_t i = 0; i < len; i++) {
@@ -32,7 +32,7 @@ void test_uniformity(void) {
 void test_no_duplicates(void) {
     printf("\n--- test_no_duplicates ---\n");
     uint32_t vals[1000];
-    for (int i = 0; i < 1000; i++) vals[i] = arix_random_uint32();
+    for (int i = 0; i < 1000; i++) vals[i] = SNEPPX_random_uint32();
     int dup = 0;
     for (int i = 0; i < 1000 && !dup; i++)
         for (int j = i + 1; j < 1000 && !dup; j++)
@@ -45,14 +45,14 @@ void test_uniform_bounded(void) {
     uint32_t bound = 100;
     int ok = 1;
     for (int i = 0; i < 10000; i++) {
-        uint32_t v = arix_random_uniform(bound);
+        uint32_t v = SNEPPX_random_uniform(bound);
         if (v >= bound) { ok = 0; break; }
     }
     TEST("all values in [0, bound)", ok == 1);
 }
 
 int main(void) {
-    printf("=== ARIX-Random Test Suite ===\n");
+    printf("=== SNEPPX-Random Test Suite ===\n");
     test_uniformity();
     test_no_duplicates();
     test_uniform_bounded();

@@ -24,81 +24,81 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_create_destroy(void) {
-    ArixTokenizer* tok = arix_tokenizer_create(1000);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create(1000);
     ASSERT(tok != NULL, "create returned non-NULL");
-    ASSERT_EQ(arix_tokenizer_vocab_size(tok), 256, "starts with 256 bytes");
-    arix_tokenizer_destroy(tok);
+    ASSERT_EQ(SNEPPX_tokenizer_vocab_size(tok), 256, "starts with 256 bytes");
+    SNEPPX_tokenizer_destroy(tok);
 }
 
 static void test_add_token(void) {
-    ArixTokenizer* tok = arix_tokenizer_create(500);
-    int r = arix_tokenizer_add_token(tok, "hello", 256);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create(500);
+    int r = SNEPPX_tokenizer_add_token(tok, "hello", 256);
     ASSERT_EQ(r, 0, "add hello token");
-    ASSERT_EQ(arix_tokenizer_vocab_size(tok), 257, "vocab now 257");
-    arix_tokenizer_destroy(tok);
+    ASSERT_EQ(SNEPPX_tokenizer_vocab_size(tok), 257, "vocab now 257");
+    SNEPPX_tokenizer_destroy(tok);
 }
 
 static void test_encode_decode_basic(void) {
-    ArixTokenizer* tok = arix_tokenizer_create(1000);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create(1000);
     const char* text = "hello";
     int ids[256];
-    int n = arix_tokenizer_encode(tok, text, ids, 256);
+    int n = SNEPPX_tokenizer_encode(tok, text, ids, 256);
     ASSERT(n > 0, "encoded non-empty");
-    char* decoded = arix_tokenizer_decode(tok, ids, (size_t)n);
+    char* decoded = SNEPPX_tokenizer_decode(tok, ids, (size_t)n);
     ASSERT(decoded != NULL, "decoded non-NULL");
     ASSERT_STR_EQ(decoded, text, "roundtrip match");
-    arix_free(decoded, strlen(decoded) + 1);
-    arix_tokenizer_destroy(tok);
+    SNEPPX_free(decoded, strlen(decoded) + 1);
+    SNEPPX_tokenizer_destroy(tok);
 }
 
 static void test_train_bpe(void) {
     const char* texts[] = {"low low low low low", "lowest lowest", "newer newer"};
-    ArixTokenizer* tok = arix_tokenizer_train_bpe(texts, 3, 270);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_train_bpe(texts, 3, 270);
     ASSERT(tok != NULL, "trained non-NULL");
-    ASSERT(arix_tokenizer_vocab_size(tok) > 256, "vocab grew");
+    ASSERT(SNEPPX_tokenizer_vocab_size(tok) > 256, "vocab grew");
     int ids[256];
-    int n = arix_tokenizer_encode(tok, "low", ids, 256);
+    int n = SNEPPX_tokenizer_encode(tok, "low", ids, 256);
     ASSERT(n < 3, "low encoded with fewer tokens than letters (bpe works)");
-    char* decoded = arix_tokenizer_decode(tok, ids, (size_t)n);
+    char* decoded = SNEPPX_tokenizer_decode(tok, ids, (size_t)n);
     ASSERT(decoded != NULL, "decoded non-NULL");
     ASSERT_STR_EQ(decoded, "low", "roundtrip low");
-    arix_free(decoded, strlen(decoded) + 1);
-    arix_tokenizer_destroy(tok);
+    SNEPPX_free(decoded, strlen(decoded) + 1);
+    SNEPPX_tokenizer_destroy(tok);
 }
 
 static void test_save_load(void) {
-    ArixTokenizer* tok1 = arix_tokenizer_create(500);
-    arix_tokenizer_add_token(tok1, "test", 256);
-    arix_tokenizer_add_token(tok1, "save", 257);
-    int r = arix_tokenizer_save(tok1, "test_tokenizer.bin");
+    SNEPPXTokenizer* tok1 = SNEPPX_tokenizer_create(500);
+    SNEPPX_tokenizer_add_token(tok1, "test", 256);
+    SNEPPX_tokenizer_add_token(tok1, "save", 257);
+    int r = SNEPPX_tokenizer_save(tok1, "test_tokenizer.bin");
     ASSERT_EQ(r, 0, "save succeeded");
-    ArixTokenizer* tok2 = arix_tokenizer_load("test_tokenizer.bin");
+    SNEPPXTokenizer* tok2 = SNEPPX_tokenizer_load("test_tokenizer.bin");
     ASSERT(tok2 != NULL, "load succeeded");
-    ASSERT_EQ(arix_tokenizer_vocab_size(tok2), 258, "vocab size matches");
+    ASSERT_EQ(SNEPPX_tokenizer_vocab_size(tok2), 258, "vocab size matches");
     const char* text = "test";
     int ids1[256], ids2[256];
-    int n1 = arix_tokenizer_encode(tok1, text, ids1, 256);
-    int n2 = arix_tokenizer_encode(tok2, text, ids2, 256);
+    int n1 = SNEPPX_tokenizer_encode(tok1, text, ids1, 256);
+    int n2 = SNEPPX_tokenizer_encode(tok2, text, ids2, 256);
     ASSERT_EQ(n1, n2, "encode lengths match");
-    arix_tokenizer_destroy(tok1);
-    arix_tokenizer_destroy(tok2);
+    SNEPPX_tokenizer_destroy(tok1);
+    SNEPPX_tokenizer_destroy(tok2);
     remove("test_tokenizer.bin");
 }
 
 static void test_special_tokens(void) {
-    ArixTokenizer* tok = arix_tokenizer_create(500);
-    ArixSpecialTokens sp = {0, 1, 2, 3};
-    arix_tokenizer_set_special(tok, sp);
-    ArixSpecialTokens got = arix_tokenizer_special(tok);
+    SNEPPXTokenizer* tok = SNEPPX_tokenizer_create(500);
+    SNEPPXSpecialTokens sp = {0, 1, 2, 3};
+    SNEPPX_tokenizer_set_special(tok, sp);
+    SNEPPXSpecialTokens got = SNEPPX_tokenizer_special(tok);
     ASSERT_EQ(got.pad_id, 0, "pad=0");
     ASSERT_EQ(got.bos_id, 1, "bos=1");
     ASSERT_EQ(got.eos_id, 2, "eos=2");
     ASSERT_EQ(got.unk_id, 3, "unk=3");
-    arix_tokenizer_destroy(tok);
+    SNEPPX_tokenizer_destroy(tok);
 }
 
 int main(void) {
-    arix_mem_pool_init();
+    SNEPPX_mem_pool_init();
     run_test("create_destroy", test_create_destroy);
     run_test("add_token", test_add_token);
     run_test("encode_decode_basic", test_encode_decode_basic);
@@ -107,6 +107,6 @@ int main(void) {
     run_test("special_tokens", test_special_tokens);
     printf("\nResults: %d passed, %d failed out of %d\n",
            tests_passed, tests_failed, tests_passed + tests_failed);
-    arix_mem_pool_destroy();
+    SNEPPX_mem_pool_destroy();
     return tests_failed > 0 ? 1 : 0;
 }

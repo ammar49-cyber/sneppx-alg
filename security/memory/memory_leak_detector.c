@@ -28,7 +28,7 @@ static uint64_t current_usage = 0;
 static int tracking_enabled = 1;
 static int leak_threshold = 1024;
 
-int arix_leak_init(void) {
+int SNEPPX_leak_init(void) {
     memset(allocations, 0, sizeof(allocations));
     alloc_count = 0;
     total_allocated = 0;
@@ -39,7 +39,7 @@ int arix_leak_init(void) {
     return 0;
 }
 
-int arix_leak_track_alloc(void *ptr, size_t size, const char *file, int line, const char *func) {
+int SNEPPX_leak_track_alloc(void *ptr, size_t size, const char *file, int line, const char *func) {
     if (!ptr || !tracking_enabled) return -1;
     if (alloc_count >= LEAK_MAX_ALLOCATIONS) return -1;
     allocations[alloc_count].ptr = ptr;
@@ -57,7 +57,7 @@ int arix_leak_track_alloc(void *ptr, size_t size, const char *file, int line, co
     return 0;
 }
 
-int arix_leak_track_free(void *ptr) {
+int SNEPPX_leak_track_free(void *ptr) {
     if (!ptr || !tracking_enabled) return -1;
     for (int i = 0; i < alloc_count; i++) {
         if (allocations[i].ptr == ptr && !allocations[i].freed) {
@@ -70,7 +70,7 @@ int arix_leak_track_free(void *ptr) {
     return 1;
 }
 
-int arix_leak_check(leak_report_t *reports, int max_reports) {
+int SNEPPX_leak_check(leak_report_t *reports, int max_reports) {
     if (!reports) return -1;
     int found = 0;
     for (int i = 0; i < alloc_count && found < max_reports; i++) {
@@ -87,7 +87,7 @@ int arix_leak_check(leak_report_t *reports, int max_reports) {
     return found;
 }
 
-int arix_leak_get_stats(leak_stats_t *stats) {
+int SNEPPX_leak_get_stats(leak_stats_t *stats) {
     if (!stats) return -1;
     stats->total_allocations = alloc_count;
     stats->active_allocations = 0;
@@ -102,22 +102,22 @@ int arix_leak_get_stats(leak_stats_t *stats) {
     return 0;
 }
 
-int arix_leak_set_threshold(int bytes) {
+int SNEPPX_leak_set_threshold(int bytes) {
     leak_threshold = bytes > 0 ? bytes : 1024;
     return 0;
 }
 
-int arix_leak_enable_tracking(void) {
+int SNEPPX_leak_enable_tracking(void) {
     tracking_enabled = 1;
     return 0;
 }
 
-int arix_leak_disable_tracking(void) {
+int SNEPPX_leak_disable_tracking(void) {
     tracking_enabled = 0;
     return 0;
 }
 
-int arix_leak_reset(void) {
+int SNEPPX_leak_reset(void) {
     alloc_count = 0;
     total_allocated = 0;
     total_freed = 0;
@@ -127,28 +127,28 @@ int arix_leak_reset(void) {
     return 0;
 }
 
-void *arix_leak_malloc(size_t size, const char *file, int line, const char *func) {
+void *SNEPPX_leak_malloc(size_t size, const char *file, int line, const char *func) {
     void *ptr = malloc(size);
-    if (ptr) arix_leak_track_alloc(ptr, size, file, line, func);
+    if (ptr) SNEPPX_leak_track_alloc(ptr, size, file, line, func);
     return ptr;
 }
 
-void arix_leak_free(void *ptr) {
+void SNEPPX_leak_free(void *ptr) {
     if (ptr) {
-        arix_leak_track_free(ptr);
+        SNEPPX_leak_track_free(ptr);
         free(ptr);
     }
 }
 
-void *arix_leak_calloc(size_t nmemb, size_t size, const char *file, int line, const char *func) {
+void *SNEPPX_leak_calloc(size_t nmemb, size_t size, const char *file, int line, const char *func) {
     void *ptr = calloc(nmemb, size);
-    if (ptr) arix_leak_track_alloc(ptr, nmemb * size, file, line, func);
+    if (ptr) SNEPPX_leak_track_alloc(ptr, nmemb * size, file, line, func);
     return ptr;
 }
 
-void *arix_leak_realloc(void *ptr, size_t size, const char *file, int line, const char *func) {
-    if (ptr) arix_leak_track_free(ptr);
+void *SNEPPX_leak_realloc(void *ptr, size_t size, const char *file, int line, const char *func) {
+    if (ptr) SNEPPX_leak_track_free(ptr);
     void *new_ptr = realloc(ptr, size);
-    if (new_ptr) arix_leak_track_alloc(new_ptr, size, file, line, func);
+    if (new_ptr) SNEPPX_leak_track_alloc(new_ptr, size, file, line, func);
     return new_ptr;
 }

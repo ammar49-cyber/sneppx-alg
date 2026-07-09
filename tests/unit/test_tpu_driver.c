@@ -21,25 +21,25 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_tpu_init_shutdown(void) {
-    int ret = arix_tpu_init();
+    int ret = SNEPPX_tpu_init();
     ASSERT(ret == 0, "tpu_init returns 0 (stub)");
-    arix_tpu_shutdown();
+    SNEPPX_tpu_shutdown();
 }
 
 static void test_tpu_device_count(void) {
-    int count = arix_tpu_device_count();
+    int count = SNEPPX_tpu_device_count();
     ASSERT(count >= 0, "device count >= 0");
 }
 
 static void test_tpu_malloc_free(void) {
     void* ptr = NULL;
-    int ret = arix_tpu_malloc(&ptr, 2048);
+    int ret = SNEPPX_tpu_malloc(&ptr, 2048);
     ASSERT(ret == 0, "tpu_malloc returns 0 (stub)");
-    if (ptr) arix_tpu_free(ptr);
+    if (ptr) SNEPPX_tpu_free(ptr);
 }
 
 static void test_tpu_execute(void) {
-    int ret = arix_tpu_execute(NULL, 0, NULL, 0);
+    int ret = SNEPPX_tpu_execute(NULL, 0, NULL, 0);
     ASSERT(ret == 0, "tpu_execute stub");
 }
 

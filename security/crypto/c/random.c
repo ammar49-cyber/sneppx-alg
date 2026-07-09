@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #endif
 
-int arix_random_bytes(uint8_t* buffer, size_t len) {
+int SNEPPX_random_bytes(uint8_t* buffer, size_t len) {
     if (!buffer || !len) return -1;
 #ifdef _WIN32
     NTSTATUS status = BCryptGenRandom(NULL, buffer, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
@@ -40,17 +40,17 @@ int arix_random_bytes(uint8_t* buffer, size_t len) {
 #endif
 }
 
-uint32_t arix_random_uint32(void) {
+uint32_t SNEPPX_random_uint32(void) {
     uint32_t val;
-    if (arix_random_bytes((uint8_t*)&val, 4) != 0) return 0;
+    if (SNEPPX_random_bytes((uint8_t*)&val, 4) != 0) return 0;
     return val;
 }
 
-uint32_t arix_random_uniform(uint32_t upper_bound) {
+uint32_t SNEPPX_random_uniform(uint32_t upper_bound) {
     if (upper_bound == 0) return 0;
     uint32_t threshold = -upper_bound % upper_bound;
     while (1) {
-        uint32_t r = arix_random_uint32();
+        uint32_t r = SNEPPX_random_uint32();
         if (r >= threshold) return r % upper_bound;
     }
 }

@@ -1,4 +1,4 @@
-# ARIX-Algo Security System Architecture Plan (S1–S9)
+# SNEPPX-Algo Security System Architecture Plan (S1–S9)
 ## Target: 20,000+ lines of implementation code
 
 ---

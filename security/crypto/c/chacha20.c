@@ -10,7 +10,7 @@ static void qr(uint32_t* a, uint32_t* b, uint32_t* c, uint32_t* d) {
     *c += *d; *b ^= *c; *b = ROTL32(*b, 7);
 }
 
-void arix_chacha20_init(ArixChaCha20State* s, const uint8_t key[32], const uint8_t nonce[12], uint32_t counter) {
+void SNEPPX_chacha20_init(SNEPPXChaCha20State* s, const uint8_t key[32], const uint8_t nonce[12], uint32_t counter) {
     s->state[0] = 1634760805U; s->state[1] = 857760878U; s->state[2] = 2036477234U; s->state[3] = 1797285236U;
     for (int i = 0; i < 8; i++)
         s->state[4 + i] = (uint32_t)key[i*4] | (uint32_t)key[i*4+1]<<8 | (uint32_t)key[i*4+2]<<16 | (uint32_t)key[i*4+3]<<24;
@@ -20,7 +20,7 @@ void arix_chacha20_init(ArixChaCha20State* s, const uint8_t key[32], const uint8
     s->state[15] = (uint32_t)nonce[8] | (uint32_t)nonce[9]<<8 | (uint32_t)nonce[10]<<16 | (uint32_t)nonce[11]<<24;
 }
 
-void arix_chacha20_block(ArixChaCha20State* s, uint8_t output[64]) {
+void SNEPPX_chacha20_block(SNEPPXChaCha20State* s, uint8_t output[64]) {
     uint32_t x[16];
     memcpy(x, s->state, 64);
     for (int i = 0; i < 10; i++) {
@@ -37,11 +37,11 @@ void arix_chacha20_block(ArixChaCha20State* s, uint8_t output[64]) {
     s->state[12]++;
 }
 
-void arix_chacha20_encrypt(ArixChaCha20State* s, uint8_t* data, size_t len) {
+void SNEPPX_chacha20_encrypt(SNEPPXChaCha20State* s, uint8_t* data, size_t len) {
     uint8_t block[64];
     size_t offset = 0;
     while (offset < len) {
-        arix_chacha20_block(s, block);
+        SNEPPX_chacha20_block(s, block);
         size_t todo = len - offset;
         if (todo > 64) todo = 64;
         for (size_t i = 0; i < todo; i++) data[offset + i] ^= block[i];

@@ -6,7 +6,7 @@
 #include <iostream>
 
 extern "C" {
-void arix_secure_zero(void* ptr, size_t len);
+void SNEPPX_secure_zero(void* ptr, size_t len);
 }
 
 static int tests_passed = 0;
@@ -19,10 +19,10 @@ static int tests_failed = 0;
 
 void test_encrypt_decrypt() {
     TEST("encrypt_decrypt");
-    arix::ArixObfStringPool pool;
+    SNEPPX::SNEPPXObfStringPool pool;
 
-    std::string plain = "ARIX-Algo";
-    arix::ArixObfString crypt = pool.encrypt(plain, 0xA71A75A7);
+    std::string plain = "SNEPPX-Algo";
+    SNEPPX::SNEPPXObfString crypt = pool.encrypt(plain, 0xA71A75A7);
 
     ASSERT(crypt.length == plain.size(), "length mismatch");
 
@@ -35,7 +35,7 @@ void test_encrypt_decrypt() {
 
 void test_pool() {
     TEST("pool_100_strings");
-    arix::ArixObfStringPool pool;
+    SNEPPX::SNEPPXObfStringPool pool;
 
     std::string strings[100];
     for (int i = 0; i < 100; i++) {
@@ -58,17 +58,17 @@ void test_pool() {
 
 void test_wipe() {
     TEST("wipe_after_decrypt");
-    arix::ArixObfStringPool pool;
+    SNEPPX::SNEPPXObfStringPool pool;
 
     std::string plain = "sensitive_data";
-    arix::ArixObfString crypt = pool.encrypt(plain, 0x12345678);
+    SNEPPX::SNEPPXObfString crypt = pool.encrypt(plain, 0x12345678);
 
     char output[64] = {0};
     pool.decrypt(crypt, output, sizeof(output));
 
     ASSERT(std::string(output) == plain, "decrypt before wipe");
 
-    arix_secure_zero(output, sizeof(output));
+    SNEPPX_secure_zero(output, sizeof(output));
 
     bool all_zero = true;
     for (size_t i = 0; i < plain.size() && i < sizeof(output); i++) {
@@ -82,7 +82,7 @@ void test_wipe() {
 void test_compile_time_encrypt() {
     TEST("compile_time_encrypt");
     constexpr uint32_t key = 0x42424242;
-    constexpr auto encrypted = arix::arix_obf_encrypt_literal("TEST", key);
+    constexpr auto encrypted = SNEPPX::SNEPPX_obf_encrypt_literal("TEST", key);
 
     ASSERT(encrypted[0] == ('T' ^ 0x42), "byte 0 mismatch");
     ASSERT(encrypted[1] == ('E' ^ 0x42), "byte 1 mismatch");

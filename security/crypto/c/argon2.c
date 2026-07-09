@@ -44,8 +44,8 @@ static void fill_block_with_xor(const uint64_t prev[128], const uint64_t ref[128
     else { memcpy(next, tmp, 128 * 8); }
 }
 
-int arix_argon2id(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
-                  const ArixArgon2Config* config, uint8_t* hash) {
+int SNEPPX_argon2id(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
+                  const SNEPPXArgon2Config* config, uint8_t* hash) {
     if (!password || !salt || !config || !hash) return -1;
     size_t m = config->memory_kb;
     size_t t = config->iterations;
@@ -115,11 +115,11 @@ int arix_argon2id(const uint8_t* password, size_t password_len, const uint8_t* s
     return 0;
 }
 
-int arix_argon2id_verify(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
-                         const ArixArgon2Config* config, const uint8_t* expected_hash) {
+int SNEPPX_argon2id_verify(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
+                         const SNEPPXArgon2Config* config, const uint8_t* expected_hash) {
     uint8_t computed[32];
-    ArixArgon2Config cfg = *config;
+    SNEPPXArgon2Config cfg = *config;
     if (cfg.hash_len == 0) cfg.hash_len = 32;
-    if (arix_argon2id(password, password_len, salt, salt_len, &cfg, computed) != 0) return -1;
-    return arix_ct_equal(computed, expected_hash, cfg.hash_len);
+    if (SNEPPX_argon2id(password, password_len, salt, salt_len, &cfg, computed) != 0) return -1;
+    return SNEPPX_ct_equal(computed, expected_hash, cfg.hash_len);
 }

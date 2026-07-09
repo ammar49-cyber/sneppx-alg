@@ -13,153 +13,153 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_npe_train_step(void) {
-    ArixArchConfig cfg = arix_arch_config_default();
+    SNEPPXArchConfig cfg = SNEPPX_arch_config_default();
     cfg.enable_attention = 0;
     cfg.enable_hss = 0;
     cfg.input_dim = 4;
     cfg.output_dim = 4;
     cfg.enable_npe = 1;
-    cfg.npe_config = arix_npe_config_default();
+    cfg.npe_config = SNEPPX_npe_config_default();
 
-    ArixModel* model = arix_model_create(&cfg);
+    SNEPPXModel* model = SNEPPX_model_create(&cfg);
     ASSERT(model != NULL, "model created");
     ASSERT(model->npe_program != NULL, "npe program created");
 
-    size_t nw = arix_model_get_params(model, NULL, 0);
+    size_t nw = SNEPPX_model_get_params(model, NULL, 0);
     ASSERT(nw == 4, "npe has 4 params");
 
-    ArixTensor** params = (ArixTensor**)malloc(nw * sizeof(ArixTensor*));
-    arix_model_get_params(model, params, nw);
+    SNEPPXTensor** params = (SNEPPXTensor**)malloc(nw * sizeof(SNEPPXTensor*));
+    SNEPPX_model_get_params(model, params, nw);
 
     size_t sh[] = {4, 4};
-    ArixTensor* input = arix_tensor_randn(sh, 2, ARIX_FLOAT32);
-    ArixTensor* target = arix_tensor_randn(sh, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* target = SNEPPX_tensor_randn(sh, 2, SNEPPX_FLOAT32);
 
-    ArixTape* tape = arix_tape_create();
-    ArixVariable** wv = (ArixVariable**)malloc(nw * sizeof(ArixVariable*));
-    for (size_t i = 0; i < nw; i++) wv[i] = arix_variable_create(params[i], 1);
+    SNEPPXTape* tape = SNEPPX_tape_create();
+    SNEPPXVariable** wv = (SNEPPXVariable**)malloc(nw * sizeof(SNEPPXVariable*));
+    for (size_t i = 0; i < nw; i++) wv[i] = SNEPPX_variable_create(params[i], 1);
 
-    ArixVariable* inv = arix_variable_create(input, 0);
-    ArixVariable* outv = NULL;
-    int ret = arix_model_build_train_graph(model, tape, inv, wv, nw, &outv);
+    SNEPPXVariable* inv = SNEPPX_variable_create(input, 0);
+    SNEPPXVariable* outv = NULL;
+    int ret = SNEPPX_model_build_train_graph(model, tape, inv, wv, nw, &outv);
     ASSERT(ret == 0, "build graph ok");
     ASSERT(outv != NULL, "output non-null");
 
-    ArixVariable* tgv = arix_variable_create(target, 0);
-    ArixVariable* loss_v = arix_mse_loss(tape, outv, tgv);
+    SNEPPXVariable* tgv = SNEPPX_variable_create(target, 0);
+    SNEPPXVariable* loss_v = SNEPPX_mse_loss(tape, outv, tgv);
     ASSERT(loss_v != NULL, "loss non-null");
     float loss = ((float*)loss_v->data->data)[0];
     ASSERT(isfinite(loss), "loss finite");
     ASSERT(loss >= 0.0f, "loss non-negative");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(target);
-    for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
-    inv->data = NULL; arix_variable_destroy(inv);
-    tgv->data = NULL; arix_variable_destroy(tgv);
-    arix_tape_destroy(tape);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(target);
+    for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; SNEPPX_variable_destroy(wv[i]); }
+    inv->data = NULL; SNEPPX_variable_destroy(inv);
+    tgv->data = NULL; SNEPPX_variable_destroy(tgv);
+    SNEPPX_tape_destroy(tape);
     free(wv);
     free(params);
-    arix_model_destroy(model);
+    SNEPPX_model_destroy(model);
 }
 
 static void test_npe_train_convergence(void) {
-    ArixArchConfig cfg = arix_arch_config_default();
+    SNEPPXArchConfig cfg = SNEPPX_arch_config_default();
     cfg.enable_attention = 0;
     cfg.enable_hss = 0;
     cfg.input_dim = 4;
     cfg.output_dim = 4;
     cfg.enable_npe = 1;
-    cfg.npe_config = arix_npe_config_default();
+    cfg.npe_config = SNEPPX_npe_config_default();
 
-    ArixModel* model = arix_model_create(&cfg);
+    SNEPPXModel* model = SNEPPX_model_create(&cfg);
     ASSERT(model != NULL, "model created");
 
-    ArixOptimizerConfig opt_cfg = arix_optimizer_config_default();
+    SNEPPXOptimizerConfig opt_cfg = SNEPPX_optimizer_config_default();
     opt_cfg.learning_rate = 0.01f;
-    opt_cfg.type = ARIX_OPTIMIZER_ADAM;
+    opt_cfg.type = SNEPPX_OPTIMIZER_ADAM;
     opt_cfg.weight_decay = 0.0f;
     opt_cfg.grad_clip = 1.0f;
-    ArixOptimizer* opt = arix_optimizer_create(&opt_cfg);
+    SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&opt_cfg);
 
-    size_t nw = arix_model_get_params(model, NULL, 0);
+    size_t nw = SNEPPX_model_get_params(model, NULL, 0);
     ASSERT(nw == 4, "npe has 4 params");
 
-    ArixTensor** params = (ArixTensor**)malloc(nw * sizeof(ArixTensor*));
-    arix_model_get_params(model, params, nw);
+    SNEPPXTensor** params = (SNEPPXTensor**)malloc(nw * sizeof(SNEPPXTensor*));
+    SNEPPX_model_get_params(model, params, nw);
 
     size_t sh[] = {4, 4};
-    ArixTensor* input = arix_tensor_randn(sh, 2, ARIX_FLOAT32);
-    ArixTensor* target = arix_tensor_randn(sh, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* target = SNEPPX_tensor_randn(sh, 2, SNEPPX_FLOAT32);
 
     float init_loss = 0.0f;
     {
-        ArixTape* tape = arix_tape_create();
-        ArixVariable** wv = (ArixVariable**)malloc(nw * sizeof(ArixVariable*));
-        for (size_t i = 0; i < nw; i++) wv[i] = arix_variable_create(params[i], 1);
-        ArixVariable* inv = arix_variable_create(input, 0);
-        ArixVariable* outv = NULL;
-        arix_model_build_train_graph(model, tape, inv, wv, nw, &outv);
-        ArixVariable* tgv = arix_variable_create(target, 0);
-        ArixVariable* loss_v = arix_mse_loss(tape, outv, tgv);
+        SNEPPXTape* tape = SNEPPX_tape_create();
+        SNEPPXVariable** wv = (SNEPPXVariable**)malloc(nw * sizeof(SNEPPXVariable*));
+        for (size_t i = 0; i < nw; i++) wv[i] = SNEPPX_variable_create(params[i], 1);
+        SNEPPXVariable* inv = SNEPPX_variable_create(input, 0);
+        SNEPPXVariable* outv = NULL;
+        SNEPPX_model_build_train_graph(model, tape, inv, wv, nw, &outv);
+        SNEPPXVariable* tgv = SNEPPX_variable_create(target, 0);
+        SNEPPXVariable* loss_v = SNEPPX_mse_loss(tape, outv, tgv);
         if (loss_v) init_loss = ((float*)loss_v->data->data)[0];
         printf("  init loss=%.6f\n", (double)init_loss);
-        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
-        inv->data = NULL; arix_variable_destroy(inv);
-        tgv->data = NULL; arix_variable_destroy(tgv);
-        arix_tape_destroy(tape);
+        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; SNEPPX_variable_destroy(wv[i]); }
+        inv->data = NULL; SNEPPX_variable_destroy(inv);
+        tgv->data = NULL; SNEPPX_variable_destroy(tgv);
+        SNEPPX_tape_destroy(tape);
         free(wv);
     }
 
     int steps = 50;
     for (int s = 0; s < steps; s++) {
-        ArixTape* tape = arix_tape_create();
-        ArixVariable** wv = (ArixVariable**)malloc(nw * sizeof(ArixVariable*));
-        for (size_t i = 0; i < nw; i++) wv[i] = arix_variable_create(params[i], 1);
-        ArixVariable* inv = arix_variable_create(input, 0);
-        ArixVariable* outv = NULL;
-        arix_model_build_train_graph(model, tape, inv, wv, nw, &outv);
-        ArixVariable* tgv = arix_variable_create(target, 0);
-        ArixVariable* loss_v = arix_mse_loss(tape, outv, tgv);
+        SNEPPXTape* tape = SNEPPX_tape_create();
+        SNEPPXVariable** wv = (SNEPPXVariable**)malloc(nw * sizeof(SNEPPXVariable*));
+        for (size_t i = 0; i < nw; i++) wv[i] = SNEPPX_variable_create(params[i], 1);
+        SNEPPXVariable* inv = SNEPPX_variable_create(input, 0);
+        SNEPPXVariable* outv = NULL;
+        SNEPPX_model_build_train_graph(model, tape, inv, wv, nw, &outv);
+        SNEPPXVariable* tgv = SNEPPX_variable_create(target, 0);
+        SNEPPXVariable* loss_v = SNEPPX_mse_loss(tape, outv, tgv);
         if (loss_v) {
-            arix_tape_backward(tape, loss_v);
-            ArixTensor** grads = (ArixTensor**)malloc(nw * sizeof(ArixTensor*));
+            SNEPPX_tape_backward(tape, loss_v);
+            SNEPPXTensor** grads = (SNEPPXTensor**)malloc(nw * sizeof(SNEPPXTensor*));
             for (size_t i = 0; i < nw; i++) grads[i] = wv[i]->grad;
-            arix_optimizer_step(opt, params, grads, nw);
+            SNEPPX_optimizer_step(opt, params, grads, nw);
             free(grads);
         }
-        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
-        inv->data = NULL; arix_variable_destroy(inv);
-        tgv->data = NULL; arix_variable_destroy(tgv);
-        arix_tape_destroy(tape);
+        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; SNEPPX_variable_destroy(wv[i]); }
+        inv->data = NULL; SNEPPX_variable_destroy(inv);
+        tgv->data = NULL; SNEPPX_variable_destroy(tgv);
+        SNEPPX_tape_destroy(tape);
         free(wv);
     }
 
     float final_loss = 0.0f;
     {
-        ArixTape* tape = arix_tape_create();
-        ArixVariable** wv = (ArixVariable**)malloc(nw * sizeof(ArixVariable*));
-        for (size_t i = 0; i < nw; i++) wv[i] = arix_variable_create(params[i], 1);
-        ArixVariable* inv = arix_variable_create(input, 0);
-        ArixVariable* outv = NULL;
-        arix_model_build_train_graph(model, tape, inv, wv, nw, &outv);
-        ArixVariable* tgv = arix_variable_create(target, 0);
-        ArixVariable* loss_v = arix_mse_loss(tape, outv, tgv);
+        SNEPPXTape* tape = SNEPPX_tape_create();
+        SNEPPXVariable** wv = (SNEPPXVariable**)malloc(nw * sizeof(SNEPPXVariable*));
+        for (size_t i = 0; i < nw; i++) wv[i] = SNEPPX_variable_create(params[i], 1);
+        SNEPPXVariable* inv = SNEPPX_variable_create(input, 0);
+        SNEPPXVariable* outv = NULL;
+        SNEPPX_model_build_train_graph(model, tape, inv, wv, nw, &outv);
+        SNEPPXVariable* tgv = SNEPPX_variable_create(target, 0);
+        SNEPPXVariable* loss_v = SNEPPX_mse_loss(tape, outv, tgv);
         if (loss_v) final_loss = ((float*)loss_v->data->data)[0];
         printf("  final loss=%.6f ratio=%.4f\n", (double)final_loss, (double)(final_loss / (init_loss + 1e-10f)));
-        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; arix_variable_destroy(wv[i]); }
-        inv->data = NULL; arix_variable_destroy(inv);
-        tgv->data = NULL; arix_variable_destroy(tgv);
-        arix_tape_destroy(tape);
+        for (size_t i = 0; i < nw; i++) { wv[i]->data = NULL; wv[i]->grad = NULL; SNEPPX_variable_destroy(wv[i]); }
+        inv->data = NULL; SNEPPX_variable_destroy(inv);
+        tgv->data = NULL; SNEPPX_variable_destroy(tgv);
+        SNEPPX_tape_destroy(tape);
         free(wv);
     }
 
     ASSERT(final_loss < init_loss * 0.9f, "loss decreased >10%%");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(target);
-    arix_optimizer_destroy(opt);
-    arix_model_destroy(model);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(target);
+    SNEPPX_optimizer_destroy(opt);
+    SNEPPX_model_destroy(model);
     free(params);
 }
 

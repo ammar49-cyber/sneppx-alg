@@ -6,14 +6,14 @@
 #include <cmath>
 
 extern "C" {
-void arix_secure_zero(void* ptr, size_t len);
+void SNEPPX_secure_zero(void* ptr, size_t len);
 }
 
-namespace arix {
+namespace SNEPPX {
 
 static std::mt19937_64 vm_rng(std::random_device{}());
 
-ArixObfVM::ArixObfVM() : table_encrypted(false), per_opcode_key_encrypted_(false), entry_offset_(0) {
+SNEPPXObfVM::SNEPPXObfVM() : table_encrypted(false), per_opcode_key_encrypted_(false), entry_offset_(0) {
     for (auto& k : handler_xor_key) k = 0xAB;
     for (auto& k : opcode_xor_key_) k = 0xCD;
     for (auto& m : handler_indirection) m = 0;
@@ -63,37 +63,37 @@ ArixObfVM::ArixObfVM() : table_encrypted(false), per_opcode_key_encrypted_(false
     handlers[40] = { handler_popf, true };
 }
 
-ArixObfVM::~ArixObfVM() {
-    arix_secure_zero(handler_xor_key.data(), handler_xor_key.size());
-    arix_secure_zero(opcode_xor_key_.data(), opcode_xor_key_.size());
+SNEPPXObfVM::~SNEPPXObfVM() {
+    SNEPPX_secure_zero(handler_xor_key.data(), handler_xor_key.size());
+    SNEPPX_secure_zero(opcode_xor_key_.data(), opcode_xor_key_.size());
 }
 
-void ArixObfVM::add_handler(ArixObfBytecode opcode, ArixObfHandler handler) {
+void SNEPPXObfVM::add_handler(SNEPPXObfBytecode opcode, SNEPPXObfHandler handler) {
     size_t idx = static_cast<size_t>(opcode);
     if (idx < handlers.size()) handlers[idx] = handler;
 }
 
-void ArixObfVM::encrypt_handler_table() {
+void SNEPPXObfVM::encrypt_handler_table() {
     if (table_encrypted) return;
     for (size_t i = 0; i < handlers.size(); i++) {
         uint8_t key = handler_xor_key[i % handler_xor_key.size()];
         uint8_t* raw = reinterpret_cast<uint8_t*>(&handlers[i]);
-        for (size_t j = 0; j < sizeof(ArixObfHandler); j++) raw[j] ^= key;
+        for (size_t j = 0; j < sizeof(SNEPPXObfHandler); j++) raw[j] ^= key;
     }
     table_encrypted = true;
 }
 
-void ArixObfVM::decrypt_handler_table() {
+void SNEPPXObfVM::decrypt_handler_table() {
     if (!table_encrypted) return;
     for (size_t i = 0; i < handlers.size(); i++) {
         uint8_t key = handler_xor_key[i % handler_xor_key.size()];
         uint8_t* raw = reinterpret_cast<uint8_t*>(&handlers[i]);
-        for (size_t j = 0; j < sizeof(ArixObfHandler); j++) raw[j] ^= key;
+        for (size_t j = 0; j < sizeof(SNEPPXObfHandler); j++) raw[j] ^= key;
     }
     table_encrypted = false;
 }
 
-void ArixObfVM::vm_exit_cleanup() {
+void SNEPPXObfVM::vm_exit_cleanup() {
     vm_state.regs.fill(0);
     vm_state.fregs.fill(0.0);
     vm_state.flags = 0;
@@ -102,7 +102,7 @@ void ArixObfVM::vm_exit_cleanup() {
     vm_state.running = false;
 }
 
-bool ArixObfVM::validate_bytecode(const uint8_t* bytecode, size_t len) {
+bool SNEPPXObfVM::validate_bytecode(const uint8_t* bytecode, size_t len) {
     if (!bytecode || len == 0) return false;
     if (len % 4 != 0) return false;
     if (len > 1048576) return false;
@@ -114,7 +114,7 @@ bool ArixObfVM::validate_bytecode(const uint8_t* bytecode, size_t len) {
     return true;
 }
 
-uint8_t ArixObfVM::resolve_opcode(uint8_t raw_opcode, size_t ip) {
+uint8_t SNEPPXObfVM::resolve_opcode(uint8_t raw_opcode, size_t ip) {
     size_t key_idx = (ip / 4) % opcode_xor_key_.size();
     return raw_opcode ^ opcode_xor_key_[key_idx];
 }
@@ -126,7 +126,7 @@ static void emit_inst(std::vector<uint8_t>& bc, uint8_t opcode, uint8_t op1, uin
     bc.push_back(op3);
 }
 
-void ArixObfVM::compile_to_bytecode(ArixObfCFG& cfg) {
+void SNEPPXObfVM::compile_to_bytecode(SNEPPXObfCFG& cfg) {
     bytecode_.clear();
     entry_offset_ = 0;
 
@@ -141,15 +141,15 @@ void ArixObfVM::compile_to_bytecode(ArixObfCFG& cfg) {
             op2 = (uint8_t)(vm_rng() % 8);
             uint8_t op3 = 0;
             switch (inst.type) {
-                case ArixObfInstType::ADD: emit_inst(bytecode_, 1, op1, op2, 0); break;
-                case ArixObfInstType::SUB: emit_inst(bytecode_, 2, op1, op2, 0); break;
-                case ArixObfInstType::MUL: emit_inst(bytecode_, 3, op1, op2, 0); break;
-                case ArixObfInstType::DIV: emit_inst(bytecode_, 4, op1, op2, 0); break;
-                case ArixObfInstType::XOR: emit_inst(bytecode_, 15, op1, op2, 0); break;
-                case ArixObfInstType::AND: emit_inst(bytecode_, 0x19, op1, op2, 0); break;
-                case ArixObfInstType::OR: emit_inst(bytecode_, 0x1A, op1, op2, 0); break;
-                case ArixObfInstType::LOAD:
-                case ArixObfInstType::MOV: emit_inst(bytecode_, 5, op1, (uint8_t)(vm_rng() % 256), 0); break;
+                case SNEPPXObfInstType::ADD: emit_inst(bytecode_, 1, op1, op2, 0); break;
+                case SNEPPXObfInstType::SUB: emit_inst(bytecode_, 2, op1, op2, 0); break;
+                case SNEPPXObfInstType::MUL: emit_inst(bytecode_, 3, op1, op2, 0); break;
+                case SNEPPXObfInstType::DIV: emit_inst(bytecode_, 4, op1, op2, 0); break;
+                case SNEPPXObfInstType::XOR: emit_inst(bytecode_, 15, op1, op2, 0); break;
+                case SNEPPXObfInstType::AND: emit_inst(bytecode_, 0x19, op1, op2, 0); break;
+                case SNEPPXObfInstType::OR: emit_inst(bytecode_, 0x1A, op1, op2, 0); break;
+                case SNEPPXObfInstType::LOAD:
+                case SNEPPXObfInstType::MOV: emit_inst(bytecode_, 5, op1, (uint8_t)(vm_rng() % 256), 0); break;
                 default: emit_inst(bytecode_, 0, 0, 0, 0); break;
             }
         }
@@ -167,15 +167,15 @@ void ArixObfVM::compile_to_bytecode(ArixObfCFG& cfg) {
     emit_inst(bytecode_, 0xFF, 0, 0, 0);
 }
 
-bool ArixObfVM::load_bytecode(const std::vector<uint8_t>& bc) {
+bool SNEPPXObfVM::load_bytecode(const std::vector<uint8_t>& bc) {
     bytecode_ = bc;
     return true;
 }
 
-bool ArixObfVM::vm_execute(const uint8_t* bytecode, size_t len) {
+bool SNEPPXObfVM::vm_execute(const uint8_t* bytecode, size_t len) {
     if (!validate_bytecode(bytecode, len)) return false;
 
-    vm_state = ArixObfVMState();
+    vm_state = SNEPPXObfVMState();
     vm_state.ip = 0;
     vm_state.running = true;
 
@@ -203,47 +203,47 @@ bool ArixObfVM::vm_execute(const uint8_t* bytecode, size_t len) {
     return true;
 }
 
-void ArixObfVM::dispatch(uint8_t opcode, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::dispatch(uint8_t opcode, uint8_t op1, uint8_t op2) {
     if (opcode < handlers.size() && handlers[opcode].initialized) {
         handlers[opcode].func(vm_state, op1, op2);
     }
 }
 
-void ArixObfVM::handler_nop(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_nop(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)state; (void)op1; (void)op2;
 }
 
-void ArixObfVM::handler_add(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_add(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] += state.regs[op2];
 }
 
-void ArixObfVM::handler_sub(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_sub(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] -= state.regs[op2];
 }
 
-void ArixObfVM::handler_mul(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_mul(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] *= state.regs[op2];
 }
 
-void ArixObfVM::handler_div(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_div(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     if (state.regs[op2] != 0) state.regs[op1] /= state.regs[op2];
 }
 
-void ArixObfVM::handler_load(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_load(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] = static_cast<uint64_t>(op2);
 }
 
-void ArixObfVM::handler_store(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_store(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.regs[op1] = state.regs[op1];
 }
 
-void ArixObfVM::handler_push(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_push(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.stack.push_back(state.regs[op1]);
 }
 
-void ArixObfVM::handler_pop(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_pop(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (!state.stack.empty()) {
         state.regs[op1] = state.stack.back();
@@ -251,18 +251,18 @@ void ArixObfVM::handler_pop(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_jmp(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jmp(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.ip = static_cast<size_t>(state.regs[op1]);
 }
 
-void ArixObfVM::handler_call(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_call(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.stack.push_back(state.ip + 4);
     state.ip = static_cast<size_t>(state.regs[op1]);
 }
 
-void ArixObfVM::handler_ret(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_ret(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op1; (void)op2;
     if (!state.stack.empty()) {
         state.ip = state.stack.back();
@@ -270,49 +270,49 @@ void ArixObfVM::handler_ret(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_cmp(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_cmp(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     if (state.regs[op1] == state.regs[op2]) state.flags = 0;
     else if (state.regs[op1] < state.regs[op2]) state.flags = 1;
     else state.flags = 2;
 }
 
-void ArixObfVM::handler_jz(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jz(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (state.flags == 0 && state.regs[op1] < 256) {
         state.ip = static_cast<size_t>(state.regs[op1] * 4);
     }
 }
 
-void ArixObfVM::handler_jnz(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jnz(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (state.flags != 0 && state.regs[op1] < 256) {
         state.ip = static_cast<size_t>(state.regs[op1] * 4);
     }
 }
 
-void ArixObfVM::handler_xor_op(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_xor_op(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] ^= state.regs[op2];
 }
 
-void ArixObfVM::handler_fadd(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_fadd(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     size_t idx1 = op1 % 8;
     size_t idx2 = op2 % 8;
     state.fregs[idx1] += state.fregs[idx2];
 }
 
-void ArixObfVM::handler_fsub(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_fsub(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     size_t idx1 = op1 % 8;
     size_t idx2 = op2 % 8;
     state.fregs[idx1] -= state.fregs[idx2];
 }
 
-void ArixObfVM::handler_fmul(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_fmul(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     size_t idx1 = op1 % 8;
     size_t idx2 = op2 % 8;
     state.fregs[idx1] *= state.fregs[idx2];
 }
 
-void ArixObfVM::handler_fdiv(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_fdiv(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     size_t idx1 = op1 % 8;
     size_t idx2 = op2 % 8;
     if (std::fabs(state.fregs[idx2]) > 1e-300) {
@@ -320,7 +320,7 @@ void ArixObfVM::handler_fdiv(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_mread(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_mread(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t addr = state.regs[op1];
     uint64_t reg_idx = op2 % 8;
     if (addr < state.mem.size()) {
@@ -328,7 +328,7 @@ void ArixObfVM::handler_mread(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_mwrite(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_mwrite(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t addr = state.regs[op1];
     size_t reg_idx = op2 % 8;
     if (addr < state.mem.size()) {
@@ -336,7 +336,7 @@ void ArixObfVM::handler_mwrite(ArixObfVMState& state, uint8_t op1, uint8_t op2) 
     }
 }
 
-void ArixObfVM::handler_enter(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_enter(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op1;
     size_t count = (op2 % 8) + 1;
     for (size_t i = 0; i < count; i++) {
@@ -344,7 +344,7 @@ void ArixObfVM::handler_enter(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_leave(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_leave(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op1;
     size_t count = (op2 % 8) + 1;
     for (size_t i = count; i > 0; i--) {
@@ -355,95 +355,95 @@ void ArixObfVM::handler_leave(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-void ArixObfVM::handler_swap(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_swap(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t tmp = state.regs[op1];
     state.regs[op1] = state.regs[op2];
     state.regs[op2] = tmp;
 }
 
-void ArixObfVM::handler_and(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_and(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] &= state.regs[op2];
 }
 
-void ArixObfVM::handler_or(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_or(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] |= state.regs[op2];
 }
 
-void ArixObfVM::handler_inc(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_inc(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.regs[op1]++;
 }
 
-void ArixObfVM::handler_dec(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_dec(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.regs[op1]--;
 }
 
-void ArixObfVM::handler_not(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_not(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     state.regs[op1] = ~state.regs[op1];
 }
 
-void ArixObfVM::handler_rotl(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_rotl(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t val = state.regs[op1];
     uint64_t shift = state.regs[op2] & 63;
     state.regs[op1] = (val << shift) | (val >> (64 - shift));
 }
 
-void ArixObfVM::handler_rotr(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_rotr(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t val = state.regs[op1];
     uint64_t shift = state.regs[op2] & 63;
     state.regs[op1] = (val >> shift) | (val << (64 - shift));
 }
 
-void ArixObfVM::handler_load64(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_load64(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] = (static_cast<uint64_t>(op2) << 8) | op2;
 }
 
-void ArixObfVM::handler_jle(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jle(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (state.flags <= 1 && state.regs[op1] < 256) {
         state.ip = static_cast<size_t>(state.regs[op1] * 4);
     }
 }
 
-void ArixObfVM::handler_jg(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (state.flags == 2 && state.regs[op1] < 256) {
         state.ip = static_cast<size_t>(state.regs[op1] * 4);
     }
 }
 
-void ArixObfVM::handler_jge(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_jge(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op2;
     if (state.flags >= 1 && state.regs[op1] < 256) {
         state.ip = static_cast<size_t>(state.regs[op1] * 4);
     }
 }
 
-void ArixObfVM::handler_mov_reg(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_mov_reg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     state.regs[op1] = state.regs[op2];
 }
 
-void ArixObfVM::handler_xchg(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_xchg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t tmp = state.regs[op1];
     state.regs[op1] = state.regs[op2];
     state.regs[op2] = tmp;
 }
 
-void ArixObfVM::handler_test(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_test(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     uint64_t result = state.regs[op1] & state.regs[op2];
     if (result == 0) state.flags = 0;
     else if (result & 0x8000000000000000ULL) state.flags = 1;
     else state.flags = 2;
 }
 
-void ArixObfVM::handler_pushf(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_pushf(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op1; (void)op2;
     state.stack.push_back(state.flags);
 }
 
-void ArixObfVM::handler_popf(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
+void SNEPPXObfVM::handler_popf(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2) {
     (void)op1; (void)op2;
     if (!state.stack.empty()) {
         state.flags = state.stack.back();
@@ -451,7 +451,7 @@ void ArixObfVM::handler_popf(ArixObfVMState& state, uint8_t op1, uint8_t op2) {
     }
 }
 
-bool ArixObfVM::encrypt_bytecode() {
+bool SNEPPXObfVM::encrypt_bytecode() {
     if (bytecode_.empty()) return false;
     for (size_t i = 0; i < bytecode_.size(); i += 4) {
         size_t key_idx = (i / 4) % opcode_xor_key_.size();
@@ -461,7 +461,7 @@ bool ArixObfVM::encrypt_bytecode() {
     return true;
 }
 
-bool ArixObfVM::decrypt_bytecode() {
+bool SNEPPXObfVM::decrypt_bytecode() {
     if (bytecode_.empty() || !per_opcode_key_encrypted_) return false;
     for (size_t i = 0; i < bytecode_.size(); i += 4) {
         size_t key_idx = (i / 4) % opcode_xor_key_.size();
@@ -471,26 +471,26 @@ bool ArixObfVM::decrypt_bytecode() {
     return true;
 }
 
-void ArixObfVM::reset_state() {
-    vm_state = ArixObfVMState();
+void SNEPPXObfVM::reset_state() {
+    vm_state = SNEPPXObfVMState();
     vm_state.ip = 0;
     vm_state.running = true;
 }
 
-size_t ArixObfVM::instruction_count(const uint8_t* bytecode, size_t len) {
+size_t SNEPPXObfVM::instruction_count(const uint8_t* bytecode, size_t len) {
     if (!validate_bytecode(bytecode, len)) return 0;
     return len / 4;
 }
 
-bool ArixObfVM::snapshot_state(ArixObfVMState& out) const {
+bool SNEPPXObfVM::snapshot_state(SNEPPXObfVMState& out) const {
     out = vm_state;
     return true;
 }
 
-bool ArixObfVM::restore_state(const ArixObfVMState& in) {
+bool SNEPPXObfVM::restore_state(const SNEPPXObfVMState& in) {
     vm_state = in;
     vm_state.running = true;
     return true;
 }
 
-} // namespace arix
+} // namespace SNEPPX

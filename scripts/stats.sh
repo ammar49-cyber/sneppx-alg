@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "=== ARIX-Algo Stats ==="
+echo "=== SNEPPX-Algo Stats ==="
 echo ""
 
 # Lines of code

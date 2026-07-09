@@ -1,5 +1,5 @@
-#ifndef ARIX_PQUEUE_H
-#define ARIX_PQUEUE_H
+#ifndef SNEPPX_PQUEUE_H
+#define SNEPPX_PQUEUE_H
 /*
  * Priority Queue — v0.5 (generic library)
  *
@@ -20,29 +20,29 @@ extern "C" {
 typedef struct {
     uint64_t priority;
     void*    data;
-} ArixPQElement;
+} SNEPPXPQElement;
 
 typedef struct {
-    ArixPQElement* heap;
+    SNEPPXPQElement* heap;
     size_t         capacity;
     size_t         size;
     int            (*compare)(uint64_t a, uint64_t b);
-} ArixPriorityQueue;
+} SNEPPXPriorityQueue;
 
-ArixPriorityQueue* arix_pq_create(size_t initial_capacity);
-void               arix_pq_destroy(ArixPriorityQueue* pq);
+SNEPPXPriorityQueue* SNEPPX_pq_create(size_t initial_capacity);
+void               SNEPPX_pq_destroy(SNEPPXPriorityQueue* pq);
 
-int   arix_pq_push(ArixPriorityQueue* pq, uint64_t priority, void* data);
-int   arix_pq_pop(ArixPriorityQueue* pq, uint64_t* priority, void** data);
-int   arix_pq_peek(const ArixPriorityQueue* pq, uint64_t* priority, void** data);
-int   arix_pq_is_empty(const ArixPriorityQueue* pq);
-size_t arix_pq_size(const ArixPriorityQueue* pq);
+int   SNEPPX_pq_push(SNEPPXPriorityQueue* pq, uint64_t priority, void* data);
+int   SNEPPX_pq_pop(SNEPPXPriorityQueue* pq, uint64_t* priority, void** data);
+int   SNEPPX_pq_peek(const SNEPPXPriorityQueue* pq, uint64_t* priority, void** data);
+int   SNEPPX_pq_is_empty(const SNEPPXPriorityQueue* pq);
+size_t SNEPPX_pq_size(const SNEPPXPriorityQueue* pq);
 
-void  arix_pq_heapify(ArixPriorityQueue* pq, size_t idx);
-void  arix_pq_clear(ArixPriorityQueue* pq);
+void  SNEPPX_pq_heapify(SNEPPXPriorityQueue* pq, size_t idx);
+void  SNEPPX_pq_clear(SNEPPXPriorityQueue* pq);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_PQUEUE_H */
+#endif /* SNEPPX_PQUEUE_H */

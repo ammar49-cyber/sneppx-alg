@@ -18,31 +18,31 @@
  * ================================================================== */
 
 #ifdef _WIN32
-#define ARIX_CAS_PTR(dst, old, new_val) \
+#define SNEPPX_CAS_PTR(dst, old, new_val) \
     (InterlockedCompareExchangePointer((void* volatile*)(dst), (void*)(new_val), (void*)(old)) == (void*)(old))
-#define ARIX_ATOMIC_LOAD_PTR(src) \
+#define SNEPPX_ATOMIC_LOAD_PTR(src) \
     InterlockedCompareExchangePointer((void* volatile*)(src), NULL, NULL)
-#define ARIX_ATOMIC_XCHG_INT(dst, val) \
+#define SNEPPX_ATOMIC_XCHG_INT(dst, val) \
     _InterlockedExchange((volatile long*)(dst), (long)(val))
-#define ARIX_ATOMIC_ADD_INT(dst, val) \
+#define SNEPPX_ATOMIC_ADD_INT(dst, val) \
     _InterlockedExchangeAdd((volatile long*)(dst), (long)(val))
 #if defined(_M_X64)
-#define ARIX_ATOMIC_ADD_SIZE(dst, val) \
+#define SNEPPX_ATOMIC_ADD_SIZE(dst, val) \
     ((size_t)_InterlockedExchangeAdd64((volatile __int64*)(dst), (__int64)(val)))
 #else
-#define ARIX_ATOMIC_ADD_SIZE(dst, val) \
+#define SNEPPX_ATOMIC_ADD_SIZE(dst, val) \
     ((size_t)_InterlockedExchangeAdd((volatile long*)(dst), (long)(val)))
 #endif
 #else /* GCC / Clang */
-#define ARIX_CAS_PTR(dst, old, new_val) \
+#define SNEPPX_CAS_PTR(dst, old, new_val) \
     __sync_bool_compare_and_swap((void* volatile*)(dst), (void*)(old), (void*)(new_val))
-#define ARIX_ATOMIC_LOAD_PTR(src) \
+#define SNEPPX_ATOMIC_LOAD_PTR(src) \
     __sync_fetch_and_add((void* volatile*)(src), 0)
-#define ARIX_ATOMIC_XCHG_INT(dst, val) \
+#define SNEPPX_ATOMIC_XCHG_INT(dst, val) \
     __sync_lock_test_and_set((volatile int*)(dst), (int)(val))
-#define ARIX_ATOMIC_ADD_INT(dst, val) \
+#define SNEPPX_ATOMIC_ADD_INT(dst, val) \
     __sync_fetch_and_add((volatile int*)(dst), (int)(val))
-#define ARIX_ATOMIC_ADD_SIZE(dst, val) \
+#define SNEPPX_ATOMIC_ADD_SIZE(dst, val) \
     __sync_fetch_and_add((volatile size_t*)(dst), (size_t)(val))
 #endif
 
@@ -50,7 +50,7 @@
  *  Core Memory Functions (unchanged)
  * ================================================================== */
 
-void* arix_malloc(size_t size, size_t alignment) {
+void* SNEPPX_malloc(size_t size, size_t alignment) {
     void* ptr = NULL;
 #ifdef _WIN32
     ptr = _aligned_malloc(size, alignment);
@@ -67,9 +67,9 @@ void* arix_malloc(size_t size, size_t alignment) {
     return ptr;
 }
 
-void arix_free(void* ptr, size_t size) {
+void SNEPPX_free(void* ptr, size_t size) {
     if (!ptr) return;
-    arix_secure_zero(ptr, size);
+    SNEPPX_secure_zero(ptr, size);
 #ifdef _WIN32
     _aligned_free(ptr);
 #else
@@ -77,16 +77,16 @@ void arix_free(void* ptr, size_t size) {
 #endif
 }
 
-void* arix_realloc(void* ptr, size_t old_size, size_t new_size, size_t alignment) {
-    void* new_ptr = arix_malloc(new_size, alignment);
+void* SNEPPX_realloc(void* ptr, size_t old_size, size_t new_size, size_t alignment) {
+    void* new_ptr = SNEPPX_malloc(new_size, alignment);
     if (!new_ptr) return NULL;
     size_t copy_size = old_size < new_size ? old_size : new_size;
-    arix_secure_copy(new_ptr, ptr, copy_size);
-    arix_free(ptr, old_size);
+    SNEPPX_secure_copy(new_ptr, ptr, copy_size);
+    SNEPPX_free(ptr, old_size);
     return new_ptr;
 }
 
-void arix_secure_zero(void* ptr, size_t size) {
+void SNEPPX_secure_zero(void* ptr, size_t size) {
     if (!ptr) return;
     volatile unsigned char* p = (volatile unsigned char*)ptr;
     for (size_t i = 0; i < size; i++) {
@@ -94,7 +94,7 @@ void arix_secure_zero(void* ptr, size_t size) {
     }
 }
 
-void arix_secure_copy(void* dst, const void* src, size_t size) {
+void SNEPPX_secure_copy(void* dst, const void* src, size_t size) {
     if (!dst || !src) return;
     memcpy(dst, src, size);
 }
@@ -118,14 +118,14 @@ void arix_secure_copy(void* dst, const void* src, size_t size) {
  *  Size class table
  * ------------------------------------------------------------------ */
 
-static const size_t g_size_classes[ARIX_NUM_SIZE_CLASSES] = {
+static const size_t g_size_classes[SNEPPX_NUM_SIZE_CLASSES] = {
     16, 32, 48, 64, 96, 128, 192, 256, 384, 512,
     768, 1024, 1536, 2048, 3072, 4096, 6144, 8192
 };
 
 /* Given a size, return the pool index (0-based) or -1. */
-static int arix_pool_size_class(size_t size) {
-    if (size == 0 || size > ARIX_POOL_MAX_SIZE) return -1;
+static int SNEPPX_pool_size_class(size_t size) {
+    if (size == 0 || size > SNEPPX_POOL_MAX_SIZE) return -1;
     if (size <= 16)   return 0;
     if (size <= 32)   return 1;
     if (size <= 48)   return 2;
@@ -187,21 +187,21 @@ static void os_free(void* ptr, size_t size) {
  *  Lock-free stack operations (Treiber)
  * ------------------------------------------------------------------ */
 
-static inline void lf_push(ArixLockFreeStack* stack, ArixMemNode* node) {
-    ArixMemNode* old;
+static inline void lf_push(SNEPPXLockFreeStack* stack, SNEPPXMemNode* node) {
+    SNEPPXMemNode* old;
     do {
-        old = (ArixMemNode*)ARIX_ATOMIC_LOAD_PTR(&stack->head);
+        old = (SNEPPXMemNode*)SNEPPX_ATOMIC_LOAD_PTR(&stack->head);
         node->next = old;
-    } while (!ARIX_CAS_PTR(&stack->head, old, node));
+    } while (!SNEPPX_CAS_PTR(&stack->head, old, node));
 }
 
-static inline ArixMemNode* lf_pop(ArixLockFreeStack* stack) {
-    ArixMemNode* old = (ArixMemNode*)ARIX_ATOMIC_LOAD_PTR(&stack->head);
+static inline SNEPPXMemNode* lf_pop(SNEPPXLockFreeStack* stack) {
+    SNEPPXMemNode* old = (SNEPPXMemNode*)SNEPPX_ATOMIC_LOAD_PTR(&stack->head);
     while (old) {
-        ArixMemNode* next = old->next;
-        if (ARIX_CAS_PTR(&stack->head, old, next))
+        SNEPPXMemNode* next = old->next;
+        if (SNEPPX_CAS_PTR(&stack->head, old, next))
             return old;
-        old = (ArixMemNode*)ARIX_ATOMIC_LOAD_PTR(&stack->head);
+        old = (SNEPPXMemNode*)SNEPPX_ATOMIC_LOAD_PTR(&stack->head);
     }
     return NULL;
 }
@@ -210,32 +210,32 @@ static inline ArixMemNode* lf_pop(ArixLockFreeStack* stack) {
  *  Global pool state
  * ------------------------------------------------------------------ */
 
-static ArixMemPool  g_pools[ARIX_NUM_SIZE_CLASSES];
+static SNEPPXMemPool  g_pools[SNEPPX_NUM_SIZE_CLASSES];
 static volatile int g_pool_initialized = 0;
 static volatile size_t g_total_pool_allocated = 0;
 static volatile size_t g_total_pool_freed     = 0;
 
 /* TLS cache  (one per thread, lazily init'd) */
 #ifdef _MSC_VER
-static __declspec(thread) ArixTlsCache* g_tls_cache = NULL;
+static __declspec(thread) SNEPPXTlsCache* g_tls_cache = NULL;
 #else
-static __thread ArixTlsCache* g_tls_cache = NULL;
+static __thread SNEPPXTlsCache* g_tls_cache = NULL;
 #endif
 
 static volatile int g_active_tls_caches = 0;
 
 /* ------------------------------------------------------------------
- *  arix_mem_pool_init  –  one-shot initialisation
+ *  SNEPPX_mem_pool_init  –  one-shot initialisation
  * ------------------------------------------------------------------ */
 
-int arix_mem_pool_init(void) {
+int SNEPPX_mem_pool_init(void) {
     /* Idempotent  –  only the first call does any work. */
-    if (ARIX_ATOMIC_XCHG_INT(&g_pool_initialized, 1) != 0)
+    if (SNEPPX_ATOMIC_XCHG_INT(&g_pool_initialized, 1) != 0)
         return 0;
 
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
         g_pools[i].block_size       = g_size_classes[i];
-        g_pools[i].blocks_per_chunk = ARIX_CHUNK_SIZE / g_size_classes[i];
+        g_pools[i].blocks_per_chunk = SNEPPX_CHUNK_SIZE / g_size_classes[i];
         g_pools[i].stack.head       = NULL;
         g_pools[i].alloc_count      = 0;
         g_pools[i].free_count       = 0;
@@ -249,7 +249,7 @@ int arix_mem_pool_init(void) {
  *  Allocate one chunk and push its blocks onto the pool stack
  * ------------------------------------------------------------------ */
 
-static int pool_grow(ArixMemPool* pool) {
+static int pool_grow(SNEPPXMemPool* pool) {
     size_t   block_size = pool->block_size;
     size_t   nblocks    = pool->blocks_per_chunk;
     size_t   chunk_size = block_size * nblocks;
@@ -267,7 +267,7 @@ static int pool_grow(ArixMemPool* pool) {
 
     /* Carve into blocks and push onto the lock-free stack */
     for (size_t b = 0; b < nblocks; b++) {
-        ArixMemNode* node = (ArixMemNode*)(base + b * block_size);
+        SNEPPXMemNode* node = (SNEPPXMemNode*)(base + b * block_size);
         lf_push(&pool->stack, node);
     }
     pool->chunk_count++;
@@ -278,25 +278,25 @@ static int pool_grow(ArixMemPool* pool) {
  *  TLS cache helpers
  * ------------------------------------------------------------------ */
 
-void arix_tls_cache_init(void) {
+void SNEPPX_tls_cache_init(void) {
     if (g_tls_cache) return;
-    g_tls_cache = (ArixTlsCache*)malloc(sizeof(ArixTlsCache));
+    g_tls_cache = (SNEPPXTlsCache*)malloc(sizeof(SNEPPXTlsCache));
     if (!g_tls_cache) return;
-    memset(g_tls_cache, 0, sizeof(ArixTlsCache));
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
-        g_tls_cache->entries[i].max = ARIX_TLS_CACHE_MAX;
+    memset(g_tls_cache, 0, sizeof(SNEPPXTlsCache));
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
+        g_tls_cache->entries[i].max = SNEPPX_TLS_CACHE_MAX;
     }
-    g_tls_cache->capacity = ARIX_TLS_CACHE_MAX;
-    ARIX_ATOMIC_ADD_INT(&g_active_tls_caches, 1);
+    g_tls_cache->capacity = SNEPPX_TLS_CACHE_MAX;
+    SNEPPX_ATOMIC_ADD_INT(&g_active_tls_caches, 1);
 }
 
-void arix_tls_cache_destroy(void) {
+void SNEPPX_tls_cache_destroy(void) {
     if (!g_tls_cache) return;
     /* Flush all entries back to their respective pools */
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
-        ArixTlsEntry* e = &g_tls_cache->entries[i];
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
+        SNEPPXTlsEntry* e = &g_tls_cache->entries[i];
         while (e->free_list) {
-            ArixMemNode* node = (ArixMemNode*)e->free_list;
+            SNEPPXMemNode* node = (SNEPPXMemNode*)e->free_list;
             e->free_list = (void*)node->next;
             e->count--;
             lf_push(&g_pools[i].stack, node);
@@ -304,28 +304,28 @@ void arix_tls_cache_destroy(void) {
     }
     free(g_tls_cache);
     g_tls_cache = NULL;
-    ARIX_ATOMIC_ADD_INT(&g_active_tls_caches, -1);
+    SNEPPX_ATOMIC_ADD_INT(&g_active_tls_caches, -1);
 }
 
 /* ------------------------------------------------------------------
- *  arix_pool_alloc  –  fast path: TLS → global stack → grow
+ *  SNEPPX_pool_alloc  –  fast path: TLS → global stack → grow
  * ------------------------------------------------------------------ */
 
-void* arix_pool_alloc(size_t size) {
-    if (size > ARIX_POOL_MAX_SIZE)
-        return arix_malloc(size, 16);
+void* SNEPPX_pool_alloc(size_t size) {
+    if (size > SNEPPX_POOL_MAX_SIZE)
+        return SNEPPX_malloc(size, 16);
 
-    int idx = arix_pool_size_class(size);
-    if (idx < 0) return arix_malloc(size, 16);
+    int idx = SNEPPX_pool_size_class(size);
+    if (idx < 0) return SNEPPX_malloc(size, 16);
 
     /* 1. lazily init TLS cache */
-    if (!g_tls_cache) arix_tls_cache_init();
+    if (!g_tls_cache) SNEPPX_tls_cache_init();
 
     /* 2. try TLS cache first */
     if (g_tls_cache) {
-        ArixTlsEntry* e = &g_tls_cache->entries[idx];
+        SNEPPXTlsEntry* e = &g_tls_cache->entries[idx];
         if (e->free_list) {
-            ArixMemNode* node = (ArixMemNode*)e->free_list;
+            SNEPPXMemNode* node = (SNEPPXMemNode*)e->free_list;
             e->free_list = (void*)node->next;
             e->count--;
             g_tls_cache->hits++;
@@ -335,7 +335,7 @@ void* arix_pool_alloc(size_t size) {
     }
 
     /* 3. try global lock-free stack */
-    ArixMemNode* node = lf_pop(&g_pools[idx].stack);
+    SNEPPXMemNode* node = lf_pop(&g_pools[idx].stack);
     if (!node) {
         /* 4. grow the pool */
         if (pool_grow(&g_pools[idx]) != 0)
@@ -344,36 +344,36 @@ void* arix_pool_alloc(size_t size) {
         if (!node) return NULL;
     }
     g_pools[idx].alloc_count++;
-    ARIX_ATOMIC_ADD_SIZE(&g_total_pool_allocated, g_size_classes[idx]);
+    SNEPPX_ATOMIC_ADD_SIZE(&g_total_pool_allocated, g_size_classes[idx]);
     memset(node, 0, g_size_classes[idx]);
     return node;
 }
 
 /* ------------------------------------------------------------------
- *  arix_pool_free  –  return to TLS (or fall back to global)
+ *  SNEPPX_pool_free  –  return to TLS (or fall back to global)
  * ------------------------------------------------------------------ */
 
-void arix_pool_free(void* ptr, size_t size) {
+void SNEPPX_pool_free(void* ptr, size_t size) {
     if (!ptr) return;
 
-    /* Large allocations were handled by arix_malloc */
-    if (size > ARIX_POOL_MAX_SIZE) {
-        arix_free(ptr, size);
+    /* Large allocations were handled by SNEPPX_malloc */
+    if (size > SNEPPX_POOL_MAX_SIZE) {
+        SNEPPX_free(ptr, size);
         return;
     }
 
-    int idx = arix_pool_size_class(size);
+    int idx = SNEPPX_pool_size_class(size);
     if (idx < 0) {
-        arix_free(ptr, size);
+        SNEPPX_free(ptr, size);
         return;
     }
 
-    if (!g_tls_cache) arix_tls_cache_init();
+    if (!g_tls_cache) SNEPPX_tls_cache_init();
 
     if (g_tls_cache) {
-        ArixTlsEntry* e = &g_tls_cache->entries[idx];
+        SNEPPXTlsEntry* e = &g_tls_cache->entries[idx];
         if (e->count < e->max) {
-            ((ArixMemNode*)ptr)->next = (ArixMemNode*)e->free_list;
+            ((SNEPPXMemNode*)ptr)->next = (SNEPPXMemNode*)e->free_list;
             e->free_list = ptr;
             e->count++;
             return;
@@ -381,18 +381,18 @@ void arix_pool_free(void* ptr, size_t size) {
     }
 
     /* TLS full or unavailable  →  return to global stack */
-    lf_push(&g_pools[idx].stack, (ArixMemNode*)ptr);
+    lf_push(&g_pools[idx].stack, (SNEPPXMemNode*)ptr);
     g_pools[idx].free_count++;
-    ARIX_ATOMIC_ADD_SIZE(&g_total_pool_freed, g_size_classes[idx]);
+    SNEPPX_ATOMIC_ADD_SIZE(&g_total_pool_freed, g_size_classes[idx]);
 }
 
 /* ------------------------------------------------------------------
- *  arix_mem_pool_destroy  –  tear down everything
+ *  SNEPPX_mem_pool_destroy  –  tear down everything
  * ------------------------------------------------------------------ */
 
-void arix_mem_pool_destroy(void) {
+void SNEPPX_mem_pool_destroy(void) {
     /* Destroy the calling thread's TLS cache first (flushes entries to pool) */
-    if (g_tls_cache) arix_tls_cache_destroy();
+    if (g_tls_cache) SNEPPX_tls_cache_destroy();
 
     /* Free all chunks */
     ChunkHeader* h = g_chunk_list;
@@ -405,7 +405,7 @@ void arix_mem_pool_destroy(void) {
     g_chunk_list = NULL;
 
     /* Reset pools */
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
         g_pools[i].stack.head  = NULL;
         g_pools[i].alloc_count = 0;
         g_pools[i].free_count  = 0;
@@ -421,7 +421,7 @@ void arix_mem_pool_destroy(void) {
  *  Statistics
  * ------------------------------------------------------------------ */
 
-void arix_mem_pool_stats(ArixMemStats* stats) {
+void SNEPPX_mem_pool_stats(SNEPPXMemStats* stats) {
     if (!stats) return;
     stats->total_pool_allocated = g_total_pool_allocated;
     stats->total_pool_freed     = g_total_pool_freed;
@@ -430,19 +430,19 @@ void arix_mem_pool_stats(ArixMemStats* stats) {
     stats->total_chunks         = 0;
     stats->active_tls_caches    = (size_t)g_active_tls_caches;
 
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
         stats->total_chunks += g_pools[i].chunk_count;
         stats->total_pool_hits += g_pools[i].alloc_count;
     }
 }
 
-void arix_mem_pool_print_stats(void) {
-    ArixMemStats s;
-    arix_mem_pool_stats(&s);
+void SNEPPX_mem_pool_print_stats(void) {
+    SNEPPXMemStats s;
+    SNEPPX_mem_pool_stats(&s);
 
     size_t tls_hits = g_tls_cache ? g_tls_cache->hits : 0;
 
-    printf("--- ARIX Pool Allocator Stats ---\n");
+    printf("--- SNEPPX Pool Allocator Stats ---\n");
     printf("Total pool allocated:  %zu bytes\n", s.total_pool_allocated);
     printf("Total pool freed:      %zu bytes\n", s.total_pool_freed);
     printf("Total chunks:          %zu\n", s.total_chunks);
@@ -453,7 +453,7 @@ void arix_mem_pool_print_stats(void) {
     printf("\nPer-class breakdown:\n");
     printf("  %-6s  %-8s  %-6s  %-6s  %-6s\n",
            "Class", "B/blk", "Chunks", "Allocs", "Frees");
-    for (int i = 0; i < ARIX_NUM_SIZE_CLASSES; i++) {
+    for (int i = 0; i < SNEPPX_NUM_SIZE_CLASSES; i++) {
         printf("  %-6zu  %-8zu  %-6zu  %-6zu  %-6zu\n",
                g_size_classes[i],
                g_pools[i].block_size,

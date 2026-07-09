@@ -12,26 +12,26 @@ static void bench_kyber_keygen(void) {
     BENCH_INIT(bs);
     uint8_t pk[KYBER_PUBLICKEYBYTES], sk[KYBER_SECRETKEYBYTES];
     BENCH_START(bs, 1000, 100, {
-        arix_kyber_keygen(pk, sk, 3);
+        SNEPPX_kyber_keygen(pk, sk, 3);
     });
     bench_print("Kyber-768 keygen", &bs);
 }
 static void bench_kyber_encaps(void) {
     BENCH_INIT(bs);
     uint8_t pk[KYBER_PUBLICKEYBYTES], sk[KYBER_SECRETKEYBYTES], ct[KYBER_CIPHERTEXTBYTES], ss[KYBER_SSBYTES];
-    arix_kyber_keygen(pk, sk, 3);
+    SNEPPX_kyber_keygen(pk, sk, 3);
     BENCH_START(bs, 1000, 100, {
-        arix_kyber_encaps(ct, ss, pk, 3);
+        SNEPPX_kyber_encaps(ct, ss, pk, 3);
     });
     bench_print("Kyber-768 encaps", &bs);
 }
 static void bench_kyber_decaps(void) {
     BENCH_INIT(bs);
     uint8_t pk[KYBER_PUBLICKEYBYTES], sk[KYBER_SECRETKEYBYTES], ct[KYBER_CIPHERTEXTBYTES], ss[KYBER_SSBYTES];
-    arix_kyber_keygen(pk, sk, 3);
-    arix_kyber_encaps(ct, ss, pk, 3);
+    SNEPPX_kyber_keygen(pk, sk, 3);
+    SNEPPX_kyber_encaps(ct, ss, pk, 3);
     BENCH_START(bs, 1000, 100, {
-        arix_kyber_decaps(ss, ct, sk, 3);
+        SNEPPX_kyber_decaps(ss, ct, sk, 3);
     });
     bench_print("Kyber-768 decaps", &bs);
 }
@@ -43,7 +43,7 @@ static void bench_dilithium_keygen(void) {
     BENCH_INIT(bs);
     uint8_t pk[DILITHIUM_PUBLICKEYBYTES], sk[DILITHIUM_SECRETKEYBYTES];
     BENCH_START(bs, 500, 50, {
-        arix_dilithium_keygen(pk, sk, 3);
+        SNEPPX_dilithium_keygen(pk, sk, 3);
     });
     bench_print("Dilithium-3 keygen", &bs);
 }
@@ -53,9 +53,9 @@ static void bench_dilithium_sign(void) {
     uint8_t sig[DILITHIUM_SIGBYTES];
     size_t siglen;
     const uint8_t msg[] = "benchmark message";
-    arix_dilithium_keygen(pk, sk, 3);
+    SNEPPX_dilithium_keygen(pk, sk, 3);
     BENCH_START(bs, 500, 50, {
-        arix_dilithium_sign(sig, &siglen, msg, sizeof(msg), sk, 3);
+        SNEPPX_dilithium_sign(sig, &siglen, msg, sizeof(msg), sk, 3);
     });
     bench_print("Dilithium-3 sign", &bs);
 }
@@ -65,10 +65,10 @@ static void bench_dilithium_verify(void) {
     uint8_t sig[DILITHIUM_SIGBYTES];
     size_t siglen;
     const uint8_t msg[] = "benchmark message";
-    arix_dilithium_keygen(pk, sk, 3);
-    arix_dilithium_sign(sig, &siglen, msg, sizeof(msg), sk, 3);
+    SNEPPX_dilithium_keygen(pk, sk, 3);
+    SNEPPX_dilithium_sign(sig, &siglen, msg, sizeof(msg), sk, 3);
     BENCH_START(bs, 500, 50, {
-        arix_dilithium_verify(sig, siglen, msg, sizeof(msg), pk, 3);
+        SNEPPX_dilithium_verify(sig, siglen, msg, sizeof(msg), pk, 3);
     });
     bench_print("Dilithium-3 verify", &bs);
 }
@@ -81,7 +81,7 @@ static void bench_sphincs_keygen(void) {
     BENCH_INIT(bs);
     uint8_t pk[SPHINCS_PUBLICKEYBYTES], sk[SPHINCS_SECRETKEYBYTES];
     BENCH_START(bs, 1, 0, {
-        arix_sphincs_keygen(pk, sk, 128);
+        SNEPPX_sphincs_keygen(pk, sk, 128);
     });
     bench_print("SPHINCS+-128s keygen", &bs);
 }
@@ -92,9 +92,9 @@ static void bench_sphincs_sign(void) {
     uint8_t sig[SPHINCS_SIGBYTES];
     size_t siglen;
     const uint8_t msg[] = "benchmark message";
-    arix_sphincs_keygen(pk, sk, 128);
+    SNEPPX_sphincs_keygen(pk, sk, 128);
     BENCH_START(bs, 1, 0, {
-        arix_sphincs_sign(sig, &siglen, msg, sizeof(msg), sk, 128);
+        SNEPPX_sphincs_sign(sig, &siglen, msg, sizeof(msg), sk, 128);
     });
     bench_print("SPHINCS+-128s sign", &bs);
 }
@@ -111,16 +111,16 @@ static void bench_kyber_variants(void) {
         int v = variants[i];
         BENCH_INIT(bs);
         BENCH_START(bs, 500, 50, {
-            arix_kyber_keygen(pk, sk, v);
+            SNEPPX_kyber_keygen(pk, sk, v);
         });
         bench_print(names[i], &bs);
     }
     for (int i = 0; i < 3; i++) {
         int v = variants[i];
-        arix_kyber_keygen(pk, sk, v);
+        SNEPPX_kyber_keygen(pk, sk, v);
         BENCH_INIT(bs);
         BENCH_START(bs, 500, 50, {
-            arix_kyber_encaps(ct, ss, pk, v);
+            SNEPPX_kyber_encaps(ct, ss, pk, v);
         });
         printf("  %-35s %8.3f ms\n", names[i], bs.mean_time * 1000.0);
     }

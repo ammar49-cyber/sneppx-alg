@@ -10,53 +10,53 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_verifier_create(void) {
-    ArixOutputVerifier* v = arix_arc_output_verifier_create(32, 2, 42);
+    SNEPPXOutputVerifier* v = SNEPPX_arc_output_verifier_create(32, 2, 42);
     ASSERT(v != NULL, "verifier not null");
     ASSERT(v->verification_weights[0]->shape[0] == 32, "w0 rows 32");
     ASSERT(v->verification_weights[0]->shape[1] == 32, "w0 cols 32");
     ASSERT(v->verification_weights[1] != NULL, "w1 not null");
     ASSERT(v->num_layers == 2, "num_layers == 2");
-    arix_arc_output_verifier_destroy(v);
+    SNEPPX_arc_output_verifier_destroy(v);
 }
 
 static void test_verify_normal(void) {
-    ArixOutputVerifier* v = arix_arc_output_verifier_create(16, 1, 42);
+    SNEPPXOutputVerifier* v = SNEPPX_arc_output_verifier_create(16, 1, 42);
     ASSERT(v != NULL, "verifier not null");
 
     size_t shape_in[] = {4, 16};
-    ArixTensor* out = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* out = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)out->data;
     for (size_t i = 0; i < 4 * 16; i++) d[i] = 0.1f;
 
-    ArixTensor* verified = NULL;
+    SNEPPXTensor* verified = NULL;
     float conf = 0.0f;
-    arix_arc_verify_output(v, out, &verified, &conf);
+    SNEPPX_arc_verify_output(v, out, &verified, &conf);
     ASSERT(verified != NULL, "verified not null");
     ASSERT(conf == 1.0f, "confidence 1.0 on first call (no history)");
 
-    arix_arc_verify_output(v, out, &verified, &conf);
+    SNEPPX_arc_verify_output(v, out, &verified, &conf);
     ASSERT(conf > 0.8f, "confidence > 0.8 on second call (consistent)");
 
-    arix_tensor_destroy(out);
-    if (verified) arix_tensor_destroy(verified);
-    arix_arc_output_verifier_destroy(v);
+    SNEPPX_tensor_destroy(out);
+    if (verified) SNEPPX_tensor_destroy(verified);
+    SNEPPX_arc_output_verifier_destroy(v);
 }
 
 static void test_verify_inconsistent(void) {
-    ArixOutputVerifier* v = arix_arc_output_verifier_create(16, 1, 42);
+    SNEPPXOutputVerifier* v = SNEPPX_arc_output_verifier_create(16, 1, 42);
     ASSERT(v != NULL, "verifier not null");
 
     size_t shape_in[] = {4, 16};
-    ArixTensor* out1 = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* out1 = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d1 = (float*)out1->data;
     for (size_t i = 0; i < 4 * 16; i++) d1[i] = 0.1f;
 
-    ArixTensor* verified1 = NULL;
+    SNEPPXTensor* verified1 = NULL;
     float conf1 = 0.0f;
-    arix_arc_verify_output(v, out1, &verified1, &conf1);
-    arix_tensor_destroy(verified1);
+    SNEPPX_arc_verify_output(v, out1, &verified1, &conf1);
+    SNEPPX_tensor_destroy(verified1);
 
-    ArixTensor* out2 = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* out2 = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d2 = (float*)out2->data;
     unsigned long s2 = 999;
     for (size_t i = 0; i < 4 * 16; i++) {
@@ -64,16 +64,16 @@ static void test_verify_inconsistent(void) {
         d2[i] = ((float)((s2 >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 10.0f;
     }
 
-    ArixTensor* verified2 = NULL;
+    SNEPPXTensor* verified2 = NULL;
     float conf2 = 0.0f;
-    arix_arc_verify_output(v, out2, &verified2, &conf2);
+    SNEPPX_arc_verify_output(v, out2, &verified2, &conf2);
     ASSERT(verified2 != NULL, "verified2 not null");
     ASSERT(conf2 < 0.8f, "confidence < 0.8 for random vs constant");
 
-    arix_tensor_destroy(out1);
-    arix_tensor_destroy(out2);
-    if (verified2) arix_tensor_destroy(verified2);
-    arix_arc_output_verifier_destroy(v);
+    SNEPPX_tensor_destroy(out1);
+    SNEPPX_tensor_destroy(out2);
+    if (verified2) SNEPPX_tensor_destroy(verified2);
+    SNEPPX_arc_output_verifier_destroy(v);
 }
 
 int main(void) {

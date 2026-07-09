@@ -25,7 +25,7 @@ static void test_compress_roundtrip(void) {
     const char* input = "hello world hello world hello world";
     size_t in_len = strlen(input) + 1;
     size_t comp_len = 0;
-    int ret = arix_compress(input, in_len, NULL, &comp_len);
+    int ret = SNEPPX_compress(input, in_len, NULL, &comp_len);
     ASSERT(ret == 0, "get compressed size");
     ASSERT(comp_len > 0, "compressed size > 0");
 }
@@ -34,14 +34,14 @@ static void test_compress_decompress(void) {
     const char* input = "AAAAABBBBBCCCCCDDDDD";
     size_t in_len = strlen(input) + 1;
     size_t comp_len = 0;
-    arix_compress(input, in_len, NULL, &comp_len);
+    SNEPPX_compress(input, in_len, NULL, &comp_len);
     unsigned char* compressed = (unsigned char*)malloc(comp_len);
     ASSERT(compressed != NULL, "compressed buffer");
-    arix_compress(input, in_len, compressed, &comp_len);
+    SNEPPX_compress(input, in_len, compressed, &comp_len);
     size_t decomp_len = in_len;
     unsigned char* decompressed = (unsigned char*)malloc(decomp_len);
     ASSERT(decompressed != NULL, "decompressed buffer");
-    arix_decompress(compressed, comp_len, decompressed, &decomp_len);
+    SNEPPX_decompress(compressed, comp_len, decompressed, &decomp_len);
     ASSERT(memcmp(input, decompressed, in_len) == 0, "roundtrip");
     free(decompressed);
     free(compressed);

@@ -1,18 +1,18 @@
 #include "hierarchical_state_space.h"
 #include <string.h>
 
-void arix_hss_discretize(ArixHSSLayer* layer) {
+void SNEPPX_hss_discretize(SNEPPXHSSLayer* layer) {
     size_t s_dim = layer->A->shape[0];
     size_t i_dim = layer->B->shape[1];
 
     size_t shape_s[] = {s_dim, s_dim};
     size_t shape_si[] = {s_dim, i_dim};
 
-    if (layer->A_bar) arix_tensor_destroy(layer->A_bar);
-    if (layer->B_bar) arix_tensor_destroy(layer->B_bar);
+    if (layer->A_bar) SNEPPX_tensor_destroy(layer->A_bar);
+    if (layer->B_bar) SNEPPX_tensor_destroy(layer->B_bar);
 
-    layer->A_bar = arix_tensor_zeros(shape_s, 2, ARIX_FLOAT32);
-    layer->B_bar = arix_tensor_zeros(shape_si, 2, ARIX_FLOAT32);
+    layer->A_bar = SNEPPX_tensor_zeros(shape_s, 2, SNEPPX_FLOAT32);
+    layer->B_bar = SNEPPX_tensor_zeros(shape_si, 2, SNEPPX_FLOAT32);
     if (!layer->A_bar || !layer->B_bar) return;
 
     float* A = (float*)layer->A->data;

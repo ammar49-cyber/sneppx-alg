@@ -3,7 +3,7 @@
 
 #define MASK26 0x3ffffffULL
 
-static void poly1305_block(ArixPoly1305State *s, const uint8_t *m, unsigned int hibit) {
+static void poly1305_block(SNEPPXPoly1305State *s, const uint8_t *m, unsigned int hibit) {
     uint64_t h0 = s->h[0], h1 = s->h[1], h2 = s->h[2], h3 = s->h[3], h4 = s->h[4];
     uint64_t r0 = s->r[0], r1 = s->r[1], r2 = s->r[2], r3 = s->r[3], r4 = s->r[4];
     uint64_t d0, d1, d2, d3, d4, c;
@@ -36,7 +36,7 @@ static void poly1305_block(ArixPoly1305State *s, const uint8_t *m, unsigned int 
     s->h[0] = h0; s->h[1] = h1; s->h[2] = h2; s->h[3] = h3; s->h[4] = h4;
 }
 
-void arix_poly1305_init(ArixPoly1305State *s, const uint8_t key[32]) {
+void SNEPPX_poly1305_init(SNEPPXPoly1305State *s, const uint8_t key[32]) {
     uint64_t r_lo, r_hi;
     uint8_t r[16];
     memcpy(r, key, 16);
@@ -65,7 +65,7 @@ void arix_poly1305_init(ArixPoly1305State *s, const uint8_t key[32]) {
     s->buflen = 0;
 }
 
-void arix_poly1305_update(ArixPoly1305State *s, const uint8_t *data, size_t len) {
+void SNEPPX_poly1305_update(SNEPPXPoly1305State *s, const uint8_t *data, size_t len) {
     while (len) {
         size_t take = 16 - s->buflen;
         if (take > len) take = len;
@@ -78,7 +78,7 @@ void arix_poly1305_update(ArixPoly1305State *s, const uint8_t *data, size_t len)
     }
 }
 
-void arix_poly1305_finish(ArixPoly1305State *s, uint8_t mac[16]) {
+void SNEPPX_poly1305_finish(SNEPPXPoly1305State *s, uint8_t mac[16]) {
     if (s->buflen) {
         memset(s->buf + s->buflen, 0, 16 - s->buflen);
         s->buf[s->buflen] = 1;

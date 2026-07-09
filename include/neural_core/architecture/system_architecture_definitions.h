@@ -1,5 +1,5 @@
-#ifndef ARIX_ARCH_H
-#define ARIX_ARCH_H
+#ifndef SNEPPX_ARCH_H
+#define SNEPPX_ARCH_H
 
 #include "hierarchical_state_space.h"
 #include "sparse_expert_routing.h"
@@ -9,12 +9,12 @@
 #include "multi_head_attention_module.h"
 
 typedef struct {
-    ArixHSSConfig hss_config;
-    ArixSERConfig ser_config;
-    ArixARCConfig arc_config;
-    ArixNPEConfig npe_config;
-    ArixFMConfig fm_config;
-    ArixAttentionConfig attention_config;
+    SNEPPXHSSConfig hss_config;
+    SNEPPXSERConfig ser_config;
+    SNEPPXARCConfig arc_config;
+    SNEPPXNPEConfig npe_config;
+    SNEPPXFMConfig fm_config;
+    SNEPPXAttentionConfig attention_config;
     int enable_attention;
     int enable_hss;
     int enable_ser;
@@ -25,29 +25,29 @@ typedef struct {
     size_t output_dim;
     size_t vocab_size;
     unsigned int seed;
-} ArixArchConfig;
+} SNEPPXArchConfig;
 
 typedef struct {
-    ArixHSSModel* hss_model;
-    ArixSERModel* ser_model;
-    ArixARCLayer* arc_layer;
-    ArixNPEVM* npe_vm;
-    ArixNPEProgram* npe_program;
-    ArixFMController* fm_controller;
-    ArixAttentionWeights* attention;
-    ArixTensor* embed_weight;
-    ArixTensor* unembed_weight;
-    ArixArchConfig config;
-} ArixModel;
+    SNEPPXHSSModel* hss_model;
+    SNEPPXSERModel* ser_model;
+    SNEPPXARCLayer* arc_layer;
+    SNEPPXNPEVM* npe_vm;
+    SNEPPXNPEProgram* npe_program;
+    SNEPPXFMController* fm_controller;
+    SNEPPXAttentionWeights* attention;
+    SNEPPXTensor* embed_weight;
+    SNEPPXTensor* unembed_weight;
+    SNEPPXArchConfig config;
+} SNEPPXModel;
 
-ArixArchConfig arix_arch_config_default(void);
-ArixModel* arix_model_create(const ArixArchConfig* config);
-void arix_model_destroy(ArixModel* model);
-int arix_model_forward(ArixModel* model, const ArixTensor* input, ArixTensor** output);
-size_t arix_model_get_params(const ArixModel* model, ArixTensor** out_params, size_t max_params);
-int arix_model_build_train_graph(ArixModel* model, ArixTape* tape,
-                                  ArixVariable* input_var,
-                                  ArixVariable** weight_vars, size_t num_weights,
-                                  ArixVariable** output_var);
+SNEPPXArchConfig SNEPPX_arch_config_default(void);
+SNEPPXModel* SNEPPX_model_create(const SNEPPXArchConfig* config);
+void SNEPPX_model_destroy(SNEPPXModel* model);
+int SNEPPX_model_forward(SNEPPXModel* model, const SNEPPXTensor* input, SNEPPXTensor** output);
+size_t SNEPPX_model_get_params(const SNEPPXModel* model, SNEPPXTensor** out_params, size_t max_params);
+int SNEPPX_model_build_train_graph(SNEPPXModel* model, SNEPPXTape* tape,
+                                  SNEPPXVariable* input_var,
+                                  SNEPPXVariable** weight_vars, size_t num_weights,
+                                  SNEPPXVariable** output_var);
 
-#endif /* ARIX_ARCH_H */
+#endif /* SNEPPX_ARCH_H */

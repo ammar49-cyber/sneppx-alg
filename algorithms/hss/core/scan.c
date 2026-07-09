@@ -26,7 +26,7 @@ static void assoc_combine(AssocPair* out, const AssocPair* a, const AssocPair* b
     }
 }
 
-void arix_hss_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* h_seq, ArixTensor* y_seq) {
+void SNEPPX_hss_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq) {
     size_t seq_len = x_seq->shape[0];
     size_t i_dim = x_seq->shape[1];
     size_t s_dim = layer->A_bar->shape[0];
@@ -77,7 +77,7 @@ void arix_hss_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTenso
     }
 }
 
-void arix_hss_parallel_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* h_seq, ArixTensor* y_seq) {
+void SNEPPX_hss_parallel_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq) {
     size_t seq_len = x_seq->shape[0];
     size_t i_dim = x_seq->shape[1];
     size_t s_dim = layer->A_bar->shape[0];
@@ -91,12 +91,12 @@ void arix_hss_parallel_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, 
     float* h_seq_data = (float*)h_seq->data;
     float* y_seq_data = (float*)y_seq->data;
 
-    if (seq_len == 0 || s_dim > 1024) { arix_hss_scan(layer, x_seq, h_seq, y_seq); return; }
+    if (seq_len == 0 || s_dim > 1024) { SNEPPX_hss_scan(layer, x_seq, h_seq, y_seq); return; }
 
     /* Allocate associative-pair array */
     size_t pair_size = s_dim * s_dim + s_dim;
     float* pair_buf = (float*)malloc(seq_len * pair_size * sizeof(float));
-    if (!pair_buf) { arix_hss_scan(layer, x_seq, h_seq, y_seq); return; }
+    if (!pair_buf) { SNEPPX_hss_scan(layer, x_seq, h_seq, y_seq); return; }
 
     /* Phase 1: initialise elements */
     for (size_t t = 0; t < seq_len; t++) {
@@ -115,7 +115,7 @@ void arix_hss_parallel_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, 
     AssocPair pair_ap, curb_ap;
     float* cur_A = (float*)malloc(s_dim * s_dim * sizeof(float));
     float* cur_b = (float*)malloc(s_dim * sizeof(float));
-    if (!cur_A || !cur_b) { free(pair_buf); free(cur_A); free(cur_b); arix_hss_scan(layer, x_seq, h_seq, y_seq); return; }
+    if (!cur_A || !cur_b) { free(pair_buf); free(cur_A); free(cur_b); SNEPPX_hss_scan(layer, x_seq, h_seq, y_seq); return; }
 
     for (int stride = 1; stride < n; stride *= 2) {
         for (int idx = 0; idx < n - stride; idx += 2 * stride) {

@@ -10,11 +10,11 @@ REPORT_DIR="${ROOT}/coverage_report"
 command -v lcov >/dev/null 2>&1 || { echo "ERROR: lcov not found"; exit 1; }
 command -v genhtml >/dev/null 2>&1 || { echo "ERROR: genhtml not found"; exit 1; }
 
-echo "=== ARIX-Algo Coverage Report ==="
+echo "=== SNEPPX-Algo Coverage Report ==="
 
 # Configure with coverage flags
 echo "Configuring..."
-cmake -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON \
+cmake -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON \
     -DCMAKE_C_FLAGS="--coverage -g -O0" \
     -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 

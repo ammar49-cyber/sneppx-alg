@@ -1,5 +1,5 @@
 /*
- * ARIX Fuzzing Harness — SKELETON
+ * SNEPPX Fuzzing Harness — SKELETON
  * VERSION: v0.5
  *
  * PURPOSE: Coverage-guided fuzzing entry points for structured tensor
@@ -7,7 +7,7 @@
  * messages.  Designed to be linked with libFuzzer or AFL.
  *
  * Each fuzz target consumes a byte array and returns 0.
- * Register new targets via arix_fuzz_register_target().
+ * Register new targets via SNEPPX_fuzz_register_target().
  */
 
 #include <stdio.h>
@@ -18,14 +18,14 @@
 typedef struct {
     const char* name;
     int (*target)(const uint8_t* data, size_t size);
-} ArixFuzzTarget;
+} SNEPPXFuzzTarget;
 
-#define ARIX_MAX_FUZZ_TARGETS 64
-static ArixFuzzTarget g_targets[ARIX_MAX_FUZZ_TARGETS];
+#define SNEPPX_MAX_FUZZ_TARGETS 64
+static SNEPPXFuzzTarget g_targets[SNEPPX_MAX_FUZZ_TARGETS];
 static int g_num_targets = 0;
 
-int arix_fuzz_register_target(const char* name, int (*target)(const uint8_t*, size_t)) {
-    if (g_num_targets >= ARIX_MAX_FUZZ_TARGETS) return -1;
+int SNEPPX_fuzz_register_target(const char* name, int (*target)(const uint8_t*, size_t)) {
+    if (g_num_targets >= SNEPPX_MAX_FUZZ_TARGETS) return -1;
     g_targets[g_num_targets].name = name;
     g_targets[g_num_targets].target = target;
     g_num_targets++;
@@ -34,13 +34,13 @@ int arix_fuzz_register_target(const char* name, int (*target)(const uint8_t*, si
 
 static int fuzz_tensor_create(const uint8_t* data, size_t size) {
     (void)data; (void)size;
-    /* TODO(v0.5): feed bytes as shape+dtype, attempt arix_tensor_create */
+    /* TODO(v0.5): feed bytes as shape+dtype, attempt SNEPPX_tensor_create */
     return 0;
 }
 
 static int fuzz_checkpoint_load(const uint8_t* data, size_t size) {
     (void)data; (void)size;
-    /* TODO(v0.5): feed bytes as checkpoint file, attempt arix_ckpt_read_open */
+    /* TODO(v0.5): feed bytes as checkpoint file, attempt SNEPPX_ckpt_read_open */
     return 0;
 }
 
@@ -53,9 +53,9 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 }
 
 int main(void) {
-    arix_fuzz_register_target("tensor_create", fuzz_tensor_create);
-    arix_fuzz_register_target("checkpoint_load", fuzz_checkpoint_load);
-    printf("ARIX Fuzz Harness (skeleton)\n");
+    SNEPPX_fuzz_register_target("tensor_create", fuzz_tensor_create);
+    SNEPPX_fuzz_register_target("checkpoint_load", fuzz_checkpoint_load);
+    printf("SNEPPX Fuzz Harness (skeleton)\n");
     printf("Registered targets: %d\n", g_num_targets);
     return 0;
 }

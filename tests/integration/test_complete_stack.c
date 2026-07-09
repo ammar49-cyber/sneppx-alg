@@ -15,23 +15,23 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_complete_stack(void) {
-    ArixHSSConfig hss_cfg = arix_hss_config_default();
+    SNEPPXHSSConfig hss_cfg = SNEPPX_hss_config_default();
     hss_cfg.state_dim = 4; hss_cfg.input_dim = 16; hss_cfg.output_dim = 16;
     hss_cfg.num_layers = 1; hss_cfg.use_hierarchical = 0;
-    ArixHSSModel* hss = arix_hss_model_create(&hss_cfg, 42);
+    SNEPPXHSSModel* hss = SNEPPX_hss_model_create(&hss_cfg, 42);
     ASSERT(hss != NULL, "hss model");
 
-    ArixSERConfig ser_cfg = arix_ser_config_default();
+    SNEPPXSERConfig ser_cfg = SNEPPX_ser_config_default();
     ser_cfg.num_experts = 2; ser_cfg.num_active = 1; ser_cfg.input_dim = 16;
     ser_cfg.expert_dim = 32; ser_cfg.output_dim = 16;
-    ArixSERModel* ser = arix_ser_model_create(&ser_cfg, 99, 1);
+    SNEPPXSERModel* ser = SNEPPX_ser_model_create(&ser_cfg, 99, 1);
     ASSERT(ser != NULL, "ser model");
 
-    ArixARCConfig arc_cfg = arix_arc_config_default();
-    ArixARCLayer* arc = arix_arc_layer_create(&arc_cfg, 16, 16, 200);
+    SNEPPXARCConfig arc_cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* arc = SNEPPX_arc_layer_create(&arc_cfg, 16, 16, 200);
     ASSERT(arc != NULL, "arc layer");
 
-    ArixNPEProgram* npe_prog = arix_npe_compile_mlp(16, 32);
+    SNEPPXNPEProgram* npe_prog = SNEPPX_npe_compile_mlp(16, 32);
     ASSERT(npe_prog != NULL, "npe program");
     unsigned long s = 42;
     for (size_t i = 0; i < 16 * 32 + 32 + 32 * 16 + 16; i++) {
@@ -39,48 +39,48 @@ static void test_complete_stack(void) {
         ((float*)npe_prog->memory->data)[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 0.1f;
     }
 
-    ArixNPEConfig npe_cfg = arix_npe_config_default();
-    ArixNPEVM* vm = arix_npe_vm_create(&npe_cfg);
-    arix_npe_vm_load(vm, npe_prog);
+    SNEPPXNPEConfig npe_cfg = SNEPPX_npe_config_default();
+    SNEPPXNPEVM* vm = SNEPPX_npe_vm_create(&npe_cfg);
+    SNEPPX_npe_vm_load(vm, npe_prog);
 
-    ArixFMConfig fm_cfg = arix_fm_config_default();
+    SNEPPXFMConfig fm_cfg = SNEPPX_fm_config_default();
     fm_cfg.num_nodes = 2;
     fm_cfg.memory_dim = 16;
     fm_cfg.memory_capacity = 32;
     fm_cfg.sync_interval = 1000;
-    ArixFMController* fm = arix_fm_controller_create(&fm_cfg);
+    SNEPPXFMController* fm = SNEPPX_fm_controller_create(&fm_cfg);
     ASSERT(fm != NULL, "fm controller");
 
     size_t shape_in[] = {1, 4, 16};
-    ArixTensor* input = arix_tensor_randn(shape_in, 3, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 3, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input");
 
-    ArixTensor* hss_out = NULL;
-    int ret = arix_hss_forward(hss, input, &hss_out);
+    SNEPPXTensor* hss_out = NULL;
+    int ret = SNEPPX_hss_forward(hss, input, &hss_out);
     ASSERT(ret == 0 && hss_out != NULL && hss_out->shape[0] == 1 && hss_out->shape[1] == 4 && hss_out->shape[2] == 16, "hss ok");
 
     size_t merged = 4;
-    ArixTensor flat;
+    SNEPPXTensor flat;
     size_t flat_shape[] = {merged, 16};
     flat.data = hss_out->data; flat.shape = flat_shape; flat.ndim = 2;
     flat.size = merged * 16; flat.item_size = sizeof(float);
-    flat.dtype = ARIX_FLOAT32; flat.strides = NULL;
+    flat.dtype = SNEPPX_FLOAT32; flat.strides = NULL;
 
-    ArixTensor* ser_out = NULL;
-    arix_ser_forward(ser->layers[0], &flat, &ser_out);
+    SNEPPXTensor* ser_out = NULL;
+    SNEPPX_ser_forward(ser->layers[0], &flat, &ser_out);
     ASSERT(ser_out != NULL && ser_out->shape[0] == merged && ser_out->shape[1] == 16, "ser ok");
 
-    ArixTensor* arc_out = NULL;
+    SNEPPXTensor* arc_out = NULL;
     float metrics[4];
-    arix_arc_forward(arc, ser_out, &arc_out, metrics);
+    SNEPPX_arc_forward(arc, ser_out, &arc_out, metrics);
     ASSERT(arc_out != NULL && arc_out->shape[0] == merged && arc_out->shape[1] == 16, "arc ok");
 
-    ArixTensor* npe_out = NULL;
-    arix_npe_vm_run(vm, arc_out, &npe_out);
+    SNEPPXTensor* npe_out = NULL;
+    SNEPPX_npe_vm_run(vm, arc_out, &npe_out);
     ASSERT(npe_out != NULL && npe_out->shape[0] == merged && npe_out->shape[1] == 16, "npe ok");
 
-    ArixTensor* fm_out = NULL;
-    ret = arix_fm_forward(fm, 0, npe_out, &fm_out);
+    SNEPPXTensor* fm_out = NULL;
+    ret = SNEPPX_fm_forward(fm, 0, npe_out, &fm_out);
     ASSERT(ret == 0 && fm_out != NULL, "fm ok");
     ASSERT(fm_out->shape[0] == merged && fm_out->shape[1] == 16, "fm shape ok");
 
@@ -96,18 +96,18 @@ static void test_complete_stack(void) {
 
     printf("  FM memory entries: %zu\n", fm->nodes[0]->memory_bank->num_entries);
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(hss_out);
-    arix_tensor_destroy(ser_out);
-    arix_tensor_destroy(arc_out);
-    arix_tensor_destroy(npe_out);
-    arix_tensor_destroy(fm_out);
-    arix_hss_model_destroy(hss);
-    arix_ser_model_destroy(ser);
-    arix_arc_layer_destroy(arc);
-    arix_npe_vm_destroy(vm);
-    arix_npe_program_destroy(npe_prog);
-    arix_fm_controller_destroy(fm);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(hss_out);
+    SNEPPX_tensor_destroy(ser_out);
+    SNEPPX_tensor_destroy(arc_out);
+    SNEPPX_tensor_destroy(npe_out);
+    SNEPPX_tensor_destroy(fm_out);
+    SNEPPX_hss_model_destroy(hss);
+    SNEPPX_ser_model_destroy(ser);
+    SNEPPX_arc_layer_destroy(arc);
+    SNEPPX_npe_vm_destroy(vm);
+    SNEPPX_npe_program_destroy(npe_prog);
+    SNEPPX_fm_controller_destroy(fm);
 }
 
 int main(void) {

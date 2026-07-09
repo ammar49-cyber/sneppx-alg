@@ -1,5 +1,5 @@
-#ifndef ARIX_BIGNUM_H
-#define ARIX_BIGNUM_H
+#ifndef SNEPPX_BIGNUM_H
+#define SNEPPX_BIGNUM_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -8,40 +8,40 @@
 extern "C" {
 #endif
 
-#define ARIX_BN_MAX_WORDS 128
-#define ARIX_BN_WORD uint64_t
-#define ARIX_BN_HALF_WORD uint32_t
+#define SNEPPX_BN_MAX_WORDS 128
+#define SNEPPX_BN_WORD uint64_t
+#define SNEPPX_BN_HALF_WORD uint32_t
 
 typedef struct {
-    ARIX_BN_WORD words[ARIX_BN_MAX_WORDS];
+    SNEPPX_BN_WORD words[SNEPPX_BN_MAX_WORDS];
     int used;
     int sign;
-} ArixBigNum;
+} SNEPPXBigNum;
 
-void arix_bn_init(ArixBigNum* bn);
-void arix_bn_zero(ArixBigNum* bn);
-int  arix_bn_set_word(ArixBigNum* bn, ARIX_BN_WORD val);
-int  arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len);
-int  arix_bn_from_hex(ArixBigNum* bn, const char* hex);
-void arix_bn_to_array(const ArixBigNum* bn, uint8_t* out, size_t* out_len);
+void SNEPPX_bn_init(SNEPPXBigNum* bn);
+void SNEPPX_bn_zero(SNEPPXBigNum* bn);
+int  SNEPPX_bn_set_word(SNEPPXBigNum* bn, SNEPPX_BN_WORD val);
+int  SNEPPX_bn_set_array(SNEPPXBigNum* bn, const uint8_t* bytes, size_t len);
+int  SNEPPX_bn_from_hex(SNEPPXBigNum* bn, const char* hex);
+void SNEPPX_bn_to_array(const SNEPPXBigNum* bn, uint8_t* out, size_t* out_len);
 
-int  arix_bn_copy(ArixBigNum* dst, const ArixBigNum* src);
-int  arix_bn_is_zero(const ArixBigNum* bn);
-int  arix_bn_is_one(const ArixBigNum* bn);
-int  arix_bn_cmp(const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_cmp_word(const ArixBigNum* a, ARIX_BN_WORD b);
+int  SNEPPX_bn_copy(SNEPPXBigNum* dst, const SNEPPXBigNum* src);
+int  SNEPPX_bn_is_zero(const SNEPPXBigNum* bn);
+int  SNEPPX_bn_is_one(const SNEPPXBigNum* bn);
+int  SNEPPX_bn_cmp(const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_cmp_word(const SNEPPXBigNum* a, SNEPPX_BN_WORD b);
 
-int  arix_bn_add(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_sub(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_mul(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_div(ArixBigNum* q, ArixBigNum* rem, const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_mod(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* m);
-int  arix_bn_exp_mod(ArixBigNum* r, const ArixBigNum* base, const ArixBigNum* exp, const ArixBigNum* mod);
+int  SNEPPX_bn_add(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_sub(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_mul(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_div(SNEPPXBigNum* q, SNEPPXBigNum* rem, const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m);
+int  SNEPPX_bn_exp_mod(SNEPPXBigNum* r, const SNEPPXBigNum* base, const SNEPPXBigNum* exp, const SNEPPXBigNum* mod);
 
-int  arix_bn_gcd(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b);
-int  arix_bn_inv_mod(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* m);
-int  arix_bn_is_prime(const ArixBigNum* bn);
-void arix_bn_print(const ArixBigNum* bn);
+int  SNEPPX_bn_gcd(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b);
+int  SNEPPX_bn_inv_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m);
+int  SNEPPX_bn_is_prime(const SNEPPXBigNum* bn);
+void SNEPPX_bn_print(const SNEPPXBigNum* bn);
 
 #ifdef __cplusplus
 }

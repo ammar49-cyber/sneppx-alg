@@ -10,8 +10,8 @@ macro(add_neural_bench bench_src)
         ${CMAKE_SOURCE_DIR}/include/neural_core/security
         ${CMAKE_SOURCE_DIR}/tests
     )
-    if(ARIX_USE_LTO)
-        arix_enable_lto(${bench_name})
+    if(SNEPPX_USE_LTO)
+        SNEPPX_enable_lto(${bench_name})
     endif()
 endmacro()
 

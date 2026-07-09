@@ -8,7 +8,7 @@
 #include <errno.h>
 #endif
 
-int arix_mlock(void* ptr, size_t len) {
+int SNEPPX_mlock(void* ptr, size_t len) {
     if (!ptr || !len) return -1;
 #if defined(_WIN32)
     if (VirtualLock(ptr, len)) return 0;
@@ -25,7 +25,7 @@ int arix_mlock(void* ptr, size_t len) {
 #endif
 }
 
-int arix_munlock(void* ptr, size_t len) {
+int SNEPPX_munlock(void* ptr, size_t len) {
     if (!ptr || !len) return -1;
 #if defined(_WIN32)
     if (VirtualUnlock(ptr, len)) return 0;
@@ -35,7 +35,7 @@ int arix_munlock(void* ptr, size_t len) {
 #endif
 }
 
-int arix_mlockall_possible(void) {
+int SNEPPX_mlockall_possible(void) {
 #if defined(_WIN32)
     return -1;
 #else

@@ -22,18 +22,18 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_vmem_reserve_commit(void) {
-    void* region = arix_vmem_reserve(65536);
+    void* region = SNEPPX_vmem_reserve(65536);
     ASSERT(region != NULL, "vmem reserve 64KB");
-    int ok = arix_vmem_commit(region, 4096);
+    int ok = SNEPPX_vmem_commit(region, 4096);
     ASSERT(ok == 0, "vmem commit 4KB");
-    arix_vmem_decommit(region, 4096);
-    arix_vmem_release(region, 65536);
+    SNEPPX_vmem_decommit(region, 4096);
+    SNEPPX_vmem_release(region, 65536);
 }
 
 static void test_vmem_large_region(void) {
-    void* region = arix_vmem_reserve(1048576);
+    void* region = SNEPPX_vmem_reserve(1048576);
     ASSERT(region != NULL, "vmem reserve 1MB");
-    arix_vmem_release(region, 1048576);
+    SNEPPX_vmem_release(region, 1048576);
 }
 
 int main(void) {

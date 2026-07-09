@@ -14,21 +14,21 @@ static float euclidean_similarity(const float* a, const float* b, size_t dim) {
     return 1.0f / (1.0f + dist_sq / (float)dim);
 }
 
-ArixFMMemoryBank* arix_fm_memory_bank_create(size_t memory_dim, size_t capacity) {
-    ArixFMMemoryBank* bank = (ArixFMMemoryBank*)arix_malloc(sizeof(ArixFMMemoryBank), 64);
+SNEPPXFMMemoryBank* SNEPPX_fm_memory_bank_create(size_t memory_dim, size_t capacity) {
+    SNEPPXFMMemoryBank* bank = (SNEPPXFMMemoryBank*)SNEPPX_malloc(sizeof(SNEPPXFMMemoryBank), 64);
     if (!bank) return NULL;
-    memset(bank, 0, sizeof(ArixFMMemoryBank));
+    memset(bank, 0, sizeof(SNEPPXFMMemoryBank));
 
     size_t keys_shape[] = {capacity, memory_dim};
-    bank->keys = arix_tensor_zeros(keys_shape, 2, ARIX_FLOAT32);
-    bank->values = arix_tensor_zeros(keys_shape, 2, ARIX_FLOAT32);
+    bank->keys = SNEPPX_tensor_zeros(keys_shape, 2, SNEPPX_FLOAT32);
+    bank->values = SNEPPX_tensor_zeros(keys_shape, 2, SNEPPX_FLOAT32);
 
     size_t ts_shape[] = {capacity};
-    bank->timestamps = arix_tensor_zeros(ts_shape, 1, ARIX_FLOAT32);
-    bank->access_counts = arix_tensor_zeros(ts_shape, 1, ARIX_FLOAT32);
+    bank->timestamps = SNEPPX_tensor_zeros(ts_shape, 1, SNEPPX_FLOAT32);
+    bank->access_counts = SNEPPX_tensor_zeros(ts_shape, 1, SNEPPX_FLOAT32);
 
     if (!bank->keys || !bank->values || !bank->timestamps || !bank->access_counts) {
-        arix_fm_memory_bank_destroy(bank);
+        SNEPPX_fm_memory_bank_destroy(bank);
         return NULL;
     }
 
@@ -37,16 +37,16 @@ ArixFMMemoryBank* arix_fm_memory_bank_create(size_t memory_dim, size_t capacity)
     return bank;
 }
 
-void arix_fm_memory_bank_destroy(ArixFMMemoryBank* bank) {
+void SNEPPX_fm_memory_bank_destroy(SNEPPXFMMemoryBank* bank) {
     if (!bank) return;
-    if (bank->keys) arix_tensor_destroy(bank->keys);
-    if (bank->values) arix_tensor_destroy(bank->values);
-    if (bank->timestamps) arix_tensor_destroy(bank->timestamps);
-    if (bank->access_counts) arix_tensor_destroy(bank->access_counts);
-    arix_free(bank, sizeof(ArixFMMemoryBank));
+    if (bank->keys) SNEPPX_tensor_destroy(bank->keys);
+    if (bank->values) SNEPPX_tensor_destroy(bank->values);
+    if (bank->timestamps) SNEPPX_tensor_destroy(bank->timestamps);
+    if (bank->access_counts) SNEPPX_tensor_destroy(bank->access_counts);
+    SNEPPX_free(bank, sizeof(SNEPPXFMMemoryBank));
 }
 
-int arix_fm_memory_bank_write(ArixFMMemoryBank* bank, const ArixTensor* key, const ArixTensor* value) {
+int SNEPPX_fm_memory_bank_write(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key, const SNEPPXTensor* value) {
     if (!bank || !key || !value) return 0;
     size_t dim = bank->keys->shape[1];
     float* keys_data = (float*)bank->keys->data;
@@ -96,7 +96,7 @@ int arix_fm_memory_bank_write(ArixFMMemoryBank* bank, const ArixTensor* key, con
     return 1;
 }
 
-ArixTensor* arix_fm_memory_bank_read(ArixFMMemoryBank* bank, const ArixTensor* key) {
+SNEPPXTensor* SNEPPX_fm_memory_bank_read(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key) {
     if (!bank || !key || bank->num_entries == 0) return NULL;
     size_t dim = bank->keys->shape[1];
     float* keys_data = (float*)bank->keys->data;
@@ -118,7 +118,7 @@ ArixTensor* arix_fm_memory_bank_read(ArixFMMemoryBank* bank, const ArixTensor* k
     if (best_sim < 0.5f) return NULL;
 
     size_t out_shape[] = {dim};
-    ArixTensor* result = arix_tensor_create(out_shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_create(out_shape, 1, SNEPPX_FLOAT32);
     if (result) {
         memcpy((float*)result->data, vals_data + best_idx * dim, dim * sizeof(float));
     }
@@ -141,7 +141,7 @@ static int cmp_retention(const void* a, const void* b) {
     return 0;
 }
 
-void arix_fm_memory_bank_forget(ArixFMMemoryBank* bank, float forget_rate) {
+void SNEPPX_fm_memory_bank_forget(SNEPPXFMMemoryBank* bank, float forget_rate) {
     if (!bank || bank->num_entries == 0) return;
     size_t dim = bank->keys->shape[1];
     float* keys_data = (float*)bank->keys->data;

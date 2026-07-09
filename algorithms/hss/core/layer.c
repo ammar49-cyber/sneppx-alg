@@ -4,8 +4,8 @@
 #include <string.h>
 #include <math.h>
 
-ArixHSSConfig arix_hss_config_default(void) {
-    ArixHSSConfig cfg;
+SNEPPXHSSConfig SNEPPX_hss_config_default(void) {
+    SNEPPXHSSConfig cfg;
     cfg.state_dim = 64;
     cfg.input_dim = 512;
     cfg.output_dim = 512;
@@ -28,7 +28,7 @@ static float uniform_float(unsigned long* state, float min, float max) {
     return min + t * (max - min);
 }
 
-static void fill_randn(ArixTensor* t, unsigned long* state, float scale) {
+static void fill_randn(SNEPPXTensor* t, unsigned long* state, float scale) {
     float* data = (float*)t->data;
     for (size_t i = 0; i < t->size; i += 2) {
         float u1 = uniform_float(state, 0.0f, 1.0f);
@@ -42,10 +42,10 @@ static void fill_randn(ArixTensor* t, unsigned long* state, float scale) {
     }
 }
 
-ArixHSSLayer* arix_hss_layer_create(const ArixHSSConfig* config, unsigned int seed) {
-    ArixHSSLayer* layer = (ArixHSSLayer*)arix_malloc(sizeof(ArixHSSLayer), 64);
+SNEPPXHSSLayer* SNEPPX_hss_layer_create(const SNEPPXHSSConfig* config, unsigned int seed) {
+    SNEPPXHSSLayer* layer = (SNEPPXHSSLayer*)SNEPPX_malloc(sizeof(SNEPPXHSSLayer), 64);
     if (!layer) return NULL;
-    memset(layer, 0, sizeof(ArixHSSLayer));
+    memset(layer, 0, sizeof(SNEPPXHSSLayer));
 
     unsigned long state = seed;
     size_t s_dim = config->state_dim;
@@ -59,14 +59,14 @@ ArixHSSLayer* arix_hss_layer_create(const ArixHSSConfig* config, unsigned int se
     size_t shape_ii[] = {i_dim, i_dim};
     size_t shape_i1[] = {i_dim};
 
-    layer->A = arix_tensor_create(shape_s, 2, ARIX_FLOAT32);
-    layer->B = arix_tensor_create(shape_si, 2, ARIX_FLOAT32);
-    layer->C = arix_tensor_create(shape_os, 2, ARIX_FLOAT32);
-    layer->D = arix_tensor_create(shape_oi, 2, ARIX_FLOAT32);
-    layer->dt = arix_tensor_create(shape_s1, 1, ARIX_FLOAT32);
-    layer->h = arix_tensor_create(shape_s1, 1, ARIX_FLOAT32);
-    layer->x_proj = arix_tensor_create(shape_ii, 2, ARIX_FLOAT32);
-    layer->x_proj_bias = arix_tensor_create(shape_i1, 1, ARIX_FLOAT32);
+    layer->A = SNEPPX_tensor_create(shape_s, 2, SNEPPX_FLOAT32);
+    layer->B = SNEPPX_tensor_create(shape_si, 2, SNEPPX_FLOAT32);
+    layer->C = SNEPPX_tensor_create(shape_os, 2, SNEPPX_FLOAT32);
+    layer->D = SNEPPX_tensor_create(shape_oi, 2, SNEPPX_FLOAT32);
+    layer->dt = SNEPPX_tensor_create(shape_s1, 1, SNEPPX_FLOAT32);
+    layer->h = SNEPPX_tensor_create(shape_s1, 1, SNEPPX_FLOAT32);
+    layer->x_proj = SNEPPX_tensor_create(shape_ii, 2, SNEPPX_FLOAT32);
+    layer->x_proj_bias = SNEPPX_tensor_create(shape_i1, 1, SNEPPX_FLOAT32);
 
     if (layer->A && layer->B && layer->C && layer->D && layer->dt &&
         layer->h && layer->x_proj && layer->x_proj_bias) {
@@ -88,17 +88,17 @@ ArixHSSLayer* arix_hss_layer_create(const ArixHSSConfig* config, unsigned int se
     return layer;
 }
 
-void arix_hss_layer_destroy(ArixHSSLayer* layer) {
+void SNEPPX_hss_layer_destroy(SNEPPXHSSLayer* layer) {
     if (!layer) return;
-    if (layer->A) arix_tensor_destroy(layer->A);
-    if (layer->B) arix_tensor_destroy(layer->B);
-    if (layer->C) arix_tensor_destroy(layer->C);
-    if (layer->D) arix_tensor_destroy(layer->D);
-    if (layer->dt) arix_tensor_destroy(layer->dt);
-    if (layer->h) arix_tensor_destroy(layer->h);
-    if (layer->x_proj) arix_tensor_destroy(layer->x_proj);
-    if (layer->x_proj_bias) arix_tensor_destroy(layer->x_proj_bias);
-    if (layer->A_bar) arix_tensor_destroy(layer->A_bar);
-    if (layer->B_bar) arix_tensor_destroy(layer->B_bar);
-    arix_free(layer, sizeof(ArixHSSLayer));
+    if (layer->A) SNEPPX_tensor_destroy(layer->A);
+    if (layer->B) SNEPPX_tensor_destroy(layer->B);
+    if (layer->C) SNEPPX_tensor_destroy(layer->C);
+    if (layer->D) SNEPPX_tensor_destroy(layer->D);
+    if (layer->dt) SNEPPX_tensor_destroy(layer->dt);
+    if (layer->h) SNEPPX_tensor_destroy(layer->h);
+    if (layer->x_proj) SNEPPX_tensor_destroy(layer->x_proj);
+    if (layer->x_proj_bias) SNEPPX_tensor_destroy(layer->x_proj_bias);
+    if (layer->A_bar) SNEPPX_tensor_destroy(layer->A_bar);
+    if (layer->B_bar) SNEPPX_tensor_destroy(layer->B_bar);
+    SNEPPX_free(layer, sizeof(SNEPPXHSSLayer));
 }

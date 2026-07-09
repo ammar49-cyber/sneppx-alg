@@ -6,7 +6,7 @@ from .tensor import Tensor, _to_shape
 
 class ModelConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixArchConfig()
+        self._c = _neural_engine_bridge.SNEPPXArchConfig()
         self._c.default()
 
     @property
@@ -77,7 +77,7 @@ class Model:
 # ---- HSS Model ----
 class HSSConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixHSSConfig()
+        self._c = _neural_engine_bridge.SNEPPXHSSConfig()
         self._c.default()
 
     @property
@@ -158,7 +158,7 @@ class HSSModel:
 # ---- SER Model ----
 class SERConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixSERConfig()
+        self._c = _neural_engine_bridge.SNEPPXSERConfig()
         self._c.default()
 
     @property
@@ -236,7 +236,7 @@ class SERModel:
 # ---- ARC Model ----
 class ARCConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixARCConfig()
+        self._c = _neural_engine_bridge.SNEPPXARCConfig()
         self._c.default()
 
     @property
@@ -303,7 +303,7 @@ class ARCModel:
 
     def forward(self, input: Tensor) -> Tensor:
         from . import _neural_engine_bridge as c
-        out_ptr = c._Tensor.create((1, 1), c.ArixDtype.FLOAT32)
+        out_ptr = c._Tensor.create((1, 1), c.SNEPPXDtype.FLOAT32)
         metrics = [0.0, 0.0, 0.0, 0.0]
         self._m.forward(input._t, out_ptr, metrics)
         return Tensor._from_ptr(out_ptr)
@@ -315,7 +315,7 @@ class ARCModel:
 # ---- NPE Model ----
 class NPEConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixNPEConfig()
+        self._c = _neural_engine_bridge.SNEPPXNPEConfig()
         self._c.default()
 
     @property
@@ -375,7 +375,7 @@ class NPEModel:
 # ---- FM Model ----
 class FMConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixFMConfig()
+        self._c = _neural_engine_bridge.SNEPPXFMConfig()
         self._c.default()
 
     @property

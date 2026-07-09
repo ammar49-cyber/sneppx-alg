@@ -2,7 +2,7 @@
 
 ## Elevator Pitch
 
-ARIX-Algo is the first open-source AI algorithm with cryptographic integrity — neuro-symbolic execution where every inference is verifiable, every execution path is tamper-proof, and the model evolves on-device without compromising privacy. The algorithm protects itself so you can run it anywhere without trusting the host.
+SNEPPX-Algo is the first open-source AI algorithm with cryptographic integrity — neuro-symbolic execution where every inference is verifiable, every execution path is tamper-proof, and the model evolves on-device without compromising privacy. The algorithm protects itself so you can run it anywhere without trusting the host.
 
 ## The Problem
 
@@ -27,7 +27,7 @@ Every inference produces a zero-knowledge proof that it was computed correctly. 
 - **Public verifiable**: Anyone can check the proof with open-source verifier code
 
 ### 3. Self-Protecting Execution
-The algorithm encrypts its own memory, obfuscates its control flow, detects debuggers, and virtualizes critical functions. Running ARIX on an untrusted host is safer than running any other model anywhere.
+The algorithm encrypts its own memory, obfuscates its control flow, detects debuggers, and virtualizes critical functions. Running SNEPPX on an untrusted host is safer than running any other model anywhere.
 
 - S0: All crypto primitives are constant-time, side-channel resistant
 - S1: All allocations have guard pages, canaries, ASLR
@@ -42,7 +42,7 @@ The core algorithm is designed to run on phones and edge devices, not just datac
 - No cloud dependency for inference
 
 ### 5. Federated Contribution Protocol
-Open-source AI needs an incentive and verification model. ARIX lets contributors train shards locally and submit cryptographically signed gradient contributions. The protocol verifies contributions without seeing private data, turning the community into a distributed training network.
+Open-source AI needs an incentive and verification model. SNEPPX lets contributors train shards locally and submit cryptographically signed gradient contributions. The protocol verifies contributions without seeing private data, turning the community into a distributed training network.
 
 - Gradient contributions are signed with Ed25519 (S0)
 - Contributions are aggregated via trust-weighted all-reduce (FM)
@@ -61,7 +61,7 @@ The behavioral monitor (S3) enforces provable constraints at runtime — not jus
 
 ## What Makes This Next-Gen
 
-Most "next-gen AI" is just bigger models trained on more GPUs. ARIX-Algo is next-gen because it rethinks the relationship between the algorithm and the user:
+Most "next-gen AI" is just bigger models trained on more GPUs. SNEPPX-Algo is next-gen because it rethinks the relationship between the algorithm and the user:
 
 - From black box → verifiable
 - From trust-the-company → trust-the-math

@@ -1,5 +1,5 @@
-#ifndef ARIX_TRAIN_H
-#define ARIX_TRAIN_H
+#ifndef SNEPPX_TRAIN_H
+#define SNEPPX_TRAIN_H
 
 #include "system_architecture_definitions.h"
 #include "automatic_differentiation_framework.h"
@@ -13,23 +13,23 @@ typedef struct {
     float learning_rate;
     size_t log_interval;
     size_t save_interval;
-    ArixDevice device;
-} ArixTrainConfig;
+    SNEPPXDevice device;
+} SNEPPXTrainConfig;
 
 typedef struct {
-    ArixModel* model;
-    ArixOptimizer* optimizer;
-    ArixTrainConfig config;
-    ArixTensor* loss_history;
+    SNEPPXModel* model;
+    SNEPPXOptimizer* optimizer;
+    SNEPPXTrainConfig config;
+    SNEPPXTensor* loss_history;
     size_t step_count;
-} ArixTrainer;
+} SNEPPXTrainer;
 
-ArixTrainConfig arix_train_config_default(void);
-ArixTrainer* arix_trainer_create(ArixModel* model, const ArixTrainConfig* config);
-void arix_trainer_destroy(ArixTrainer* trainer);
-float arix_trainer_train_step(ArixTrainer* trainer, const ArixTensor* batch_input, const ArixTensor* batch_target);
-float arix_trainer_evaluate(ArixTrainer* trainer, const ArixTensor* val_input, const ArixTensor* val_target);
-int arix_trainer_save_checkpoint(ArixTrainer* trainer, const char* path);
-int arix_trainer_load_checkpoint(ArixTrainer* trainer, const char* path);
+SNEPPXTrainConfig SNEPPX_train_config_default(void);
+SNEPPXTrainer* SNEPPX_trainer_create(SNEPPXModel* model, const SNEPPXTrainConfig* config);
+void SNEPPX_trainer_destroy(SNEPPXTrainer* trainer);
+float SNEPPX_trainer_train_step(SNEPPXTrainer* trainer, const SNEPPXTensor* batch_input, const SNEPPXTensor* batch_target);
+float SNEPPX_trainer_evaluate(SNEPPXTrainer* trainer, const SNEPPXTensor* val_input, const SNEPPXTensor* val_target);
+int SNEPPX_trainer_save_checkpoint(SNEPPXTrainer* trainer, const char* path);
+int SNEPPX_trainer_load_checkpoint(SNEPPXTrainer* trainer, const char* path);
 
-#endif /* ARIX_TRAIN_H */
+#endif /* SNEPPX_TRAIN_H */

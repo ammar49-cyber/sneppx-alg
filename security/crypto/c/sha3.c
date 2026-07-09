@@ -40,7 +40,7 @@ static void keccak_f1600(uint64_t state[25]) {
     }
 }
 
-static void sha3_absorb(ArixSHA3State* s, const uint8_t* data, size_t len) {
+static void sha3_absorb(SNEPPXSHA3State* s, const uint8_t* data, size_t len) {
     while (len) {
         size_t take = len < s->rate ? len : s->rate;
         for (size_t i = 0; i < take; i++)
@@ -50,21 +50,21 @@ static void sha3_absorb(ArixSHA3State* s, const uint8_t* data, size_t len) {
     }
 }
 
-void arix_sha3_256_init(ArixSHA3State* s) {
+void SNEPPX_sha3_256_init(SNEPPXSHA3State* s) {
     memset(s, 0, sizeof(*s));
     s->rate = 136;
     s->capacity = 64;
     s->digest_size = 32;
 }
 
-void arix_sha3_512_init(ArixSHA3State* s) {
+void SNEPPX_sha3_512_init(SNEPPXSHA3State* s) {
     memset(s, 0, sizeof(*s));
     s->rate = 72;
     s->capacity = 128;
     s->digest_size = 64;
 }
 
-void arix_sha3_update(ArixSHA3State* s, const uint8_t* data, size_t len) {
+void SNEPPX_sha3_update(SNEPPXSHA3State* s, const uint8_t* data, size_t len) {
     if (s->buflen) {
         size_t fill = s->rate - s->buflen;
         if (len < fill) { memcpy(s->buffer + s->buflen, data, len); s->buflen += (unsigned int)len; return; }
@@ -80,7 +80,7 @@ void arix_sha3_update(ArixSHA3State* s, const uint8_t* data, size_t len) {
     if (len) { memcpy(s->buffer, data, len); s->buflen = (unsigned int)len; }
 }
 
-void arix_sha3_finish(ArixSHA3State* s, uint8_t* hash) {
+void SNEPPX_sha3_finish(SNEPPXSHA3State* s, uint8_t* hash) {
     uint8_t buf[200];
     memcpy(buf, s->buffer, s->buflen);
     buf[s->buflen] = 0x06;

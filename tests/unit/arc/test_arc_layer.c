@@ -10,18 +10,18 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_arc_forward(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
-    ArixARCLayer* layer = arix_arc_layer_create(&cfg, 32, 32, 42);
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 32, 32, 42);
     ASSERT(layer != NULL, "layer not null");
 
     size_t shape_in[] = {4, 32};
-    ArixTensor* input = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < 4 * 32; i++) d[i] = 0.1f;
 
-    ArixTensor* output = NULL;
+    SNEPPXTensor* output = NULL;
     float metrics[4];
-    arix_arc_forward(layer, input, &output, metrics);
+    SNEPPX_arc_forward(layer, input, &output, metrics);
 
     ASSERT(output != NULL, "output not null");
     ASSERT(output->shape[0] == 4, "batch == 4");
@@ -38,9 +38,9 @@ static void test_arc_forward(void) {
         ASSERT(isfinite(metrics[i]), "all metrics finite");
     }
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(output);
-    arix_arc_layer_destroy(layer);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_arc_layer_destroy(layer);
 }
 
 int main(void) {

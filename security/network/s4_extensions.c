@@ -134,7 +134,7 @@ static uint32_t hash_hostname(const char* hostname) {
 }
 
 /* ---- TLS 1.3 ---- */
-int arix_tls13_client_hello_init(ArixTLS13ClientHello* ch) {
+int SNEPPX_tls13_client_hello_init(SNEPPXTLS13ClientHello* ch) {
     if (!ch) return -1;
     memset(ch, 0, sizeof(*ch));
     for (int i = 0; i < 32; i++) ch->random[i] = (uint8_t)(rand() % 256);
@@ -145,11 +145,11 @@ int arix_tls13_client_hello_init(ArixTLS13ClientHello* ch) {
     ch->supported_groups[0] = 29;
     ch->supported_groups[1] = 23;
     ch->group_count = 2;
-    /* ch->key_share_initialized = 1; */ /* not in ArixTLS13ClientHello */
+    /* ch->key_share_initialized = 1; */ /* not in SNEPPXTLS13ClientHello */
     return 0;
 }
 
-int arix_tls13_server_hello_parse(ArixTLS13Session* sess, const uint8_t* data, size_t len) {
+int SNEPPX_tls13_server_hello_parse(SNEPPXTLS13Session* sess, const uint8_t* data, size_t len) {
     if (!sess || !data) return -1;
     if (len < 7) return -1;
     size_t off = 0;
@@ -178,7 +178,7 @@ int arix_tls13_server_hello_parse(ArixTLS13Session* sess, const uint8_t* data, s
     return 0;
 }
 
-int arix_tls13_derive_keys(ArixTLS13Session* sess, const uint8_t* psk, size_t psk_len) {
+int SNEPPX_tls13_derive_keys(SNEPPXTLS13Session* sess, const uint8_t* psk, size_t psk_len) {
     if (!sess || !psk || psk_len == 0) return -1;
     uint8_t early_secret[48];
     memset(early_secret, 0, 48);
@@ -196,12 +196,12 @@ int arix_tls13_derive_keys(ArixTLS13Session* sess, const uint8_t* psk, size_t ps
     return 0;
 }
 
-int arix_tls13_init_server(ArixTLS13Session* sess, const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
+int SNEPPX_tls13_init_server(SNEPPXTLS13Session* sess, const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
     if (!sess || !cert_der || !key_der || cert_len == 0 || key_len == 0) return -1;
     memset(sess, 0, sizeof(*sess));
     for (int i = 0; i < 32; i++) sess->server_random[i] = (uint8_t)(rand() % 256);
     sess->handshake_complete = 0;
-    /* sess->cert_sel = 1; */ /* not in ArixTLS13Session */
+    /* sess->cert_sel = 1; */ /* not in SNEPPXTLS13Session */
     uint8_t tmp[64];
     for (size_t i = 0; i < 32; i++) tmp[i] = cert_der[i % cert_len];
     for (size_t i = 0; i < 32; i++) tmp[32 + i] = key_der[i % key_len];
@@ -216,7 +216,7 @@ int arix_tls13_init_server(ArixTLS13Session* sess, const uint8_t* cert_der, size
     return 0;
 }
 
-int arix_tls13_negotiate_cipher(const uint16_t* client_suites, int client_count) {
+int SNEPPX_tls13_negotiate_cipher(const uint16_t* client_suites, int client_count) {
     if (!client_suites || client_count <= 0) return -1;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < client_count; j++) {
@@ -226,7 +226,7 @@ int arix_tls13_negotiate_cipher(const uint16_t* client_suites, int client_count)
     return -1;
 }
 
-int arix_tls13_send_finished(ArixTLS13Session* sess, uint8_t* finished_msg, size_t len) {
+int SNEPPX_tls13_send_finished(SNEPPXTLS13Session* sess, uint8_t* finished_msg, size_t len) {
     if (!sess || !finished_msg || len < 32) return -1;
     uint8_t base[48];
     memcpy(base, sess->master_secret, 48);
@@ -236,7 +236,7 @@ int arix_tls13_send_finished(ArixTLS13Session* sess, uint8_t* finished_msg, size
     return 0;
 }
 
-int arix_tls13_verify_finished(ArixTLS13Session* sess, const uint8_t* finished_msg, size_t len) {
+int SNEPPX_tls13_verify_finished(SNEPPXTLS13Session* sess, const uint8_t* finished_msg, size_t len) {
     if (!sess || !finished_msg || len < 32) return -1;
     uint8_t expected[32];
     for (size_t i = 0; i < 32; i++) {
@@ -245,13 +245,13 @@ int arix_tls13_verify_finished(ArixTLS13Session* sess, const uint8_t* finished_m
     return (memcmp(expected, finished_msg, 32) == 0) ? 0 : -1;
 }
 
-int arix_tls13_server_select_cert(ArixTLS13Session* sess, int cert_index) {
+int SNEPPX_tls13_server_select_cert(SNEPPXTLS13Session* sess, int cert_index) {
     if (!sess || cert_index < 0) return -1;
-    /* sess->cert_sel = cert_index; */ /* not in ArixTLS13Session */
+    /* sess->cert_sel = cert_index; */ /* not in SNEPPXTLS13Session */
     return 0;
 }
 
-int arix_tls13_hs_traffic_keys(ArixTLS13Session* sess, uint8_t* hs_key, uint8_t* hs_iv, size_t key_len) {
+int SNEPPX_tls13_hs_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* hs_key, uint8_t* hs_iv, size_t key_len) {
     if (!sess || !hs_key || !hs_iv || key_len < 16) return -1;
     for (size_t i = 0; i < 16; i++) {
         hs_key[i] = sess->master_secret[i % 48] ^ (uint8_t)(i * 0x3e);
@@ -260,7 +260,7 @@ int arix_tls13_hs_traffic_keys(ArixTLS13Session* sess, uint8_t* hs_key, uint8_t*
     return 0;
 }
 
-int arix_tls13_app_traffic_keys(ArixTLS13Session* sess, uint8_t* app_key, uint8_t* app_iv, size_t key_len) {
+int SNEPPX_tls13_app_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* app_key, uint8_t* app_iv, size_t key_len) {
     if (!sess || !app_key || !app_iv || key_len < 16) return -1;
     for (size_t i = 0; i < 16; i++) {
         app_key[i] = sess->master_secret[(i + 32) % 48] ^ (uint8_t)(i * 0x2e);
@@ -269,7 +269,7 @@ int arix_tls13_app_traffic_keys(ArixTLS13Session* sess, uint8_t* app_key, uint8_
     return 0;
 }
 
-int arix_tls13_export_keying_material(ArixTLS13Session* sess, uint8_t* out, size_t out_len, const char* label) {
+int SNEPPX_tls13_export_keying_material(SNEPPXTLS13Session* sess, uint8_t* out, size_t out_len, const char* label) {
     if (!sess || !out || out_len == 0 || !label) return -1;
     size_t llen = strlen(label);
     uint8_t tmp[64];
@@ -281,7 +281,7 @@ int arix_tls13_export_keying_material(ArixTLS13Session* sess, uint8_t* out, size
 }
 
 /* ---- Noise Protocol ---- */
-int arix_noise_init(ArixNoiseHandshake* nh, int pattern, int initiator) {
+int SNEPPX_noise_init(SNEPPXNoiseHandshake* nh, int pattern, int initiator) {
     if (!nh) return -1;
     memset(nh, 0, sizeof(*nh));
     nh->pattern = pattern;
@@ -297,7 +297,7 @@ int arix_noise_init(ArixNoiseHandshake* nh, int pattern, int initiator) {
     return 0;
 }
 
-static void noise_handshake_hash(uint8_t* h, size_t h_len, const ArixNoiseHandshake* nh, const uint8_t* extra, size_t extra_len) {
+static void noise_handshake_hash(uint8_t* h, size_t h_len, const SNEPPXNoiseHandshake* nh, const uint8_t* extra, size_t extra_len) {
     memset(h, 0, h_len);
     const uint8_t* srcs[4]; size_t slens[4]; int nsrc = 0;
     srcs[nsrc] = nh->e; slens[nsrc] = 32; nsrc++;
@@ -315,7 +315,7 @@ static void noise_handshake_hash(uint8_t* h, size_t h_len, const ArixNoiseHandsh
     }
 }
 
-int arix_noise_write_msg(ArixNoiseHandshake* nh, uint8_t* msg, size_t* msg_len) {
+int SNEPPX_noise_write_msg(SNEPPXNoiseHandshake* nh, uint8_t* msg, size_t* msg_len) {
     if (!nh || !msg || !msg_len || *msg_len < 48) return -1;
     memset(msg, 0, *msg_len);
     memcpy(msg, nh->e, 32);
@@ -337,7 +337,7 @@ int arix_noise_write_msg(ArixNoiseHandshake* nh, uint8_t* msg, size_t* msg_len) 
     return 0;
 }
 
-int arix_noise_read_msg(ArixNoiseHandshake* nh, const uint8_t* msg, size_t msg_len) {
+int SNEPPX_noise_read_msg(SNEPPXNoiseHandshake* nh, const uint8_t* msg, size_t msg_len) {
     if (!nh || !msg || msg_len < 48) return -1;
     memcpy(nh->re, msg, 32);
     uint8_t h[32];
@@ -356,7 +356,7 @@ int arix_noise_read_msg(ArixNoiseHandshake* nh, const uint8_t* msg, size_t msg_l
     return 0;
 }
 
-int arix_noise_init_from_key(ArixNoiseHandshake* nh, int pattern, int initiator, const uint8_t* s, const uint8_t* e, const uint8_t* rs, const uint8_t* re) {
+int SNEPPX_noise_init_from_key(SNEPPXNoiseHandshake* nh, int pattern, int initiator, const uint8_t* s, const uint8_t* e, const uint8_t* rs, const uint8_t* re) {
     if (!nh || !s || !e || !rs || !re) return -1;
     memset(nh, 0, sizeof(*nh));
     nh->pattern = pattern;
@@ -369,7 +369,7 @@ int arix_noise_init_from_key(ArixNoiseHandshake* nh, int pattern, int initiator,
     return 0;
 }
 
-int arix_noise_encrypt(ArixNoiseHandshake* nh, const uint8_t* plaintext, size_t pt_len, uint8_t* ciphertext, size_t* ct_len, uint8_t* tag) {
+int SNEPPX_noise_encrypt(SNEPPXNoiseHandshake* nh, const uint8_t* plaintext, size_t pt_len, uint8_t* ciphertext, size_t* ct_len, uint8_t* tag) {
     if (!nh || !plaintext || !ciphertext || !ct_len || !tag || pt_len == 0) return -1;
     if (*ct_len < pt_len + 16) return -1;
     for (size_t i = 0; i < pt_len; i++) {
@@ -382,7 +382,7 @@ int arix_noise_encrypt(ArixNoiseHandshake* nh, const uint8_t* plaintext, size_t 
     return 0;
 }
 
-int arix_noise_decrypt(ArixNoiseHandshake* nh, const uint8_t* ciphertext, size_t ct_len, uint8_t* plaintext, size_t* pt_len, const uint8_t* tag) {
+int SNEPPX_noise_decrypt(SNEPPXNoiseHandshake* nh, const uint8_t* ciphertext, size_t ct_len, uint8_t* plaintext, size_t* pt_len, const uint8_t* tag) {
     if (!nh || !ciphertext || !plaintext || !pt_len || !tag || ct_len == 0) return -1;
     if (*pt_len < ct_len) return -1;
     uint8_t computed_tag[16];
@@ -397,14 +397,14 @@ int arix_noise_decrypt(ArixNoiseHandshake* nh, const uint8_t* ciphertext, size_t
     return 0;
 }
 
-int arix_noise_get_handshake_hash(ArixNoiseHandshake* nh, uint8_t* hash_out, size_t hash_len) {
+int SNEPPX_noise_get_handshake_hash(SNEPPXNoiseHandshake* nh, uint8_t* hash_out, size_t hash_len) {
     if (!nh || !hash_out || hash_len < 32) return -1;
     noise_handshake_hash(hash_out, hash_len, nh, NULL, 0);
     return 0;
 }
 
 /* ---- QUIC ---- */
-int arix_quic_conn_init(ArixQUICConn* qc) {
+int SNEPPX_quic_conn_init(SNEPPXQUICConn* qc) {
     if (!qc) return -1;
     memset(qc, 0, sizeof(*qc));
     qc->connection_id = rand() % 100000;
@@ -413,7 +413,7 @@ int arix_quic_conn_init(ArixQUICConn* qc) {
     return 0;
 }
 
-int arix_quic_conn_handshake(ArixQUICConn* qc, const uint8_t* params, size_t params_len) {
+int SNEPPX_quic_conn_handshake(SNEPPXQUICConn* qc, const uint8_t* params, size_t params_len) {
     if (!qc || !params || params_len == 0) return -1;
     (void)params[0];
     qc->connection_id = 0;
@@ -426,7 +426,7 @@ int arix_quic_conn_handshake(ArixQUICConn* qc, const uint8_t* params, size_t par
     return 0;
 }
 
-int arix_quic_stream_send(ArixQUICConn* qc, int stream_id, const uint8_t* data, size_t len) {
+int SNEPPX_quic_stream_send(SNEPPXQUICConn* qc, int stream_id, const uint8_t* data, size_t len) {
     if (!qc || !data || len == 0) return -1;
     if (!qc->established) return -1;
     int idx = stream_id & 15;
@@ -453,7 +453,7 @@ int arix_quic_stream_send(ArixQUICConn* qc, int stream_id, const uint8_t* data, 
     return (int)len;
 }
 
-int arix_quic_stream_recv(ArixQUICConn* qc, int stream_id, uint8_t* data, size_t* len) {
+int SNEPPX_quic_stream_recv(SNEPPXQUICConn* qc, int stream_id, uint8_t* data, size_t* len) {
     if (!qc || !data || !len) return -1;
     if (!qc->established) return -1;
     int idx = stream_id & 15;
@@ -477,7 +477,7 @@ int arix_quic_stream_recv(ArixQUICConn* qc, int stream_id, uint8_t* data, size_t
     return (int)to_read;
 }
 
-int arix_quic_create_stream(ArixQUICConn* qc) {
+int SNEPPX_quic_create_stream(SNEPPXQUICConn* qc) {
     if (!qc || !qc->established) return -1;
     for (int i = 0; i < 16; i++) {
         if (qc->stream_buffers[i] == NULL) {
@@ -494,7 +494,7 @@ int arix_quic_create_stream(ArixQUICConn* qc) {
     return -1;
 }
 
-int arix_quic_close_stream(ArixQUICConn* qc, int stream_id) {
+int SNEPPX_quic_close_stream(SNEPPXQUICConn* qc, int stream_id) {
     if (!qc) return -1;
     int idx = stream_id & 15;
     if (qc->stream_buffers[idx] == NULL) return -1;
@@ -505,12 +505,12 @@ int arix_quic_close_stream(ArixQUICConn* qc, int stream_id) {
     return 0;
 }
 
-int arix_quic_get_stream_count(ArixQUICConn* qc) {
+int SNEPPX_quic_get_stream_count(SNEPPXQUICConn* qc) {
     if (!qc) return 0;
     return qc->stream_count;
 }
 
-int arix_quic_stream_avail(ArixQUICConn* qc, int stream_id) {
+int SNEPPX_quic_stream_avail(SNEPPXQUICConn* qc, int stream_id) {
     if (!qc || !qc->established) return 0;
     int idx = stream_id & 15;
     if (qc->stream_buffers[idx] == NULL) return 0;
@@ -520,7 +520,7 @@ int arix_quic_stream_avail(ArixQUICConn* qc, int stream_id) {
     return (int)(*wp - *rp);
 }
 
-int arix_quic_flow_control(ArixQUICConn* qc, int stream_id, uint32_t credit) {
+int SNEPPX_quic_flow_control(SNEPPXQUICConn* qc, int stream_id, uint32_t credit) {
     if (!qc) return -1;
     int idx = stream_id & 15;
     if (qc->stream_buffers[idx] == NULL) return -1;
@@ -539,7 +539,7 @@ int arix_quic_flow_control(ArixQUICConn* qc, int stream_id, uint32_t credit) {
 }
 
 /* ---- mTLS ---- */
-int arix_mtls_authenticate(const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
+int SNEPPX_mtls_authenticate(const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
     if (!cert_der || !key_der || cert_len < 10 || key_len < 4) return 0;
     if (cert_der[0] != 0x30) return 0;
     size_t off = 2;
@@ -569,7 +569,7 @@ int arix_mtls_authenticate(const uint8_t* cert_der, size_t cert_len, const uint8
     return 1;
 }
 
-int arix_mtls_get_peer_cert(uint8_t* cert_out, size_t cert_len) {
+int SNEPPX_mtls_get_peer_cert(uint8_t* cert_out, size_t cert_len) {
     if (!cert_out || cert_len < 64) return -1;
     if (g_peer_cert_available && g_peer_cert_len > 0) {
         size_t copy_len = (g_peer_cert_len < cert_len) ? g_peer_cert_len : cert_len;
@@ -580,7 +580,7 @@ int arix_mtls_get_peer_cert(uint8_t* cert_out, size_t cert_len) {
     return (int)cert_len;
 }
 
-int arix_mtls_verify_chain(const uint8_t* cert_chain, int chain_len, const uint8_t* trusted_ca, size_t ca_len) {
+int SNEPPX_mtls_verify_chain(const uint8_t* cert_chain, int chain_len, const uint8_t* trusted_ca, size_t ca_len) {
     if (!cert_chain || !trusted_ca || chain_len <= 0 || ca_len == 0) return 0;
     for (int i = 0; i < chain_len; i++) {
         int match = 1;
@@ -593,7 +593,7 @@ int arix_mtls_verify_chain(const uint8_t* cert_chain, int chain_len, const uint8
 }
 
 /* ---- OCSP ---- */
-int arix_ocsp_request(const uint8_t* issuer_cert, size_t issuer_len, const uint8_t* cert, size_t cert_len, uint8_t* response, size_t* resp_len) {
+int SNEPPX_ocsp_request(const uint8_t* issuer_cert, size_t issuer_len, const uint8_t* cert, size_t cert_len, uint8_t* response, size_t* resp_len) {
     if (!issuer_cert || !cert || !response || !resp_len || *resp_len < 128) return -1;
     uint8_t ih[20], kh[20];
     for (int i = 0; i < 20; i++) { ih[i] = issuer_cert[i % issuer_len] ^ (uint8_t)(i * 0x1a); kh[i] = cert[i % cert_len] ^ (uint8_t)(i * 0x2b); }
@@ -619,7 +619,7 @@ int arix_ocsp_request(const uint8_t* issuer_cert, size_t issuer_len, const uint8
     return 0;
 }
 
-int arix_ocsp_verify(const uint8_t* response, size_t resp_len) {
+int SNEPPX_ocsp_verify(const uint8_t* response, size_t resp_len) {
     if (!response || resp_len < 8) return -1;
     size_t off = 0;
     if (response[off] != 0x30) return -1; off++;
@@ -643,7 +643,7 @@ int arix_ocsp_verify(const uint8_t* response, size_t resp_len) {
     return -1;
 }
 
-int arix_ocsp_cache_init(int max_entries, int ttl) {
+int SNEPPX_ocsp_cache_init(int max_entries, int ttl) {
     ocsp_cache_max = max_entries > 0 ? max_entries : 32;
     ocsp_cache_ttl = ttl > 0 ? ttl : 3600;
     ocsp_cache_len = 0;
@@ -655,7 +655,7 @@ int arix_ocsp_cache_init(int max_entries, int ttl) {
     return 0;
 }
 
-int arix_ocsp_cache_lookup(uint32_t cert_hash, uint8_t* response, size_t* resp_len) {
+int SNEPPX_ocsp_cache_lookup(uint32_t cert_hash, uint8_t* response, size_t* resp_len) {
     if (!response || !resp_len || *resp_len < 128) return -1;
     if (ocsp_cache_len == 0) return -1;
     uint64_t now = (uint64_t)time(NULL);
@@ -668,7 +668,7 @@ int arix_ocsp_cache_lookup(uint32_t cert_hash, uint8_t* response, size_t* resp_l
     return 0;
 }
 
-int arix_ocsp_cache_store(uint32_t cert_hash, const uint8_t* response, size_t resp_len) {
+int SNEPPX_ocsp_cache_store(uint32_t cert_hash, const uint8_t* response, size_t resp_len) {
     if (!response || resp_len == 0 || resp_len > sizeof(ocsp_cache_data)) return -1;
     ocsp_cached_hash = cert_hash;
     ocsp_cache_len = resp_len;
@@ -678,7 +678,7 @@ int arix_ocsp_cache_store(uint32_t cert_hash, const uint8_t* response, size_t re
     return 0;
 }
 
-int arix_ocsp_cache_clear(void) {
+int SNEPPX_ocsp_cache_clear(void) {
     ocsp_cache_len = 0;
     ocsp_cached_hash = 0;
     ocsp_cache_time = 0;
@@ -688,14 +688,14 @@ int arix_ocsp_cache_clear(void) {
     return 0;
 }
 
-int arix_ocsp_cache_get_stats(uint32_t* lookups, uint32_t* stores) {
+int SNEPPX_ocsp_cache_get_stats(uint32_t* lookups, uint32_t* stores) {
     if (!lookups || !stores) return -1;
     *lookups = g_ocsp_lookup_count;
     *stores = g_ocsp_store_count;
     return 0;
 }
 
-int arix_ocsp_cache_is_expired(void) {
+int SNEPPX_ocsp_cache_is_expired(void) {
     uint64_t now = (uint64_t)time(NULL);
     if (ocsp_cache_len == 0) return 1;
     if (now - ocsp_cache_time > (uint64_t)ocsp_cache_ttl) return 1;
@@ -703,16 +703,16 @@ int arix_ocsp_cache_is_expired(void) {
 }
 
 /* ---- CT ---- */
-int arix_ct_verify_sct(const uint8_t* sct, size_t sct_len, const uint8_t* cert, size_t cert_len) {
+int SNEPPX_ct_verify_sct(const uint8_t* sct, size_t sct_len, const uint8_t* cert, size_t cert_len) {
     (void)cert; (void)cert_len;
     return ct_verify_single_sct(sct, sct_len);
 }
 
-int arix_ct_get_sct_count(void) {
+int SNEPPX_ct_get_sct_count(void) {
     return g_ct_sct_count;
 }
 
-int arix_ct_verify_all_scts(const uint8_t* cert, size_t cert_len, uint8_t* results, int max) {
+int SNEPPX_ct_verify_all_scts(const uint8_t* cert, size_t cert_len, uint8_t* results, int max) {
     if (!cert || !results || max <= 0) return -1;
     int verified = 0;
     for (int i = 0; i < max && i < 16; i++) {
@@ -730,7 +730,7 @@ int arix_ct_verify_all_scts(const uint8_t* cert, size_t cert_len, uint8_t* resul
 }
 
 /* ---- DoH ---- */
-int arix_doh_resolve(const char* hostname, uint8_t* ip_out, size_t* ip_len) {
+int SNEPPX_doh_resolve(const char* hostname, uint8_t* ip_out, size_t* ip_len) {
     if (!hostname || !ip_out || !ip_len || *ip_len < 4) return -1;
     uint32_t h = hash_hostname(hostname);
     ip_out[0] = 10;
@@ -741,7 +741,7 @@ int arix_doh_resolve(const char* hostname, uint8_t* ip_out, size_t* ip_len) {
     return 0;
 }
 
-int arix_doh_set_resolver(const char* url) {
+int SNEPPX_doh_set_resolver(const char* url) {
     if (!url) return -1;
     strncpy(g_doh_resolver_url, url, sizeof(g_doh_resolver_url) - 1);
     g_doh_resolver_url[sizeof(g_doh_resolver_url) - 1] = '\0';
@@ -749,7 +749,7 @@ int arix_doh_set_resolver(const char* url) {
     return 0;
 }
 
-int arix_doh_resolve_batch(const char** hostnames, int count, uint32_t* ips_out) {
+int SNEPPX_doh_resolve_batch(const char** hostnames, int count, uint32_t* ips_out) {
     if (!hostnames || !ips_out || count <= 0) return -1;
     for (int i = 0; i < count; i++) {
         if (!hostnames[i]) { ips_out[i] = 0; continue; }
@@ -760,19 +760,19 @@ int arix_doh_resolve_batch(const char** hostnames, int count, uint32_t* ips_out)
 }
 
 /* ---- WireGuard ---- */
-int arix_wireguard_init(ArixWireGuardSession* wg) {
+int SNEPPX_wireguard_init(SNEPPXWireGuardSession* wg) {
     if (!wg) return -1;
     memset(wg, 0, sizeof(*wg));
     for (int i = 0; i < 32; i++) wg->private_key[i] = (uint8_t)(rand() % 256);
     wg->established = 0;
-    /* wg->rx_bytes = 0; */ /* not in ArixWireGuardSession */
-    /* wg->tx_bytes = 0; */ /* not in ArixWireGuardSession */
+    /* wg->rx_bytes = 0; */ /* not in SNEPPXWireGuardSession */
+    /* wg->tx_bytes = 0; */ /* not in SNEPPXWireGuardSession */
     memset(wg->public_key, 0, 32);
     memset(wg->preshared_key, 0, 32);
     return 0;
 }
 
-int arix_wireguard_handshake(ArixWireGuardSession* wg, const uint8_t* peer_key, size_t key_len) {
+int SNEPPX_wireguard_handshake(SNEPPXWireGuardSession* wg, const uint8_t* peer_key, size_t key_len) {
     if (!wg || !peer_key || key_len < 32) return -1;
     memset(wg->preshared_key, 0, 32);
     for (int i = 0; i < 32; i++) wg->preshared_key[i] = wg->private_key[i] ^ peer_key[i] ^ (uint8_t)(i * 0xa9);
@@ -783,21 +783,21 @@ int arix_wireguard_handshake(ArixWireGuardSession* wg, const uint8_t* peer_key, 
     return 0;
 }
 
-int arix_wireguard_send(ArixWireGuardSession* wg, uint8_t* data, size_t len) {
+int SNEPPX_wireguard_send(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
     g_wireguard_total_sent += (uint64_t)len;
     return 0;
 }
 
-int arix_wireguard_recv(ArixWireGuardSession* wg, uint8_t* data, size_t len) {
+int SNEPPX_wireguard_recv(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
     g_wireguard_total_recv += (uint64_t)len;
     return 0;
 }
 
-int arix_wireguard_get_peer_stats(ArixWireGuardSession* wg, uint64_t* rx_bytes, uint64_t* tx_bytes) {
+int SNEPPX_wireguard_get_peer_stats(SNEPPXWireGuardSession* wg, uint64_t* rx_bytes, uint64_t* tx_bytes) {
     if (!wg || !rx_bytes || !tx_bytes) return -1;
     *rx_bytes = g_wireguard_total_recv;
     *tx_bytes = g_wireguard_total_sent;
@@ -805,14 +805,14 @@ int arix_wireguard_get_peer_stats(ArixWireGuardSession* wg, uint64_t* rx_bytes, 
 }
 
 /* ---- IP Blocklist ---- */
-int arix_ip_blocklist_init(ArixIPBlocklist* bl) {
+int SNEPPX_ip_blocklist_init(SNEPPXIPBlocklist* bl) {
     if (!bl) return -1;
     memset(bl, 0, sizeof(*bl));
     return 0;
 }
 
-int arix_ip_blocklist_add(ArixIPBlocklist* bl, const char* cidr) {
-    if (!bl || !cidr || bl->count >= ARIX_IP_BLOCKLIST_MAX) return -1;
+int SNEPPX_ip_blocklist_add(SNEPPXIPBlocklist* bl, const char* cidr) {
+    if (!bl || !cidr || bl->count >= SNEPPX_IP_BLOCKLIST_MAX) return -1;
     uint32_t ip = 0, mask = 0xFFFFFFFF;
     int a, b, c, d, m;
     if (sscanf(cidr, "%d.%d.%d.%d/%d", &a, &b, &c, &d, &m) >= 4) {
@@ -824,7 +824,7 @@ int arix_ip_blocklist_add(ArixIPBlocklist* bl, const char* cidr) {
     return 0;
 }
 
-int arix_ip_blocklist_check(ArixIPBlocklist* bl, uint32_t ip) {
+int SNEPPX_ip_blocklist_check(SNEPPXIPBlocklist* bl, uint32_t ip) {
     if (!bl) return 0;
     for (int i = 0; i < bl->count; i++) {
         if ((ip & bl->masks[i]) == (bl->networks[i] & bl->masks[i])) return 1;
@@ -832,7 +832,7 @@ int arix_ip_blocklist_check(ArixIPBlocklist* bl, uint32_t ip) {
     return 0;
 }
 
-int arix_ip_blocklist_remove(ArixIPBlocklist* bl, const char* cidr) {
+int SNEPPX_ip_blocklist_remove(SNEPPXIPBlocklist* bl, const char* cidr) {
     if (!bl || !cidr) return -1;
     uint32_t ip = 0, mask = 0xFFFFFFFF;
     int a, b, c, d, m;
@@ -850,7 +850,7 @@ int arix_ip_blocklist_remove(ArixIPBlocklist* bl, const char* cidr) {
     return -1;
 }
 
-int arix_ip_blocklist_clear(ArixIPBlocklist* bl) {
+int SNEPPX_ip_blocklist_clear(SNEPPXIPBlocklist* bl) {
     if (!bl) return -1;
     memset(bl->networks, 0, sizeof(bl->networks));
     memset(bl->masks, 0, sizeof(bl->masks));
@@ -859,13 +859,13 @@ int arix_ip_blocklist_clear(ArixIPBlocklist* bl) {
     return 0;
 }
 
-int arix_ip_blocklist_get_count(ArixIPBlocklist* bl) {
+int SNEPPX_ip_blocklist_get_count(SNEPPXIPBlocklist* bl) {
     if (!bl) return 0;
     return bl->count;
 }
 
 /* ---- NIDS ---- */
-int arix_nids_init(void) {
+int SNEPPX_nids_init(void) {
     srand((unsigned int)time(NULL));
     g_nids_packet_count = 0;
     g_nids_alert_count = 0;
@@ -878,7 +878,7 @@ int arix_nids_init(void) {
     return 0;
 }
 
-int arix_nids_analyze_packet(const uint8_t* packet, size_t len) {
+int SNEPPX_nids_analyze_packet(const uint8_t* packet, size_t len) {
     if (!packet || len < 54) return 0;
     g_nids_packet_count++;
     size_t off = 0;
@@ -918,7 +918,7 @@ int arix_nids_analyze_packet(const uint8_t* packet, size_t len) {
     return 0;
 }
 
-int arix_nids_set_rules(const char* rules_path) {
+int SNEPPX_nids_set_rules(const char* rules_path) {
     if (!rules_path) return -1;
     (void)rules_path;
     g_nids_alert_count = 0;
@@ -926,11 +926,11 @@ int arix_nids_set_rules(const char* rules_path) {
     return 0;
 }
 
-int arix_nids_get_alert_count(void) {
+int SNEPPX_nids_get_alert_count(void) {
     return g_nids_alert_count;
 }
 
-int arix_nids_clear_alerts(void) {
+int SNEPPX_nids_clear_alerts(void) {
     g_nids_alert_count = 0;
     g_nids_alert_timestamp = 0;
     g_nids_alert_buffer_count = 0;
@@ -938,17 +938,17 @@ int arix_nids_clear_alerts(void) {
     return 0;
 }
 
-int arix_nids_get_packet_count(void) {
+int SNEPPX_nids_get_packet_count(void) {
     return (int)g_nids_packet_count;
 }
 
-int arix_nids_add_port_blacklist(uint16_t port) {
+int SNEPPX_nids_add_port_blacklist(uint16_t port) {
     if (g_nids_port_blacklist_count >= 16) return -1;
     g_nids_port_blacklist[g_nids_port_blacklist_count++] = port;
     return 0;
 }
 
-int arix_nids_remove_port_blacklist(uint16_t port) {
+int SNEPPX_nids_remove_port_blacklist(uint16_t port) {
     for (int i = 0; i < g_nids_port_blacklist_count; i++) {
         if (g_nids_port_blacklist[i] == port) {
             for (int j = i; j < g_nids_port_blacklist_count - 1; j++)
@@ -960,14 +960,14 @@ int arix_nids_remove_port_blacklist(uint16_t port) {
     return -1;
 }
 
-int arix_nids_get_alert_timestamp(uint64_t* ts) {
+int SNEPPX_nids_get_alert_timestamp(uint64_t* ts) {
     if (!ts) return -1;
     *ts = g_nids_alert_timestamp;
     return 0;
 }
 
 /* ---- Traffic padding ---- */
-int arix_traffic_pad(uint8_t* data, size_t* len, size_t max_len, size_t block_size) {
+int SNEPPX_traffic_pad(uint8_t* data, size_t* len, size_t max_len, size_t block_size) {
     if (!data || !len) return -1;
     size_t padded = ((*len + block_size - 1) / block_size) * block_size;
     if (padded > max_len) return -1;
@@ -976,14 +976,14 @@ int arix_traffic_pad(uint8_t* data, size_t* len, size_t max_len, size_t block_si
     return 0;
 }
 
-int arix_traffic_pad_to(uint8_t* data, size_t* len, size_t max, size_t target_size) {
+int SNEPPX_traffic_pad_to(uint8_t* data, size_t* len, size_t max, size_t target_size) {
     if (!data || !len || target_size > max || *len > target_size) return -1;
     for (size_t i = *len; i < target_size; i++) data[i] = (uint8_t)(rand() % 256);
     *len = target_size;
     return 0;
 }
 
-int arix_traffic_mtu_obfuscate(uint8_t* data, size_t* len, size_t max, size_t mtu) {
+int SNEPPX_traffic_mtu_obfuscate(uint8_t* data, size_t* len, size_t max, size_t mtu) {
     if (!data || !len || mtu == 0) return -1;
     size_t orig = *len;
     size_t total = 0;
@@ -1001,14 +1001,14 @@ int arix_traffic_mtu_obfuscate(uint8_t* data, size_t* len, size_t max, size_t mt
 }
 
 /* ---- Rate Limiter ---- */
-int arix_rate_limiter_init(ArixRateLimiter* rl, int max_per_window) {
+int SNEPPX_rate_limiter_init(SNEPPXRateLimiter* rl, int max_per_window) {
     if (!rl) return -1;
     memset(rl, 0, sizeof(*rl));
     rl->max_per_window = max_per_window;
     return 0;
 }
 
-int arix_rate_limiter_check(ArixRateLimiter* rl, uint32_t src_ip) {
+int SNEPPX_rate_limiter_check(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     if (!rl) return 0;
     int idx = src_ip % 256;
     uint64_t now = (uint64_t)time(NULL) * 1000;
@@ -1017,14 +1017,14 @@ int arix_rate_limiter_check(ArixRateLimiter* rl, uint32_t src_ip) {
     return rl->connection_counts[idx] > rl->max_per_window ? 1 : 0;
 }
 
-int arix_rate_limiter_reset(ArixRateLimiter* rl) {
+int SNEPPX_rate_limiter_reset(SNEPPXRateLimiter* rl) {
     if (!rl) return -1;
     memset(rl->connection_counts, 0, sizeof(rl->connection_counts));
     memset(rl->windows, 0, sizeof(rl->windows));
     return 0;
 }
 
-int arix_rate_limiter_get_count(ArixRateLimiter* rl, uint32_t src_ip) {
+int SNEPPX_rate_limiter_get_count(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     if (!rl) return 0;
     int idx = src_ip % 256;
     uint64_t now = (uint64_t)time(NULL) * 1000;
@@ -1032,39 +1032,39 @@ int arix_rate_limiter_get_count(ArixRateLimiter* rl, uint32_t src_ip) {
     return rl->connection_counts[idx];
 }
 
-int arix_rate_limiter_set_window(ArixRateLimiter* rl, uint32_t src_ip, uint64_t window_ms) {
+int SNEPPX_rate_limiter_set_window(SNEPPXRateLimiter* rl, uint32_t src_ip, uint64_t window_ms) {
     if (!rl) return -1;
     int idx = src_ip % 256;
     rl->windows[idx] = window_ms;
     return 0;
 }
 
-int arix_rate_limiter_adjust_limit(ArixRateLimiter* rl, int new_max) {
+int SNEPPX_rate_limiter_adjust_limit(SNEPPXRateLimiter* rl, int new_max) {
     if (!rl || new_max <= 0) return -1;
     rl->max_per_window = new_max;
     return 0;
 }
 
-int arix_rate_limiter_get_limit(ArixRateLimiter* rl) {
+int SNEPPX_rate_limiter_get_limit(SNEPPXRateLimiter* rl) {
     if (!rl) return 0;
     return rl->max_per_window;
 }
 
 /* ---- Port Knocking ---- */
-int arix_port_knock_sequence(const uint16_t* ports, int port_count) {
+int SNEPPX_port_knock_sequence(const uint16_t* ports, int port_count) {
     (void)ports;
     (void)port_count;
     return 0;
 }
 
-int arix_port_knock_verify(const uint16_t* received, int count, const uint16_t* expected, int expected_count) {
+int SNEPPX_port_knock_verify(const uint16_t* received, int count, const uint16_t* expected, int expected_count) {
     if (!received || !expected || count != expected_count) return 0;
     for (int i = 0; i < count; i++) if (received[i] != expected[i]) return 0;
     return 1;
 }
 
 /* ---- gRPC Auth ---- */
-int arix_grpc_auth_init(ArixGRPCAuth* ga, const uint8_t* token, size_t token_len) {
+int SNEPPX_grpc_auth_init(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t token_len) {
     if (!ga || !token || token_len > 64) return -1;
     memset(ga, 0, sizeof(*ga));
     memcpy(ga->token, token, token_len);
@@ -1072,12 +1072,12 @@ int arix_grpc_auth_init(ArixGRPCAuth* ga, const uint8_t* token, size_t token_len
     return 0;
 }
 
-int arix_grpc_auth_verify(ArixGRPCAuth* ga, const uint8_t* received_token, size_t token_len) {
+int SNEPPX_grpc_auth_verify(SNEPPXGRPCAuth* ga, const uint8_t* received_token, size_t token_len) {
     if (!ga || !received_token || token_len != ga->token_len) return 0;
     return memcmp(ga->token, received_token, token_len) == 0 ? 1 : 0;
 }
 
-int arix_grpc_auth_set_token(ArixGRPCAuth* ga, const uint8_t* token, size_t token_len) {
+int SNEPPX_grpc_auth_set_token(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t token_len) {
     if (!ga || !token || token_len > 64) return -1;
     memset(ga->token, 0, sizeof(ga->token));
     memcpy(ga->token, token, token_len);
@@ -1085,50 +1085,50 @@ int arix_grpc_auth_set_token(ArixGRPCAuth* ga, const uint8_t* token, size_t toke
     return 0;
 }
 
-int arix_grpc_auth_get_token(ArixGRPCAuth* ga, uint8_t* token_out, size_t token_len) {
+int SNEPPX_grpc_auth_get_token(SNEPPXGRPCAuth* ga, uint8_t* token_out, size_t token_len) {
     if (!ga || !token_out || token_len < ga->token_len) return -1;
     memcpy(token_out, ga->token, ga->token_len);
     return (int)ga->token_len;
 }
 
-int arix_grpc_auth_renew(ArixGRPCAuth* ga) {
+int SNEPPX_grpc_auth_renew(SNEPPXGRPCAuth* ga) {
     if (!ga) return -1;
     for (size_t i = 0; i < ga->token_len && i < sizeof(ga->token); i++)
         ga->token[i] = (uint8_t)(rand() % 256);
     return 0;
 }
 
-int arix_grpc_auth_has_token(ArixGRPCAuth* ga) {
+int SNEPPX_grpc_auth_has_token(SNEPPXGRPCAuth* ga) {
     if (!ga || ga->token_len == 0) return 0;
     return 1;
 }
 
-int arix_grpc_auth_get_token_len(ArixGRPCAuth* ga) {
+int SNEPPX_grpc_auth_get_token_len(SNEPPXGRPCAuth* ga) {
     if (!ga) return 0;
     return (int)ga->token_len;
 }
 
-int arix_tls13_set_psk_binder(ArixTLS13Session* sess, const uint8_t* binder, size_t binder_len) {
+int SNEPPX_tls13_set_psk_binder(SNEPPXTLS13Session* sess, const uint8_t* binder, size_t binder_len) {
     if (!sess || !binder || binder_len < 32) return -1;
     /* memcpy(g_tls13_psk_binder, binder, 32); */ /* undeclared global */
     /* g_tls13_psk_binder_set = 1; */ /* undeclared global */
     return 0;
 }
 
-int arix_tls13_get_key_generation(uint64_t* gen) {
+int SNEPPX_tls13_get_key_generation(uint64_t* gen) {
     if (!gen) return -1;
     *gen = g_tls13_key_generation;
     return 0;
 }
 
-int arix_quic_set_flow_params(uint32_t max_stream_data, uint32_t initial_flow) {
+int SNEPPX_quic_set_flow_params(uint32_t max_stream_data, uint32_t initial_flow) {
     if (max_stream_data == 0 || initial_flow == 0) return -1;
     /* g_quic_max_stream_data = max_stream_data; */ /* undeclared global */
     /* g_quic_initial_flow_control = initial_flow; */ /* undeclared global */
     return 0;
 }
 
-int arix_quic_reset_conn(ArixQUICConn* qc) {
+int SNEPPX_quic_reset_conn(SNEPPXQUICConn* qc) {
     if (!qc) return -1;
     for (int i = 0; i < 16; i++) {
         if (qc->stream_buffers[i] != NULL) { free(qc->stream_buffers[i]); qc->stream_buffers[i] = NULL; }
@@ -1137,68 +1137,68 @@ int arix_quic_reset_conn(ArixQUICConn* qc) {
     return 0;
 }
 
-int arix_quic_get_conn_stats(uint64_t* sent, uint64_t* recv) {
+int SNEPPX_quic_get_conn_stats(uint64_t* sent, uint64_t* recv) {
     if (!sent || !recv) return -1;
     *sent = g_quic_total_bytes_sent;
     *recv = g_quic_total_bytes_recv;
     return 0;
 }
 
-int arix_noise_set_chaining_key(const uint8_t* ck, size_t ck_len) {
+int SNEPPX_noise_set_chaining_key(const uint8_t* ck, size_t ck_len) {
     if (!ck || ck_len < 32) return -1;
     memcpy(g_noise_chaining_key, ck, 32);
     g_noise_chaining_set = 1;
     return 0;
 }
 
-int arix_noise_get_chaining_key(uint8_t* ck_out, size_t ck_len) {
+int SNEPPX_noise_get_chaining_key(uint8_t* ck_out, size_t ck_len) {
     if (!ck_out || ck_len < 32 || !g_noise_chaining_set) return -1;
     memcpy(ck_out, g_noise_chaining_key, 32);
     return 0;
 }
 
-int arix_noise_transport_key_set(void) {
+int SNEPPX_noise_transport_key_set(void) {
     /* return g_noise_transport_key_set; */ /* undeclared global */
     return 0;
 }
 
-int arix_noise_set_transport_key(const uint8_t* key, size_t key_len) {
+int SNEPPX_noise_set_transport_key(const uint8_t* key, size_t key_len) {
     if (!key || key_len < 32) return -1;
     /* memcpy(g_noise_transport_key, key, 32); */ /* undeclared global */
     /* g_noise_transport_key_set = 1; */ /* undeclared global */
     return 0;
 }
 
-uint64_t arix_noise_get_rekey_count(void) {
+uint64_t SNEPPX_noise_get_rekey_count(void) {
     return (uint64_t)g_noise_transport_phase;
 }
 
-int arix_noise_set_step(ArixNoiseHandshake* nh, int step) {
+int SNEPPX_noise_set_step(SNEPPXNoiseHandshake* nh, int step) {
     if (!nh) return -1;
     nh->step = step;
     return 0;
 }
 
-int arix_noise_get_step(ArixNoiseHandshake* nh) {
+int SNEPPX_noise_get_step(SNEPPXNoiseHandshake* nh) {
     if (!nh) return -1;
     return nh->step;
 }
 
-int arix_wireguard_is_established(void) {
+int SNEPPX_wireguard_is_established(void) {
     return g_wireguard_peer_set;
 }
 
-int arix_wireguard_get_total_stats(uint64_t* sent, uint64_t* recv) {
+int SNEPPX_wireguard_get_total_stats(uint64_t* sent, uint64_t* recv) {
     if (!sent || !recv) return -1;
     *sent = g_wireguard_total_sent;
     *recv = g_wireguard_total_recv;
     return 0;
 }
 
-int arix_nids_get_total_packets(void) {
+int SNEPPX_nids_get_total_packets(void) {
     return (int)g_nids_packet_count;
 }
 
-int arix_nids_get_port_blacklist_count(void) {
+int SNEPPX_nids_get_port_blacklist_count(void) {
     return g_nids_port_blacklist_count;
 }

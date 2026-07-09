@@ -54,7 +54,7 @@ static void sha256_transform(sha256_ctx_t *ctx) {
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
 }
 
-void arix_sha256(uint8_t out[32], const uint8_t *in, size_t inlen) {
+void SNEPPX_sha256(uint8_t out[32], const uint8_t *in, size_t inlen) {
     sha256_ctx_t ctx;
     ctx.state[0] = 0x6a09e667; ctx.state[1] = 0xbb67ae85;
     ctx.state[2] = 0x3c6ef372; ctx.state[3] = 0xa54ff53a;

@@ -1,6 +1,6 @@
 # Support
 
-If you need help with ARIX-Algo, here are the available channels:
+If you need help with SneppX-ALG, here are the available channels:
 
 ## Documentation
 
@@ -12,14 +12,14 @@ If you need help with ARIX-Algo, here are the available channels:
 
 ## Community
 
-- **Email**: [algoarix@gmail.com](mailto:algoarix@gmail.com) — patches, questions, security reports
-- **GitHub Issues**: [https://github.com/ammar49-cyber/arixalgo/issues](https://github.com/ammar49-cyber/arixalgo/issues)
-- **Twitter / X**: [@Arixdrv](https://x.com/Arixdrv)
-- **YouTube**: [ArixAlgo](https://www.youtube.com/@ArixAlgo)
+- **Email**: [algoSNEPPX@gmail.com](mailto:algoSNEPPX@gmail.com) — patches, questions, security reports
+- **GitHub Issues**: [https://github.com/ammar49-cyber/SNEPPX_ALG/issues](https://github.com/ammar49-cyber/SNEPPX_ALG/issues)
+- **Twitter / X**: [@SNEPPXdrv](https://x.com/SNEPPXdrv)
+- **YouTube**: [SNEPPX_ALG](https://www.youtube.com/@SNEPPX_ALG)
 
 ## Scope
 
-ARIX-Algo is maintained by a single BDFL. Response times vary. For urgent security issues, send encrypted email.
+SneppX-ALG is maintained by a single BDFL. Response times vary. For urgent security issues, send encrypted email.
 
 ## License
 

@@ -22,22 +22,22 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_checkpoint_reader_create_null(void) {
-    ArixCheckpointReader* reader = arix_checkpoint_reader_create(NULL);
+    SNEPPXCheckpointReader* reader = SNEPPX_checkpoint_reader_create(NULL);
     ASSERT(reader == NULL, "create with NULL path returns NULL");
 }
 
 static void test_checkpoint_reader_create(void) {
-    ArixCheckpointReader* reader = arix_checkpoint_reader_create("/tmp/test.ckpt");
+    SNEPPXCheckpointReader* reader = SNEPPX_checkpoint_reader_create("/tmp/test.ckpt");
     ASSERT(reader != NULL, "checkpoint reader created");
-    arix_checkpoint_reader_destroy(reader);
+    SNEPPX_checkpoint_reader_destroy(reader);
 }
 
 static void test_checkpoint_reader_get_tensor(void) {
-    ArixCheckpointReader* reader = arix_checkpoint_reader_create("/tmp/test.ckpt");
-    ArixTensor* t = arix_checkpoint_reader_get_tensor(reader, "weights");
+    SNEPPXCheckpointReader* reader = SNEPPX_checkpoint_reader_create("/tmp/test.ckpt");
+    SNEPPXTensor* t = SNEPPX_checkpoint_reader_get_tensor(reader, "weights");
     /* may be NULL if file doesn't exist */
-    if (t) arix_tensor_destroy(t);
-    arix_checkpoint_reader_destroy(reader);
+    if (t) SNEPPX_tensor_destroy(t);
+    SNEPPX_checkpoint_reader_destroy(reader);
 }
 
 int main(void) {

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 RELEASE_DIR="${PROJECT_ROOT}/releases"
 
-echo "=== ARIX-Algo Release Signing ==="
+echo "=== SNEPPX-Algo Release Signing ==="
 echo ""
 
 if [ ! -f "${RELEASE_DIR}/SHA256SUMS" ]; then
@@ -43,7 +43,7 @@ int main() {
     }
 
     // Simple Ed25519 key pair generation placeholder
-    // In production, use arix_ed25519_gen_keypair from S0
+    // In production, use SNEPPX_ed25519_gen_keypair from S0
     for (int i = 0; i < 32; i++) public_key[i] = seed[i] ^ 0xAA;
     for (int i = 0; i < 64; i++) private_key[i] = (i < 32) ? seed[i] : public_key[i-32];
 
@@ -74,7 +74,7 @@ fi
 
 echo ""
 echo ">> Signing release files..."
-echo "ARIX-Algo v0.1.0 Release Signatures" > "${SIGNATURE_FILE}"
+echo "SNEPPX-Algo v0.1.0 Release Signatures" > "${SIGNATURE_FILE}"
 echo "Release Date: ${RELEASE_DATE}" >> "${SIGNATURE_FILE}"
 echo "Ed25519 Public Key Fingerprint: ${PUBLIC_KEY_FINGERPRINT}" >> "${SIGNATURE_FILE}"
 echo "" >> "${SIGNATURE_FILE}"
@@ -83,7 +83,7 @@ cd "${RELEASE_DIR}"
 for file in *.tar.gz *.zip; do
     [ -f "${file}" ] || continue
     sigfile="${file}.sig"
-    # In production: use arix_ed25519_sign from S0
+    # In production: use SNEPPX_ed25519_sign from S0
     # For now, create a placeholder signature
     echo "Signing: ${file}"
     echo "Signature for ${file}:" >> "${SIGNATURE_FILE}"
@@ -104,4 +104,4 @@ done
 echo ""
 echo "=== Signing Complete ==="
 echo "Public key: ${PUBLIC_KEY_FINGERPRINT}"
-echo "Verify with: ./scripts/verify-release.sh releases/arix-algo-v0.1.0.tar.gz"
+echo "Verify with: ./scripts/verify-release.sh releases/SNEPPX-algo-v0.1.0.tar.gz"

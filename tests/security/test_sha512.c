@@ -24,7 +24,7 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 static void test_sha512_hash(void) {
     unsigned char hash[64];
     const unsigned char* input = (const unsigned char*)"hello";
-    arix_sha512_hash(input, 5, hash);
+    SNEPPX_sha512_hash(input, 5, hash);
     int non_zero = 0;
     for (int i = 0; i < 64; i++) if (hash[i]) non_zero++;
     ASSERT(non_zero > 0, "sha512 hash produced non-zero output");
@@ -33,8 +33,8 @@ static void test_sha512_hash(void) {
 static void test_sha512_deterministic(void) {
     unsigned char h1[64], h2[64];
     const unsigned char* input = (const unsigned char*)"test";
-    arix_sha512_hash(input, 4, h1);
-    arix_sha512_hash(input, 4, h2);
+    SNEPPX_sha512_hash(input, 4, h1);
+    SNEPPX_sha512_hash(input, 4, h2);
     ASSERT(memcmp(h1, h2, 64) == 0, "sha512 deterministic");
 }
 
@@ -42,8 +42,8 @@ static void test_sha512_diff_input(void) {
     unsigned char h1[64], h2[64];
     const unsigned char* in1 = (const unsigned char*)"abc";
     const unsigned char* in2 = (const unsigned char*)"abd";
-    arix_sha512_hash(in1, 3, h1);
-    arix_sha512_hash(in2, 3, h2);
+    SNEPPX_sha512_hash(in1, 3, h1);
+    SNEPPX_sha512_hash(in2, 3, h2);
     ASSERT(memcmp(h1, h2, 64) != 0, "sha512 different for diff input");
 }
 
@@ -51,7 +51,7 @@ static void test_sha512_hmac(void) {
     unsigned char hmac[64];
     const unsigned char* key = (const unsigned char*)"key";
     const unsigned char* msg = (const unsigned char*)"message";
-    arix_sha512_hmac(key, 3, msg, 7, hmac);
+    SNEPPX_sha512_hmac(key, 3, msg, 7, hmac);
     int non_zero = 0;
     for (int i = 0; i < 64; i++) if (hmac[i]) non_zero++;
     ASSERT(non_zero > 0, "sha512 hmac produced output");

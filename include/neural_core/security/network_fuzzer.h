@@ -1,5 +1,5 @@
-#ifndef ARIX_NETWORK_FUZZER_H
-#define ARIX_NETWORK_FUZZER_H
+#ifndef SNEPPX_NETWORK_FUZZER_H
+#define SNEPPX_NETWORK_FUZZER_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -55,13 +55,13 @@ typedef struct {
     double crashes_per_k;
 } fuzz_stats_t;
 
-int arix_fuzzer_init(fuzz_protocol_t protocol);
-int arix_fuzzer_add_seed(const uint8_t *data, size_t len);
-int arix_fuzzer_generate(uint8_t *buf, size_t *len, size_t max_len);
-int arix_fuzzer_execute(const uint8_t *input, size_t len, fuzz_result_t *result);
-int arix_fuzzer_get_stats(fuzz_stats_t *stats);
-int arix_fuzzer_set_config(const fuzz_config_t *config);
-int arix_fuzzer_reset(void);
-int arix_fuzzer_fuzz_target(const uint8_t *target_data, size_t target_len, int iterations, fuzz_result_t *results, int max_results);
+int SNEPPX_fuzzer_init(fuzz_protocol_t protocol);
+int SNEPPX_fuzzer_add_seed(const uint8_t *data, size_t len);
+int SNEPPX_fuzzer_generate(uint8_t *buf, size_t *len, size_t max_len);
+int SNEPPX_fuzzer_execute(const uint8_t *input, size_t len, fuzz_result_t *result);
+int SNEPPX_fuzzer_get_stats(fuzz_stats_t *stats);
+int SNEPPX_fuzzer_set_config(const fuzz_config_t *config);
+int SNEPPX_fuzzer_reset(void);
+int SNEPPX_fuzzer_fuzz_target(const uint8_t *target_data, size_t target_len, int iterations, fuzz_result_t *results, int max_results);
 
 #endif

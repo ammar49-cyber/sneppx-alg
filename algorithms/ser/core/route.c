@@ -31,7 +31,7 @@ static int cmp_desc(const void* a, const void* b) {
     return (fa > fb) ? -1 : (fa < fb) ? 1 : 0;
 }
 
-void arix_ser_route(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** gate_weights, int** expert_indices) {
+void SNEPPX_ser_route(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** gate_weights, int** expert_indices) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];
     size_t n_exp = layer->config.num_experts;
@@ -54,7 +54,7 @@ void arix_ser_route(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** g
         }
     }
 
-    if (layer->config.top_k_method == ARIX_TOPK_NOISY) {
+    if (layer->config.top_k_method == SNEPPX_TOPK_NOISY) {
         unsigned long state = 12345;
         for (size_t i = 0; i < n_exp * num_tokens; i++) {
             state = lcg_next(state);
@@ -80,7 +80,7 @@ void arix_ser_route(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** g
     }
 
     size_t shape_gw[] = {num_tokens, n_act};
-    *gate_weights = arix_tensor_create(shape_gw, 2, ARIX_FLOAT32);
+    *gate_weights = SNEPPX_tensor_create(shape_gw, 2, SNEPPX_FLOAT32);
     *expert_indices = (int*)malloc(num_tokens * n_act * sizeof(int));
     if (!*gate_weights || !*expert_indices) {
         free(logits);
@@ -127,9 +127,9 @@ void arix_ser_route(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** g
 
 // Gating forward with learned temperature scaling
 // Returns pre-softmax logits for z-loss computation
-void arix_ser_gate_forward(const ArixSERLayer* layer, const ArixTensor* input,
-                           ArixTensor** gate_weights, int** expert_indices,
-                           ArixTensor** gate_logits, float temperature) {
+void SNEPPX_ser_gate_forward(const SNEPPXSERLayer* layer, const SNEPPXTensor* input,
+                           SNEPPXTensor** gate_weights, int** expert_indices,
+                           SNEPPXTensor** gate_logits, float temperature) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];
     size_t n_exp = layer->config.num_experts;
@@ -142,7 +142,7 @@ void arix_ser_gate_forward(const ArixSERLayer* layer, const ArixTensor* input,
     float inv_temp = (temperature > 0.0f) ? (1.0f / temperature) : 1.0f;
 
     size_t logits_shape[] = {num_tokens, n_exp};
-    *gate_logits = arix_tensor_create(logits_shape, 2, ARIX_FLOAT32);
+    *gate_logits = SNEPPX_tensor_create(logits_shape, 2, SNEPPX_FLOAT32);
     if (!*gate_logits) return;
     float* logits_data = (float*)(*gate_logits)->data;
 
@@ -157,16 +157,16 @@ void arix_ser_gate_forward(const ArixSERLayer* layer, const ArixTensor* input,
     }
 
     float* sm_data = (float*)malloc(num_tokens * n_exp * sizeof(float));
-    if (!sm_data) { arix_tensor_destroy(*gate_logits); *gate_logits = NULL; return; }
+    if (!sm_data) { SNEPPX_tensor_destroy(*gate_logits); *gate_logits = NULL; return; }
     memcpy(sm_data, logits_data, num_tokens * n_exp * sizeof(float));
     softmax(sm_data, num_tokens, n_exp);
 
     size_t shape_gw[] = {num_tokens, n_act};
-    *gate_weights = arix_tensor_create(shape_gw, 2, ARIX_FLOAT32);
+    *gate_weights = SNEPPX_tensor_create(shape_gw, 2, SNEPPX_FLOAT32);
     *expert_indices = (int*)malloc(num_tokens * n_act * sizeof(int));
     if (!*gate_weights || !*expert_indices) {
         free(sm_data);
-        arix_tensor_destroy(*gate_logits);
+        SNEPPX_tensor_destroy(*gate_logits);
         *gate_logits = NULL;
         return;
     }
@@ -210,7 +210,7 @@ void arix_ser_gate_forward(const ArixSERLayer* layer, const ArixTensor* input,
 
 // Z-loss: auxiliary loss that keeps gate logits near zero
 // Computes mean(gate_logits^2) to penalize large logit magnitudes
-float arix_ser_z_loss(const ArixTensor* gate_logits) {
+float SNEPPX_ser_z_loss(const SNEPPXTensor* gate_logits) {
     size_t n = gate_logits->size;
     float* data = (float*)gate_logits->data;
     float sum_sq = 0.0f;
@@ -221,16 +221,16 @@ float arix_ser_z_loss(const ArixTensor* gate_logits) {
 }
 
 // Combined auxiliary loss: load balancing + z-loss
-float arix_ser_aux_loss(const ArixTensor* gate_weights, const int* expert_indices,
-                        const ArixTensor* gate_logits, size_t num_tokens,
+float SNEPPX_ser_aux_loss(const SNEPPXTensor* gate_weights, const int* expert_indices,
+                        const SNEPPXTensor* gate_logits, size_t num_tokens,
                         float load_balance_coef, float z_loss_coef) {
-    float lb_loss = arix_ser_load_balance_loss(gate_weights, expert_indices, num_tokens);
-    float zl_loss = arix_ser_z_loss(gate_logits);
+    float lb_loss = SNEPPX_ser_load_balance_loss(gate_weights, expert_indices, num_tokens);
+    float zl_loss = SNEPPX_ser_z_loss(gate_logits);
     return load_balance_coef * lb_loss + z_loss_coef * zl_loss;
 }
 
 // Enforce expert capacity: drop lowest-weighted tokens from overloaded experts
-void arix_ser_expert_capacity_balance(ArixTensor* gate_weights, int* expert_indices,
+void SNEPPX_ser_expert_capacity_balance(SNEPPXTensor* gate_weights, int* expert_indices,
                                       size_t num_tokens, size_t num_active,
                                       size_t expert_capacity) {
     if (expert_capacity == 0) return;

@@ -1,5 +1,5 @@
-#ifndef ARIX_HASHTABLE_H
-#define ARIX_HASHTABLE_H
+#ifndef SNEPPX_HASHTABLE_H
+#define SNEPPX_HASHTABLE_H
 /*
  * Hash Table — v0.5 (generic library)
  *
@@ -26,30 +26,30 @@ typedef struct {
     void*    value;
     int      occupied;
     int      deleted;
-} ArixHTEntry;
+} SNEPPXHTEntry;
 
 typedef struct {
-    ArixHTEntry* buckets;
+    SNEPPXHTEntry* buckets;
     size_t       capacity;
     size_t       count;
     float        load_factor_threshold;
     uint64_t     (*hash_fn)(uint64_t key);
-} ArixHashTable;
+} SNEPPXHashTable;
 
-ArixHashTable* arix_ht_create(size_t initial_capacity);
-void           arix_ht_destroy(ArixHashTable* ht);
+SNEPPXHashTable* SNEPPX_ht_create(size_t initial_capacity);
+void           SNEPPX_ht_destroy(SNEPPXHashTable* ht);
 
-int   arix_ht_insert(ArixHashTable* ht, uint64_t key, void* value);
-void* arix_ht_lookup(const ArixHashTable* ht, uint64_t key);
-int   arix_ht_delete(ArixHashTable* ht, uint64_t key);
+int   SNEPPX_ht_insert(SNEPPXHashTable* ht, uint64_t key, void* value);
+void* SNEPPX_ht_lookup(const SNEPPXHashTable* ht, uint64_t key);
+int   SNEPPX_ht_delete(SNEPPXHashTable* ht, uint64_t key);
 
-void  arix_ht_clear(ArixHashTable* ht);
-int   arix_ht_resize(ArixHashTable* ht, size_t new_capacity);
-void  arix_ht_foreach(const ArixHashTable* ht,
+void  SNEPPX_ht_clear(SNEPPXHashTable* ht);
+int   SNEPPX_ht_resize(SNEPPXHashTable* ht, size_t new_capacity);
+void  SNEPPX_ht_foreach(const SNEPPXHashTable* ht,
                       void (*fn)(uint64_t key, void* value, void* ctx), void* ctx);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_HASHTABLE_H */
+#endif /* SNEPPX_HASHTABLE_H */

@@ -20,12 +20,12 @@
 
 ## Enforcement
 
-The BDFL (Ammar [ARIX]) has the sole authority to enforce this Code of Conduct.
+The BDFL (Ammar [SNEPPX]) has the sole authority to enforce this Code of Conduct.
 All decisions are final. No appeals.
 
 ## Reporting
 
-Report violations to algoarix@gmail.com.
+Report violations to algoSNEPPX@gmail.com.
 
 All reports will be reviewed by the BDFL and will remain confidential.
 

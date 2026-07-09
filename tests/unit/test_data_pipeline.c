@@ -22,35 +22,35 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_data_pipeline_create(void) {
-    ArixDataPipeline* pipe = arix_data_pipeline_create(256);
+    SNEPPXDataPipeline* pipe = SNEPPX_data_pipeline_create(256);
     ASSERT(pipe != NULL, "pipeline created");
     ASSERT(pipe->batch_size == 256, "batch size set");
-    arix_data_pipeline_destroy(pipe);
+    SNEPPX_data_pipeline_destroy(pipe);
 }
 
 static void test_data_pipeline_load_data(void) {
-    ArixDataPipeline* pipe = arix_data_pipeline_create(32);
-    ArixTensor* data = NULL;
-    ArixTensor* labels = NULL;
-    int ret = arix_data_pipeline_load("dummy_path", pipe, &data, &labels);
+    SNEPPXDataPipeline* pipe = SNEPPX_data_pipeline_create(32);
+    SNEPPXTensor* data = NULL;
+    SNEPPXTensor* labels = NULL;
+    int ret = SNEPPX_data_pipeline_load("dummy_path", pipe, &data, &labels);
     ASSERT(ret == 0, "load returns 0 (stub)");
-    arix_data_pipeline_destroy(pipe);
+    SNEPPX_data_pipeline_destroy(pipe);
 }
 
 static void test_data_pipeline_get_batch(void) {
-    ArixDataPipeline* pipe = arix_data_pipeline_create(16);
-    ArixTensor* batch = NULL;
-    ArixTensor* labels = NULL;
-    int ret = arix_data_pipeline_get_batch(pipe, &batch, &labels);
+    SNEPPXDataPipeline* pipe = SNEPPX_data_pipeline_create(16);
+    SNEPPXTensor* batch = NULL;
+    SNEPPXTensor* labels = NULL;
+    int ret = SNEPPX_data_pipeline_get_batch(pipe, &batch, &labels);
     ASSERT(ret == 0, "get_batch returns 0 (stub)");
-    arix_data_pipeline_destroy(pipe);
+    SNEPPX_data_pipeline_destroy(pipe);
 }
 
 static void test_data_pipeline_shuffle(void) {
-    ArixDataPipeline* pipe = arix_data_pipeline_create(64);
-    arix_data_pipeline_shuffle(pipe);
+    SNEPPXDataPipeline* pipe = SNEPPX_data_pipeline_create(64);
+    SNEPPX_data_pipeline_shuffle(pipe);
     ASSERT(pipe != NULL, "shuffle does not crash");
-    arix_data_pipeline_destroy(pipe);
+    SNEPPX_data_pipeline_destroy(pipe);
 }
 
 int main(void) {

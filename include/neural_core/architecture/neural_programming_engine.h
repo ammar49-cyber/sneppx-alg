@@ -1,46 +1,46 @@
-#ifndef ARIX_NPE_H
-#define ARIX_NPE_H
+#ifndef SNEPPX_NPE_H
+#define SNEPPX_NPE_H
 
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
 
 typedef enum {
-    ARIX_NOP,
-    ARIX_LOAD,
-    ARIX_STORE,
-    ARIX_ADD,
-    ARIX_SUB,
-    ARIX_MUL,
-    ARIX_DIV,
-    ARIX_MATMUL,
-    ARIX_RELU,
-    ARIX_SOFTMAX,
-    ARIX_LAYERNORM,
-    ARIX_ATTENTION,
-    ARIX_BRANCH,
-    ARIX_HALT,
-    ARIX_NEG,
-    ARIX_EXP,
-    ARIX_LOG,
-    ARIX_SQRT,
-    ARIX_POW,
-    ARIX_SIN,
-    ARIX_COS,
-    ARIX_TANH,
-    ARIX_SIGMOID,
-    ARIX_GELU,
-    ARIX_SILU,
-    ARIX_DROPOUT,
-    ARIX_CONV2D,
-    ARIX_POOL2D,
-    ARIX_BATCHNORM,
-    ARIX_EMBEDDING,
-    ARIX_CROSSENTROPY,
-    ARIX_MSE,
-    ARIX_CONCAT,
-    ARIX_SPLIT
-} ArixNPEOpCode;
+    SNEPPX_NOP,
+    SNEPPX_LOAD,
+    SNEPPX_STORE,
+    SNEPPX_ADD,
+    SNEPPX_SUB,
+    SNEPPX_MUL,
+    SNEPPX_DIV,
+    SNEPPX_MATMUL,
+    SNEPPX_RELU,
+    SNEPPX_SOFTMAX,
+    SNEPPX_LAYERNORM,
+    SNEPPX_ATTENTION,
+    SNEPPX_BRANCH,
+    SNEPPX_HALT,
+    SNEPPX_NEG,
+    SNEPPX_EXP,
+    SNEPPX_LOG,
+    SNEPPX_SQRT,
+    SNEPPX_POW,
+    SNEPPX_SIN,
+    SNEPPX_COS,
+    SNEPPX_TANH,
+    SNEPPX_SIGMOID,
+    SNEPPX_GELU,
+    SNEPPX_SILU,
+    SNEPPX_DROPOUT,
+    SNEPPX_CONV2D,
+    SNEPPX_POOL2D,
+    SNEPPX_BATCHNORM,
+    SNEPPX_EMBEDDING,
+    SNEPPX_CROSSENTROPY,
+    SNEPPX_MSE,
+    SNEPPX_CONCAT,
+    SNEPPX_SPLIT
+} SNEPPXNPEOpCode;
 
 typedef struct {
     int opcode;
@@ -50,28 +50,28 @@ typedef struct {
     int immediate;
     int shape_a[2];
     int shape_b[2];
-} ArixNPEInstruction;
+} SNEPPXNPEInstruction;
 
 typedef struct {
-    ArixNPEInstruction* instructions;
+    SNEPPXNPEInstruction* instructions;
     size_t num_instructions;
     size_t max_instructions;
-    ArixTensor* registers[16];
-    ArixTensor* memory;
+    SNEPPXTensor* registers[16];
+    SNEPPXTensor* memory;
     size_t pc;
-    ArixTensor* param_w1;
-    ArixTensor* param_b1;
-    ArixTensor* param_w2;
-    ArixTensor* param_b2;
-} ArixNPEProgram;
+    SNEPPXTensor* param_w1;
+    SNEPPXTensor* param_b1;
+    SNEPPXTensor* param_w2;
+    SNEPPXTensor* param_b2;
+} SNEPPXNPEProgram;
 
 typedef struct {
-    ArixNPEProgram* program;
-    ArixNPEInstruction* execution_trace;
+    SNEPPXNPEProgram* program;
+    SNEPPXNPEInstruction* execution_trace;
     size_t trace_length;
     size_t max_trace;
     size_t step_limit;
-} ArixNPEVM;
+} SNEPPXNPEVM;
 
 typedef struct {
     size_t max_program_length;
@@ -79,44 +79,44 @@ typedef struct {
     size_t step_limit;
     int verification_mode;
     int trace_execution;
-} ArixNPEConfig;
+} SNEPPXNPEConfig;
 
-ArixNPEConfig arix_npe_config_default(void);
-ArixNPEProgram* arix_npe_program_create(size_t max_instructions);
-void arix_npe_program_destroy(ArixNPEProgram* prog);
-void arix_npe_program_append(ArixNPEProgram* prog, ArixNPEInstruction inst);
-ArixNPEVM* arix_npe_vm_create(const ArixNPEConfig* config);
-void arix_npe_vm_destroy(ArixNPEVM* vm);
-void arix_npe_vm_load(ArixNPEVM* vm, ArixNPEProgram* prog);
-int arix_npe_vm_run(ArixNPEVM* vm, ArixTensor* input, ArixTensor** output);
-int arix_npe_vm_step(ArixNPEVM* vm);
-ArixNPEProgram* arix_npe_compile_attention(size_t seq_len, size_t dim);
-ArixNPEProgram* arix_npe_compile_mlp(size_t dim, size_t hidden_dim);
-int arix_npe_verify_program(const ArixNPEProgram* prog, char** error_msg, size_t* error_len);
+SNEPPXNPEConfig SNEPPX_npe_config_default(void);
+SNEPPXNPEProgram* SNEPPX_npe_program_create(size_t max_instructions);
+void SNEPPX_npe_program_destroy(SNEPPXNPEProgram* prog);
+void SNEPPX_npe_program_append(SNEPPXNPEProgram* prog, SNEPPXNPEInstruction inst);
+SNEPPXNPEVM* SNEPPX_npe_vm_create(const SNEPPXNPEConfig* config);
+void SNEPPX_npe_vm_destroy(SNEPPXNPEVM* vm);
+void SNEPPX_npe_vm_load(SNEPPXNPEVM* vm, SNEPPXNPEProgram* prog);
+int SNEPPX_npe_vm_run(SNEPPXNPEVM* vm, SNEPPXTensor* input, SNEPPXTensor** output);
+int SNEPPX_npe_vm_step(SNEPPXNPEVM* vm);
+SNEPPXNPEProgram* SNEPPX_npe_compile_attention(size_t seq_len, size_t dim);
+SNEPPXNPEProgram* SNEPPX_npe_compile_mlp(size_t dim, size_t hidden_dim);
+int SNEPPX_npe_verify_program(const SNEPPXNPEProgram* prog, char** error_msg, size_t* error_len);
 
 // Training graph support
-size_t arix_npe_get_params(ArixNPEProgram* prog, ArixTensor** out_params, size_t max_params);
-int arix_npe_build_train_graph(ArixNPEProgram* prog, ArixTape* tape,
-                                ArixVariable* input_var,
-                                ArixVariable** weight_vars, size_t num_weights,
-                                ArixVariable** output_var);
+size_t SNEPPX_npe_get_params(SNEPPXNPEProgram* prog, SNEPPXTensor** out_params, size_t max_params);
+int SNEPPX_npe_build_train_graph(SNEPPXNPEProgram* prog, SNEPPXTape* tape,
+                                SNEPPXVariable* input_var,
+                                SNEPPXVariable** weight_vars, size_t num_weights,
+                                SNEPPXVariable** output_var);
 
 // JIT profiling data
-typedef struct ArixNPEJITProfile {
+typedef struct SNEPPXNPEJITProfile {
     size_t op_frequency[32];
     size_t op_latency[32];
     size_t total_instructions;
     size_t hot_threshold;
     int   is_profiling;
-} ArixNPEJITProfile;
+} SNEPPXNPEJITProfile;
 
-ArixNPEJITProfile* arix_npe_jit_profile_create(size_t hot_threshold);
-void arix_npe_jit_profile_destroy(ArixNPEJITProfile* profile);
-void arix_npe_jit_record(ArixNPEJITProfile* profile, int opcode, float latency_us);
-ArixNPEProgram* arix_npe_jit_compile(ArixNPEJITProfile* profile, const ArixNPEProgram* original);
-ArixNPEProgram* arix_npe_jit_specialize(const ArixNPEProgram* prog, size_t batch, size_t seq_len, size_t dim);
-ArixNPEProgram* arix_npe_jit_fuse(const ArixNPEProgram* prog);
-ArixNPEProgram* arix_npe_jit_constant_fold(const ArixNPEProgram* prog, const ArixTensor* memory);
-ArixNPEProgram* arix_npe_jit_dce(const ArixNPEProgram* prog);
+SNEPPXNPEJITProfile* SNEPPX_npe_jit_profile_create(size_t hot_threshold);
+void SNEPPX_npe_jit_profile_destroy(SNEPPXNPEJITProfile* profile);
+void SNEPPX_npe_jit_record(SNEPPXNPEJITProfile* profile, int opcode, float latency_us);
+SNEPPXNPEProgram* SNEPPX_npe_jit_compile(SNEPPXNPEJITProfile* profile, const SNEPPXNPEProgram* original);
+SNEPPXNPEProgram* SNEPPX_npe_jit_specialize(const SNEPPXNPEProgram* prog, size_t batch, size_t seq_len, size_t dim);
+SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog);
+SNEPPXNPEProgram* SNEPPX_npe_jit_constant_fold(const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory);
+SNEPPXNPEProgram* SNEPPX_npe_jit_dce(const SNEPPXNPEProgram* prog);
 
-#endif /* ARIX_NPE_H */
+#endif /* SNEPPX_NPE_H */

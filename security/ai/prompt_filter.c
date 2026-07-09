@@ -46,7 +46,7 @@ static const char* multilingual_patterns[] = {
     NULL
 };
 
-static int pattern_priorities[ARIX_MAX_PATTERNS];
+static int pattern_priorities[SNEPPX_MAX_PATTERNS];
 static int total_scans = 0;
 static int total_blocks = 0;
 
@@ -64,7 +64,7 @@ static int utf8_str_find(const char* haystack, const char* needle) {
     return (strstr(haystack, needle) != NULL) ? 1 : 0;
 }
 
-int arix_prompt_filter_init(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_init(SNEPPXPromptFilter* pf) {
     if (!pf) return -1;
     memset(pf, 0, sizeof(*pf));
     pf->enabled = 1;
@@ -76,31 +76,31 @@ int arix_prompt_filter_init(ArixPromptFilter* pf) {
     return 0;
 }
 
-void arix_prompt_filter_destroy(ArixPromptFilter* pf) {
+void SNEPPX_prompt_filter_destroy(SNEPPXPromptFilter* pf) {
     if (pf) memset(pf, 0, sizeof(*pf));
 }
 
-int arix_prompt_filter_add_pattern(ArixPromptFilter* pf, const char* pattern,
-                                     ArixFilterResult classification) {
-    if (!pf || !pattern || pf->pattern_count >= ARIX_MAX_PATTERNS) return -1;
-    ArixFilterPattern* p = &pf->patterns[pf->pattern_count];
-    strncpy(p->pattern, pattern, ARIX_PATTERN_MAX_LEN - 1);
+int SNEPPX_prompt_filter_add_pattern(SNEPPXPromptFilter* pf, const char* pattern,
+                                     SNEPPXFilterResult classification) {
+    if (!pf || !pattern || pf->pattern_count >= SNEPPX_MAX_PATTERNS) return -1;
+    SNEPPXFilterPattern* p = &pf->patterns[pf->pattern_count];
+    strncpy(p->pattern, pattern, SNEPPX_PATTERN_MAX_LEN - 1);
     p->classification = classification;
     p->is_active = 1;
     pattern_priorities[pf->pattern_count] = 0;
     return pf->pattern_count++;
 }
 
-ArixFilterResult arix_prompt_filter_scan(ArixPromptFilter* pf,
+SNEPPXFilterResult SNEPPX_prompt_filter_scan(SNEPPXPromptFilter* pf,
                                           const char* prompt, size_t len) {
-    if (!pf || !pf->enabled || !prompt) return ARIX_FILTER_CLEAN;
+    if (!pf || !pf->enabled || !prompt) return SNEPPX_FILTER_CLEAN;
     total_scans++;
-    char lower[ARIX_PATTERN_MAX_LEN];
-    size_t plen = (len < ARIX_PATTERN_MAX_LEN - 1) ? len : ARIX_PATTERN_MAX_LEN - 1;
+    char lower[SNEPPX_PATTERN_MAX_LEN];
+    size_t plen = (len < SNEPPX_PATTERN_MAX_LEN - 1) ? len : SNEPPX_PATTERN_MAX_LEN - 1;
     for (size_t i = 0; i < plen; i++) lower[i] = (char)tolower((unsigned char)prompt[i]);
     lower[plen] = '\0';
 
-    ArixFilterResult highest = ARIX_FILTER_CLEAN;
+    SNEPPXFilterResult highest = SNEPPX_FILTER_CLEAN;
     int highest_prio = -1;
     for (int i = 0; i < pf->pattern_count; i++) {
         if (!pf->patterns[i].is_active) continue;
@@ -111,16 +111,16 @@ ArixFilterResult arix_prompt_filter_scan(ArixPromptFilter* pf,
             }
         }
     }
-    if (highest != ARIX_FILTER_CLEAN) total_blocks++;
+    if (highest != SNEPPX_FILTER_CLEAN) total_blocks++;
     return highest;
 }
 
-int arix_prompt_filter_sanitize(ArixPromptFilter* pf,
+int SNEPPX_prompt_filter_sanitize(SNEPPXPromptFilter* pf,
                                   const char* prompt, size_t len,
                                   char* sanitized, size_t* sanitized_len) {
     if (!pf || !prompt || !sanitized || !sanitized_len) return -1;
-    ArixFilterResult result = arix_prompt_filter_scan(pf, prompt, len);
-    if (result != ARIX_FILTER_CLEAN) {
+    SNEPPXFilterResult result = SNEPPX_prompt_filter_scan(pf, prompt, len);
+    if (result != SNEPPX_FILTER_CLEAN) {
         const char* msg = "[Content filtered by security policy]";
         size_t msg_len = strlen(msg) + 1;
         if (*sanitized_len < msg_len) return -1;
@@ -134,15 +134,15 @@ int arix_prompt_filter_sanitize(ArixPromptFilter* pf,
     return 0;
 }
 
-void arix_prompt_filter_load_defaults(ArixPromptFilter* pf) {
+void SNEPPX_prompt_filter_load_defaults(SNEPPXPromptFilter* pf) {
     if (!pf) return;
     for (int i = 0; default_injection_patterns[i]; i++)
-        arix_prompt_filter_add_pattern(pf, default_injection_patterns[i], ARIX_FILTER_INJECTION);
+        SNEPPX_prompt_filter_add_pattern(pf, default_injection_patterns[i], SNEPPX_FILTER_INJECTION);
     for (int i = 0; default_jailbreak_patterns[i]; i++)
-        arix_prompt_filter_add_pattern(pf, default_jailbreak_patterns[i], ARIX_FILTER_JAILBREAK);
+        SNEPPX_prompt_filter_add_pattern(pf, default_jailbreak_patterns[i], SNEPPX_FILTER_JAILBREAK);
 }
 
-int arix_prompt_filter_set_priority(ArixPromptFilter* pf, const char* pattern_name, int priority) {
+int SNEPPX_prompt_filter_set_priority(SNEPPXPromptFilter* pf, const char* pattern_name, int priority) {
     if (!pf || !pattern_name) return -1;
     for (int i = 0; i < pf->pattern_count; i++) {
         if (strcmp(pf->patterns[i].pattern, pattern_name) == 0) {
@@ -153,55 +153,55 @@ int arix_prompt_filter_set_priority(ArixPromptFilter* pf, const char* pattern_na
     return -1;
 }
 
-int arix_prompt_filter_match_wildcard(const char* text, const char* pattern) {
+int SNEPPX_prompt_filter_match_wildcard(const char* text, const char* pattern) {
     if (!text || !pattern) return 0;
     if (pattern[0] == '\0') return text[0] == '\0';
     if (pattern[0] == '*') {
         for (int i = 0; text[i]; i++)
-            if (arix_prompt_filter_match_wildcard(text + i, pattern + 1)) return 1;
-        return arix_prompt_filter_match_wildcard(text, pattern + 1);
+            if (SNEPPX_prompt_filter_match_wildcard(text + i, pattern + 1)) return 1;
+        return SNEPPX_prompt_filter_match_wildcard(text, pattern + 1);
     }
     if (pattern[0] == '?' && text[0]) {
-        return arix_prompt_filter_match_wildcard(text + 1, pattern + 1);
+        return SNEPPX_prompt_filter_match_wildcard(text + 1, pattern + 1);
     }
     if (pattern[0] == text[0]) {
-        return arix_prompt_filter_match_wildcard(text + 1, pattern + 1);
+        return SNEPPX_prompt_filter_match_wildcard(text + 1, pattern + 1);
     }
     return 0;
 }
 
-ArixFilterResult arix_prompt_filter_scan_wildcard(ArixPromptFilter* pf,
+SNEPPXFilterResult SNEPPX_prompt_filter_scan_wildcard(SNEPPXPromptFilter* pf,
                                                     const char* prompt, size_t len) {
-    if (!pf || !pf->enabled || !prompt) return ARIX_FILTER_CLEAN;
+    if (!pf || !pf->enabled || !prompt) return SNEPPX_FILTER_CLEAN;
     total_scans++;
-    char lower[ARIX_PATTERN_MAX_LEN];
-    size_t plen = (len < ARIX_PATTERN_MAX_LEN - 1) ? len : ARIX_PATTERN_MAX_LEN - 1;
+    char lower[SNEPPX_PATTERN_MAX_LEN];
+    size_t plen = (len < SNEPPX_PATTERN_MAX_LEN - 1) ? len : SNEPPX_PATTERN_MAX_LEN - 1;
     for (size_t i = 0; i < plen; i++) lower[i] = (char)tolower((unsigned char)prompt[i]);
     lower[plen] = '\0';
 
-    ArixFilterResult highest = ARIX_FILTER_CLEAN;
+    SNEPPXFilterResult highest = SNEPPX_FILTER_CLEAN;
     int highest_prio = -1;
     for (int i = 0; i < pf->pattern_count; i++) {
         if (!pf->patterns[i].is_active) continue;
-        if (arix_prompt_filter_match_wildcard(lower, pf->patterns[i].pattern)) {
+        if (SNEPPX_prompt_filter_match_wildcard(lower, pf->patterns[i].pattern)) {
             if (pattern_priorities[i] > highest_prio) {
                 highest_prio = pattern_priorities[i];
                 highest = pf->patterns[i].classification;
             }
         }
     }
-    if (highest != ARIX_FILTER_CLEAN) total_blocks++;
+    if (highest != SNEPPX_FILTER_CLEAN) total_blocks++;
     return highest;
 }
 
-void arix_prompt_filter_reset(ArixPromptFilter* pf) {
+void SNEPPX_prompt_filter_reset(SNEPPXPromptFilter* pf) {
     if (!pf) return;
-    memset(pf->patterns, 0, sizeof(ArixFilterPattern) * pf->pattern_count);
+    memset(pf->patterns, 0, sizeof(SNEPPXFilterPattern) * pf->pattern_count);
     pf->pattern_count = 0;
     memset(pattern_priorities, 0, sizeof(pattern_priorities));
 }
 
-int arix_prompt_filter_stats(ArixPromptFilter* pf, int* patterns_loaded, int* scans, int* blocks) {
+int SNEPPX_prompt_filter_stats(SNEPPXPromptFilter* pf, int* patterns_loaded, int* scans, int* blocks) {
     if (!pf || !patterns_loaded || !scans || !blocks) return -1;
     *patterns_loaded = pf->pattern_count;
     *scans = total_scans;
@@ -209,7 +209,7 @@ int arix_prompt_filter_stats(ArixPromptFilter* pf, int* patterns_loaded, int* sc
     return 0;
 }
 
-int arix_prompt_filter_remove_pattern(ArixPromptFilter* pf, const char* pattern_name) {
+int SNEPPX_prompt_filter_remove_pattern(SNEPPXPromptFilter* pf, const char* pattern_name) {
     if (!pf || !pattern_name) return -1;
     for (int i = 0; i < pf->pattern_count; i++) {
         if (strcmp(pf->patterns[i].pattern, pattern_name) == 0) {
@@ -220,48 +220,48 @@ int arix_prompt_filter_remove_pattern(ArixPromptFilter* pf, const char* pattern_
     return -1;
 }
 
-int arix_prompt_filter_add_defaults(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_add_defaults(SNEPPXPromptFilter* pf) {
     if (!pf) return -1;
     int count = 0;
     for (int i = 0; default_injection_patterns[i]; i++) {
-        if (arix_prompt_filter_add_pattern(pf, default_injection_patterns[i], ARIX_FILTER_INJECTION) >= 0)
+        if (SNEPPX_prompt_filter_add_pattern(pf, default_injection_patterns[i], SNEPPX_FILTER_INJECTION) >= 0)
             count++;
     }
     for (int i = 0; default_jailbreak_patterns[i]; i++) {
-        if (arix_prompt_filter_add_pattern(pf, default_jailbreak_patterns[i], ARIX_FILTER_JAILBREAK) >= 0)
+        if (SNEPPX_prompt_filter_add_pattern(pf, default_jailbreak_patterns[i], SNEPPX_FILTER_JAILBREAK) >= 0)
             count++;
     }
     for (int i = 0; multilingual_patterns[i]; i++) {
-        if (arix_prompt_filter_add_pattern(pf, multilingual_patterns[i], ARIX_FILTER_SUSPICIOUS) >= 0)
+        if (SNEPPX_prompt_filter_add_pattern(pf, multilingual_patterns[i], SNEPPX_FILTER_SUSPICIOUS) >= 0)
             count++;
     }
     return count;
 }
 
-int arix_prompt_filter_remove_all(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_remove_all(SNEPPXPromptFilter* pf) {
     if (!pf) return -1;
-    memset(pf->patterns, 0, sizeof(ArixFilterPattern) * pf->pattern_count);
+    memset(pf->patterns, 0, sizeof(SNEPPXFilterPattern) * pf->pattern_count);
     pf->pattern_count = 0;
     memset(pattern_priorities, 0, sizeof(pattern_priorities));
     return 0;
 }
 
-int arix_prompt_filter_get_pattern_count(void) {
+int SNEPPX_prompt_filter_get_pattern_count(void) {
     int count = 0;
-    for (int i = 0; i < ARIX_MAX_PATTERNS; i++) count++;
+    for (int i = 0; i < SNEPPX_MAX_PATTERNS; i++) count++;
     return count;
 }
 
-int arix_prompt_filter_scan_advanced(ArixPromptFilter* pf, const char* text, size_t len, ArixFilterResult result_out[3]) {
+int SNEPPX_prompt_filter_scan_advanced(SNEPPXPromptFilter* pf, const char* text, size_t len, SNEPPXFilterResult result_out[3]) {
     if (!pf || !text || !result_out) return -1;
     total_scans++;
-    char lower[ARIX_PATTERN_MAX_LEN];
-    size_t plen = (len < ARIX_PATTERN_MAX_LEN - 1) ? len : ARIX_PATTERN_MAX_LEN - 1;
+    char lower[SNEPPX_PATTERN_MAX_LEN];
+    size_t plen = (len < SNEPPX_PATTERN_MAX_LEN - 1) ? len : SNEPPX_PATTERN_MAX_LEN - 1;
     for (size_t i = 0; i < plen; i++) lower[i] = (char)tolower((unsigned char)text[i]);
     lower[plen] = '\0';
     int match_count = 0;
-    int found_priorities[ARIX_MAX_PATTERNS];
-    int found_indices[ARIX_MAX_PATTERNS];
+    int found_priorities[SNEPPX_MAX_PATTERNS];
+    int found_indices[SNEPPX_MAX_PATTERNS];
     for (int i = 0; i < pf->pattern_count && match_count < 3; i++) {
         if (!pf->patterns[i].is_active) continue;
         if (strstr(lower, pf->patterns[i].pattern) || utf8_str_find(lower, pf->patterns[i].pattern)) {
@@ -274,20 +274,20 @@ int arix_prompt_filter_scan_advanced(ArixPromptFilter* pf, const char* text, siz
         result_out[i] = pf->patterns[found_indices[i]].classification;
     }
     for (int i = match_count; i < 3; i++)
-        result_out[i] = ARIX_FILTER_CLEAN;
+        result_out[i] = SNEPPX_FILTER_CLEAN;
     if (match_count > 0) total_blocks++;
     return match_count;
 }
 
-int arix_prompt_filter_update_pattern(int index, const char* new_pattern) {
-    if (index < 0 || index >= ARIX_MAX_PATTERNS || !new_pattern) return -1;
-    for (int i = 0; i < ARIX_MAX_PATTERNS; i++) {
+int SNEPPX_prompt_filter_update_pattern(int index, const char* new_pattern) {
+    if (index < 0 || index >= SNEPPX_MAX_PATTERNS || !new_pattern) return -1;
+    for (int i = 0; i < SNEPPX_MAX_PATTERNS; i++) {
         (void)i;
     }
     return 0;
 }
 
-int arix_prompt_filter_get_patterns(char* buffer, int max) {
+int SNEPPX_prompt_filter_get_patterns(char* buffer, int max) {
     if (!buffer || max <= 0) return 0;
     strncpy(buffer, "default_injection,default_jailbreak,multilingual", max - 1);
     buffer[max - 1] = '\0';
@@ -314,7 +314,7 @@ static int pattern_match_utf8(const char* text, const char* pattern) {
     return (strstr(text, pattern) != NULL) ? 1 : 0;
 }
 
-static int count_active_patterns(ArixPromptFilter* pf) {
+static int count_active_patterns(SNEPPXPromptFilter* pf) {
     if (!pf) return 0;
     int count = 0;
     for (int i = 0; i < pf->pattern_count; i++) {
@@ -323,7 +323,7 @@ static int count_active_patterns(ArixPromptFilter* pf) {
     return count;
 }
 
-int arix_prompt_filter_enable_pattern(ArixPromptFilter* pf, const char* pattern_name) {
+int SNEPPX_prompt_filter_enable_pattern(SNEPPXPromptFilter* pf, const char* pattern_name) {
     if (!pf || !pattern_name) return -1;
     for (int i = 0; i < pf->pattern_count; i++) {
         if (strcmp(pf->patterns[i].pattern, pattern_name) == 0) {
@@ -334,40 +334,40 @@ int arix_prompt_filter_enable_pattern(ArixPromptFilter* pf, const char* pattern_
     return -1;
 }
 
-int arix_prompt_filter_disable_pattern(ArixPromptFilter* pf, const char* pattern_name) {
+int SNEPPX_prompt_filter_disable_pattern(SNEPPXPromptFilter* pf, const char* pattern_name) {
     if (!pf || !pattern_name) return -1;
-    return arix_prompt_filter_remove_pattern(pf, pattern_name);
+    return SNEPPX_prompt_filter_remove_pattern(pf, pattern_name);
 }
 
-int arix_prompt_filter_get_classification(ArixPromptFilter* pf, int index) {
+int SNEPPX_prompt_filter_get_classification(SNEPPXPromptFilter* pf, int index) {
     if (!pf || index < 0 || index >= pf->pattern_count) return -1;
     return (int)pf->patterns[index].classification;
 }
 
-int arix_prompt_filter_is_enabled(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_is_enabled(SNEPPXPromptFilter* pf) {
     return (pf && pf->enabled) ? 1 : 0;
 }
 
-void arix_prompt_filter_set_enabled(ArixPromptFilter* pf, int enabled) {
+void SNEPPX_prompt_filter_set_enabled(SNEPPXPromptFilter* pf, int enabled) {
     if (pf) pf->enabled = (enabled != 0);
 }
 
-int arix_prompt_filter_get_max_token_length(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_get_max_token_length(SNEPPXPromptFilter* pf) {
     return pf ? pf->max_token_length : 0;
 }
 
-void arix_prompt_filter_set_max_token_length(ArixPromptFilter* pf, int max_len) {
+void SNEPPX_prompt_filter_set_max_token_length(SNEPPXPromptFilter* pf, int max_len) {
     if (pf && max_len > 0) pf->max_token_length = max_len;
 }
 
-double arix_prompt_filter_get_anomaly_threshold(ArixPromptFilter* pf) {
+double SNEPPX_prompt_filter_get_anomaly_threshold(SNEPPXPromptFilter* pf) {
     return pf ? pf->anomaly_threshold : 0.0;
 }
 
-void arix_prompt_filter_set_anomaly_threshold(ArixPromptFilter* pf, double t) {
+void SNEPPX_prompt_filter_set_anomaly_threshold(SNEPPXPromptFilter* pf, double t) {
     if (pf && t >= 0.0 && t <= 1.0) pf->anomaly_threshold = t;
 }
-int arix_prompt_filter_scan_multi(const char* prompts[], size_t lengths[], int count) {
+int SNEPPX_prompt_filter_scan_multi(const char* prompts[], size_t lengths[], int count) {
     if (!prompts || !lengths || count <= 0) return 0;
     int total_blocks = 0;
     for (int i = 0; i < count; i++) {
@@ -376,16 +376,16 @@ int arix_prompt_filter_scan_multi(const char* prompts[], size_t lengths[], int c
     return total_blocks;
 }
 
-int arix_prompt_filter_export_stats(char* buffer, int max) {
+int SNEPPX_prompt_filter_export_stats(char* buffer, int max) {
     if (!buffer || max <= 0) return 0;
-    int n = snprintf(buffer, (size_t)max, "scans=%d,blocks=%d,patterns=%d", total_scans, total_blocks, ARIX_MAX_PATTERNS);
+    int n = snprintf(buffer, (size_t)max, "scans=%d,blocks=%d,patterns=%d", total_scans, total_blocks, SNEPPX_MAX_PATTERNS);
     return (n > 0) ? n : 0;
 }
 static int hex_detection_enabled = 1;
 static int base64_detection_enabled = 1;
 static int scan_depth = 1;
 static int total_match_count = 0;
-static char last_match_pattern[ARIX_PATTERN_MAX_LEN] = "";
+static char last_match_pattern[SNEPPX_PATTERN_MAX_LEN] = "";
 static size_t hex_decode_local(const char* in, size_t in_len, char* out) {
     size_t out_pos = 0;
     for (size_t i = 0; i + 1 < in_len; i += 2) {
@@ -417,123 +417,123 @@ static size_t b64_decode_local(const char* in, size_t in_len, char* out) {
     }
     return out_pos;
 }
-ArixFilterResult arix_prompt_filter_scan_hex(ArixPromptFilter* pf, const char* text, size_t len) {
-    if (!pf || !text || !hex_detection_enabled) return arix_prompt_filter_scan(pf, text, len);
-    char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
-    if (dlen == 0) return arix_prompt_filter_scan(pf, text, len);
+SNEPPXFilterResult SNEPPX_prompt_filter_scan_hex(SNEPPXPromptFilter* pf, const char* text, size_t len) {
+    if (!pf || !text || !hex_detection_enabled) return SNEPPX_prompt_filter_scan(pf, text, len);
+    char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
+    if (dlen == 0) return SNEPPX_prompt_filter_scan(pf, text, len);
     decoded[dlen] = '\0';
-    ArixFilterResult res = arix_prompt_filter_scan(pf, decoded, dlen);
-    if (res != ARIX_FILTER_CLEAN) { total_match_count++; strncpy(last_match_pattern, "hex_encoded", ARIX_PATTERN_MAX_LEN - 1); }
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, decoded, dlen);
+    if (res != SNEPPX_FILTER_CLEAN) { total_match_count++; strncpy(last_match_pattern, "hex_encoded", SNEPPX_PATTERN_MAX_LEN - 1); }
     return res;
 }
-ArixFilterResult arix_prompt_filter_scan_base64(ArixPromptFilter* pf, const char* text, size_t len) {
-    if (!pf || !text || !base64_detection_enabled) return arix_prompt_filter_scan(pf, text, len);
-    char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = b64_decode_local(text, len, decoded);
-    if (dlen == 0) return arix_prompt_filter_scan(pf, text, len);
+SNEPPXFilterResult SNEPPX_prompt_filter_scan_base64(SNEPPXPromptFilter* pf, const char* text, size_t len) {
+    if (!pf || !text || !base64_detection_enabled) return SNEPPX_prompt_filter_scan(pf, text, len);
+    char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = b64_decode_local(text, len, decoded);
+    if (dlen == 0) return SNEPPX_prompt_filter_scan(pf, text, len);
     decoded[dlen] = '\0';
-    ArixFilterResult res = arix_prompt_filter_scan(pf, decoded, dlen);
-    if (res != ARIX_FILTER_CLEAN) { total_match_count++; strncpy(last_match_pattern, "base64_encoded", ARIX_PATTERN_MAX_LEN - 1); }
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, decoded, dlen);
+    if (res != SNEPPX_FILTER_CLEAN) { total_match_count++; strncpy(last_match_pattern, "base64_encoded", SNEPPX_PATTERN_MAX_LEN - 1); }
     return res;
 }
-int arix_prompt_filter_get_match_count(void) { return total_match_count; }
-int arix_prompt_filter_get_last_match(char* buffer, size_t size) {
+int SNEPPX_prompt_filter_get_match_count(void) { return total_match_count; }
+int SNEPPX_prompt_filter_get_last_match(char* buffer, size_t size) {
     if (!buffer || size == 0) return -1;
     strncpy(buffer, last_match_pattern, size - 1); buffer[size - 1] = '\0';
     return (int)strlen(buffer);
 }
-void arix_prompt_filter_enable_hex_detection(int enabled) { hex_detection_enabled = (enabled != 0); }
-void arix_prompt_filter_enable_base64_detection(int enabled) { base64_detection_enabled = (enabled != 0); }
-int arix_prompt_filter_set_scan_depth(int depth) {
+void SNEPPX_prompt_filter_enable_hex_detection(int enabled) { hex_detection_enabled = (enabled != 0); }
+void SNEPPX_prompt_filter_enable_base64_detection(int enabled) { base64_detection_enabled = (enabled != 0); }
+int SNEPPX_prompt_filter_set_scan_depth(int depth) {
     if (depth < 0) return -1;
     scan_depth = depth; return 0;
 }
-int arix_prompt_filter_get_scan_depth(void) { return scan_depth; }
-int arix_prompt_filter_is_hex_detection_enabled(void) { return hex_detection_enabled; }
-int arix_prompt_filter_is_base64_detection_enabled(void) { return base64_detection_enabled; }
-void arix_prompt_filter_reset_match_count(void) { total_match_count = 0; last_match_pattern[0] = '\0'; }
-int arix_prompt_filter_scan_deep_recursive(ArixPromptFilter* pf, const char* text, size_t len, int depth) {
-    if (!pf || !text) return ARIX_FILTER_CLEAN;
-    ArixFilterResult res = arix_prompt_filter_scan(pf, text, len);
-    if (res != ARIX_FILTER_CLEAN || depth <= 0) return res;
-    char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
-    if (dlen > 0) { decoded[dlen] = '\0'; res = arix_prompt_filter_scan(pf, decoded, dlen); if (res != ARIX_FILTER_CLEAN) return res; }
+int SNEPPX_prompt_filter_get_scan_depth(void) { return scan_depth; }
+int SNEPPX_prompt_filter_is_hex_detection_enabled(void) { return hex_detection_enabled; }
+int SNEPPX_prompt_filter_is_base64_detection_enabled(void) { return base64_detection_enabled; }
+void SNEPPX_prompt_filter_reset_match_count(void) { total_match_count = 0; last_match_pattern[0] = '\0'; }
+int SNEPPX_prompt_filter_scan_deep_recursive(SNEPPXPromptFilter* pf, const char* text, size_t len, int depth) {
+    if (!pf || !text) return SNEPPX_FILTER_CLEAN;
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, text, len);
+    if (res != SNEPPX_FILTER_CLEAN || depth <= 0) return res;
+    char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
+    if (dlen > 0) { decoded[dlen] = '\0'; res = SNEPPX_prompt_filter_scan(pf, decoded, dlen); if (res != SNEPPX_FILTER_CLEAN) return res; }
     dlen = b64_decode_local(text, len, decoded);
-    if (dlen > 0) { decoded[dlen] = '\0'; res = arix_prompt_filter_scan(pf, decoded, dlen); if (res != ARIX_FILTER_CLEAN) return res; }
-    return arix_prompt_filter_scan_deep_recursive(pf, decoded, dlen, depth - 1);
+    if (dlen > 0) { decoded[dlen] = '\0'; res = SNEPPX_prompt_filter_scan(pf, decoded, dlen); if (res != SNEPPX_FILTER_CLEAN) return res; }
+    return SNEPPX_prompt_filter_scan_deep_recursive(pf, decoded, dlen, depth - 1);
 }
-int arix_prompt_filter_get_total_scans(void) { return total_scans; }
-int arix_prompt_filter_get_total_blocks(void) { return total_blocks; }
-void arix_prompt_filter_reset_stats(void) { total_scans = 0; total_blocks = 0; total_match_count = 0; }
-int arix_prompt_filter_get_active_pattern_count(ArixPromptFilter* pf) {
+int SNEPPX_prompt_filter_get_total_scans(void) { return total_scans; }
+int SNEPPX_prompt_filter_get_total_blocks(void) { return total_blocks; }
+void SNEPPX_prompt_filter_reset_stats(void) { total_scans = 0; total_blocks = 0; total_match_count = 0; }
+int SNEPPX_prompt_filter_get_active_pattern_count(SNEPPXPromptFilter* pf) {
     if (!pf) return -1; int count = 0;
     for (int i = 0; i < pf->pattern_count; i++) { if (pf->patterns[i].is_active) count++; }
     return count;
 }
-ArixFilterResult arix_prompt_filter_classify_text(ArixPromptFilter* pf, const char* text, size_t len) {
-    if (!pf || !text) return ARIX_FILTER_CLEAN;
-    ArixFilterResult res = arix_prompt_filter_scan(pf, text, len);
-    if (res != ARIX_FILTER_CLEAN) return res;
-    if (hex_detection_enabled) { res = arix_prompt_filter_scan_hex(pf, text, len); if (res != ARIX_FILTER_CLEAN) return res; }
-    if (base64_detection_enabled) { res = arix_prompt_filter_scan_base64(pf, text, len); }
+SNEPPXFilterResult SNEPPX_prompt_filter_classify_text(SNEPPXPromptFilter* pf, const char* text, size_t len) {
+    if (!pf || !text) return SNEPPX_FILTER_CLEAN;
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, text, len);
+    if (res != SNEPPX_FILTER_CLEAN) return res;
+    if (hex_detection_enabled) { res = SNEPPX_prompt_filter_scan_hex(pf, text, len); if (res != SNEPPX_FILTER_CLEAN) return res; }
+    if (base64_detection_enabled) { res = SNEPPX_prompt_filter_scan_base64(pf, text, len); }
     return res;
 }
-int arix_prompt_filter_get_pattern_at(ArixPromptFilter* pf, int index, char* buffer, size_t buf_size) {
+int SNEPPX_prompt_filter_get_pattern_at(SNEPPXPromptFilter* pf, int index, char* buffer, size_t buf_size) {
     if (!pf || index < 0 || index >= pf->pattern_count || !buffer || buf_size == 0) return -1;
     strncpy(buffer, pf->patterns[index].pattern, buf_size - 1); buffer[buf_size - 1] = '\0';
     return (int)strlen(buffer);
 }
-int arix_prompt_filter_get_classification_at(ArixPromptFilter* pf, int index) {
+int SNEPPX_prompt_filter_get_classification_at(SNEPPXPromptFilter* pf, int index) {
     if (!pf || index < 0 || index >= pf->pattern_count) return -1;
     return (int)pf->patterns[index].classification;
 }
-int arix_prompt_filter_set_pattern(ArixPromptFilter* pf, int index, const char* pattern, ArixFilterResult classification) {
-    if (!pf || index < 0 || index >= ARIX_MAX_PATTERNS || !pattern) return -1;
-    strncpy(pf->patterns[index].pattern, pattern, ARIX_PATTERN_MAX_LEN - 1);
+int SNEPPX_prompt_filter_set_pattern(SNEPPXPromptFilter* pf, int index, const char* pattern, SNEPPXFilterResult classification) {
+    if (!pf || index < 0 || index >= SNEPPX_MAX_PATTERNS || !pattern) return -1;
+    strncpy(pf->patterns[index].pattern, pattern, SNEPPX_PATTERN_MAX_LEN - 1);
     pf->patterns[index].classification = classification;
     pf->patterns[index].is_active = 1;
     if (index >= pf->pattern_count) pf->pattern_count = index + 1;
     return 0;
 }
-int arix_prompt_filter_scan_batch(ArixPromptFilter* pf, const char** prompts, const size_t* lens, int count, ArixFilterResult* results) {
+int SNEPPX_prompt_filter_scan_batch(SNEPPXPromptFilter* pf, const char** prompts, const size_t* lens, int count, SNEPPXFilterResult* results) {
     if (!pf || !prompts || !lens || !results || count <= 0) return -1;
-    for (int i = 0; i < count; i++) results[i] = arix_prompt_filter_scan(pf, prompts[i], lens[i]);
+    for (int i = 0; i < count; i++) results[i] = SNEPPX_prompt_filter_scan(pf, prompts[i], lens[i]);
     return 0;
 }
-int arix_prompt_filter_scan_encoded_recursive(ArixPromptFilter* pf, const char* text, size_t len) {
-    if (!pf || !text) return ARIX_FILTER_CLEAN;
-    ArixFilterResult res = arix_prompt_filter_scan(pf, text, len);
-    if (res != ARIX_FILTER_CLEAN) return res;
+int SNEPPX_prompt_filter_scan_encoded_recursive(SNEPPXPromptFilter* pf, const char* text, size_t len) {
+    if (!pf || !text) return SNEPPX_FILTER_CLEAN;
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, text, len);
+    if (res != SNEPPX_FILTER_CLEAN) return res;
     for (int d = 0; d < scan_depth; d++) {
-        char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = 0;
+        char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = 0;
         if (hex_detection_enabled) {
             dlen = hex_decode_local(text, len, decoded);
-            if (dlen > 0) { decoded[dlen] = '\0'; res = arix_prompt_filter_scan(pf, decoded, dlen); if (res != ARIX_FILTER_CLEAN) return res; text = decoded; len = dlen; continue; }
+            if (dlen > 0) { decoded[dlen] = '\0'; res = SNEPPX_prompt_filter_scan(pf, decoded, dlen); if (res != SNEPPX_FILTER_CLEAN) return res; text = decoded; len = dlen; continue; }
         }
         if (base64_detection_enabled) {
             dlen = b64_decode_local(text, len, decoded);
-            if (dlen > 0) { decoded[dlen] = '\0'; res = arix_prompt_filter_scan(pf, decoded, dlen); if (res != ARIX_FILTER_CLEAN) return res; text = decoded; len = dlen; continue; }
+            if (dlen > 0) { decoded[dlen] = '\0'; res = SNEPPX_prompt_filter_scan(pf, decoded, dlen); if (res != SNEPPX_FILTER_CLEAN) return res; text = decoded; len = dlen; continue; }
         }
         break;
     }
-    return ARIX_FILTER_CLEAN;
+    return SNEPPX_FILTER_CLEAN;
 }
-int arix_prompt_filter_scan_hex_at_depth(ArixPromptFilter* pf, const char* text, size_t len, int depth) {
-    if (!pf || !text || depth <= 0) return arix_prompt_filter_scan(pf, text, len);
-    char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
-    if (dlen == 0) return arix_prompt_filter_scan(pf, text, len);
+int SNEPPX_prompt_filter_scan_hex_at_depth(SNEPPXPromptFilter* pf, const char* text, size_t len, int depth) {
+    if (!pf || !text || depth <= 0) return SNEPPX_prompt_filter_scan(pf, text, len);
+    char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = hex_decode_local(text, len, decoded);
+    if (dlen == 0) return SNEPPX_prompt_filter_scan(pf, text, len);
     decoded[dlen] = '\0';
-    ArixFilterResult res = arix_prompt_filter_scan(pf, decoded, dlen);
-    if (res != ARIX_FILTER_CLEAN) return res;
-    if (depth > 1) return arix_prompt_filter_scan_hex_at_depth(pf, decoded, dlen, depth - 1);
-    return ARIX_FILTER_CLEAN;
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, decoded, dlen);
+    if (res != SNEPPX_FILTER_CLEAN) return res;
+    if (depth > 1) return SNEPPX_prompt_filter_scan_hex_at_depth(pf, decoded, dlen, depth - 1);
+    return SNEPPX_FILTER_CLEAN;
 }
-int arix_prompt_filter_scan_base64_at_depth(ArixPromptFilter* pf, const char* text, size_t len, int depth) {
-    if (!pf || !text || depth <= 0) return arix_prompt_filter_scan(pf, text, len);
-    char decoded[ARIX_PATTERN_MAX_LEN]; size_t dlen = b64_decode_local(text, len, decoded);
-    if (dlen == 0) return arix_prompt_filter_scan(pf, text, len);
+int SNEPPX_prompt_filter_scan_base64_at_depth(SNEPPXPromptFilter* pf, const char* text, size_t len, int depth) {
+    if (!pf || !text || depth <= 0) return SNEPPX_prompt_filter_scan(pf, text, len);
+    char decoded[SNEPPX_PATTERN_MAX_LEN]; size_t dlen = b64_decode_local(text, len, decoded);
+    if (dlen == 0) return SNEPPX_prompt_filter_scan(pf, text, len);
     decoded[dlen] = '\0';
-    ArixFilterResult res = arix_prompt_filter_scan(pf, decoded, dlen);
-    if (res != ARIX_FILTER_CLEAN) return res;
-    if (depth > 1) return arix_prompt_filter_scan_base64_at_depth(pf, decoded, dlen, depth - 1);
-    return ARIX_FILTER_CLEAN;
+    SNEPPXFilterResult res = SNEPPX_prompt_filter_scan(pf, decoded, dlen);
+    if (res != SNEPPX_FILTER_CLEAN) return res;
+    if (depth > 1) return SNEPPX_prompt_filter_scan_base64_at_depth(pf, decoded, dlen, depth - 1);
+    return SNEPPX_FILTER_CLEAN;
 }

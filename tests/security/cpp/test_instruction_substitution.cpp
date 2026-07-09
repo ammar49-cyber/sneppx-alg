@@ -23,13 +23,13 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_nand_and_substitution(void) {
-    arix::ArixObfSubst subst;
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfSubst subst;
+    SNEPPX::SNEPPXObfCFG cfg;
     uint64_t block_id = cfg.add_block();
     auto block = cfg.blocks[block_id];
 
-    arix::ArixObfInstruction inst;
-    inst.type = arix::ArixObfInstType::AND;
+    SNEPPX::SNEPPXObfInstruction inst;
+    inst.type = SNEPPX::SNEPPXObfInstType::AND;
     inst.operand1 = "a";
     inst.operand2 = "b";
     inst.result = "r";
@@ -40,19 +40,19 @@ static void test_nand_and_substitution(void) {
     /* AND should be replaced with NAND-based sequence */
     bool found_nand = false;
     for (auto& instr : block->instructions) {
-        if (instr.type == arix::ArixObfInstType::NAND) found_nand = true;
+        if (instr.type == SNEPPX::SNEPPXObfInstType::NAND) found_nand = true;
     }
     ASSERT(found_nand, "AND substitution uses NAND instructions");
 }
 
 static void test_nand_or_substitution(void) {
-    arix::ArixObfSubst subst;
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfSubst subst;
+    SNEPPX::SNEPPXObfCFG cfg;
     uint64_t block_id = cfg.add_block();
     auto block = cfg.blocks[block_id];
 
-    arix::ArixObfInstruction inst;
-    inst.type = arix::ArixObfInstType::OR;
+    SNEPPX::SNEPPXObfInstruction inst;
+    inst.type = SNEPPX::SNEPPXObfInstType::OR;
     inst.operand1 = "x";
     inst.operand2 = "y";
     inst.result = "z";
@@ -62,19 +62,19 @@ static void test_nand_or_substitution(void) {
 
     bool found_nand = false;
     for (auto& instr : block->instructions) {
-        if (instr.type == arix::ArixObfInstType::NAND) found_nand = true;
+        if (instr.type == SNEPPX::SNEPPXObfInstType::NAND) found_nand = true;
     }
     ASSERT(found_nand, "OR substitution uses NAND instructions");
 }
 
 static void test_nand_xor_substitution(void) {
-    arix::ArixObfSubst subst;
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfSubst subst;
+    SNEPPX::SNEPPXObfCFG cfg;
     uint64_t block_id = cfg.add_block();
     auto block = cfg.blocks[block_id];
 
-    arix::ArixObfInstruction inst;
-    inst.type = arix::ArixObfInstType::XOR;
+    SNEPPX::SNEPPXObfInstruction inst;
+    inst.type = SNEPPX::SNEPPXObfInstType::XOR;
     inst.operand1 = "p";
     inst.operand2 = "q";
     inst.result = "r";
@@ -85,11 +85,11 @@ static void test_nand_xor_substitution(void) {
     bool found_nand = false;
     int nand_count = 0;
     for (auto& instr : block->instructions) {
-        if (instr.type == arix::ArixObfInstType::NAND) {
+        if (instr.type == SNEPPX::SNEPPXObfInstType::NAND) {
             found_nand = true;
             nand_count++;
         }
-        ASSERT(instr.type != arix::ArixObfInstType::NOP, "no NOP instructions remain");
+        ASSERT(instr.type != SNEPPX::SNEPPXObfInstType::NOP, "no NOP instructions remain");
     }
     ASSERT(found_nand, "XOR substitution uses NAND instructions");
     ASSERT(nand_count >= 3, "XOR requires at least 3 NANDs");

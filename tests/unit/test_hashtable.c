@@ -22,48 +22,48 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_hashtable_create_destroy(void) {
-    ArixHashTable* ht = arix_hashtable_create(64);
+    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
     ASSERT(ht != NULL, "hashtable created");
     ASSERT(ht->size == 0, "empty hashtable");
-    arix_hashtable_destroy(ht);
+    SNEPPX_hashtable_destroy(ht);
 }
 
 static void test_hashtable_insert_lookup(void) {
-    ArixHashTable* ht = arix_hashtable_create(64);
-    arix_hashtable_insert(ht, "key1", (void*)42);
-    arix_hashtable_insert(ht, "key2", (void*)84);
+    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
+    SNEPPX_hashtable_insert(ht, "key1", (void*)42);
+    SNEPPX_hashtable_insert(ht, "key2", (void*)84);
     ASSERT(ht->size == 2, "two entries inserted");
-    void* val = arix_hashtable_lookup(ht, "key1");
+    void* val = SNEPPX_hashtable_lookup(ht, "key1");
     ASSERT(val == (void*)42, "key1 lookup");
-    val = arix_hashtable_lookup(ht, "key2");
+    val = SNEPPX_hashtable_lookup(ht, "key2");
     ASSERT(val == (void*)84, "key2 lookup");
-    val = arix_hashtable_lookup(ht, "nonexistent");
+    val = SNEPPX_hashtable_lookup(ht, "nonexistent");
     ASSERT(val == NULL, "missing key returns NULL");
-    arix_hashtable_destroy(ht);
+    SNEPPX_hashtable_destroy(ht);
 }
 
 static void test_hashtable_remove(void) {
-    ArixHashTable* ht = arix_hashtable_create(64);
-    arix_hashtable_insert(ht, "a", (void*)1);
-    arix_hashtable_insert(ht, "b", (void*)2);
-    arix_hashtable_remove(ht, "a");
+    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
+    SNEPPX_hashtable_insert(ht, "a", (void*)1);
+    SNEPPX_hashtable_insert(ht, "b", (void*)2);
+    SNEPPX_hashtable_remove(ht, "a");
     ASSERT(ht->size == 1, "one entry after remove");
-    void* val = arix_hashtable_lookup(ht, "a");
+    void* val = SNEPPX_hashtable_lookup(ht, "a");
     ASSERT(val == NULL, "removed key absent");
-    arix_hashtable_destroy(ht);
+    SNEPPX_hashtable_destroy(ht);
 }
 
 static void test_hashtable_clear(void) {
-    ArixHashTable* ht = arix_hashtable_create(64);
+    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
     for (int i = 0; i < 10; i++) {
         char key[8];
         sprintf(key, "k%d", i);
-        arix_hashtable_insert(ht, key, (void*)(intptr_t)i);
+        SNEPPX_hashtable_insert(ht, key, (void*)(intptr_t)i);
     }
     ASSERT(ht->size == 10, "10 entries");
-    arix_hashtable_clear(ht);
+    SNEPPX_hashtable_clear(ht);
     ASSERT(ht->size == 0, "cleared");
-    arix_hashtable_destroy(ht);
+    SNEPPX_hashtable_destroy(ht);
 }
 
 int main(void) {

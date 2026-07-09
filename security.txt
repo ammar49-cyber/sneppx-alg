@@ -1,9 +1,9 @@
 -----BEGIN SECURITY CONTACT-----
-Contact: mailto:algoarix@gmail.com
+Contact: mailto:algoSNEPPX@gmail.com
 Expires: 2027-06-24T00:00:00Z
-Acknowledgments: https://github.com/ammar49-cyber/arixalgo/blob/main/SECURITY.md
-Policy: https://github.com/ammar49-cyber/arixalgo/blob/main/SECURITY.md
+Acknowledgments: https://github.com/ammar49-cyber/SNEPPX_ALG/blob/main/SECURITY.md
+Policy: https://github.com/ammar49-cyber/SNEPPX_ALG/blob/main/SECURITY.md
 Hiring: no
 Preferred-Languages: en
-Canonical: https://arix.dev/security.txt
+Canonical: https://SNEPPX.dev/security.txt
 -----END SECURITY CONTACT-----

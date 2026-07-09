@@ -21,25 +21,25 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_lock_init_destroy(void) {
-    ArixLock* lock = arix_lock_init();
+    SNEPPXLock* lock = SNEPPX_lock_init();
     ASSERT(lock != NULL, "lock initialized");
-    arix_lock_destroy(lock);
+    SNEPPX_lock_destroy(lock);
 }
 
 static void test_lock_acquire_release(void) {
-    ArixLock* lock = arix_lock_init();
-    arix_lock_acquire(lock);
+    SNEPPXLock* lock = SNEPPX_lock_init();
+    SNEPPX_lock_acquire(lock);
     ASSERT(lock->held == 1 || lock->held == 0, "lock acquired");
-    arix_lock_release(lock);
-    arix_lock_destroy(lock);
+    SNEPPX_lock_release(lock);
+    SNEPPX_lock_destroy(lock);
 }
 
 static void test_lock_try_acquire(void) {
-    ArixLock* lock = arix_lock_init();
-    int ok = arix_lock_try_acquire(lock);
+    SNEPPXLock* lock = SNEPPX_lock_init();
+    int ok = SNEPPX_lock_try_acquire(lock);
     ASSERT(ok == 0 || ok == 1, "try_acquire returns bool");
-    arix_lock_release(lock);
-    arix_lock_destroy(lock);
+    SNEPPX_lock_release(lock);
+    SNEPPX_lock_destroy(lock);
 }
 
 int main(void) {

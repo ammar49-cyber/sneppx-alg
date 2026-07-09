@@ -1,6 +1,6 @@
 /*
  * CUDA Driver Implementation — v1.0
- * PURPOSE: Real CUDA Runtime API calls wrapped behind ArixCUDA interface.
+ * PURPOSE: Real CUDA Runtime API calls wrapped behind SNEPPXCUDA interface.
  */
 
 #include "cuda_driver.h"
@@ -8,12 +8,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 #include <cuda.h>
 
-static cublasHandle_t get_blas_handle(ArixCUDAContext* ctx) {
+static cublasHandle_t get_blas_handle(SNEPPXCUDAContext* ctx) {
     return ctx ? (cublasHandle_t)ctx->blas_handle : NULL;
 }
 #else
@@ -42,20 +42,20 @@ typedef struct { int unused; } cudaError_t;
 #define cudaMemcpyDeviceToDevice 3
 #endif
 
-static void set_error(ArixCUDAContext* ctx, int err) {
+static void set_error(SNEPPXCUDAContext* ctx, int err) {
     if (ctx) ctx->error_state = err;
 }
 
-int arix_cuda_register_driver(void) {
+int SNEPPX_cuda_register_driver(void) {
     /* In the future, this registers into a global driver ops table */
     return 0;
 }
 
 /* ---------- Device lifecycle ---------- */
 
-int arix_cuda_get_device_count(int* count) {
+int SNEPPX_cuda_get_device_count(int* count) {
     if (!count) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     int c = 0;
     cudaError_t err = cudaGetDeviceCount(&c);
     if (err != cudaSuccess) return -1;
@@ -67,10 +67,10 @@ int arix_cuda_get_device_count(int* count) {
 #endif
 }
 
-int arix_cuda_get_device_props(int dev_id, ArixCUDADeviceProps* props) {
+int SNEPPX_cuda_get_device_props(int dev_id, SNEPPXCUDADeviceProps* props) {
     if (!props) return -1;
     memset(props, 0, sizeof(*props));
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     cudaDeviceProp p;
     cudaError_t err = cudaGetDeviceProperties(&p, dev_id);
     if (err != cudaSuccess) return -1;
@@ -95,8 +95,8 @@ int arix_cuda_get_device_props(int dev_id, ArixCUDADeviceProps* props) {
     return 0;
 }
 
-int arix_cuda_set_device(int dev_id) {
-#if defined(ARIX_HAS_CUDA)
+int SNEPPX_cuda_set_device(int dev_id) {
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaSetDevice(dev_id) == cudaSuccess) ? 0 : -1;
 #else
     (void)dev_id;
@@ -104,9 +104,9 @@ int arix_cuda_set_device(int dev_id) {
 #endif
 }
 
-int arix_cuda_get_device(int* dev_id) {
+int SNEPPX_cuda_get_device(int* dev_id) {
     if (!dev_id) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     int d = 0;
     if (cudaGetDevice(&d) != cudaSuccess) return -1;
     *dev_id = d;
@@ -119,13 +119,13 @@ int arix_cuda_get_device(int* dev_id) {
 
 /* ---------- Context ---------- */
 
-ArixCUDAContext* arix_cuda_create_context(int device_id) {
-    ArixCUDAContext* ctx = (ArixCUDAContext*)calloc(1, sizeof(ArixCUDAContext));
+SNEPPXCUDAContext* SNEPPX_cuda_create_context(int device_id) {
+    SNEPPXCUDAContext* ctx = (SNEPPXCUDAContext*)calloc(1, sizeof(SNEPPXCUDAContext));
     if (!ctx) return NULL;
     ctx->device_id = device_id;
 
-#if defined(ARIX_HAS_CUDA)
-    arix_cuda_get_device_props(device_id, &ctx->props);
+#if defined(SNEPPX_HAS_CUDA)
+    SNEPPX_cuda_get_device_props(device_id, &ctx->props);
 
     cublasHandle_t blas = NULL;
     if (cublasCreate(&blas) != CUBLAS_STATUS_SUCCESS) {
@@ -142,9 +142,9 @@ ArixCUDAContext* arix_cuda_create_context(int device_id) {
     }
     cublasSetStream(blas, stream);
 
-    ctx->streams = (ArixCUDAStream**)calloc(1, sizeof(ArixCUDAStream*));
+    ctx->streams = (SNEPPXCUDAStream**)calloc(1, sizeof(SNEPPXCUDAStream*));
     if (ctx->streams) {
-        ctx->streams[0] = (ArixCUDAStream*)calloc(1, sizeof(ArixCUDAStream));
+        ctx->streams[0] = (SNEPPXCUDAStream*)calloc(1, sizeof(SNEPPXCUDAStream));
         if (ctx->streams[0]) {
             ctx->streams[0]->handle = (void*)stream;
             ctx->streams[0]->device_id = device_id;
@@ -156,9 +156,9 @@ ArixCUDAContext* arix_cuda_create_context(int device_id) {
     return ctx;
 }
 
-void arix_cuda_destroy_context(ArixCUDAContext* ctx) {
+void SNEPPX_cuda_destroy_context(SNEPPXCUDAContext* ctx) {
     if (!ctx) return;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     if (ctx->blas_handle) cublasDestroy((cublasHandle_t)ctx->blas_handle);
     if (ctx->streams) {
         for (int i = 0; i < ctx->num_streams; i++) {
@@ -174,17 +174,17 @@ void arix_cuda_destroy_context(ArixCUDAContext* ctx) {
     free(ctx);
 }
 
-int arix_cuda_context_error(const ArixCUDAContext* ctx) {
+int SNEPPX_cuda_context_error(const SNEPPXCUDAContext* ctx) {
     return ctx ? ctx->error_state : -1;
 }
 
 /* ---------- Stream / event ---------- */
 
-int arix_cuda_stream_create(ArixCUDAStream** stream, int priority) {
+int SNEPPX_cuda_stream_create(SNEPPXCUDAStream** stream, int priority) {
     if (!stream) return -1;
-    *stream = (ArixCUDAStream*)calloc(1, sizeof(ArixCUDAStream));
+    *stream = (SNEPPXCUDAStream*)calloc(1, sizeof(SNEPPXCUDAStream));
     if (!*stream) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     cudaStream_t s = NULL;
     cudaError_t err = cudaStreamCreateWithPriority(&s, cudaStreamDefault, priority);
     if (err != cudaSuccess) { free(*stream); *stream = NULL; return -1; }
@@ -194,28 +194,28 @@ int arix_cuda_stream_create(ArixCUDAStream** stream, int priority) {
     return 0;
 }
 
-void arix_cuda_stream_destroy(ArixCUDAStream* stream) {
+void SNEPPX_cuda_stream_destroy(SNEPPXCUDAStream* stream) {
     if (!stream) return;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     if (stream->handle) cudaStreamDestroy((cudaStream_t)stream->handle);
 #endif
     free(stream);
 }
 
-int arix_cuda_stream_synchronize(ArixCUDAStream* stream) {
+int SNEPPX_cuda_stream_synchronize(SNEPPXCUDAStream* stream) {
     if (!stream) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaStreamSynchronize((cudaStream_t)stream->handle) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_event_create(ArixCUDAEvent** event) {
+int SNEPPX_cuda_event_create(SNEPPXCUDAEvent** event) {
     if (!event) return -1;
-    *event = (ArixCUDAEvent*)calloc(1, sizeof(ArixCUDAEvent));
+    *event = (SNEPPXCUDAEvent*)calloc(1, sizeof(SNEPPXCUDAEvent));
     if (!*event) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     cudaEvent_t e = NULL;
     if (cudaEventCreate(&e) != cudaSuccess) { free(*event); *event = NULL; return -1; }
     (*event)->handle = (void*)e;
@@ -223,35 +223,35 @@ int arix_cuda_event_create(ArixCUDAEvent** event) {
     return 0;
 }
 
-void arix_cuda_event_destroy(ArixCUDAEvent* event) {
+void SNEPPX_cuda_event_destroy(SNEPPXCUDAEvent* event) {
     if (!event) return;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     if (event->handle) cudaEventDestroy((cudaEvent_t)event->handle);
 #endif
     free(event);
 }
 
-int arix_cuda_event_record(ArixCUDAEvent* event, ArixCUDAStream* stream) {
+int SNEPPX_cuda_event_record(SNEPPXCUDAEvent* event, SNEPPXCUDAStream* stream) {
     if (!event || !stream) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaEventRecord((cudaEvent_t)event->handle, (cudaStream_t)stream->handle) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_event_synchronize(ArixCUDAEvent* event) {
+int SNEPPX_cuda_event_synchronize(SNEPPXCUDAEvent* event) {
     if (!event) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaEventSynchronize((cudaEvent_t)event->handle) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_event_elapsed_ms(float* ms, ArixCUDAEvent* start, ArixCUDAEvent* end) {
+int SNEPPX_cuda_event_elapsed_ms(float* ms, SNEPPXCUDAEvent* start, SNEPPXCUDAEvent* end) {
     if (!ms || !start || !end) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaEventElapsedTime(ms, (cudaEvent_t)start->handle, (cudaEvent_t)end->handle) == cudaSuccess) ? 0 : -1;
 #else
     *ms = 0.0f;
@@ -261,9 +261,9 @@ int arix_cuda_event_elapsed_ms(float* ms, ArixCUDAEvent* start, ArixCUDAEvent* e
 
 /* ---------- Memory ---------- */
 
-int arix_cuda_mem_alloc(void** dev_ptr, size_t bytes) {
+int SNEPPX_cuda_mem_alloc(void** dev_ptr, size_t bytes) {
     if (!dev_ptr) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaMalloc(dev_ptr, bytes) == cudaSuccess) ? 0 : -1;
 #else
     *dev_ptr = NULL;
@@ -271,45 +271,45 @@ int arix_cuda_mem_alloc(void** dev_ptr, size_t bytes) {
 #endif
 }
 
-int arix_cuda_mem_free(void* dev_ptr) {
+int SNEPPX_cuda_mem_free(void* dev_ptr) {
     if (!dev_ptr) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaFree(dev_ptr) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
+int SNEPPX_cuda_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
     if (!dev_dst || !host_src) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaMemcpy(dev_dst, host_src, bytes, cudaMemcpyHostToDevice) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
+int SNEPPX_cuda_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
     if (!host_dst || !dev_src) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaMemcpy(host_dst, dev_src, bytes, cudaMemcpyDeviceToHost) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
+int SNEPPX_cuda_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
     if (!dev_dst || !dev_src) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaMemcpy(dev_dst, dev_src, bytes, cudaMemcpyDeviceToDevice) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
 #endif
 }
 
-int arix_cuda_mem_set(void* dev_ptr, int value, size_t bytes) {
+int SNEPPX_cuda_mem_set(void* dev_ptr, int value, size_t bytes) {
     if (!dev_ptr) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     return (cudaMemset(dev_ptr, value, bytes) == cudaSuccess) ? 0 : -1;
 #else
     return 0;
@@ -318,9 +318,9 @@ int arix_cuda_mem_set(void* dev_ptr, int value, size_t bytes) {
 
 /* ---------- Kernel dispatch ---------- */
 
-int arix_cuda_launch_kernel(const ArixCUDAKernelLaunch* launch) {
+int SNEPPX_cuda_launch_kernel(const SNEPPXCUDAKernelLaunch* launch) {
     if (!launch) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     if (!launch->kernel_func) return -1;
     void* args[] = { /* kernel args would be passed through launch */ };
     cudaError_t err = cudaLaunchKernel(launch->kernel_func,
@@ -334,15 +334,15 @@ int arix_cuda_launch_kernel(const ArixCUDAKernelLaunch* launch) {
 #endif
 }
 
-int arix_cuda_launch_kernel_async(const ArixCUDAKernelLaunch* launch) {
-    return arix_cuda_launch_kernel(launch);
+int SNEPPX_cuda_launch_kernel_async(const SNEPPXCUDAKernelLaunch* launch) {
+    return SNEPPX_cuda_launch_kernel(launch);
 }
 
 /* ---------- Tensor-core GEMM ---------- */
 
-int arix_cuda_tc_gemm(const ArixCUDATensorCoreGemm* desc, ArixCUDAStream* stream) {
+int SNEPPX_cuda_tc_gemm(const SNEPPXCUDATensorCoreGemm* desc, SNEPPXCUDAStream* stream) {
     if (!desc || !stream) return -1;
-#if defined(ARIX_HAS_CUDA)
+#if defined(SNEPPX_HAS_CUDA)
     /* Uses cuBLAS with tensor core op Math mode */
     cudaStream_t s = (cudaStream_t)stream->handle;
     cublasHandle_t blas = NULL;
@@ -367,8 +367,8 @@ int arix_cuda_tc_gemm(const ArixCUDATensorCoreGemm* desc, ArixCUDAStream* stream
 
 /* ---------- Warp primitives ---------- */
 
-uint32_t arix_cuda_warp_ballot(int predicate) {
-#if defined(ARIX_HAS_CUDA) && defined(__CUDACC__)
+uint32_t SNEPPX_cuda_warp_ballot(int predicate) {
+#if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     return __ballot_sync(__activemask(), predicate);
 #else
     (void)predicate;
@@ -376,8 +376,8 @@ uint32_t arix_cuda_warp_ballot(int predicate) {
 #endif
 }
 
-uint32_t arix_cuda_warp_reduce_sum(uint32_t value) {
-#if defined(ARIX_HAS_CUDA) && defined(__CUDACC__)
+uint32_t SNEPPX_cuda_warp_reduce_sum(uint32_t value) {
+#if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     value += __shfl_xor_sync(__activemask(), value, 16);
     value += __shfl_xor_sync(__activemask(), value, 8);
     value += __shfl_xor_sync(__activemask(), value, 4);
@@ -389,8 +389,8 @@ uint32_t arix_cuda_warp_reduce_sum(uint32_t value) {
 #endif
 }
 
-float arix_cuda_warp_reduce_sum_f32(float value) {
-#if defined(ARIX_HAS_CUDA) && defined(__CUDACC__)
+float SNEPPX_cuda_warp_reduce_sum_f32(float value) {
+#if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     value += __shfl_xor_sync(__activemask(), value, 16);
     value += __shfl_xor_sync(__activemask(), value, 8);
     value += __shfl_xor_sync(__activemask(), value, 4);
@@ -404,8 +404,8 @@ float arix_cuda_warp_reduce_sum_f32(float value) {
 
 /* ---------- Error string ---------- */
 
-const char* arix_cuda_error_string(int error_code) {
-#if defined(ARIX_HAS_CUDA)
+const char* SNEPPX_cuda_error_string(int error_code) {
+#if defined(SNEPPX_HAS_CUDA)
     return cudaGetErrorString((cudaError_t)error_code);
 #else
     (void)error_code;

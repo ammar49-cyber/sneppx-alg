@@ -31,77 +31,77 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_tape_create_destroy(void) {
-    ArixTape* tape = arix_tape_create();
+    SNEPPXTape* tape = SNEPPX_tape_create();
     ASSERT(tape != NULL, "tape created");
-    arix_tape_destroy(tape);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_variable_create(void) {
     size_t shape[] = {2, 3};
-    ArixTensor* t = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor created");
-    ArixVariable* v = arix_variable_create(t, 1);
+    SNEPPXVariable* v = SNEPPX_variable_create(t, 1);
     ASSERT(v != NULL, "variable created");
     ASSERT(v->requires_grad == 1, "requires_grad set");
-    arix_variable_destroy(v);
+    SNEPPX_variable_destroy(v);
 }
 
 static void test_tape_record_and_backward(void) {
-    ArixTape* tape = arix_tape_create();
+    SNEPPXTape* tape = SNEPPX_tape_create();
     size_t shape[] = {2, 2};
-    ArixTensor* a_t = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixVariable* a = arix_variable_create(a_t, 1);
-    arix_tape_record(tape, a);
+    SNEPPXTensor* a_t = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXVariable* a = SNEPPX_variable_create(a_t, 1);
+    SNEPPX_tape_record(tape, a);
 
-    ArixTensor* b_t = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixVariable* b = arix_variable_create(b_t, 1);
-    arix_tape_record(tape, b);
+    SNEPPXTensor* b_t = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXVariable* b = SNEPPX_variable_create(b_t, 1);
+    SNEPPX_tape_record(tape, b);
 
-    ArixVariable* c = arix_add(tape, a, b);
+    SNEPPXVariable* c = SNEPPX_add(tape, a, b);
     ASSERT(c != NULL, "add op created");
 
-    ArixVariable* d = arix_mul(tape, c, a);
+    SNEPPXVariable* d = SNEPPX_mul(tape, c, a);
     ASSERT(d != NULL, "mul op created");
 
-    arix_tape_backward(tape, d);
+    SNEPPX_tape_backward(tape, d);
     ASSERT(a->grad != NULL, "gradient computed for a");
     ASSERT(b->grad != NULL, "gradient computed for b");
 
-    arix_variable_destroy(d);
-    arix_variable_destroy(c);
-    arix_variable_destroy(b);
-    arix_variable_destroy(a);
-    arix_tape_destroy(tape);
+    SNEPPX_variable_destroy(d);
+    SNEPPX_variable_destroy(c);
+    SNEPPX_variable_destroy(b);
+    SNEPPX_variable_destroy(a);
+    SNEPPX_tape_destroy(tape);
 }
 
 static void test_tape_ops(void) {
-    ArixTape* tape = arix_tape_create();
+    SNEPPXTape* tape = SNEPPX_tape_create();
     size_t shape[] = {3, 1};
-    ArixTensor* t = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixVariable* v = arix_variable_create(t, 1);
-    arix_tape_record(tape, v);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXVariable* v = SNEPPX_variable_create(t, 1);
+    SNEPPX_tape_record(tape, v);
 
-    ArixVariable* r1 = arix_relu(tape, v);
+    SNEPPXVariable* r1 = SNEPPX_relu(tape, v);
     ASSERT(r1 != NULL, "relu op");
-    ArixVariable* r2 = arix_sigmoid(tape, v);
+    SNEPPXVariable* r2 = SNEPPX_sigmoid(tape, v);
     ASSERT(r2 != NULL, "sigmoid op");
-    ArixVariable* r3 = arix_exp(tape, v);
+    SNEPPXVariable* r3 = SNEPPX_exp(tape, v);
     ASSERT(r3 != NULL, "exp op");
-    ArixVariable* r4 = arix_log(tape, v);
+    SNEPPXVariable* r4 = SNEPPX_log(tape, v);
     ASSERT(r4 != NULL, "log op");
-    ArixVariable* r5 = arix_neg(tape, v);
+    SNEPPXVariable* r5 = SNEPPX_neg(tape, v);
     ASSERT(r5 != NULL, "neg op");
 
-    arix_tape_backward(tape, r5);
+    SNEPPX_tape_backward(tape, r5);
     ASSERT(v->grad != NULL, "grad computed after sequence");
 
-    arix_variable_destroy(r5);
-    arix_variable_destroy(r4);
-    arix_variable_destroy(r3);
-    arix_variable_destroy(r2);
-    arix_variable_destroy(r1);
-    arix_variable_destroy(v);
-    arix_tape_destroy(tape);
+    SNEPPX_variable_destroy(r5);
+    SNEPPX_variable_destroy(r4);
+    SNEPPX_variable_destroy(r3);
+    SNEPPX_variable_destroy(r2);
+    SNEPPX_variable_destroy(r1);
+    SNEPPX_variable_destroy(v);
+    SNEPPX_tape_destroy(tape);
 }
 
 int main(void) {

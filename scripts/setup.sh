@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "=== ARIX-Algo Development Setup ==="
+echo "=== SNEPPX-Algo Development Setup ==="
 echo ""
 
 # Check prerequisites
@@ -21,7 +21,7 @@ fi
 # Configure and build
 echo ""
 echo "=== Configuring (Debug) ==="
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON -DARIX_BUILD_BENCHMARKS=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_BENCHMARKS=ON
 
 echo ""
 echo "=== Building ==="

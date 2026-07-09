@@ -10,12 +10,12 @@ import ctypes
 
 
 class Tensor:
-    """Multi-dimensional array backed by C ArixTensor."""
+    """Multi-dimensional array backed by C SNEPPXTensor."""
 
     def __init__(self, shape: Tuple[int, ...], dtype: str = "float32"):
         self._shape = shape
         self._dtype = dtype
-        self._data = None  # TODO(v0.5): allocate via arix_tensor_create
+        self._data = None  # TODO(v0.5): allocate via SNEPPX_tensor_create
 
     @property
     def shape(self) -> Tuple[int, ...]:

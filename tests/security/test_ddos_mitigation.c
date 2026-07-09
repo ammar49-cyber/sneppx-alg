@@ -4,13 +4,13 @@
 
 int main() {
     ddos_stats_t stats;
-    int blocked = arix_ddos_detect_syn_flood(0xC0A80001, 0xC0A80002);
+    int blocked = SNEPPX_ddos_detect_syn_flood(0xC0A80001, 0xC0A80002);
     printf("SYN flood detection returned %d\n", blocked);
-    arix_ddos_track_connection(0xC0A80001, 0xC0A80002, 1234, 80, 1024);
-    uint32_t cookie = arix_ddos_generate_syn_cookie(0xC0A80001, 0xC0A80002, 1234);
-    int valid = arix_ddos_validate_syn_cookie(cookie, 0xC0A80001, 0xC0A80002, 1234);
+    SNEPPX_ddos_track_connection(0xC0A80001, 0xC0A80002, 1234, 80, 1024);
+    uint32_t cookie = SNEPPX_ddos_generate_syn_cookie(0xC0A80001, 0xC0A80002, 1234);
+    int valid = SNEPPX_ddos_validate_syn_cookie(cookie, 0xC0A80001, 0xC0A80002, 1234);
     printf("SYN cookie valid: %d\n", valid);
-    arix_ddos_get_stats(&stats);
+    SNEPPX_ddos_get_stats(&stats);
     printf("DDoS stats: dropped=%llu blocks=%llu\n", stats.total_packets_dropped, stats.total_blocks_issued);
     printf("PASS: DDoS mitigation OK\n");
     return 0;

@@ -16,22 +16,22 @@
 #include <sys/mman.h>
 #endif
 
-int arix_binary_subst_init(ArixBinarySubst* bs) { if (!bs) return -1; memset(bs,0,sizeof(*bs)); return 0; }
+int SNEPPX_binary_subst_init(SNEPPXBinarySubst* bs) { if (!bs) return -1; memset(bs,0,sizeof(*bs)); return 0; }
 
-int arix_binary_subst_add_rule(ArixBinarySubst* bs, uint8_t orig, uint8_t subst, const uint8_t* prefix, int pcount, const uint8_t* suffix, int scount) {
-    if (!bs||bs->rule_count>=ARIX_OBF_MAX_BINARY_OPS) return -1;
-    ArixBinarySubstRule* r=&bs->rules[bs->rule_count++];
+int SNEPPX_binary_subst_add_rule(SNEPPXBinarySubst* bs, uint8_t orig, uint8_t subst, const uint8_t* prefix, int pcount, const uint8_t* suffix, int scount) {
+    if (!bs||bs->rule_count>=SNEPPX_OBF_MAX_BINARY_OPS) return -1;
+    SNEPPXBinarySubstRule* r=&bs->rules[bs->rule_count++];
     r->original_opcode=orig; r->substitute_opcode=subst;
     r->prefix_count=pcount<4?pcount:4; memcpy(r->prefix_bytes,prefix,r->prefix_count);
     r->suffix_count=scount<4?scount:4; memcpy(r->suffix_bytes,suffix,r->suffix_count);
     return 0;
 }
 
-int arix_binary_subst_apply(ArixBinarySubst* bs, uint8_t* code, size_t* code_len, size_t max_len) {
+int SNEPPX_binary_subst_apply(SNEPPXBinarySubst* bs, uint8_t* code, size_t* code_len, size_t max_len) {
     if (!bs||!code||!code_len) return -1;
     size_t new_len=*code_len;
     for (int r=0;r<bs->rule_count;r++) {
-        ArixBinarySubstRule* rule=&bs->rules[r];
+        SNEPPXBinarySubstRule* rule=&bs->rules[r];
         for (size_t i=0;i<new_len;i++) {
             if (code[i]==rule->original_opcode) {
                 size_t needed=new_len+rule->prefix_count+rule->suffix_count+1;
@@ -50,24 +50,24 @@ int arix_binary_subst_apply(ArixBinarySubst* bs, uint8_t* code, size_t* code_len
     return 0;
 }
 
-int arix_junk_code_init(ArixJunkCodeGen* jcg) {
+int SNEPPX_junk_code_init(SNEPPXJunkCodeGen* jcg) {
     if (!jcg) return -1;
     memset(jcg,0,sizeof(*jcg));
     uint8_t patterns[][16]={
         {0x90},{0x0F,0x1F,0x00},{0x66,0x90},{0x0F,0x1F,0x44,0x00,0x00},{0x66,0x0F,0x1F,0x44,0x00,0x00}
     };
-    for (int i=0;i<5;i++) arix_junk_code_add_pattern(jcg,patterns[i],i==0?1:(i==1?3:(i==2?2:(i==3?5:6))));
+    for (int i=0;i<5;i++) SNEPPX_junk_code_add_pattern(jcg,patterns[i],i==0?1:(i==1?3:(i==2?2:(i==3?5:6))));
     return 0;
 }
 
-int arix_junk_code_add_pattern(ArixJunkCodeGen* jcg, const uint8_t* pattern, size_t len) {
+int SNEPPX_junk_code_add_pattern(SNEPPXJunkCodeGen* jcg, const uint8_t* pattern, size_t len) {
     if (!jcg||!pattern||jcg->junk_count>=64||len>16) return -1;
     memcpy(jcg->junk_code[jcg->junk_count],pattern,len);
     jcg->junk_count++;
     return 0;
 }
 
-int arix_junk_code_insert(ArixJunkCodeGen* jcg, uint8_t* code, size_t* code_len, size_t max_len, int position) {
+int SNEPPX_junk_code_insert(SNEPPXJunkCodeGen* jcg, uint8_t* code, size_t* code_len, size_t max_len, int position) {
     if (!jcg||!code||!code_len||jcg->junk_count==0) return -1;
     int idx=rand()%jcg->junk_count;
     size_t junk_len=0;
@@ -80,7 +80,7 @@ int arix_junk_code_insert(ArixJunkCodeGen* jcg, uint8_t* code, size_t* code_len,
     return 0;
 }
 
-int arix_constant_unfold_int32(uint32_t value, uint8_t* expr_out, size_t* expr_len) {
+int SNEPPX_constant_unfold_int32(uint32_t value, uint8_t* expr_out, size_t* expr_len) {
     if (!expr_out||!expr_len||*expr_len<6) return -1;
     uint32_t a=value/3+1,b=value-a;
     expr_out[0]=0xB8; memcpy(expr_out+1,&a,4);
@@ -89,7 +89,7 @@ int arix_constant_unfold_int32(uint32_t value, uint8_t* expr_out, size_t* expr_l
     return 0;
 }
 
-int arix_constant_unfold_int64(uint64_t value, uint8_t* expr_out, size_t* expr_len) {
+int SNEPPX_constant_unfold_int64(uint64_t value, uint8_t* expr_out, size_t* expr_len) {
     if (!expr_out||!expr_len||*expr_len<12) return -1;
     uint64_t a=value/7+3,b=value-a;
     expr_out[0]=0x48; expr_out[1]=0xB8; memcpy(expr_out+2,&a,8);
@@ -98,7 +98,7 @@ int arix_constant_unfold_int64(uint64_t value, uint8_t* expr_out, size_t* expr_l
     return 0;
 }
 
-int arix_array_obfuscate_indices(const size_t* dims, int ndim, size_t* linearized, size_t* obfuscated_indices, int n_indices) {
+int SNEPPX_array_obfuscate_indices(const size_t* dims, int ndim, size_t* linearized, size_t* obfuscated_indices, int n_indices) {
     if (!dims||!linearized||!obfuscated_indices) return -1;
     size_t stride=1;
     for (int i=ndim-1;i>=0;i--) {
@@ -110,72 +110,72 @@ int arix_array_obfuscate_indices(const size_t* dims, int ndim, size_t* linearize
     return 0;
 }
 
-#define ARIX_FAKE_BLOCK_MAX 32
-#define ARIX_FAKE_BLOCK_SIZE 128
+#define SNEPPX_FAKE_BLOCK_MAX 32
+#define SNEPPX_FAKE_BLOCK_SIZE 128
 
 static struct {
-    uint8_t blocks[ARIX_FAKE_BLOCK_MAX][ARIX_FAKE_BLOCK_SIZE];
-    size_t sizes[ARIX_FAKE_BLOCK_MAX];
-    uint8_t patterns[ARIX_FAKE_BLOCK_MAX][ARIX_FAKE_BLOCK_SIZE];
+    uint8_t blocks[SNEPPX_FAKE_BLOCK_MAX][SNEPPX_FAKE_BLOCK_SIZE];
+    size_t sizes[SNEPPX_FAKE_BLOCK_MAX];
+    uint8_t patterns[SNEPPX_FAKE_BLOCK_MAX][SNEPPX_FAKE_BLOCK_SIZE];
     int count;
     int seeded;
-} arix_bogus_int;
+} SNEPPX_bogus_int;
 
-static void arix_bogus_seed(void) {
-    if (arix_bogus_int.seeded) return;
-    arix_bogus_int.seeded=1;
+static void SNEPPX_bogus_seed(void) {
+    if (SNEPPX_bogus_int.seeded) return;
+    SNEPPX_bogus_int.seeded=1;
     unsigned seed=(unsigned)std::chrono::steady_clock::now().time_since_epoch().count();
     srand(seed);
 }
 
-int arix_bogus_cf_init(ArixBogusCF* bcf) {
+int SNEPPX_bogus_cf_init(SNEPPXBogusCF* bcf) {
     if (!bcf) return -1;
     memset(bcf,0,sizeof(*bcf));
-    memset(&arix_bogus_int,0,sizeof(arix_bogus_int));
-    arix_bogus_seed();
+    memset(&SNEPPX_bogus_int,0,sizeof(SNEPPX_bogus_int));
+    SNEPPX_bogus_seed();
     for (int i=0;i<4;i++) {
         size_t len=(size_t)(rand()%12+2);
         for (size_t j=0;j<len;j++) {
             uint8_t v=(uint8_t)(rand()&0xFF);
-            arix_bogus_int.patterns[i][j]=v;
+            SNEPPX_bogus_int.patterns[i][j]=v;
         }
-        arix_bogus_int.sizes[i]=len;
-        arix_bogus_int.count++;
+        SNEPPX_bogus_int.sizes[i]=len;
+        SNEPPX_bogus_int.count++;
     }
     return 0;
 }
 
-int arix_bogus_cf_add_fake_block(ArixBogusCF* bcf, const uint8_t* fake_code, size_t fake_len) {
-    if (!bcf||!fake_code||!fake_len||fake_len>ARIX_FAKE_BLOCK_SIZE) return -1;
-    arix_bogus_seed();
-    if (arix_bogus_int.count>=ARIX_FAKE_BLOCK_MAX) return -1;
-    int idx=arix_bogus_int.count;
-    memcpy(arix_bogus_int.blocks[idx],fake_code,fake_len);
-    arix_bogus_int.sizes[idx]=fake_len;
+int SNEPPX_bogus_cf_add_fake_block(SNEPPXBogusCF* bcf, const uint8_t* fake_code, size_t fake_len) {
+    if (!bcf||!fake_code||!fake_len||fake_len>SNEPPX_FAKE_BLOCK_SIZE) return -1;
+    SNEPPX_bogus_seed();
+    if (SNEPPX_bogus_int.count>=SNEPPX_FAKE_BLOCK_MAX) return -1;
+    int idx=SNEPPX_bogus_int.count;
+    memcpy(SNEPPX_bogus_int.blocks[idx],fake_code,fake_len);
+    SNEPPX_bogus_int.sizes[idx]=fake_len;
     for (size_t i=0;i<fake_len;i++) {
         uint8_t pat=(uint8_t)((i*0x9E3779B9)^(fake_code[i]<<3));
-        arix_bogus_int.patterns[idx][i]=pat;
+        SNEPPX_bogus_int.patterns[idx][i]=pat;
     }
-    arix_bogus_int.count++;
-    bcf->fake_entry=(uintptr_t)arix_bogus_int.blocks[idx];
-    uint8_t synthetic[ARIX_FAKE_BLOCK_SIZE];
-    size_t slen=fake_len<ARIX_FAKE_BLOCK_SIZE?fake_len:ARIX_FAKE_BLOCK_SIZE;
+    SNEPPX_bogus_int.count++;
+    bcf->fake_entry=(uintptr_t)SNEPPX_bogus_int.blocks[idx];
+    uint8_t synthetic[SNEPPX_FAKE_BLOCK_SIZE];
+    size_t slen=fake_len<SNEPPX_FAKE_BLOCK_SIZE?fake_len:SNEPPX_FAKE_BLOCK_SIZE;
     for (size_t i=0;i<slen;i++) synthetic[i]=(uint8_t)((i*0x37)^0x90);
-    memcpy(arix_bogus_int.blocks[arix_bogus_int.count-1],synthetic,slen);
-    arix_bogus_int.sizes[arix_bogus_int.count-1]=slen;
+    memcpy(SNEPPX_bogus_int.blocks[SNEPPX_bogus_int.count-1],synthetic,slen);
+    SNEPPX_bogus_int.sizes[SNEPPX_bogus_int.count-1]=slen;
     return 0;
 }
 
-int arix_bogus_cf_redirect(ArixBogusCF* bcf, uint8_t* code, size_t code_len) {
+int SNEPPX_bogus_cf_redirect(SNEPPXBogusCF* bcf, uint8_t* code, size_t code_len) {
     if (!bcf||!code||!code_len) return -1;
-    arix_bogus_seed();
+    SNEPPX_bogus_seed();
     bcf->real_entry=(uintptr_t)code;
     uint8_t trampoline[32];
     size_t tp=0;
-    int fake_idx=arix_bogus_int.count>0?rand()%arix_bogus_int.count:0;
-    size_t flen=arix_bogus_int.sizes[fake_idx];
+    int fake_idx=SNEPPX_bogus_int.count>0?rand()%SNEPPX_bogus_int.count:0;
+    size_t flen=SNEPPX_bogus_int.sizes[fake_idx];
     if (flen>0&&flen<code_len) {
-        memcpy(trampoline+tp,arix_bogus_int.blocks[fake_idx],flen);
+        memcpy(trampoline+tp,SNEPPX_bogus_int.blocks[fake_idx],flen);
         tp+=flen;
     }
     size_t jmp_ofs=tp;
@@ -191,10 +191,10 @@ int arix_bogus_cf_redirect(ArixBogusCF* bcf, uint8_t* code, size_t code_len) {
     return 0;
 }
 
-int arix_iat_protect_init(ArixIATProtect* iat) { if (!iat) return -1; memset(iat,0,sizeof(*iat)); return 0; }
+int SNEPPX_iat_protect_init(SNEPPXIATProtect* iat) { if (!iat) return -1; memset(iat,0,sizeof(*iat)); return 0; }
 
-int arix_iat_protect_add_entry(ArixIATProtect* iat, const char* name, void* original) {
-    if (!iat||!name||iat->count>=ARIX_OBF_MAX_IAT_ENTRIES) return -1;
+int SNEPPX_iat_protect_add_entry(SNEPPXIATProtect* iat, const char* name, void* original) {
+    if (!iat||!name||iat->count>=SNEPPX_OBF_MAX_IAT_ENTRIES) return -1;
     iat->entries[iat->count].name=name;
     iat->entries[iat->count].original=original;
     iat->entries[iat->count].current=original;
@@ -202,7 +202,7 @@ int arix_iat_protect_add_entry(ArixIATProtect* iat, const char* name, void* orig
     return 0;
 }
 
-int arix_iat_protect_scan(ArixIATProtect* iat) {
+int SNEPPX_iat_protect_scan(SNEPPXIATProtect* iat) {
     if (!iat) return 0;
     int hooked=0;
     for (int i=0;i<iat->count;i++) {
@@ -211,13 +211,13 @@ int arix_iat_protect_scan(ArixIATProtect* iat) {
     return hooked;
 }
 
-int arix_iat_protect_restore(ArixIATProtect* iat) {
+int SNEPPX_iat_protect_restore(SNEPPXIATProtect* iat) {
     if (!iat) return -1;
     for (int i=0;i<iat->count;i++) iat->entries[i].current=iat->entries[i].original;
     return 0;
 }
 
-int arix_whitebox_aes_init(ArixWhiteBoxAES* wb, const uint8_t key[16]) {
+int SNEPPX_whitebox_aes_init(SNEPPXWhiteBoxAES* wb, const uint8_t key[16]) {
     if (!wb||!key) return -1;
     memset(wb,0,sizeof(*wb));
     memcpy(wb->embedded_key,key,16);
@@ -231,7 +231,7 @@ int arix_whitebox_aes_init(ArixWhiteBoxAES* wb, const uint8_t key[16]) {
     return 0;
 }
 
-void arix_whitebox_aes_encrypt(ArixWhiteBoxAES* wb, const uint8_t in[16], uint8_t out[16]) {
+void SNEPPX_whitebox_aes_encrypt(SNEPPXWhiteBoxAES* wb, const uint8_t in[16], uint8_t out[16]) {
     if (!wb||!wb->initialized||!in||!out) { if (out) memset(out,0,16); return; }
     uint32_t s[4],tk[4];
     for (int i=0;i<4;i++) s[i]=((uint32_t*)in)[i]^((uint32_t*)wb->embedded_key)[i];
@@ -245,22 +245,22 @@ void arix_whitebox_aes_encrypt(ArixWhiteBoxAES* wb, const uint8_t in[16], uint8_
     for (int i=0;i<4;i++) ((uint32_t*)out)[i]=s[i];
 }
 
-int arix_iat_obfuscation_init(ArixIATObfuscation* io) { if (!io) return -1; memset(io,0,sizeof(*io)); return 0; }
+int SNEPPX_iat_obfuscation_init(SNEPPXIATObfuscation* io) { if (!io) return -1; memset(io,0,sizeof(*io)); return 0; }
 
-uint32_t arix_iat_hash_name(const char* name) {
+uint32_t SNEPPX_iat_hash_name(const char* name) {
     uint32_t h=0x811C9DC5;
     while (name&&*name) { h^=(uint8_t)*name++; h*=0x01000193; }
     return h;
 }
 
-void* arix_iat_resolve_by_hash(ArixIATObfuscation* io, uint32_t hash) {
+void* SNEPPX_iat_resolve_by_hash(SNEPPXIATObfuscation* io, uint32_t hash) {
     if (!io) return NULL;
     for (int i=0;i<io->count;i++) if (io->api_hashes[i]==hash) return io->resolved_ptrs[i];
     return NULL;
 }
 
 #ifdef _WIN32
-static LONG CALLBACK arix_veh_handler(EXCEPTION_POINTERS* ep) {
+static LONG CALLBACK SNEPPX_veh_handler(EXCEPTION_POINTERS* ep) {
     if (ep->ExceptionRecord->ExceptionCode==EXCEPTION_ACCESS_VIOLATION) {
         ep->ContextRecord->Rip+=2;
         return EXCEPTION_CONTINUE_EXECUTION;
@@ -272,13 +272,13 @@ static LONG CALLBACK arix_veh_handler(EXCEPTION_POINTERS* ep) {
     return EXCEPTION_CONTINUE_SEARCH;
 }
 #else
-static struct sigaction arix_prev_sigsegv;
-static struct sigaction arix_prev_sigfpe;
-static volatile int arix_signal_caught=0;
+static struct sigaction SNEPPX_prev_sigsegv;
+static struct sigaction SNEPPX_prev_sigfpe;
+static volatile int SNEPPX_signal_caught=0;
 
-static void arix_sig_handler(int sig, siginfo_t* info, void* ctx) {
+static void SNEPPX_sig_handler(int sig, siginfo_t* info, void* ctx) {
     (void)info;(void)ctx;
-    arix_signal_caught=sig;
+    SNEPPX_signal_caught=sig;
     if (sig==SIGSEGV) {
         ucontext_t* uc=(ucontext_t*)ctx;
         uc->uc_mcontext.gregs[REG_RIP]+=2;
@@ -286,18 +286,18 @@ static void arix_sig_handler(int sig, siginfo_t* info, void* ctx) {
 }
 #endif
 
-int arix_seh_obfuscation_init(ArixSEHObfuscation* seh) {
+int SNEPPX_seh_obfuscation_init(SNEPPXSEHObfuscation* seh) {
     if (!seh) return -1;
     memset(seh,0,sizeof(*seh));
     return 0;
 }
 
-int arix_seh_obfuscation_install(ArixSEHObfuscation* seh, void* handler) {
+int SNEPPX_seh_obfuscation_install(SNEPPXSEHObfuscation* seh, void* handler) {
     if (!seh||!handler) return -1;
 #ifdef _WIN32
     seh->handler=(uintptr_t)handler;
-    PVOID veh=AddVectoredExceptionHandler(1,(PVECTORED_EXCEPTION_HANDLER)arix_veh_handler);
-    PVOID veh2=AddVectoredContinueHandler(0,(PVECTORED_EXCEPTION_HANDLER)arix_veh_handler);
+    PVOID veh=AddVectoredExceptionHandler(1,(PVECTORED_EXCEPTION_HANDLER)SNEPPX_veh_handler);
+    PVOID veh2=AddVectoredContinueHandler(0,(PVECTORED_EXCEPTION_HANDLER)SNEPPX_veh_handler);
     seh->next=(uintptr_t)veh;
     seh->next^=(uintptr_t)veh2;
     seh->next^=(uintptr_t)handler;
@@ -305,57 +305,57 @@ int arix_seh_obfuscation_install(ArixSEHObfuscation* seh, void* handler) {
     seh->handler=(uintptr_t)handler;
     struct sigaction sa;
     memset(&sa,0,sizeof(sa));
-    sa.sa_sigaction=arix_sig_handler;
+    sa.sa_sigaction=SNEPPX_sig_handler;
     sa.sa_flags=SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
-    sigaction(SIGSEGV,&sa,&arix_prev_sigsegv);
-    sigaction(SIGFPE,&sa,&arix_prev_sigfpe);
-    seh->next=(uintptr_t)arix_prev_sigsegv.sa_sigaction;
-    seh->next^=(uintptr_t)arix_prev_sigfpe.sa_sigaction;
+    sigaction(SIGSEGV,&sa,&SNEPPX_prev_sigsegv);
+    sigaction(SIGFPE,&sa,&SNEPPX_prev_sigfpe);
+    seh->next=(uintptr_t)SNEPPX_prev_sigsegv.sa_sigaction;
+    seh->next^=(uintptr_t)SNEPPX_prev_sigfpe.sa_sigaction;
 #endif
     return 0;
 }
 
-#define ARIX_MAX_TLS_CB 32
+#define SNEPPX_MAX_TLS_CB 32
 
 static struct {
-    void (*callbacks[ARIX_MAX_TLS_CB])(void*,int,void*);
+    void (*callbacks[SNEPPX_MAX_TLS_CB])(void*,int,void*);
     int count;
     int obfuscated;
-} arix_tls_ctx;
+} SNEPPX_tls_ctx;
 
-int arix_tls_callback_register(void (*cb)(void*, int, void*)) {
+int SNEPPX_tls_callback_register(void (*cb)(void*, int, void*)) {
     if (!cb) return -1;
-    if (arix_tls_ctx.count>=ARIX_MAX_TLS_CB) return -1;
-    arix_tls_ctx.callbacks[arix_tls_ctx.count++]=cb;
-    for (int i=0;i<arix_tls_ctx.count;i++) {
-        void (*c)(void*,int,void*)=arix_tls_ctx.callbacks[i];
-        if (c&&!arix_tls_ctx.obfuscated) c((void*)(uintptr_t)i,1,NULL);
+    if (SNEPPX_tls_ctx.count>=SNEPPX_MAX_TLS_CB) return -1;
+    SNEPPX_tls_ctx.callbacks[SNEPPX_tls_ctx.count++]=cb;
+    for (int i=0;i<SNEPPX_tls_ctx.count;i++) {
+        void (*c)(void*,int,void*)=SNEPPX_tls_ctx.callbacks[i];
+        if (c&&!SNEPPX_tls_ctx.obfuscated) c((void*)(uintptr_t)i,1,NULL);
     }
-    return arix_tls_ctx.count;
+    return SNEPPX_tls_ctx.count;
 }
 
-int arix_tls_callback_obfuscate(void) {
-    if (arix_tls_ctx.count==0) return 0;
+int SNEPPX_tls_callback_obfuscate(void) {
+    if (SNEPPX_tls_ctx.count==0) return 0;
     uint64_t ts=(uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
     uint32_t key1=(uint32_t)(ts&0xFFFFFFFF);
     uint32_t key2=(uint32_t)((ts>>32)^0x9E3779B9);
-    uint32_t key=key1^key2^(uint32_t)(uintptr_t)arix_tls_ctx.callbacks;
+    uint32_t key=key1^key2^(uint32_t)(uintptr_t)SNEPPX_tls_ctx.callbacks;
     for (int r=0;r<3;r++) {
-        for (int i=0;i<arix_tls_ctx.count;i++) {
-            uintptr_t ptr=(uintptr_t)arix_tls_ctx.callbacks[i];
+        for (int i=0;i<SNEPPX_tls_ctx.count;i++) {
+            uintptr_t ptr=(uintptr_t)SNEPPX_tls_ctx.callbacks[i];
             ptr^=(uintptr_t)key;
             ptr^=(uintptr_t)(i*0x9E3779B97F4A7C15ULL);
             ptr=((ptr>>13)|(ptr<<(sizeof(uintptr_t)*8-13)));
-            arix_tls_ctx.callbacks[i]=(void(*)(void*,int,void*))ptr;
+            SNEPPX_tls_ctx.callbacks[i]=(void(*)(void*,int,void*))ptr;
         }
         key=((key>>5)|(key<<27))^0xA5A5A5A5;
     }
-    arix_tls_ctx.obfuscated=1;
-    return arix_tls_ctx.count;
+    SNEPPX_tls_ctx.obfuscated=1;
+    return SNEPPX_tls_ctx.count;
 }
 
-static uint32_t arix_crc32_block(const uint8_t* data, size_t len) {
+static uint32_t SNEPPX_crc32_block(const uint8_t* data, size_t len) {
     uint32_t crc=0xFFFFFFFF;
     static const uint32_t t[256]={
         0x00000000,0x77073096,0xEE0E612C,0x990951BA,0x076DC419,0x706AF48F,0xE963A535,0x9E6495A3,
@@ -395,7 +395,7 @@ static uint32_t arix_crc32_block(const uint8_t* data, size_t len) {
     return crc^0xFFFFFFFF;
 }
 
-int arix_antidump_init(ArixAntiDump* ad) {
+int SNEPPX_antidump_init(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     memset(ad,0,sizeof(*ad));
 #ifdef _WIN32
@@ -406,16 +406,16 @@ int arix_antidump_init(ArixAntiDump* ad) {
     if (!base) base=0x400000;
     ad->image_base=base;
     ad->image_size=0x1000;
-    uint32_t crc=arix_crc32_block((const uint8_t*)base,0x1000);
+    uint32_t crc=SNEPPX_crc32_block((const uint8_t*)base,0x1000);
     for (int i=0;i<8;i++) ad->section_hash[i]=(uint8_t)(crc>>(i*4));
     for (int i=8;i<16;i++) ad->section_hash[i]=(uint8_t)((crc*0x9E3779B9)>>((i-8)*4));
-    uint32_t crc2=arix_crc32_block((const uint8_t*)base,0x200);
+    uint32_t crc2=SNEPPX_crc32_block((const uint8_t*)base,0x200);
     for (int i=16;i<24;i++) ad->section_hash[i]=(uint8_t)(crc2>>((i-16)*4));
     for (int i=24;i<32;i++) ad->section_hash[i]=(uint8_t)((crc2*0x7F4A7C15)>>((i-24)*4));
     return 0;
 }
 
-int arix_antidump_protect(ArixAntiDump* ad) {
+int SNEPPX_antidump_protect(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     ad->is_protected=1;
 #ifdef _WIN32
@@ -456,30 +456,30 @@ int arix_antidump_protect(ArixAntiDump* ad) {
     return 0;
 }
 
-int arix_antidump_verify(ArixAntiDump* ad) {
+int SNEPPX_antidump_verify(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     if (!ad->is_protected) return 0;
 #ifdef _WIN32
     uintptr_t base=ad->image_base;
     if (!base) base=(uintptr_t)GetModuleHandleA(NULL);
-    uint32_t crc=arix_crc32_block((const uint8_t*)base,0x1000);
+    uint32_t crc=SNEPPX_crc32_block((const uint8_t*)base,0x1000);
     uint8_t expected[32];
     memset(expected,0,32);
     for (int i=0;i<8;i++) expected[i]=(uint8_t)(crc>>(i*4));
     for (int i=8;i<16;i++) expected[i]=(uint8_t)((crc*0x9E3779B9)>>((i-8)*4));
-    uint32_t crc2=arix_crc32_block((const uint8_t*)base,0x200);
+    uint32_t crc2=SNEPPX_crc32_block((const uint8_t*)base,0x200);
     for (int i=16;i<24;i++) expected[i]=(uint8_t)(crc2>>((i-16)*4));
     for (int i=24;i<32;i++) expected[i]=(uint8_t)((crc2*0x7F4A7C15)>>((i-24)*4));
     if (memcmp(ad->section_hash,expected,32)!=0) return 0;
 #else
     uintptr_t base=ad->image_base;
     if (!base) base=(uintptr_t)dlopen(NULL,0);
-    uint32_t crc=arix_crc32_block((const uint8_t*)base,0x1000);
+    uint32_t crc=SNEPPX_crc32_block((const uint8_t*)base,0x1000);
     uint8_t expected[32];
     memset(expected,0,32);
     for (int i=0;i<8;i++) expected[i]=(uint8_t)(crc>>(i*4));
     for (int i=8;i<16;i++) expected[i]=(uint8_t)((crc*0x9E3779B9)>>((i-8)*4));
-    uint32_t crc2=arix_crc32_block((const uint8_t*)base,0x200);
+    uint32_t crc2=SNEPPX_crc32_block((const uint8_t*)base,0x200);
     for (int i=16;i<24;i++) expected[i]=(uint8_t)(crc2>>((i-16)*4));
     for (int i=24;i<32;i++) expected[i]=(uint8_t)((crc2*0x7F4A7C15)>>((i-24)*4));
     if (memcmp(ad->section_hash,expected,32)!=0) return 0;
@@ -487,10 +487,10 @@ int arix_antidump_verify(ArixAntiDump* ad) {
     return 1;
 }
 
-int arix_multi_vm_init(ArixMultiVM* mvm) { if (!mvm) return -1; memset(mvm,0,sizeof(*mvm)); return 0; }
-int arix_multi_vm_switch(ArixMultiVM* mvm) { if (!mvm) return -1; mvm->current_slot=(mvm->current_slot+1)%ARIX_OBF_MAX_VM_SLOTS; return 0; }
+int SNEPPX_multi_vm_init(SNEPPXMultiVM* mvm) { if (!mvm) return -1; memset(mvm,0,sizeof(*mvm)); return 0; }
+int SNEPPX_multi_vm_switch(SNEPPXMultiVM* mvm) { if (!mvm) return -1; mvm->current_slot=(mvm->current_slot+1)%SNEPPX_OBF_MAX_VM_SLOTS; return 0; }
 
-struct ArixRegDep {
+struct SNEPPXRegDep {
     uint8_t reg;
     uint8_t def_mask;
     uint8_t use_mask;
@@ -499,13 +499,13 @@ struct ArixRegDep {
     int block_id;
 };
 
-int arix_inst_schedule_randomize(uint8_t* code, size_t* code_len, size_t max_len) {
+int SNEPPX_inst_schedule_randomize(uint8_t* code, size_t* code_len, size_t max_len) {
     if (!code||!code_len||*code_len==0) return -1;
     (void)max_len;
-    std::vector<ArixRegDep> insts;
+    std::vector<SNEPPXRegDep> insts;
     size_t pos=0;
     while (pos<*code_len) {
-        ArixRegDep rd;
+        SNEPPXRegDep rd;
         rd.offset=pos;
         rd.block_id=(int)insts.size();
         uint8_t b0=code[pos];
@@ -535,7 +535,7 @@ int arix_inst_schedule_randomize(uint8_t* code, size_t* code_len, size_t max_len
     for (size_t i=0;i<insts.size();i++) {
         size_t j=i+(rng()%(insts.size()-i));
         if (i!=j) {
-            ArixRegDep tmp=insts[i];
+            SNEPPXRegDep tmp=insts[i];
             insts[i]=insts[j];
             insts[j]=tmp;
         }

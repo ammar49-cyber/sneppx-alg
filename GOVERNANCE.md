@@ -1,10 +1,10 @@
 # Governance
 
-ARIX-Algo is a BDFL (Benevolent Dictator For Life) project.
+SNEPPX-Algo is a BDFL (Benevolent Dictator For Life) project.
 
 ## BDFL
 
-Ammar [ARIX] <algoarix@gmail.com>
+Ammar [SNEPPX] <algoSNEPPX@gmail.com>
 
 ## Powers
 

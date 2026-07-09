@@ -24,66 +24,66 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_constant_fold_identity(void) {
-    ArixNPEProgram* prog = arix_npe_program_create(64);
+    SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(64);
     ASSERT(prog != NULL, "program created");
 
-    ArixNPEInstruction load = {ARIX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
-    arix_npe_program_append(prog, load);
+    SNEPPXNPEInstruction load = {SNEPPX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
+    SNEPPX_npe_program_append(prog, load);
 
-    ArixNPEInstruction halt = {ARIX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
-    arix_npe_program_append(prog, halt);
+    SNEPPXNPEInstruction halt = {SNEPPX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
+    SNEPPX_npe_program_append(prog, halt);
 
-    ArixTensor mem;
+    SNEPPXTensor mem;
     float mem_data[] = {42.0f};
     mem.data = mem_data;
     mem.size = 1;
 
-    ArixNPEProgram* folded = arix_npe_jit_constant_fold(prog, &mem);
+    SNEPPXNPEProgram* folded = SNEPPX_npe_jit_constant_fold(prog, &mem);
     ASSERT(folded != NULL, "folded program created");
     ASSERT(folded->num_instructions == 2, "same number of instructions");
 
-    arix_npe_program_destroy(folded);
-    arix_npe_program_destroy(prog);
+    SNEPPX_npe_program_destroy(folded);
+    SNEPPX_npe_program_destroy(prog);
 }
 
 static void test_constant_fold_add(void) {
-    ArixNPEProgram* prog = arix_npe_program_create(64);
+    SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(64);
     ASSERT(prog != NULL, "program created");
 
-    ArixNPEInstruction load_a = {ARIX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
-    arix_npe_program_append(prog, load_a);
-    ArixNPEInstruction load_b = {ARIX_LOAD, 1, -1, -1, 1, {1, 1}, {0, 0}};
-    arix_npe_program_append(prog, load_b);
-    ArixNPEInstruction add = {ARIX_ADD, 2, 0, 1, 0, {0, 0}, {0, 0}};
-    arix_npe_program_append(prog, add);
-    ArixNPEInstruction halt = {ARIX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
-    arix_npe_program_append(prog, halt);
+    SNEPPXNPEInstruction load_a = {SNEPPX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
+    SNEPPX_npe_program_append(prog, load_a);
+    SNEPPXNPEInstruction load_b = {SNEPPX_LOAD, 1, -1, -1, 1, {1, 1}, {0, 0}};
+    SNEPPX_npe_program_append(prog, load_b);
+    SNEPPXNPEInstruction add = {SNEPPX_ADD, 2, 0, 1, 0, {0, 0}, {0, 0}};
+    SNEPPX_npe_program_append(prog, add);
+    SNEPPXNPEInstruction halt = {SNEPPX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
+    SNEPPX_npe_program_append(prog, halt);
 
     float mem_data[] = {10.0f, 20.0f};
-    ArixTensor mem;
+    SNEPPXTensor mem;
     mem.data = mem_data;
     mem.size = 2;
 
-    ArixNPEProgram* folded = arix_npe_jit_constant_fold(prog, &mem);
+    SNEPPXNPEProgram* folded = SNEPPX_npe_jit_constant_fold(prog, &mem);
     ASSERT(folded != NULL, "folded program created");
     ASSERT(folded->num_instructions == 4, "instructions preserved");
 
-    arix_npe_program_destroy(folded);
-    arix_npe_program_destroy(prog);
+    SNEPPX_npe_program_destroy(folded);
+    SNEPPX_npe_program_destroy(prog);
 }
 
 static void test_constant_fold_null_memory(void) {
-    ArixNPEProgram* prog = arix_npe_program_create(16);
-    ArixNPEInstruction load = {ARIX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
-    arix_npe_program_append(prog, load);
-    ArixNPEInstruction halt = {ARIX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
-    arix_npe_program_append(prog, halt);
+    SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(16);
+    SNEPPXNPEInstruction load = {SNEPPX_LOAD, 0, -1, -1, 0, {1, 1}, {0, 0}};
+    SNEPPX_npe_program_append(prog, load);
+    SNEPPXNPEInstruction halt = {SNEPPX_HALT, -1, -1, -1, 0, {0, 0}, {0, 0}};
+    SNEPPX_npe_program_append(prog, halt);
 
-    ArixNPEProgram* folded = arix_npe_jit_constant_fold(prog, NULL);
+    SNEPPXNPEProgram* folded = SNEPPX_npe_jit_constant_fold(prog, NULL);
     ASSERT(folded != NULL, "folded with null memory");
 
-    arix_npe_program_destroy(folded);
-    arix_npe_program_destroy(prog);
+    SNEPPX_npe_program_destroy(folded);
+    SNEPPX_npe_program_destroy(prog);
 }
 
 int main(void) {

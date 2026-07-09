@@ -1,8 +1,8 @@
-#ifndef ARIX_POWER_H
-#define ARIX_POWER_H
+#ifndef SNEPPX_POWER_H
+#define SNEPPX_POWER_H
 
-void arix_power_balance_start(void);
-void arix_power_balance_end(void);
-void arix_power_dummy_op(void);
+void SNEPPX_power_balance_start(void);
+void SNEPPX_power_balance_end(void);
+void SNEPPX_power_dummy_op(void);
 
 #endif

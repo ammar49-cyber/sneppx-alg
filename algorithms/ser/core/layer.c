@@ -3,28 +3,28 @@
 #include <string.h>
 #include <stdlib.h>
 
-ArixSERLayer* arix_ser_layer_create(const ArixSERConfig* config, unsigned int seed) {
-    ArixSERLayer* layer = (ArixSERLayer*)arix_malloc(sizeof(ArixSERLayer), 64);
+SNEPPXSERLayer* SNEPPX_ser_layer_create(const SNEPPXSERConfig* config, unsigned int seed) {
+    SNEPPXSERLayer* layer = (SNEPPXSERLayer*)SNEPPX_malloc(sizeof(SNEPPXSERLayer), 64);
     if (!layer) return NULL;
-    memset(layer, 0, sizeof(ArixSERLayer));
+    memset(layer, 0, sizeof(SNEPPXSERLayer));
 
     layer->config = *config;
 
-    layer->experts = (ArixExpert**)arix_malloc(config->num_experts * sizeof(ArixExpert*), 64);
+    layer->experts = (SNEPPXExpert**)SNEPPX_malloc(config->num_experts * sizeof(SNEPPXExpert*), 64);
     if (!layer->experts) {
-        arix_free(layer, sizeof(ArixSERLayer));
+        SNEPPX_free(layer, sizeof(SNEPPXSERLayer));
         return NULL;
     }
-    memset(layer->experts, 0, config->num_experts * sizeof(ArixExpert*));
+    memset(layer->experts, 0, config->num_experts * sizeof(SNEPPXExpert*));
 
     for (size_t i = 0; i < config->num_experts; i++) {
-        layer->experts[i] = arix_expert_create(config, seed + (unsigned int)i * 10, ARIX_ACT_RELU);
+        layer->experts[i] = SNEPPX_expert_create(config, seed + (unsigned int)i * 10, SNEPPX_ACT_RELU);
     }
 
     size_t shape_ri[] = {config->num_experts, config->input_dim};
     size_t shape_r1[] = {config->num_experts};
-    layer->router = arix_tensor_create(shape_ri, 2, ARIX_FLOAT32);
-    layer->router_bias = arix_tensor_zeros(shape_r1, 1, ARIX_FLOAT32);
+    layer->router = SNEPPX_tensor_create(shape_ri, 2, SNEPPX_FLOAT32);
+    layer->router_bias = SNEPPX_tensor_zeros(shape_r1, 1, SNEPPX_FLOAT32);
 
     if (layer->router && layer->router->data) {
         unsigned long state = seed + 9999;
@@ -49,13 +49,13 @@ ArixSERLayer* arix_ser_layer_create(const ArixSERConfig* config, unsigned int se
     return layer;
 }
 
-void arix_ser_layer_destroy(ArixSERLayer* layer) {
+void SNEPPX_ser_layer_destroy(SNEPPXSERLayer* layer) {
     if (!layer) return;
     for (size_t i = 0; i < layer->config.num_experts; i++) {
-        if (layer->experts[i]) arix_expert_destroy(layer->experts[i]);
+        if (layer->experts[i]) SNEPPX_expert_destroy(layer->experts[i]);
     }
-    arix_free(layer->experts, layer->config.num_experts * sizeof(ArixExpert*));
-    if (layer->router) arix_tensor_destroy(layer->router);
-    if (layer->router_bias) arix_tensor_destroy(layer->router_bias);
-    arix_free(layer, sizeof(ArixSERLayer));
+    SNEPPX_free(layer->experts, layer->config.num_experts * sizeof(SNEPPXExpert*));
+    if (layer->router) SNEPPX_tensor_destroy(layer->router);
+    if (layer->router_bias) SNEPPX_tensor_destroy(layer->router_bias);
+    SNEPPX_free(layer, sizeof(SNEPPXSERLayer));
 }

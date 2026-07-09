@@ -1,5 +1,5 @@
 /*
- * ARIX Benchmark Runner — SKELETON
+ * SNEPPX Benchmark Runner — SKELETON
  * VERSION: v0.5
  *
  * PURPOSE: Command-line benchmark harness for tensor operations,
@@ -7,7 +7,7 @@
  * Supports warmup iterations, timed sections, outlier exclusion,
  * and baseline comparison.
  *
- * Usage: arix_benchmark [--suite SUITE] [--iterations N] [--warmup N]
+ * Usage: SNEPPX_benchmark [--suite SUITE] [--iterations N] [--warmup N]
  */
 
 #include <stdio.h>
@@ -18,15 +18,15 @@ typedef struct {
     const char* name;
     int (*fn)(void);
     const char* suite;
-} ArixBenchmarkEntry;
+} SNEPPXBenchmarkEntry;
 
-#define ARIX_MAX_BENCHMARKS 256
-static ArixBenchmarkEntry g_benchmarks[ARIX_MAX_BENCHMARKS];
+#define SNEPPX_MAX_BENCHMARKS 256
+static SNEPPXBenchmarkEntry g_benchmarks[SNEPPX_MAX_BENCHMARKS];
 static int g_num_benchmarks = 0;
 
-#define ARIX_REGISTER_BENCHMARK(name, suite) \
+#define SNEPPX_REGISTER_BENCHMARK(name, suite) \
     __attribute__((constructor)) static void _reg_##name() { \
-        if (g_num_benchmarks < ARIX_MAX_BENCHMARKS) { \
+        if (g_num_benchmarks < SNEPPX_MAX_BENCHMARKS) { \
             g_benchmarks[g_num_benchmarks].name = #name; \
             g_benchmarks[g_num_benchmarks].fn = name; \
             g_benchmarks[g_num_benchmarks].suite = suite; \
@@ -36,7 +36,7 @@ static int g_num_benchmarks = 0;
 
 int main(int argc, char** argv) {
     (void)argc; (void)argv;
-    printf("ARIX Benchmark Runner (skeleton)\n");
+    printf("SNEPPX Benchmark Runner (skeleton)\n");
     printf("Registered benchmarks: %d\n", g_num_benchmarks);
     for (int i = 0; i < g_num_benchmarks; i++) {
         printf("  [%s] %s\n", g_benchmarks[i].suite, g_benchmarks[i].name);

@@ -22,29 +22,29 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_secure_alloc_free(void) {
-    void* p = arix_secure_alloc(64);
+    void* p = SNEPPX_secure_alloc(64);
     ASSERT(p != NULL, "secure alloc 64 bytes");
     memset(p, 0xAB, 64);
     unsigned char* buf = (unsigned char*)p;
     ASSERT(buf[0] == 0xAB, "memory writable");
     ASSERT(buf[63] == 0xAB, "last byte writable");
-    arix_secure_free(p, 64);
+    SNEPPX_secure_free(p, 64);
 }
 
 static void test_secure_alloc_zero(void) {
-    void* p = arix_secure_alloc(128);
+    void* p = SNEPPX_secure_alloc(128);
     ASSERT(p != NULL, "secure alloc 128 bytes");
     unsigned char* buf = (unsigned char*)p;
     int all_zero = 1;
     for (size_t i = 0; i < 128; i++) if (buf[i] != 0) { all_zero = 0; break; }
     ASSERT(all_zero, "secure alloc zeroed");
-    arix_secure_free(p, 128);
+    SNEPPX_secure_free(p, 128);
 }
 
 static void test_secure_alloc_large(void) {
-    void* p = arix_secure_alloc(1048576);
+    void* p = SNEPPX_secure_alloc(1048576);
     ASSERT(p != NULL, "secure alloc 1MB");
-    arix_secure_free(p, 1048576);
+    SNEPPX_secure_free(p, 1048576);
 }
 
 int main(void) {

@@ -11,10 +11,10 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arixalgo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SNEPPX_ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
 ctest --output-on-failure
 ```
@@ -27,7 +27,7 @@ ctest --output-on-failure
 4. **Test**: `ctest --output-on-failure`
 5. **Commit**: `git commit -s -m "component: message"`
 6. **Patch**: `git format-patch -1 HEAD`
-7. **Submit**: email to [algoarix@gmail.com](mailto:algoarix@gmail.com)
+7. **Submit**: email to [algoSNEPPX@gmail.com](mailto:algoSNEPPX@gmail.com)
 
 ## Project Layout
 
@@ -48,13 +48,13 @@ security/                 # S0-S3 security layer source
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `ARIX_BUILD_TESTS` | ON | Build test suite |
-| `ARIX_BUILD_BENCHMARKS` | ON | Build benchmarks |
-| `ARIX_BUILD_PYTHON` | OFF | Build Python bindings |
-| `ARIX_BUILD_CUDA` | OFF | Build CUDA kernels |
-| `ARIX_USE_ASAN` | OFF | AddressSanitizer |
-| `ARIX_USE_UBSAN` | OFF | UndefinedBehaviorSanitizer |
-| `ARIX_USE_LTO` | OFF | Link-Time Optimization |
+| `SNEPPX_BUILD_TESTS` | ON | Build test suite |
+| `SNEPPX_BUILD_BENCHMARKS` | ON | Build benchmarks |
+| `SNEPPX_BUILD_PYTHON` | OFF | Build Python bindings |
+| `SNEPPX_BUILD_CUDA` | OFF | Build CUDA kernels |
+| `SNEPPX_USE_ASAN` | OFF | AddressSanitizer |
+| `SNEPPX_USE_UBSAN` | OFF | UndefinedBehaviorSanitizer |
+| `SNEPPX_USE_LTO` | OFF | Link-Time Optimization |
 
 ## Testing
 

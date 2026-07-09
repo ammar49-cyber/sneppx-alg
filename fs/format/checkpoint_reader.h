@@ -1,11 +1,11 @@
-#ifndef ARIX_CHECKPOINT_FORMAT_H
-#define ARIX_CHECKPOINT_FORMAT_H
+#ifndef SNEPPX_CHECKPOINT_FORMAT_H
+#define SNEPPX_CHECKPOINT_FORMAT_H
 /*
  * Checkpoint File Format — v0.5 (training persistence)
  *
  * PURPOSE: Binary format for saving/loading model weights and optimizer
  * state.  Format: magic | header | tensor records | metadata.
- *   - Magic: 8 bytes (0x41524958 0x434B5054 = "ARIXCKPT")
+ *   - Magic: 8 bytes (0x41524958 0x434B5054 = "SNEPPXCKPT")
  *   - Header: version, num_tensors, metadata_offset
  *   - Tensor records: shape, dtype, offset, size (repeated)
  *   - Metadata: JSON-like key-value pairs (optimizer step, epoch, RNG seed)
@@ -24,9 +24,9 @@
 extern "C" {
 #endif
 
-#define ARIX_CKPT_MAGIC      0x41524958  /* "ARIX" */
-#define ARIX_CKPT_MAGIC_HI   0x434B5054  /* "CKPT" */
-#define ARIX_CKPT_VERSION    1
+#define SNEPPX_CKPT_MAGIC      0x41524958  /* "SNEPPX" */
+#define SNEPPX_CKPT_MAGIC_HI   0x434B5054  /* "CKPT" */
+#define SNEPPX_CKPT_VERSION    1
 
 #pragma pack(push, 1)
 typedef struct {
@@ -38,7 +38,7 @@ typedef struct {
     uint64_t metadata_size;
     uint64_t total_size;
     uint8_t  reserved[32];
-} ArixCheckpointHeader;
+} SNEPPXCheckpointHeader;
 
 typedef struct {
     uint64_t shape[8];
@@ -47,27 +47,27 @@ typedef struct {
     uint64_t data_offset;
     uint64_t data_size;
     uint64_t stride[8];
-} ArixTensorRecord;
+} SNEPPXTensorRecord;
 #pragma pack(pop)
 
 /* ---------- Writer ---------- */
-int arix_ckpt_write_open(const char* path, ArixCheckpointHeader* header, void** handle);
-int arix_ckpt_write_tensor(void* handle, const void* tensor_data, const ArixTensorRecord* record);
-int arix_ckpt_write_metadata(void* handle, const char* metadata_json, size_t json_len);
-int arix_ckpt_write_close(void* handle);
+int SNEPPX_ckpt_write_open(const char* path, SNEPPXCheckpointHeader* header, void** handle);
+int SNEPPX_ckpt_write_tensor(void* handle, const void* tensor_data, const SNEPPXTensorRecord* record);
+int SNEPPX_ckpt_write_metadata(void* handle, const char* metadata_json, size_t json_len);
+int SNEPPX_ckpt_write_close(void* handle);
 
 /* ---------- Reader ---------- */
-int arix_ckpt_read_open(const char* path, ArixCheckpointHeader* header, void** handle);
-int arix_ckpt_read_tensor(void* handle, size_t tensor_idx, void* tensor_data, ArixTensorRecord* record);
-int arix_ckpt_read_metadata(void* handle, char** metadata_json, size_t* json_len);
-int arix_ckpt_read_close(void* handle);
+int SNEPPX_ckpt_read_open(const char* path, SNEPPXCheckpointHeader* header, void** handle);
+int SNEPPX_ckpt_read_tensor(void* handle, size_t tensor_idx, void* tensor_data, SNEPPXTensorRecord* record);
+int SNEPPX_ckpt_read_metadata(void* handle, char** metadata_json, size_t* json_len);
+int SNEPPX_ckpt_read_close(void* handle);
 
 /* ---------- Utility ---------- */
-int  arix_ckpt_validate(const char* path);
-int  arix_ckpt_supports_version(uint32_t version);
+int  SNEPPX_ckpt_validate(const char* path);
+int  SNEPPX_ckpt_supports_version(uint32_t version);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_CHECKPOINT_FORMAT_H */
+#endif /* SNEPPX_CHECKPOINT_FORMAT_H */

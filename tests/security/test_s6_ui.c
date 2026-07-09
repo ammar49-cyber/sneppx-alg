@@ -16,61 +16,61 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_key_vault_init(void) {
-    ArixKeyVault vault;
-    ASSERT(arix_key_vault_init(&vault) == 0, "init");
+    SNEPPXKeyVault vault;
+    ASSERT(SNEPPX_key_vault_init(&vault) == 0, "init");
     ASSERT(vault.is_locked == 1, "locked by default");
-    arix_key_vault_destroy(&vault);
+    SNEPPX_key_vault_destroy(&vault);
 }
 
 static void test_key_vault_generate_get(void) {
-    ArixKeyVault vault;
-    arix_key_vault_init(&vault);
-    arix_key_vault_unlock(&vault, NULL);
+    SNEPPXKeyVault vault;
+    SNEPPX_key_vault_init(&vault);
+    SNEPPX_key_vault_unlock(&vault, NULL);
     uint8_t key_id[16];
-    ASSERT(arix_key_vault_generate_key(&vault, key_id, 3600) >= 0, "generate key");
+    ASSERT(SNEPPX_key_vault_generate_key(&vault, key_id, 3600) >= 0, "generate key");
     uint8_t key_out[32];
-    ASSERT(arix_key_vault_get_key(&vault, key_id, key_out) == 0, "get key");
-    arix_key_vault_destroy(&vault);
+    ASSERT(SNEPPX_key_vault_get_key(&vault, key_id, key_out) == 0, "get key");
+    SNEPPX_key_vault_destroy(&vault);
 }
 
 static void test_key_vault_rotate_revoke(void) {
-    ArixKeyVault vault;
-    arix_key_vault_init(&vault);
-    arix_key_vault_unlock(&vault, NULL);
+    SNEPPXKeyVault vault;
+    SNEPPX_key_vault_init(&vault);
+    SNEPPX_key_vault_unlock(&vault, NULL);
     uint8_t key_id[16];
-    arix_key_vault_generate_key(&vault, key_id, 3600);
+    SNEPPX_key_vault_generate_key(&vault, key_id, 3600);
     uint8_t old_key[32];
-    arix_key_vault_get_key(&vault, key_id, old_key);
-    ASSERT(arix_key_vault_rotate_key(&vault, key_id) == 0, "rotate");
+    SNEPPX_key_vault_get_key(&vault, key_id, old_key);
+    ASSERT(SNEPPX_key_vault_rotate_key(&vault, key_id) == 0, "rotate");
     uint8_t new_key[32];
-    arix_key_vault_get_key(&vault, key_id, new_key);
+    SNEPPX_key_vault_get_key(&vault, key_id, new_key);
     int diff = 0;
     for (int i = 0; i < 32; i++) if (old_key[i] != new_key[i]) diff = 1;
     ASSERT(diff, "key changed");
-    ASSERT(arix_key_vault_revoke_key(&vault, key_id) == 0, "revoke");
-    ASSERT(arix_key_vault_get_key(&vault, key_id, new_key) != 0, "revoked key fails");
-    arix_key_vault_destroy(&vault);
+    ASSERT(SNEPPX_key_vault_revoke_key(&vault, key_id) == 0, "revoke");
+    ASSERT(SNEPPX_key_vault_get_key(&vault, key_id, new_key) != 0, "revoked key fails");
+    SNEPPX_key_vault_destroy(&vault);
 }
 
 static void test_audit_logger(void) {
-    ArixAuditLogger audit;
-    ASSERT(arix_audit_init(&audit, NULL) == 0, "audit init");
-    ASSERT(arix_audit_log(&audit, 1, "test event", 0x42) == 0, "log entry");
+    SNEPPXAuditLogger audit;
+    ASSERT(SNEPPX_audit_init(&audit, NULL) == 0, "audit init");
+    ASSERT(SNEPPX_audit_log(&audit, 1, "test event", 0x42) == 0, "log entry");
     ASSERT(audit.entry_count == 1, "1 entry");
-    ASSERT(arix_audit_verify_chain(&audit) == 1, "chain valid");
-    arix_audit_shutdown(&audit);
+    ASSERT(SNEPPX_audit_verify_chain(&audit) == 1, "chain valid");
+    SNEPPX_audit_shutdown(&audit);
 }
 
 static void test_audit_search(void) {
-    ArixAuditLogger audit;
-    arix_audit_init(&audit, NULL);
-    arix_audit_log(&audit, 1, "first event", 0);
-    arix_audit_log(&audit, 2, "second event", 0);
-    arix_audit_log(&audit, 1, "third event", 0);
-    ArixAuditEntry results[10];
-    int found = arix_audit_search(&audit, 1, results, 10);
+    SNEPPXAuditLogger audit;
+    SNEPPX_audit_init(&audit, NULL);
+    SNEPPX_audit_log(&audit, 1, "first event", 0);
+    SNEPPX_audit_log(&audit, 2, "second event", 0);
+    SNEPPX_audit_log(&audit, 1, "third event", 0);
+    SNEPPXAuditEntry results[10];
+    int found = SNEPPX_audit_search(&audit, 1, results, 10);
     ASSERT(found == 2, "found 2 type-1 events");
-    arix_audit_shutdown(&audit);
+    SNEPPX_audit_shutdown(&audit);
 }
 
 int main(void) {

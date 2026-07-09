@@ -2,11 +2,11 @@ import numpy as np
 from . import _neural_engine_bridge
 from typing import List, Tuple, Optional, Union, Sequence
 
-Dtype = _neural_engine_bridge.ArixDtype
-Device = _neural_engine_bridge.ArixDevice
-Layout = _neural_engine_bridge.ArixLayout
+Dtype = _neural_engine_bridge.SNEPPXDtype
+Device = _neural_engine_bridge.SNEPPXDevice
+Layout = _neural_engine_bridge.SNEPPXLayout
 
-_NP_TO_ARIX = {
+_NP_TO_SNEPPX = {
     np.dtype('float32'): Dtype.FLOAT32,
     np.dtype('float64'): Dtype.FLOAT64,
     np.dtype('float16'): Dtype.FLOAT16,
@@ -20,15 +20,15 @@ _NP_TO_ARIX = {
     np.dtype('complex128'): Dtype.COMPLEX128,
 }
 
-_ARIX_TO_NP = {v: k for k, v in _NP_TO_ARIX.items()}
+_SNEPPX_TO_NP = {v: k for k, v in _NP_TO_SNEPPX.items()}
 
 def _resolve_dtype(dtype) -> Dtype:
     if isinstance(dtype, Dtype):
         return dtype
     if isinstance(dtype, np.dtype):
-        return _NP_TO_ARIX.get(dtype, Dtype.FLOAT32)
+        return _NP_TO_SNEPPX.get(dtype, Dtype.FLOAT32)
     if isinstance(dtype, str):
-        return _NP_TO_ARIX.get(np.dtype(dtype), Dtype.FLOAT32)
+        return _NP_TO_SNEPPX.get(np.dtype(dtype), Dtype.FLOAT32)
     if dtype is None:
         return Dtype.FLOAT32
     return Dtype.FLOAT32

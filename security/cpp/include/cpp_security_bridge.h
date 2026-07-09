@@ -1,5 +1,5 @@
-#ifndef ARIX_SECURITY_CPP_H
-#define ARIX_SECURITY_CPP_H
+#ifndef SNEPPX_SECURITY_CPP_H
+#define SNEPPX_SECURITY_CPP_H
 /*
  * C++ Security Bindings — v0.5
  *
@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace arix {
+namespace SNEPPX {
 
 /* ---------- Secure buffer (automatically zeroed on destruction) ---------- */
 class SecureBuffer {
@@ -70,6 +70,6 @@ private:
     void* ctx_;
 };
 
-} /* namespace arix */
+} /* namespace SNEPPX */
 
-#endif /* ARIX_SECURITY_CPP_H */
+#endif /* SNEPPX_SECURITY_CPP_H */

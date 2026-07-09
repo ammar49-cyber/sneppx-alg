@@ -9,7 +9,7 @@
 #include <arm_acle.h>
 #endif
 
-void arix_cache_flush(const void* ptr, size_t len) {
+void SNEPPX_cache_flush(const void* ptr, size_t len) {
     if (!ptr) return;
     const uint8_t* p = (const uint8_t*)ptr;
     for (size_t i = 0; i < len; i += 64) {
@@ -25,7 +25,7 @@ void arix_cache_flush(const void* ptr, size_t len) {
     }
 }
 
-void arix_cache_prefetch(const void* ptr) {
+void SNEPPX_cache_prefetch(const void* ptr) {
     if (!ptr) return;
 #if defined(_MSC_VER)
     _mm_prefetch((const char*)ptr, _MM_HINT_T0);
@@ -38,7 +38,7 @@ void arix_cache_prefetch(const void* ptr) {
 #endif
 }
 
-void arix_cache_barrier(void) {
+void SNEPPX_cache_barrier(void) {
 #if defined(_MSC_VER)
     _mm_mfence();
 #elif defined(__x86_64__) || defined(__amd64__)

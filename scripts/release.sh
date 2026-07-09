@@ -2,12 +2,12 @@
 set -e
 
 VERSION="0.1.0"
-RELEASE_NAME="arix-algo-${VERSION}"
+RELEASE_NAME="SNEPPX-algo-${VERSION}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 RELEASE_DIR="${PROJECT_ROOT}/releases"
 
-echo "=== ARIX-Algo Release v${VERSION} ==="
+echo "=== SNEPPX-Algo Release v${VERSION} ==="
 echo ""
 
 # Clean and rebuild

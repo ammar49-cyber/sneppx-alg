@@ -1,5 +1,5 @@
-#ifndef ARIX_RDMA_MANAGER_H
-#define ARIX_RDMA_MANAGER_H
+#ifndef SNEPPX_RDMA_MANAGER_H
+#define SNEPPX_RDMA_MANAGER_H
 /*
  * RDMA Communication Manager — v1.0 (zero-copy distributed transport)
  *
@@ -24,7 +24,7 @@ typedef struct {
     void*   pd;               /* ibv_pd* */
     int     port_num;
     int     active_qps;
-} ArixRDMAContext;
+} SNEPPXRDMAContext;
 
 typedef struct {
     void*   mr;               /* ibv_mr* */
@@ -32,7 +32,7 @@ typedef struct {
     size_t  length;
     uint32_t rkey;
     uint32_t lkey;
-} ArixRDMARegion;
+} SNEPPXRDMARegion;
 
 typedef struct {
     void*   qp;               /* ibv_qp* */
@@ -40,42 +40,42 @@ typedef struct {
     int     state;
     uint64_t send_bytes;
     uint64_t recv_bytes;
-} ArixRDMAQueuePair;
+} SNEPPXRDMAQueuePair;
 
 typedef struct {
     void*   cq;               /* ibv_cq* */
     int     num_entries;
-} ArixRDMACompletionQueue;
+} SNEPPXRDMACompletionQueue;
 
 /* ---------- Lifecycle ---------- */
-int arix_rdma_open(ArixRDMAContext** ctx, int device_idx);
-void arix_rdma_close(ArixRDMAContext* ctx);
+int SNEPPX_rdma_open(SNEPPXRDMAContext** ctx, int device_idx);
+void SNEPPX_rdma_close(SNEPPXRDMAContext* ctx);
 
 /* ---------- Memory registration ---------- */
-int arix_rdma_register_memory(ArixRDMAContext* ctx, void* addr, size_t len, ArixRDMARegion** region);
-int arix_rdma_deregister_memory(ArixRDMAContext* ctx, ArixRDMARegion* region);
+int SNEPPX_rdma_register_memory(SNEPPXRDMAContext* ctx, void* addr, size_t len, SNEPPXRDMARegion** region);
+int SNEPPX_rdma_deregister_memory(SNEPPXRDMAContext* ctx, SNEPPXRDMARegion* region);
 
 /* ---------- Queue pairs ---------- */
-int arix_rdma_create_qp(ArixRDMAContext* ctx, ArixRDMAQueuePair** qp);
-int arix_rdma_connect_qp(ArixRDMAQueuePair* qp, int remote_qp_num, int remote_lid);
-int arix_rdma_disconnect_qp(ArixRDMAQueuePair* qp);
-void arix_rdma_destroy_qp(ArixRDMAQueuePair* qp);
+int SNEPPX_rdma_create_qp(SNEPPXRDMAContext* ctx, SNEPPXRDMAQueuePair** qp);
+int SNEPPX_rdma_connect_qp(SNEPPXRDMAQueuePair* qp, int remote_qp_num, int remote_lid);
+int SNEPPX_rdma_disconnect_qp(SNEPPXRDMAQueuePair* qp);
+void SNEPPX_rdma_destroy_qp(SNEPPXRDMAQueuePair* qp);
 
 /* ---------- One-sided operations ---------- */
-int arix_rdma_read(ArixRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
+int SNEPPX_rdma_read(SNEPPXRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
                    uint64_t remote_addr, uint32_t rkey, size_t len);
-int arix_rdma_write(ArixRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
+int SNEPPX_rdma_write(SNEPPXRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
                     uint64_t remote_addr, uint32_t rkey, size_t len);
 
 /* ---------- Completion ---------- */
-int arix_rdma_poll_completion(ArixRDMAContext* ctx, int* num_completions);
+int SNEPPX_rdma_poll_completion(SNEPPXRDMAContext* ctx, int* num_completions);
 
 /* ---------- Tensor helpers (v1.0) ---------- */
-int arix_rdma_send_tensor(ArixRDMAContext* ctx, const void* tensor, int dest_rank);
-int arix_rdma_recv_tensor(ArixRDMAContext* ctx, void** tensor, int src_rank);
+int SNEPPX_rdma_send_tensor(SNEPPXRDMAContext* ctx, const void* tensor, int dest_rank);
+int SNEPPX_rdma_recv_tensor(SNEPPXRDMAContext* ctx, void** tensor, int src_rank);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_RDMA_MANAGER_H */
+#endif /* SNEPPX_RDMA_MANAGER_H */

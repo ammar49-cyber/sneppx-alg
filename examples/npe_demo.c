@@ -8,7 +8,7 @@ int main(void) {
     printf("=== NPE Demo: MLP Execution ===\n");
     size_t dim = 8, hidden = 16;
 
-    ArixNPEProgram* prog = arix_npe_compile_mlp(dim, hidden);
+    SNEPPXNPEProgram* prog = SNEPPX_npe_compile_mlp(dim, hidden);
     if (!prog) { printf("ERROR: compile mlp\n"); return 1; }
     printf("Program length: %zu instructions\n", prog->num_instructions);
 
@@ -22,16 +22,16 @@ int main(void) {
         ((float*)prog->memory->data)[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 0.1f;
     }
 
-    ArixNPEConfig cfg = arix_npe_config_default();
-    ArixNPEVM* vm = arix_npe_vm_create(&cfg);
-    arix_npe_vm_load(vm, prog);
+    SNEPPXNPEConfig cfg = SNEPPX_npe_config_default();
+    SNEPPXNPEVM* vm = SNEPPX_npe_vm_create(&cfg);
+    SNEPPX_npe_vm_load(vm, prog);
 
     size_t shape_in[] = {4, 8};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     if (!input) { printf("ERROR: input\n"); return 1; }
 
-    ArixTensor* output = NULL;
-    int r = arix_npe_vm_run(vm, input, &output);
+    SNEPPXTensor* output = NULL;
+    int r = SNEPPX_npe_vm_run(vm, input, &output);
     printf("Run result: %d (0=ok)\n", r);
 
     if (output) {
@@ -55,10 +55,10 @@ int main(void) {
     }
     printf("\n");
 
-    arix_tensor_destroy(input);
-    if (output) arix_tensor_destroy(output);
-    arix_npe_vm_destroy(vm);
-    arix_npe_program_destroy(prog);
+    SNEPPX_tensor_destroy(input);
+    if (output) SNEPPX_tensor_destroy(output);
+    SNEPPX_npe_vm_destroy(vm);
+    SNEPPX_npe_program_destroy(prog);
     printf("Demo complete.\n");
     return 0;
 }

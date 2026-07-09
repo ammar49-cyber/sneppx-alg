@@ -1,5 +1,5 @@
 import numpy as np
-from arix_algo import Model
+from SneppX_ALG import Model
 
 
 def test_forward():

@@ -12,7 +12,7 @@ fi
 
 cd "$BUILD_DIR"
 
-echo "=== ARIX-Algo Demos ==="
+echo "=== SNEPPX-Algo Demos ==="
 echo ""
 
 run_demo() {

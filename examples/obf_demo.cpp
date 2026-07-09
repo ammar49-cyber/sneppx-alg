@@ -9,10 +9,10 @@ static int original_add(int a, int b) {
 }
 
 int main() {
-    printf("\n=== ARIX S2 Obfuscation Demo ===\n\n");
+    printf("\n=== SNEPPX S2 Obfuscation Demo ===\n\n");
 
     // Build a simple CFG representing add(a, b)
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfCFG cfg;
 
     cfg.entry_block = cfg.add_block();
     cfg.blocks[cfg.entry_block]->is_entry = true;
@@ -22,29 +22,29 @@ int main() {
     cfg.blocks[cfg.exit_block]->is_exit = true;
 
     // Block 0: setup params
-    arix::ArixObfInstruction load_a;
-    load_a.type = arix::ArixObfInstType::MOV;
+    SNEPPX::SNEPPXObfInstruction load_a;
+    load_a.type = SNEPPX::SNEPPXObfInstType::MOV;
     load_a.result = "a";
     load_a.operand1 = "input_a";
     cfg.blocks[cfg.entry_block]->instructions.push_back(load_a);
 
-    arix::ArixObfInstruction load_b;
-    load_b.type = arix::ArixObfInstType::MOV;
+    SNEPPX::SNEPPXObfInstruction load_b;
+    load_b.type = SNEPPX::SNEPPXObfInstType::MOV;
     load_b.result = "b";
     load_b.operand1 = "input_b";
     cfg.blocks[cfg.entry_block]->instructions.push_back(load_b);
 
     // Block 1: add
-    arix::ArixObfInstruction add_inst;
-    add_inst.type = arix::ArixObfInstType::ADD;
+    SNEPPX::SNEPPXObfInstruction add_inst;
+    add_inst.type = SNEPPX::SNEPPXObfInstType::ADD;
     add_inst.result = "result";
     add_inst.operand1 = "a";
     add_inst.operand2 = "b";
     cfg.blocks[body]->instructions.push_back(add_inst);
 
     // Block 2: return
-    arix::ArixObfInstruction ret_inst;
-    ret_inst.type = arix::ArixObfInstType::RET;
+    SNEPPX::SNEPPXObfInstruction ret_inst;
+    ret_inst.type = SNEPPX::SNEPPXObfInstType::RET;
     ret_inst.operand1 = "result";
     cfg.blocks[cfg.exit_block]->instructions.push_back(ret_inst);
 
@@ -60,23 +60,23 @@ int main() {
     printf("Original add(2, 3): %d (took %lld ns)\n", orig_result, (long long)orig_us);
 
     // Configure obfuscator at HEAVY level
-    arix::ArixObfuscator obfuscator;
-    obfuscator.anti_debug().set_action(arix::ArixAntiDebugAction::DELAY);
-    obfuscator.configure(arix::ArixObfuscationLevel::ARIX_OBF_HEAVY);
+    SNEPPX::SNEPPXObfuscator obfuscator;
+    obfuscator.anti_debug().set_action(SNEPPX::SNEPPXAntiDebugAction::DELAY);
+    obfuscator.configure(SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_HEAVY);
 
     auto obf_start = std::chrono::high_resolution_clock::now();
-    arix::ArixObfuscationReport report = obfuscator.obfuscate(cfg);
+    SNEPPX::SNEPPXObfuscationReport report = obfuscator.obfuscate(cfg);
     auto obf_end = std::chrono::high_resolution_clock::now();
     auto obf_us = std::chrono::duration_cast<std::chrono::microseconds>(obf_end - obf_start).count();
 
     printf("\n--- Obfuscation Report ---\n");
     printf("Level:                    ");
     switch (report.level) {
-        case arix::ArixObfuscationLevel::ARIX_OBF_NONE:    printf("NONE\n"); break;
-        case arix::ArixObfuscationLevel::ARIX_OBF_LIGHT:   printf("LIGHT\n"); break;
-        case arix::ArixObfuscationLevel::ARIX_OBF_MEDIUM:  printf("MEDIUM\n"); break;
-        case arix::ArixObfuscationLevel::ARIX_OBF_HEAVY:   printf("HEAVY\n"); break;
-        case arix::ArixObfuscationLevel::ARIX_OBF_MAXIMUM: printf("MAXIMUM\n"); break;
+        case SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_NONE:    printf("NONE\n"); break;
+        case SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_LIGHT:   printf("LIGHT\n"); break;
+        case SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_MEDIUM:  printf("MEDIUM\n"); break;
+        case SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_HEAVY:   printf("HEAVY\n"); break;
+        case SNEPPX::SNEPPXObfuscationLevel::SNEPPX_OBF_MAXIMUM: printf("MAXIMUM\n"); break;
     }
     printf("Transformations applied:  %zu\n", report.transformations_applied);
     printf("Blocks flattened:         %zu\n", report.blocks_flattened);

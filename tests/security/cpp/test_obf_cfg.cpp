@@ -11,7 +11,7 @@ static int tests_failed = 0;
 #define FAIL(msg) do { printf("FAIL: %s\n", msg); tests_failed++; } while(0)
 #define ASSERT(cond, msg) do { if (!(cond)) { FAIL(msg); return; } } while(0)
 
-void build_test_cfg(arix::ArixObfCFG& cfg) {
+void build_test_cfg(SNEPPX::SNEPPXObfCFG& cfg) {
     cfg.entry_block = cfg.add_block();
     cfg.blocks[cfg.entry_block]->is_entry = true;
 
@@ -20,21 +20,21 @@ void build_test_cfg(arix::ArixObfCFG& cfg) {
     cfg.exit_block = cfg.add_block();
     cfg.blocks[cfg.exit_block]->is_exit = true;
 
-    arix::ArixObfInstruction inst1;
-    inst1.type = arix::ArixObfInstType::MOV;
+    SNEPPX::SNEPPXObfInstruction inst1;
+    inst1.type = SNEPPX::SNEPPXObfInstType::MOV;
     inst1.result = "x";
     inst1.operand1 = "10";
     cfg.blocks[cfg.entry_block]->instructions.push_back(inst1);
 
-    arix::ArixObfInstruction inst2;
-    inst2.type = arix::ArixObfInstType::ADD;
+    SNEPPX::SNEPPXObfInstruction inst2;
+    inst2.type = SNEPPX::SNEPPXObfInstType::ADD;
     inst2.result = "x";
     inst2.operand1 = "x";
     inst2.operand2 = "5";
     cfg.blocks[b2]->instructions.push_back(inst2);
 
-    arix::ArixObfInstruction inst3;
-    inst3.type = arix::ArixObfInstType::SUB;
+    SNEPPX::SNEPPXObfInstruction inst3;
+    inst3.type = SNEPPX::SNEPPXObfInstType::SUB;
     inst3.result = "x";
     inst3.operand1 = "x";
     inst3.operand2 = "3";
@@ -47,12 +47,12 @@ void build_test_cfg(arix::ArixObfCFG& cfg) {
 
 void test_flatten_simple() {
     TEST("flatten_simple_3_blocks");
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfCFG cfg;
     build_test_cfg(cfg);
 
     ASSERT(cfg.blocks.size() == 4, "expected 4 blocks before flatten");
 
-    arix::ArixObfCFGFlattener flattener;
+    SNEPPX::SNEPPXObfCFGFlattener flattener;
     flattener.set_seed(12345);
     flattener.flatten(cfg);
 
@@ -63,7 +63,7 @@ void test_flatten_simple() {
         if (pair.second->is_entry) {
             has_dispatcher = true;
             for (auto& inst : pair.second->instructions) {
-                if (inst.type == arix::ArixObfInstType::MOV &&
+                if (inst.type == SNEPPX::SNEPPXObfInstType::MOV &&
                     inst.result == "state_var") {
                     has_dispatcher = true;
                     break;
@@ -77,7 +77,7 @@ void test_flatten_simple() {
 
 void test_flatten_loop() {
     TEST("flatten_loop");
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfCFG cfg;
 
     cfg.entry_block = cfg.add_block();
     cfg.blocks[cfg.entry_block]->is_entry = true;
@@ -91,7 +91,7 @@ void test_flatten_loop() {
     cfg.add_edge(loop_body, loop_header);
     cfg.add_edge(loop_header, cfg.exit_block);
 
-    arix::ArixObfCFGFlattener flattener;
+    SNEPPX::SNEPPXObfCFGFlattener flattener;
     flattener.set_seed(67890);
     flattener.flatten(cfg);
 
@@ -101,10 +101,10 @@ void test_flatten_loop() {
 
 void test_semantic_preserve() {
     TEST("semantic_preserve");
-    arix::ArixObfCFG cfg;
+    SNEPPX::SNEPPXObfCFG cfg;
     build_test_cfg(cfg);
 
-    arix::ArixObfCFGFlattener flattener;
+    SNEPPX::SNEPPXObfCFGFlattener flattener;
     flattener.set_seed(11111);
     flattener.flatten(cfg);
 

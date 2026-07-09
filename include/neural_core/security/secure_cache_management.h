@@ -1,10 +1,10 @@
-#ifndef ARIX_CACHE_H
-#define ARIX_CACHE_H
+#ifndef SNEPPX_CACHE_H
+#define SNEPPX_CACHE_H
 
 #include <stddef.h>
 
-void arix_cache_flush(const void* ptr, size_t len);
-void arix_cache_prefetch(const void* ptr);
-void arix_cache_barrier(void);
+void SNEPPX_cache_flush(const void* ptr, size_t len);
+void SNEPPX_cache_prefetch(const void* ptr);
+void SNEPPX_cache_barrier(void);
 
 #endif

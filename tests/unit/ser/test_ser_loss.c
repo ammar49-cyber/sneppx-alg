@@ -30,33 +30,33 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_ser_importance_loss(void) {
-    ArixSERConfig cfg = arix_ser_config_default();
+    SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4;
-    ArixSERLayer* layer = arix_ser_layer_create(&cfg, 42);
+    SNEPPXSERLayer* layer = SNEPPX_ser_layer_create(&cfg, 42);
     size_t shape[] = {2, cfg.input_dim};
-    ArixTensor* input = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < input->size; i++) d[i] = 1.0f;
-    ArixTensor* gate_weights = NULL;
+    SNEPPXTensor* gate_weights = NULL;
     int* expert_indices = NULL;
-    arix_ser_route(layer, input, &gate_weights, &expert_indices);
-    float imp_loss = arix_ser_importance_loss(gate_weights, expert_indices, 4);
+    SNEPPX_ser_route(layer, input, &gate_weights, &expert_indices);
+    float imp_loss = SNEPPX_ser_importance_loss(gate_weights, expert_indices, 4);
     ASSERT(imp_loss >= 0.0f, "importance loss >= 0");
-    arix_tensor_destroy(gate_weights);
+    SNEPPX_tensor_destroy(gate_weights);
     free(expert_indices);
-    arix_tensor_destroy(input);
-    arix_ser_layer_destroy(layer);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_ser_layer_destroy(layer);
 }
 
 static void test_ser_aux_loss_balanced(void) {
     size_t shape_batch[] = {4, 2};
     float data[8] = {1.0f, 0.0f, 0.5f, 0.5f, 0.0f, 1.0f, 0.3f, 0.7f};
-    ArixTensor* gate_weights = arix_tensor_create(shape_batch, 2, ARIX_FLOAT32);
+    SNEPPXTensor* gate_weights = SNEPPX_tensor_create(shape_batch, 2, SNEPPX_FLOAT32);
     for (size_t i = 0; i < 8; i++) ((float*)gate_weights->data)[i] = data[i];
     int expert_indices[] = {0, 1, 0, 0};
-    float aux = arix_ser_aux_load_balance(gate_weights, expert_indices, 4, 2);
+    float aux = SNEPPX_ser_aux_load_balance(gate_weights, expert_indices, 4, 2);
     ASSERT(aux >= 0.0f, "aux loss >= 0");
-    arix_tensor_destroy(gate_weights);
+    SNEPPX_tensor_destroy(gate_weights);
 }
 
 int main(void) {

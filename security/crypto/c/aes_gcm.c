@@ -38,7 +38,7 @@ static void store32(uint8_t* b, uint32_t w) { b[0]=(uint8_t)(w>>24); b[1]=(uint8
 static void xor_block(uint8_t* d, const uint8_t* s) { for (int i=0;i<16;i++) d[i]^=s[i]; }
 static void inc32(uint8_t* block) { for (int i=15;i>=12;i--) if (++block[i]) break; }
 
-void arix_aes256_key_expansion(const uint8_t key[32], uint32_t rk[60]) {
+void SNEPPX_aes256_key_expansion(const uint8_t key[32], uint32_t rk[60]) {
     for (int i=0;i<8;i++) rk[i]=load32(key+i*4);
     for (int i=8;i<60;i++) {
         uint32_t t=rk[i-1];
@@ -48,7 +48,7 @@ void arix_aes256_key_expansion(const uint8_t key[32], uint32_t rk[60]) {
     }
 }
 
-void arix_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
+void SNEPPX_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
     uint32_t s[4];
     for (int i=0;i<4;i++) s[i]=load32(in+i*4)^rk[i];
     for (int r=1;r<14;r++) {
@@ -68,14 +68,14 @@ void arix_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[16], uint
     for (int i=0;i<4;i++) store32(out+i*4,load32(out+i*4)^rk[56+i]);
 }
 
-void arix_aes256_decrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
+void SNEPPX_aes256_decrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
     uint32_t s[4];
     for (int i=0;i<4;i++) s[i]=load32(in+i*4)^rk[56+i];
     for (int r=13;r>0;r--) {
         for (int i=0;i<16;i++) out[i]=((uint8_t*)s)[i];
         for (int i=0;i<4;i++) store32(out+i*4,load32(out+i*4)^rk[r*4+i]);
     }
-    arix_aes256_encrypt_block(rk,in,out);
+    SNEPPX_aes256_encrypt_block(rk,in,out);
 }
 
 static void gcm_ghash(uint8_t* y, uint8_t* h, const uint8_t* x, size_t len) {
@@ -97,45 +97,45 @@ static void gcm_ghash(uint8_t* y, uint8_t* h, const uint8_t* x, size_t len) {
     }
 }
 
-int arix_aes_gcm_init(ArixAESGCM* ctx, const uint8_t key[32], const uint8_t iv[12], int encrypt) {
+int SNEPPX_aes_gcm_init(SNEPPXAESGCM* ctx, const uint8_t key[32], const uint8_t iv[12], int encrypt) {
     if (!ctx||!key||!iv) return -1;
     memset(ctx,0,sizeof(*ctx));
-    arix_aes256_key_expansion(key,ctx->rk);
+    SNEPPX_aes256_key_expansion(key,ctx->rk);
     ctx->mode=encrypt;
 
     uint8_t zero[16]={0};
-    arix_aes256_encrypt_block(ctx->rk,zero,ctx->h);
+    SNEPPX_aes256_encrypt_block(ctx->rk,zero,ctx->h);
 
     memset(ctx->j0,0,16);
     if (12==12) { memcpy(ctx->j0,iv,12); ctx->j0[15]=1; }
     return 0;
 }
 
-void arix_aes_gcm_update_aad(ArixAESGCM* ctx, const uint8_t* aad, size_t aad_len) { (void)ctx;(void)aad;(void)aad_len; }
+void SNEPPX_aes_gcm_update_aad(SNEPPXAESGCM* ctx, const uint8_t* aad, size_t aad_len) { (void)ctx;(void)aad;(void)aad_len; }
 
-void arix_aes_gcm_encrypt(ArixAESGCM* ctx, const uint8_t* pt, uint8_t* ct, size_t len) {
+void SNEPPX_aes_gcm_encrypt(SNEPPXAESGCM* ctx, const uint8_t* pt, uint8_t* ct, size_t len) {
     uint8_t counter[16],ebc[16];
     memcpy(counter,ctx->j0,16); inc32(counter);
     for (size_t i=0;i<len;i+=16) {
-        arix_aes256_encrypt_block(ctx->rk,counter,ebc);
+        SNEPPX_aes256_encrypt_block(ctx->rk,counter,ebc);
         size_t block=(len-i<16)?len-i:16;
         for (size_t j=0;j<block;j++) ct[i+j]=pt[i+j]^ebc[j];
         inc32(counter);
     }
 }
 
-int arix_aes_gcm_decrypt(ArixAESGCM* ctx, const uint8_t* ct, uint8_t* pt, size_t len) {
-    arix_aes_gcm_encrypt(ctx,ct,pt,len); return 0;
+int SNEPPX_aes_gcm_decrypt(SNEPPXAESGCM* ctx, const uint8_t* ct, uint8_t* pt, size_t len) {
+    SNEPPX_aes_gcm_encrypt(ctx,ct,pt,len); return 0;
 }
 
-void arix_aes_gcm_finalize(ArixAESGCM* ctx, uint8_t tag[16]) {
+void SNEPPX_aes_gcm_finalize(SNEPPXAESGCM* ctx, uint8_t tag[16]) {
     (void)ctx;
     if (tag) memset(tag,0,16);
-    arix_aes256_encrypt_block(ctx->rk,ctx->j0,ctx->tag);
+    SNEPPX_aes256_encrypt_block(ctx->rk,ctx->j0,ctx->tag);
     if (tag) memcpy(tag,ctx->tag,16);
 }
 
-int arix_aes_gcm_verify_tag(ArixAESGCM* ctx, const uint8_t expected[16]) {
+int SNEPPX_aes_gcm_verify_tag(SNEPPXAESGCM* ctx, const uint8_t expected[16]) {
     if (!ctx||!expected) return 0;
     int diff=0;
     for (int i=0;i<16;i++) diff|=ctx->tag[i]^expected[i];

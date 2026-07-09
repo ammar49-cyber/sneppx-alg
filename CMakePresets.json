@@ -9,9 +9,9 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "ARIX_BUILD_TESTS": "ON",
-                "ARIX_BUILD_BENCHMARKS": "ON",
-                "ARIX_BUILD_PYTHON": "OFF"
+                "SNEPPX_BUILD_TESTS": "ON",
+                "SNEPPX_BUILD_BENCHMARKS": "ON",
+                "SNEPPX_BUILD_PYTHON": "OFF"
             }
         },
         {
@@ -22,10 +22,10 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "ARIX_BUILD_TESTS": "ON",
-                "ARIX_BUILD_BENCHMARKS": "ON",
-                "ARIX_BUILD_PYTHON": "OFF",
-                "ARIX_USE_LTO": "ON"
+                "SNEPPX_BUILD_TESTS": "ON",
+                "SNEPPX_BUILD_BENCHMARKS": "ON",
+                "SNEPPX_BUILD_PYTHON": "OFF",
+                "SNEPPX_USE_LTO": "ON"
             }
         },
         {
@@ -36,9 +36,9 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-                "ARIX_BUILD_TESTS": "ON",
-                "ARIX_BUILD_BENCHMARKS": "ON",
-                "ARIX_BUILD_PYTHON": "OFF"
+                "SNEPPX_BUILD_TESTS": "ON",
+                "SNEPPX_BUILD_BENCHMARKS": "ON",
+                "SNEPPX_BUILD_PYTHON": "OFF"
             }
         },
         {
@@ -48,9 +48,9 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "ARIX_BUILD_TESTS": "ON",
-                "ARIX_BUILD_BENCHMARKS": "ON",
-                "ARIX_USE_LTO": "ON"
+                "SNEPPX_BUILD_TESTS": "ON",
+                "SNEPPX_BUILD_BENCHMARKS": "ON",
+                "SNEPPX_USE_LTO": "ON"
             }
         },
         {
@@ -58,7 +58,7 @@
             "displayName": "Debug with AddressSanitizer",
             "inherits": "default",
             "cacheVariables": {
-                "ARIX_USE_ASAN": "ON"
+                "SNEPPX_USE_ASAN": "ON"
             }
         }
     ],

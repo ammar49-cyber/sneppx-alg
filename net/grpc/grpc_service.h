@@ -1,5 +1,5 @@
-#ifndef ARIX_GRPC_SERVICE_H
-#define ARIX_GRPC_SERVICE_H
+#ifndef SNEPPX_GRPC_SERVICE_H
+#define SNEPPX_GRPC_SERVICE_H
 /*
  * gRPC Service Definitions — v1.0 (distributed coordination)
  *
@@ -27,61 +27,61 @@ typedef struct {
     int      data_port;
     int      num_devices;
     int64_t  total_memory;
-} ArixGRPCNodeInfo;
+} SNEPPXGRPCNodeInfo;
 
 typedef enum {
-    ARIX_GRPC_OK,
-    ARIX_GRPC_UNAVAILABLE,
-    ARIX_GRPC_DEADLINE_EXCEEDED,
-    ARIX_GRPC_INTERNAL,
-    ARIX_GRPC_UNAUTHENTICATED,
-} ArixGRPCStatus;
+    SNEPPX_GRPC_OK,
+    SNEPPX_GRPC_UNAVAILABLE,
+    SNEPPX_GRPC_DEADLINE_EXCEEDED,
+    SNEPPX_GRPC_INTERNAL,
+    SNEPPX_GRPC_UNAUTHENTICATED,
+} SNEPPXGRPCStatus;
 
 /* ---------- Service stubs ---------- */
-typedef struct ArixGRPCStub {
+typedef struct SNEPPXGRPCStub {
     void*   channel;           /* grpc_channel* */
     void*   coordination_stub; /* CoordinationService::Stub* */
     void*   transfer_stub;     /* TensorTransferService::Stub* */
     char    target[256];
     int     connected;
-} ArixGRPCStub;
+} SNEPPXGRPCStub;
 
 /* ---------- Service server ---------- */
-typedef struct ArixGRPCServer {
+typedef struct SNEPPXGRPCServer {
     void*   server;            /* grpc_server* */
     int     port;
     int     is_running;
     void*   coordination_svc;  /* CoordinationService::Service* */
     void*   transfer_svc;      /* TensorTransferService::Service* */
-} ArixGRPCServer;
+} SNEPPXGRPCServer;
 
 /* ---------- Lifecycle ---------- */
-int  arix_grpc_server_start(ArixGRPCServer** server, int port);
-void arix_grpc_server_stop(ArixGRPCServer* server);
-void arix_grpc_server_wait(ArixGRPCServer* server);
+int  SNEPPX_grpc_server_start(SNEPPXGRPCServer** server, int port);
+void SNEPPX_grpc_server_stop(SNEPPXGRPCServer* server);
+void SNEPPX_grpc_server_wait(SNEPPXGRPCServer* server);
 
-ArixGRPCStub* arix_grpc_stub_create(const char* target);
-void          arix_grpc_stub_destroy(ArixGRPCStub* stub);
+SNEPPXGRPCStub* SNEPPX_grpc_stub_create(const char* target);
+void          SNEPPX_grpc_stub_destroy(SNEPPXGRPCStub* stub);
 
 /* ---------- Coordination (v1.0) ---------- */
-int arix_grpc_register_node(ArixGRPCStub* stub, const ArixGRPCNodeInfo* info);
-int arix_grpc_get_world_size(ArixGRPCStub* stub, int* size);
-int arix_grpc_get_rank(ArixGRPCStub* stub, int* rank);
-int arix_grpc_barrier(ArixGRPCStub* stub);
-int arix_grpc_all_gather(ArixGRPCStub* stub, const void* send_buf, void** recv_buf, size_t elem_size);
+int SNEPPX_grpc_register_node(SNEPPXGRPCStub* stub, const SNEPPXGRPCNodeInfo* info);
+int SNEPPX_grpc_get_world_size(SNEPPXGRPCStub* stub, int* size);
+int SNEPPX_grpc_get_rank(SNEPPXGRPCStub* stub, int* rank);
+int SNEPPX_grpc_barrier(SNEPPXGRPCStub* stub);
+int SNEPPX_grpc_all_gather(SNEPPXGRPCStub* stub, const void* send_buf, void** recv_buf, size_t elem_size);
 
 /* ---------- Tensor transfer (v1.0) ---------- */
-int arix_grpc_send_tensor(ArixGRPCStub* stub, const void* tensor, int dest_rank);
-int arix_grpc_recv_tensor(ArixGRPCStub* stub, void** tensor, int src_rank);
+int SNEPPX_grpc_send_tensor(SNEPPXGRPCStub* stub, const void* tensor, int dest_rank);
+int SNEPPX_grpc_recv_tensor(SNEPPXGRPCStub* stub, void** tensor, int src_rank);
 
 /* ---------- Auth (v1.0) ---------- */
-int arix_grpc_set_auth_token(ArixGRPCStub* stub, const char* token);
+int SNEPPX_grpc_set_auth_token(SNEPPXGRPCStub* stub, const char* token);
 
 /* ---------- Utility ---------- */
-const char* arix_grpc_status_string(ArixGRPCStatus status);
+const char* SNEPPX_grpc_status_string(SNEPPXGRPCStatus status);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_GRPC_SERVICE_H */
+#endif /* SNEPPX_GRPC_SERVICE_H */

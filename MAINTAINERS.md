@@ -2,7 +2,7 @@
 
 ## BDFL
 
-- **Ammar [ARIX]** — [algoarix@gmail.com](mailto:algoarix@gmail.com)
+- **Ammar [SNEPPX]** — [algoSNEPPX@gmail.com](mailto:algoSNEPPX@gmail.com)
   - Architecture, Core Engine, Security, Build System
 
 ## Maintainer Responsibilities
@@ -15,7 +15,7 @@
 
 ## Process
 
-1. Patches sent to [algoarix@gmail.com](mailto:algoarix@gmail.com)
+1. Patches sent to [algoSNEPPX@gmail.com](mailto:algoSNEPPX@gmail.com)
 2. Reviewed for correctness, style, test coverage
 3. Applied with `git am` and signed
 4. Acknowledged via email reply

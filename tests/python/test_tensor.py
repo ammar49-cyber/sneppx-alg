@@ -1,5 +1,5 @@
 import numpy as np
-from arix_algo import Tensor
+from SneppX_ALG import Tensor
 
 
 def test_create():

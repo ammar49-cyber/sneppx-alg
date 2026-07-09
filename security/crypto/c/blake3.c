@@ -72,22 +72,22 @@ static void blake3_hash_chunk(const uint32_t key[8], const uint8_t* data, size_t
     blake3_compress(key, block, counter, flags & ~FLAG_CHUNK_START, out);
 }
 
-void arix_blake3_init(ArixBlake3State* s) {
+void SNEPPX_blake3_init(SNEPPXBlake3State* s) {
     memcpy(s->key, IV, 32);
     s->counter = 0;
     s->buflen = 0;
     s->flags = 0;
 }
 
-void arix_blake3_update(ArixBlake3State* s, const uint8_t* data, size_t len) {
+void SNEPPX_blake3_update(SNEPPXBlake3State* s, const uint8_t* data, size_t len) {
     while (len) {
-        size_t take = ARIX_BLAKE3_CHUNK_LEN - s->buflen;
+        size_t take = SNEPPX_BLAKE3_CHUNK_LEN - s->buflen;
         if (take > len) take = len;
         memcpy(s->buf + s->buflen, data, take);
         s->buflen += take; data += take; len -= take;
-        if (s->buflen == ARIX_BLAKE3_CHUNK_LEN) {
+        if (s->buflen == SNEPPX_BLAKE3_CHUNK_LEN) {
             uint32_t cv[16];
-            blake3_hash_chunk(s->key, s->buf, ARIX_BLAKE3_CHUNK_LEN, s->counter, FLAG_CHUNK_END, cv);
+            blake3_hash_chunk(s->key, s->buf, SNEPPX_BLAKE3_CHUNK_LEN, s->counter, FLAG_CHUNK_END, cv);
             memcpy(s->key, cv, 32);
             s->counter++;
             s->buflen = 0;
@@ -95,7 +95,7 @@ void arix_blake3_update(ArixBlake3State* s, const uint8_t* data, size_t len) {
     }
 }
 
-void arix_blake3_finish(ArixBlake3State* s, uint8_t* hash) {
+void SNEPPX_blake3_finish(SNEPPXBlake3State* s, uint8_t* hash) {
     uint32_t cv[16];
     uint8_t flags = FLAG_ROOT;
     if (s->buflen == 0 && s->counter == 0) flags |= FLAG_CHUNK_START;

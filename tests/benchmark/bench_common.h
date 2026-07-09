@@ -1,5 +1,5 @@
-#ifndef ARIX_BENCH_COMMON_H
-#define ARIX_BENCH_COMMON_H
+#ifndef SNEPPX_BENCH_COMMON_H
+#define SNEPPX_BENCH_COMMON_H
 
 #include <stdio.h>
 #include <math.h>

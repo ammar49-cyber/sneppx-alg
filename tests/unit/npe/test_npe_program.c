@@ -9,29 +9,29 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_program_create(void) {
-    ArixNPEProgram* p = arix_npe_program_create(64);
+    SNEPPXNPEProgram* p = SNEPPX_npe_program_create(64);
     ASSERT(p != NULL, "program not null");
     ASSERT(p->num_instructions == 0, "empty program");
     ASSERT(p->max_instructions == 64, "max 64");
     ASSERT(p->registers[0] == NULL, "reg 0 null");
     ASSERT(p->registers[15] == NULL, "reg 15 null");
     ASSERT(p->memory != NULL, "memory not null");
-    arix_npe_program_destroy(p);
+    SNEPPX_npe_program_destroy(p);
 }
 
 static void test_program_append(void) {
-    ArixNPEProgram* p = arix_npe_program_create(64);
+    SNEPPXNPEProgram* p = SNEPPX_npe_program_create(64);
     ASSERT(p != NULL, "program not null");
-    ArixNPEInstruction inst; memset(&inst, 0, sizeof(inst));
-    inst.opcode = ARIX_NOP;
-    arix_npe_program_append(p, inst);
-    arix_npe_program_append(p, inst);
-    arix_npe_program_append(p, inst);
-    arix_npe_program_append(p, inst);
-    arix_npe_program_append(p, inst);
+    SNEPPXNPEInstruction inst; memset(&inst, 0, sizeof(inst));
+    inst.opcode = SNEPPX_NOP;
+    SNEPPX_npe_program_append(p, inst);
+    SNEPPX_npe_program_append(p, inst);
+    SNEPPX_npe_program_append(p, inst);
+    SNEPPX_npe_program_append(p, inst);
+    SNEPPX_npe_program_append(p, inst);
     ASSERT(p->num_instructions == 5, "5 instructions");
-    ASSERT(p->instructions[0].opcode == ARIX_NOP, "opcode NOP");
-    arix_npe_program_destroy(p);
+    ASSERT(p->instructions[0].opcode == SNEPPX_NOP, "opcode NOP");
+    SNEPPX_npe_program_destroy(p);
 }
 
 int main(void) {

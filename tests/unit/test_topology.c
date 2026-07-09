@@ -22,37 +22,37 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_topology_create_destroy(void) {
-    ArixTopology* topo = arix_topology_create(4);
+    SNEPPXTopology* topo = SNEPPX_topology_create(4);
     ASSERT(topo != NULL, "topology created");
     ASSERT(topo->num_nodes == 4, "4 nodes");
-    arix_topology_destroy(topo);
+    SNEPPX_topology_destroy(topo);
 }
 
 static void test_topology_connect_disconnect(void) {
-    ArixTopology* topo = arix_topology_create(3);
-    arix_topology_connect(topo, 0, 1);
-    arix_topology_connect(topo, 1, 2);
-    ASSERT(arix_topology_is_connected(topo, 0, 1), "0-1 connected");
-    ASSERT(arix_topology_is_connected(topo, 1, 0), "1-0 connected (undirected)");
-    ASSERT(!arix_topology_is_connected(topo, 0, 2), "0-2 not connected");
-    arix_topology_disconnect(topo, 0, 1);
-    ASSERT(!arix_topology_is_connected(topo, 0, 1), "0-1 disconnected");
-    arix_topology_destroy(topo);
+    SNEPPXTopology* topo = SNEPPX_topology_create(3);
+    SNEPPX_topology_connect(topo, 0, 1);
+    SNEPPX_topology_connect(topo, 1, 2);
+    ASSERT(SNEPPX_topology_is_connected(topo, 0, 1), "0-1 connected");
+    ASSERT(SNEPPX_topology_is_connected(topo, 1, 0), "1-0 connected (undirected)");
+    ASSERT(!SNEPPX_topology_is_connected(topo, 0, 2), "0-2 not connected");
+    SNEPPX_topology_disconnect(topo, 0, 1);
+    ASSERT(!SNEPPX_topology_is_connected(topo, 0, 1), "0-1 disconnected");
+    SNEPPX_topology_destroy(topo);
 }
 
 static void test_topology_ring(void) {
-    ArixTopology* topo = arix_topology_create_ring(8);
+    SNEPPXTopology* topo = SNEPPX_topology_create_ring(8);
     ASSERT(topo != NULL, "ring topology");
-    ASSERT(arix_topology_is_connected(topo, 0, 1), "ring 0-1");
-    ASSERT(arix_topology_is_connected(topo, 7, 0), "ring 7-0");
-    arix_topology_destroy(topo);
+    ASSERT(SNEPPX_topology_is_connected(topo, 0, 1), "ring 0-1");
+    ASSERT(SNEPPX_topology_is_connected(topo, 7, 0), "ring 7-0");
+    SNEPPX_topology_destroy(topo);
 }
 
 static void test_topology_mesh(void) {
-    ArixTopology* topo = arix_topology_create_mesh(4, 4);
+    SNEPPXTopology* topo = SNEPPX_topology_create_mesh(4, 4);
     ASSERT(topo != NULL, "mesh topology 4x4");
     ASSERT(topo->num_nodes == 16, "16 nodes in 4x4 mesh");
-    arix_topology_destroy(topo);
+    SNEPPX_topology_destroy(topo);
 }
 
 int main(void) {

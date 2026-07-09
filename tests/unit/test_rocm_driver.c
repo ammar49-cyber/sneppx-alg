@@ -21,30 +21,30 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_rocm_init_shutdown(void) {
-    int ret = arix_rocm_init();
+    int ret = SNEPPX_rocm_init();
     ASSERT(ret == 0, "rocm_init returns 0 (stub)");
-    arix_rocm_shutdown();
+    SNEPPX_rocm_shutdown();
 }
 
 static void test_rocm_device_count(void) {
-    int count = arix_rocm_device_count();
+    int count = SNEPPX_rocm_device_count();
     ASSERT(count >= 0, "device count >= 0");
 }
 
 static void test_rocm_malloc_free(void) {
     void* ptr = NULL;
-    int ret = arix_rocm_malloc(&ptr, 1024);
+    int ret = SNEPPX_rocm_malloc(&ptr, 1024);
     ASSERT(ret == 0, "rocm_malloc returns 0 (stub)");
-    if (ptr) arix_rocm_free(ptr);
+    if (ptr) SNEPPX_rocm_free(ptr);
 }
 
 static void test_rocm_memcpy(void) {
     float host[4] = {1.0f, 2.0f, 3.0f, 4.0f};
     void* device = NULL;
-    arix_rocm_malloc(&device, 16);
-    int ret = arix_rocm_memcpy_to_device(device, host, 16);
+    SNEPPX_rocm_malloc(&device, 16);
+    int ret = SNEPPX_rocm_memcpy_to_device(device, host, 16);
     ASSERT(ret == 0, "memcpy to device (stub)");
-    if (device) arix_rocm_free(device);
+    if (device) SNEPPX_rocm_free(device);
 }
 
 int main(void) {

@@ -70,7 +70,7 @@ Input → HSS → SER → ARC → NPE → FM → Output
 
 ## Memory Management
 
-- Pool allocator: `arix_malloc` / `arix_free` with alignment support
+- Pool allocator: `SNEPPX_malloc` / `SNEPPX_free` with alignment support
 - Reference counting for shared tensor data
 - No garbage collection in hot paths
 - Memory pools for fixed-size allocations (tensor metadata, small buffers)

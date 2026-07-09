@@ -11,12 +11,12 @@ static void run_test(const char* name, void (*fn)(void)) {
 
 static void test_fgsm(void) {
     size_t shape_in[] = {8, 16};
-    ArixTensor* clean = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* clean = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)clean->data;
     for (size_t i = 0; i < 8 * 16; i++) d[i] = 0.1f;
 
-    ArixTensor* adv = NULL;
-    arix_arc_simulate_attack(clean, ARIX_ATTACK_FGSM, 0.1f, &adv);
+    SNEPPXTensor* adv = NULL;
+    SNEPPX_arc_simulate_attack(clean, SNEPPX_ATTACK_FGSM, 0.1f, &adv);
     ASSERT(adv != NULL, "adv not null");
     ASSERT(adv->shape[0] == 8, "batch ok");
     ASSERT(adv->shape[1] == 16, "dim ok");
@@ -33,18 +33,18 @@ static void test_fgsm(void) {
     ASSERT(different, "adversarial != clean");
     ASSERT(max_diff <= 0.1f + 1e-4f, "L_inf <= epsilon");
 
-    arix_tensor_destroy(clean);
-    arix_tensor_destroy(adv);
+    SNEPPX_tensor_destroy(clean);
+    SNEPPX_tensor_destroy(adv);
 }
 
 static void test_pgd(void) {
     size_t shape_in[] = {8, 16};
-    ArixTensor* clean = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* clean = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)clean->data;
     for (size_t i = 0; i < 8 * 16; i++) d[i] = 0.1f;
 
-    ArixTensor* adv = NULL;
-    arix_arc_simulate_attack(clean, ARIX_ATTACK_PGD, 0.1f, &adv);
+    SNEPPXTensor* adv = NULL;
+    SNEPPX_arc_simulate_attack(clean, SNEPPX_ATTACK_PGD, 0.1f, &adv);
     ASSERT(adv != NULL, "adv not null");
 
     float* cd = (float*)clean->data;
@@ -56,18 +56,18 @@ static void test_pgd(void) {
     }
     ASSERT(max_diff <= 0.1f + 1e-4f, "L_inf <= epsilon");
 
-    arix_tensor_destroy(clean);
-    arix_tensor_destroy(adv);
+    SNEPPX_tensor_destroy(clean);
+    SNEPPX_tensor_destroy(adv);
 }
 
 static void test_cw(void) {
     size_t shape_in[] = {8, 16};
-    ArixTensor* clean = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* clean = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)clean->data;
     for (size_t i = 0; i < 8 * 16; i++) d[i] = 0.1f;
 
-    ArixTensor* adv = NULL;
-    arix_arc_simulate_attack(clean, ARIX_ATTACK_CW, 0.1f, &adv);
+    SNEPPXTensor* adv = NULL;
+    SNEPPX_arc_simulate_attack(clean, SNEPPX_ATTACK_CW, 0.1f, &adv);
     ASSERT(adv != NULL, "adv not null");
 
     float* cd = (float*)clean->data;
@@ -81,8 +81,8 @@ static void test_cw(void) {
     }
     ASSERT(different, "adversarial != clean");
 
-    arix_tensor_destroy(clean);
-    arix_tensor_destroy(adv);
+    SNEPPX_tensor_destroy(clean);
+    SNEPPX_tensor_destroy(adv);
 }
 
 int main(void) {

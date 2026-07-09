@@ -23,12 +23,12 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_model_create(void) {
-    ArixHSSConfig cfg = arix_hss_config_default();
+    SNEPPXHSSConfig cfg = SNEPPX_hss_config_default();
     cfg.state_dim = 4;
     cfg.input_dim = 8;
     cfg.output_dim = 8;
     cfg.num_layers = 2;
-    ArixHSSModel* model = arix_hss_model_create(&cfg, 42);
+    SNEPPXHSSModel* model = SNEPPX_hss_model_create(&cfg, 42);
     ASSERT(model != NULL, "model not null");
     ASSERT(model->layers != NULL, "layers array not null");
     ASSERT(model->layers[0] != NULL, "layer 0 not null");
@@ -36,25 +36,25 @@ static void test_model_create(void) {
     ASSERT(model->config.num_layers == 2, "num_layers == 2");
     ASSERT(model->norm_gamma[0] != NULL, "norm_gamma[0] not null");
     ASSERT(model->norm_beta[0] != NULL, "norm_beta[0] not null");
-    arix_hss_model_destroy(model);
+    SNEPPX_hss_model_destroy(model);
 }
 
 static void test_forward_small(void) {
-    ArixHSSConfig cfg = arix_hss_config_default();
+    SNEPPXHSSConfig cfg = SNEPPX_hss_config_default();
     cfg.state_dim = 4;
     cfg.input_dim = 8;
     cfg.output_dim = 8;
     cfg.num_layers = 1;
     cfg.use_hierarchical = 0;
-    ArixHSSModel* model = arix_hss_model_create(&cfg, 42);
+    SNEPPXHSSModel* model = SNEPPX_hss_model_create(&cfg, 42);
     ASSERT(model != NULL, "model not null");
 
     size_t shape_in[] = {4, 8, 8};
-    ArixTensor* input = arix_tensor_randn(shape_in, 3, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 3, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* output = NULL;
-    int ret = arix_hss_forward(model, input, &output);
+    SNEPPXTensor* output = NULL;
+    int ret = SNEPPX_hss_forward(model, input, &output);
     ASSERT(ret == 0, "forward returned 0");
     ASSERT(output != NULL, "output not null");
     ASSERT(output->shape[0] == 4, "output batch == 4");
@@ -68,27 +68,27 @@ static void test_forward_small(void) {
     }
     ASSERT(!has_nan, "no NaN/inf in output");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(output);
-    arix_hss_model_destroy(model);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_hss_model_destroy(model);
 }
 
 static void test_forward_single_seq(void) {
-    ArixHSSConfig cfg = arix_hss_config_default();
+    SNEPPXHSSConfig cfg = SNEPPX_hss_config_default();
     cfg.state_dim = 4;
     cfg.input_dim = 8;
     cfg.output_dim = 8;
     cfg.num_layers = 1;
     cfg.use_hierarchical = 0;
-    ArixHSSModel* model = arix_hss_model_create(&cfg, 42);
+    SNEPPXHSSModel* model = SNEPPX_hss_model_create(&cfg, 42);
     ASSERT(model != NULL, "model not null");
 
     size_t shape_in[] = {16, 8};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* output = NULL;
-    int ret = arix_hss_forward(model, input, &output);
+    SNEPPXTensor* output = NULL;
+    int ret = SNEPPX_hss_forward(model, input, &output);
     ASSERT(ret == 0, "forward returned 0");
     ASSERT(output != NULL, "output not null");
 
@@ -99,9 +99,9 @@ static void test_forward_single_seq(void) {
     }
     ASSERT(!has_nan, "no NaN/inf in output");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(output);
-    arix_hss_model_destroy(model);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_hss_model_destroy(model);
 }
 
 int main(void) {

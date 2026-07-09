@@ -22,36 +22,36 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_pqueue_create_destroy(void) {
-    ArixPriorityQueue* pq = arix_pqueue_create(10);
+    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
     ASSERT(pq != NULL, "pqueue created");
-    ASSERT(arix_pqueue_size(pq) == 0, "empty pqueue");
-    arix_pqueue_destroy(pq);
+    ASSERT(SNEPPX_pqueue_size(pq) == 0, "empty pqueue");
+    SNEPPX_pqueue_destroy(pq);
 }
 
 static void test_pqueue_push_pop(void) {
-    ArixPriorityQueue* pq = arix_pqueue_create(10);
-    arix_pqueue_push(pq, 3.0f, (void*)3);
-    arix_pqueue_push(pq, 1.0f, (void*)1);
-    arix_pqueue_push(pq, 2.0f, (void*)2);
-    ASSERT(arix_pqueue_size(pq) == 3, "three items");
+    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
+    SNEPPX_pqueue_push(pq, 3.0f, (void*)3);
+    SNEPPX_pqueue_push(pq, 1.0f, (void*)1);
+    SNEPPX_pqueue_push(pq, 2.0f, (void*)2);
+    ASSERT(SNEPPX_pqueue_size(pq) == 3, "three items");
 
-    void* val = arix_pqueue_pop(pq);
+    void* val = SNEPPX_pqueue_pop(pq);
     ASSERT(val == (void*)1, "pop lowest priority");
-    val = arix_pqueue_pop(pq);
+    val = SNEPPX_pqueue_pop(pq);
     ASSERT(val == (void*)2, "pop second lowest");
-    val = arix_pqueue_pop(pq);
+    val = SNEPPX_pqueue_pop(pq);
     ASSERT(val == (void*)3, "pop highest priority");
-    ASSERT(arix_pqueue_size(pq) == 0, "empty after pops");
-    arix_pqueue_destroy(pq);
+    ASSERT(SNEPPX_pqueue_size(pq) == 0, "empty after pops");
+    SNEPPX_pqueue_destroy(pq);
 }
 
 static void test_pqueue_peek(void) {
-    ArixPriorityQueue* pq = arix_pqueue_create(10);
-    arix_pqueue_push(pq, 5.0f, (void*)42);
-    void* val = arix_pqueue_peek(pq);
+    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
+    SNEPPX_pqueue_push(pq, 5.0f, (void*)42);
+    void* val = SNEPPX_pqueue_peek(pq);
     ASSERT(val == (void*)42, "peek returns top");
-    ASSERT(arix_pqueue_size(pq) == 1, "size unchanged after peek");
-    arix_pqueue_destroy(pq);
+    ASSERT(SNEPPX_pqueue_size(pq) == 1, "size unchanged after peek");
+    SNEPPX_pqueue_destroy(pq);
 }
 
 int main(void) {

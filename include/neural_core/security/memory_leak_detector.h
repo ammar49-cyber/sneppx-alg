@@ -1,5 +1,5 @@
-#ifndef ARIX_MEMORY_LEAK_DETECTOR_H
-#define ARIX_MEMORY_LEAK_DETECTOR_H
+#ifndef SNEPPX_MEMORY_LEAK_DETECTOR_H
+#define SNEPPX_MEMORY_LEAK_DETECTOR_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -24,19 +24,19 @@ typedef struct {
     int tracking_enabled;
 } leak_stats_t;
 
-int arix_leak_init(void);
-int arix_leak_track_alloc(void *ptr, size_t size, const char *file, int line, const char *func);
-int arix_leak_track_free(void *ptr);
-int arix_leak_check(leak_report_t *reports, int max_reports);
-int arix_leak_get_stats(leak_stats_t *stats);
-int arix_leak_set_threshold(int bytes);
-int arix_leak_enable_tracking(void);
-int arix_leak_disable_tracking(void);
-int arix_leak_reset(void);
+int SNEPPX_leak_init(void);
+int SNEPPX_leak_track_alloc(void *ptr, size_t size, const char *file, int line, const char *func);
+int SNEPPX_leak_track_free(void *ptr);
+int SNEPPX_leak_check(leak_report_t *reports, int max_reports);
+int SNEPPX_leak_get_stats(leak_stats_t *stats);
+int SNEPPX_leak_set_threshold(int bytes);
+int SNEPPX_leak_enable_tracking(void);
+int SNEPPX_leak_disable_tracking(void);
+int SNEPPX_leak_reset(void);
 
-void *arix_leak_malloc(size_t size, const char *file, int line, const char *func);
-void arix_leak_free(void *ptr);
-void *arix_leak_calloc(size_t nmemb, size_t size, const char *file, int line, const char *func);
-void *arix_leak_realloc(void *ptr, size_t size, const char *file, int line, const char *func);
+void *SNEPPX_leak_malloc(size_t size, const char *file, int line, const char *func);
+void SNEPPX_leak_free(void *ptr);
+void *SNEPPX_leak_calloc(size_t nmemb, size_t size, const char *file, int line, const char *func);
+void *SNEPPX_leak_realloc(void *ptr, size_t size, const char *file, int line, const char *func);
 
 #endif

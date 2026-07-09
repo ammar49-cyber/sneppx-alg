@@ -11,19 +11,19 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_node_create(void) {
-    ArixFMNode* node = arix_fm_node_create(0, 16, 32);
+    SNEPPXFMNode* node = SNEPPX_fm_node_create(0, 16, 32);
     ASSERT(node != NULL, "node not null");
     ASSERT(node->node_id == 0, "id 0");
     ASSERT(node->memory_bank != NULL, "memory bank not null");
     ASSERT(node->gradient_accumulator != NULL, "grad accum not null");
-    arix_fm_node_destroy(node);
+    SNEPPX_fm_node_destroy(node);
 }
 
 static void test_node_online(void) {
-    ArixFMNode* node = arix_fm_node_create(1, 8, 16);
+    SNEPPXFMNode* node = SNEPPX_fm_node_create(1, 8, 16);
     ASSERT(node->is_online == 1, "online true");
     ASSERT(fabsf(node->trust_score - 1.0f) < 1e-5f, "trust 1.0");
-    arix_fm_node_destroy(node);
+    SNEPPX_fm_node_destroy(node);
 }
 
 int main(void) {

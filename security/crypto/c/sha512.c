@@ -32,7 +32,7 @@ static const uint64_t K[80] = {
     0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL, 0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL
 };
 
-static void sha512_transform(ArixSHA512Context* ctx, const uint8_t block[ARIX_SHA512_BLOCK_SIZE]) {
+static void sha512_transform(SNEPPXSHA512Context* ctx, const uint8_t block[SNEPPX_SHA512_BLOCK_SIZE]) {
     uint64_t W[80];
     for (int t = 0; t < 16; t++) {
         W[t] = (uint64_t)block[t * 8] << 56 | (uint64_t)block[t * 8 + 1] << 48 |
@@ -56,7 +56,7 @@ static void sha512_transform(ArixSHA512Context* ctx, const uint8_t block[ARIX_SH
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
 }
 
-void arix_sha512_init(ArixSHA512Context* ctx) {
+void SNEPPX_sha512_init(SNEPPXSHA512Context* ctx) {
     ctx->state[0] = 0x6a09e667f3bcc908ULL;
     ctx->state[1] = 0xbb67ae8584caa73bULL;
     ctx->state[2] = 0x3c6ef372fe94f82bULL;
@@ -69,45 +69,45 @@ void arix_sha512_init(ArixSHA512Context* ctx) {
     ctx->buflen = 0;
 }
 
-void arix_sha512_update(ArixSHA512Context* ctx, const uint8_t* data, size_t len) {
+void SNEPPX_sha512_update(SNEPPXSHA512Context* ctx, const uint8_t* data, size_t len) {
     uint64_t bitlen = (uint64_t)len * 8;
     ctx->count[1] += (uint64_t)((ctx->count[0] + bitlen) < ctx->count[0]);
     ctx->count[0] += bitlen;
 
     if (ctx->buflen) {
-        size_t fill = ARIX_SHA512_BLOCK_SIZE - ctx->buflen;
+        size_t fill = SNEPPX_SHA512_BLOCK_SIZE - ctx->buflen;
         if (len < fill) { memcpy(ctx->buffer + ctx->buflen, data, len); ctx->buflen += (unsigned int)len; return; }
         memcpy(ctx->buffer + ctx->buflen, data, fill);
         sha512_transform(ctx, ctx->buffer);
         data += fill; len -= fill; ctx->buflen = 0;
     }
-    while (len >= ARIX_SHA512_BLOCK_SIZE) {
+    while (len >= SNEPPX_SHA512_BLOCK_SIZE) {
         sha512_transform(ctx, data);
-        data += ARIX_SHA512_BLOCK_SIZE; len -= ARIX_SHA512_BLOCK_SIZE;
+        data += SNEPPX_SHA512_BLOCK_SIZE; len -= SNEPPX_SHA512_BLOCK_SIZE;
     }
     if (len) { memcpy(ctx->buffer, data, len); ctx->buflen = (unsigned int)len; }
 }
 
-void arix_sha512_finish(ArixSHA512Context* ctx, uint8_t digest[ARIX_SHA512_DIGEST_SIZE]) {
-    uint8_t pad[ARIX_SHA512_BLOCK_SIZE * 2];
+void SNEPPX_sha512_finish(SNEPPXSHA512Context* ctx, uint8_t digest[SNEPPX_SHA512_DIGEST_SIZE]) {
+    uint8_t pad[SNEPPX_SHA512_BLOCK_SIZE * 2];
     size_t padlen = 0;
     pad[padlen++] = 0x80;
-    size_t remaining = ARIX_SHA512_BLOCK_SIZE - ((ctx->buflen + 1 + 16) % ARIX_SHA512_BLOCK_SIZE);
-    if (remaining == ARIX_SHA512_BLOCK_SIZE) remaining = 0;
+    size_t remaining = SNEPPX_SHA512_BLOCK_SIZE - ((ctx->buflen + 1 + 16) % SNEPPX_SHA512_BLOCK_SIZE);
+    if (remaining == SNEPPX_SHA512_BLOCK_SIZE) remaining = 0;
     while (remaining--) pad[padlen++] = 0;
     uint64_t bits = (ctx->count[1] << 3) | (ctx->count[0] >> 61);
     uint64_t bits_lo = ctx->count[0] << 3;
     for (int i = 0; i < 8; i++) pad[padlen++] = (uint8_t)(bits >> (56 - i * 8));
     for (int i = 0; i < 8; i++) pad[padlen++] = (uint8_t)(bits_lo >> (56 - i * 8));
-    arix_sha512_update(ctx, pad, padlen);
+    SNEPPX_sha512_update(ctx, pad, padlen);
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++)
             digest[i * 8 + j] = (uint8_t)(ctx->state[i] >> (56 - j * 8));
 }
 
-void arix_sha512(const uint8_t* data, size_t len, uint8_t digest[ARIX_SHA512_DIGEST_SIZE]) {
-    ArixSHA512Context ctx;
-    arix_sha512_init(&ctx);
-    arix_sha512_update(&ctx, data, len);
-    arix_sha512_finish(&ctx, digest);
+void SNEPPX_sha512(const uint8_t* data, size_t len, uint8_t digest[SNEPPX_SHA512_DIGEST_SIZE]) {
+    SNEPPXSHA512Context ctx;
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx, data, len);
+    SNEPPX_sha512_finish(&ctx, digest);
 }

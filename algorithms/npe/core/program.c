@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-ArixNPEConfig arix_npe_config_default(void) {
-    ArixNPEConfig cfg;
+SNEPPXNPEConfig SNEPPX_npe_config_default(void) {
+    SNEPPXNPEConfig cfg;
     cfg.max_program_length = 256;
     cfg.register_count = 16;
     cfg.step_limit = 1024;
@@ -13,14 +13,14 @@ ArixNPEConfig arix_npe_config_default(void) {
     return cfg;
 }
 
-ArixNPEProgram* arix_npe_program_create(size_t max_instructions) {
-    ArixNPEProgram* prog = (ArixNPEProgram*)arix_malloc(sizeof(ArixNPEProgram), 64);
+SNEPPXNPEProgram* SNEPPX_npe_program_create(size_t max_instructions) {
+    SNEPPXNPEProgram* prog = (SNEPPXNPEProgram*)SNEPPX_malloc(sizeof(SNEPPXNPEProgram), 64);
     if (!prog) return NULL;
-    memset(prog, 0, sizeof(ArixNPEProgram));
+    memset(prog, 0, sizeof(SNEPPXNPEProgram));
 
-    prog->instructions = (ArixNPEInstruction*)arix_malloc(max_instructions * sizeof(ArixNPEInstruction), 64);
-    if (!prog->instructions) { arix_free(prog, sizeof(ArixNPEProgram)); return NULL; }
-    memset(prog->instructions, 0, max_instructions * sizeof(ArixNPEInstruction));
+    prog->instructions = (SNEPPXNPEInstruction*)SNEPPX_malloc(max_instructions * sizeof(SNEPPXNPEInstruction), 64);
+    if (!prog->instructions) { SNEPPX_free(prog, sizeof(SNEPPXNPEProgram)); return NULL; }
+    memset(prog->instructions, 0, max_instructions * sizeof(SNEPPXNPEInstruction));
 
     prog->max_instructions = max_instructions;
     prog->num_instructions = 0;
@@ -29,26 +29,26 @@ ArixNPEProgram* arix_npe_program_create(size_t max_instructions) {
     for (int i = 0; i < 16; i++) prog->registers[i] = NULL;
 
     size_t mem_size[] = {65536};
-    prog->memory = arix_tensor_zeros(mem_size, 1, ARIX_FLOAT32);
+    prog->memory = SNEPPX_tensor_zeros(mem_size, 1, SNEPPX_FLOAT32);
 
     return prog;
 }
 
-void arix_npe_program_destroy(ArixNPEProgram* prog) {
+void SNEPPX_npe_program_destroy(SNEPPXNPEProgram* prog) {
     if (!prog) return;
     for (int i = 0; i < 16; i++) {
-        if (prog->registers[i]) arix_tensor_destroy(prog->registers[i]);
+        if (prog->registers[i]) SNEPPX_tensor_destroy(prog->registers[i]);
     }
-    if (prog->memory) arix_tensor_destroy(prog->memory);
-    if (prog->param_w1) arix_tensor_destroy(prog->param_w1);
-    if (prog->param_b1) arix_tensor_destroy(prog->param_b1);
-    if (prog->param_w2) arix_tensor_destroy(prog->param_w2);
-    if (prog->param_b2) arix_tensor_destroy(prog->param_b2);
-    arix_free(prog->instructions, prog->max_instructions * sizeof(ArixNPEInstruction));
-    arix_free(prog, sizeof(ArixNPEProgram));
+    if (prog->memory) SNEPPX_tensor_destroy(prog->memory);
+    if (prog->param_w1) SNEPPX_tensor_destroy(prog->param_w1);
+    if (prog->param_b1) SNEPPX_tensor_destroy(prog->param_b1);
+    if (prog->param_w2) SNEPPX_tensor_destroy(prog->param_w2);
+    if (prog->param_b2) SNEPPX_tensor_destroy(prog->param_b2);
+    SNEPPX_free(prog->instructions, prog->max_instructions * sizeof(SNEPPXNPEInstruction));
+    SNEPPX_free(prog, sizeof(SNEPPXNPEProgram));
 }
 
-void arix_npe_program_append(ArixNPEProgram* prog, ArixNPEInstruction inst) {
+void SNEPPX_npe_program_append(SNEPPXNPEProgram* prog, SNEPPXNPEInstruction inst) {
     if (prog->num_instructions >= prog->max_instructions) return;
     prog->instructions[prog->num_instructions++] = inst;
 }

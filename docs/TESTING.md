@@ -33,7 +33,7 @@ ctest -R "test_arc|test_ser"       # ARC + SER tests
 #include "my_component.h"
 
 static void test_foo(void) {
-    ASSERT_EQ(arix_foo(2, 2), 4, "2+2 == 4");
+    ASSERT_EQ(SNEPPX_foo(2, 2), 4, "2+2 == 4");
 }
 
 int main(void) {

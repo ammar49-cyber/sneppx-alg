@@ -1,7 +1,7 @@
-# ARIX Algo — Agent Guide
+# SNEPPX Algo — Agent Guide
 
 ## Project Overview
-ARIX Algo is a cognitive processing system implementing neural architecture search, hierarchical state spaces, mixture of experts, and a full S0–S9 security layer. Written in C11 + C++20, targeting x86-64 (MSVC 19.44, GCC, Clang).
+SNEPPX Algo is a cognitive processing system implementing neural architecture search, hierarchical state spaces, mixture of experts, and a full S0–S9 security layer. Written in C11 + C++20, targeting x86-64 (MSVC 19.44, GCC, Clang).
 
 ## Build Commands
 ```powershell
@@ -32,7 +32,7 @@ ctest -C Release -R test_kyber --output-on-failure
 - **Include paths**: Short form from `include/neural_core/security/` — e.g., `#include "kyber.h"`
 - **ASM syntax**: MASM (Intel syntax) for x86-64, placed in `security/crypto/asm/x86_64/`
 - **CMake**: Uses `file(GLOB_RECURSE)` — new `.c`/`.asm` files are auto-discovered
-- **Memory allocation**: `arix_secure_malloc`/`arix_secure_free` for sensitive data
+- **Memory allocation**: `SNEPPX_secure_malloc`/`SNEPPX_secure_free` for sensitive data
 
 ## Key Files
 | Path | Purpose |
@@ -59,8 +59,8 @@ ctest -C Release -R test_kyber --output-on-failure
 
 ## Coding Standards
 - 4-space indentation, no tabs
-- `arix_` prefix for all public functions and types
-- `ARIX_` prefix for all macros and constants
+- `SNEPPX_` prefix for all public functions and types
+- `SNEPPX_` prefix for all macros and constants
 - `void` in empty parameter lists: `int foo(void)` not `int foo()`
 - Return `int` (0 success, -1 error) for most API functions
 - `size_t` for lengths/counts, `uint8_t*` for byte buffers

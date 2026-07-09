@@ -24,11 +24,11 @@ void test_vectors(void) {
         0xc2,0x2b,0x8b,0xaf,0x0c,0x01,0x27,0xa9
     };
 
-    ArixPoly1305State state;
-    arix_poly1305_init(&state, key);
-    arix_poly1305_update(&state, msg, sizeof(msg)-1);
+    SNEPPXPoly1305State state;
+    SNEPPX_poly1305_init(&state, key);
+    SNEPPX_poly1305_update(&state, msg, sizeof(msg)-1);
     uint8_t mac[16];
-    arix_poly1305_finish(&state, mac);
+    SNEPPX_poly1305_finish(&state, mac);
     int match = memcmp(mac, expected, 16) == 0;
     if (!match) {
         printf("  Got:      "); for (int i = 0; i < 16; i++) printf("%02x", mac[i]); printf("\n");
@@ -43,20 +43,20 @@ void test_key_reuse(void) {
     memset(key, 0x42, 32);
 
     uint8_t mac1[16], mac2[16];
-    ArixPoly1305State s;
-    arix_poly1305_init(&s, key);
-    arix_poly1305_update(&s, (uint8_t*)"Message one", 11);
-    arix_poly1305_finish(&s, mac1);
+    SNEPPXPoly1305State s;
+    SNEPPX_poly1305_init(&s, key);
+    SNEPPX_poly1305_update(&s, (uint8_t*)"Message one", 11);
+    SNEPPX_poly1305_finish(&s, mac1);
 
-    arix_poly1305_init(&s, key);
-    arix_poly1305_update(&s, (uint8_t*)"Message two", 11);
-    arix_poly1305_finish(&s, mac2);
+    SNEPPX_poly1305_init(&s, key);
+    SNEPPX_poly1305_update(&s, (uint8_t*)"Message two", 11);
+    SNEPPX_poly1305_finish(&s, mac2);
 
     TEST("different messages = different tags", memcmp(mac1, mac2, 16) != 0);
 }
 
 int main(void) {
-    printf("=== ARIX-Poly1305 Test Suite ===\n");
+    printf("=== SNEPPX-Poly1305 Test Suite ===\n");
     test_vectors();
     test_key_reuse();
     printf("\nResults: %d passed, %d failed out of %d\n",

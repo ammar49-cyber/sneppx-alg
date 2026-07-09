@@ -31,70 +31,70 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_arc_config_default(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
     ASSERT(cfg.input_guard_strength > 0, "input guard strength > 0");
-    ASSERT(cfg.gradient_obfuscation_method >= ARIX_OBF_NONE, "obf method valid");
+    ASSERT(cfg.gradient_obfuscation_method >= SNEPPX_OBF_NONE, "obf method valid");
 }
 
 static void test_arc_layer_create_destroy(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
-    ArixARCLayer* layer = arix_arc_layer_create(&cfg, 8, 8, 42);
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 8, 8, 42);
     ASSERT(layer != NULL, "arc layer created");
     ASSERT(layer->input_guard != NULL, "input guard created");
     ASSERT(layer->output_verifier != NULL, "output verifier created");
     ASSERT(layer->gradient_obfuscator != NULL, "gradient obfuscator created");
-    arix_arc_layer_destroy(layer);
+    SNEPPX_arc_layer_destroy(layer);
 }
 
 static void test_arc_forward_pass(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
     cfg.input_guard_strength = 3.0f;
-    ArixARCLayer* layer = arix_arc_layer_create(&cfg, 4, 4, 42);
+    SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 4, 4, 42);
     ASSERT(layer != NULL, "layer created");
 
     size_t shape_in[] = {1, 4};
-    ArixTensor* input = arix_tensor_create(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < 4; i++) d[i] = 1.0f;
 
-    ArixTensor* output = NULL;
+    SNEPPXTensor* output = NULL;
     float metrics[4];
-    arix_arc_forward(layer, input, &output, metrics);
+    SNEPPX_arc_forward(layer, input, &output, metrics);
     ASSERT(output != NULL, "forward output created");
     ASSERT(metrics[0] >= 0.0f, "anomaly score >= 0");
     ASSERT(metrics[1] >= 0.0f, "confidence >= 0");
 
-    arix_tensor_destroy(output);
-    arix_tensor_destroy(input);
-    arix_arc_layer_destroy(layer);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_arc_layer_destroy(layer);
 }
 
 static void test_arc_input_guard(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
-    ArixARCLayer* layer = arix_arc_layer_create(&cfg, 4, 4, 42);
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 4, 4, 42);
 
-    ArixTensor* input = arix_tensor_create((size_t[]){1, 4}, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create((size_t[]){1, 4}, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < 4; i++) d[i] = 0.5f;
 
-    ArixTensor* sanitized = NULL;
+    SNEPPXTensor* sanitized = NULL;
     float score = 0.0f;
-    arix_arc_input_guard_forward(layer->input_guard, input, &sanitized, &score);
+    SNEPPX_arc_input_guard_forward(layer->input_guard, input, &sanitized, &score);
     ASSERT(sanitized != NULL, "sanitized output");
 
-    arix_tensor_destroy(sanitized);
-    arix_tensor_destroy(input);
-    arix_arc_layer_destroy(layer);
+    SNEPPX_tensor_destroy(sanitized);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_arc_layer_destroy(layer);
 }
 
 static void test_arc_simulate_attack(void) {
     size_t shape[] = {1, 4};
-    ArixTensor* input = arix_tensor_zeros(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_zeros(shape, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < 4; i++) d[i] = 1.0f;
 
-    ArixTensor* adv = NULL;
-    arix_arc_simulate_attack(input, ARIX_ATTACK_FGSM, 0.1f, &adv);
+    SNEPPXTensor* adv = NULL;
+    SNEPPX_arc_simulate_attack(input, SNEPPX_ATTACK_FGSM, 0.1f, &adv);
     ASSERT(adv != NULL, "adversarial sample created");
 
     float* ad = (float*)adv->data;
@@ -102,8 +102,8 @@ static void test_arc_simulate_attack(void) {
     for (size_t i = 0; i < 4; i++) if (ad[i] != 1.0f) changed = 1;
     ASSERT(changed, "adversarial perturbation applied");
 
-    arix_tensor_destroy(adv);
-    arix_tensor_destroy(input);
+    SNEPPX_tensor_destroy(adv);
+    SNEPPX_tensor_destroy(input);
 }
 
 int main(void) {

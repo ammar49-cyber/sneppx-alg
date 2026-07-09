@@ -3,492 +3,492 @@
 
 static void test_create_0d(void) {
     size_t shape[] = {1};
-    ArixTensor* t = arix_tensor_create(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 1, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "0d tensor");
     ASSERT_EQ(t->size, 1, "size == 1");
     ASSERT_EQ(t->ndim, 1, "ndim == 1");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_create_zero_dim(void) {
-    ArixTensor* t = arix_tensor_create(NULL, 0, ARIX_FLOAT32);
-    if (t) { ASSERT_EQ(t->ndim, 0, "ndim == 0"); ASSERT_EQ(t->size, 1, "size == 1"); arix_tensor_destroy(t); }
+    SNEPPXTensor* t = SNEPPX_tensor_create(NULL, 0, SNEPPX_FLOAT32);
+    if (t) { ASSERT_EQ(t->ndim, 0, "ndim == 0"); ASSERT_EQ(t->size, 1, "size == 1"); SNEPPX_tensor_destroy(t); }
 }
 
 static void test_create_large_ndim(void) {
     size_t shape[16];
     for (size_t i = 0; i < 16; i++) shape[i] = 1;
-    ArixTensor* t = arix_tensor_create(shape, 16, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 16, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "16-dim tensor");
     ASSERT_EQ(t->ndim, 16, "ndim == 16");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_destroy_null(void) {
-    arix_tensor_destroy(NULL);
+    SNEPPX_tensor_destroy(NULL);
 }
 
 static void test_add_null(void) {
     size_t sh[] = {2, 2};
-    ArixTensor* a = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_add(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_add(a, NULL);
     ASSERT_NULL(r, "add NULL b -> NULL");
-    r = arix_tensor_add(NULL, a);
+    r = SNEPPX_tensor_add(NULL, a);
     ASSERT_NULL(r, "add NULL a -> NULL");
-    r = arix_tensor_add(NULL, NULL);
+    r = SNEPPX_tensor_add(NULL, NULL);
     ASSERT_NULL(r, "add NULL NULL -> NULL");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_sub_null(void) {
     size_t sh[] = {2, 2};
-    ArixTensor* a = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_sub(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_sub(a, NULL);
     ASSERT_NULL(r, "sub NULL -> NULL");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_mul_null(void) {
     size_t sh[] = {2, 2};
-    ArixTensor* a = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_mul(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_mul(a, NULL);
     ASSERT_NULL(r, "mul NULL -> NULL");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_div_null(void) {
     size_t sh[] = {2, 2};
-    ArixTensor* a = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_div(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_div(a, NULL);
     ASSERT_NULL(r, "div NULL -> NULL");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_matmul_null(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* a = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_matmul(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_matmul(a, NULL);
     ASSERT_NULL(r, "matmul NULL -> NULL");
-    r = arix_tensor_matmul(NULL, a);
+    r = SNEPPX_tensor_matmul(NULL, a);
     ASSERT_NULL(r, "matmul NULL a -> NULL");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_matmul_mismatched_inner(void) {
     size_t sha[] = {2, 3};
     size_t shb[] = {4, 5};
-    ArixTensor* a = arix_tensor_ones(sha, 2, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_ones(shb, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_matmul(a, b);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sha, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_ones(shb, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_matmul(a, b);
     ASSERT_NULL(r, "matmul mismatched inner -> NULL");
-    arix_tensor_destroy(a); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(a); SNEPPX_tensor_destroy(b);
 }
 
 static void test_matmul_1d_inputs(void) {
     size_t sh[] = {3};
-    ArixTensor* a = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_matmul(a, b);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_matmul(a, b);
     ASSERT_NULL(r, "matmul 1d -> NULL");
-    arix_tensor_destroy(a); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(a); SNEPPX_tensor_destroy(b);
 }
 
 static void test_slice_null(void) {
-    ArixTensor* r = arix_tensor_slice(NULL, 0, 0, 1);
+    SNEPPXTensor* r = SNEPPX_tensor_slice(NULL, 0, 0, 1);
     ASSERT_NULL(r, "slice NULL -> NULL");
 }
 
 static void test_slice_out_of_bounds_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_slice(t, 5, 0, 1);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_slice(t, 5, 0, 1);
     ASSERT_NULL(r, "slice dim>=ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_slice_invalid_start_end(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_slice(t, 0, 2, 1);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_slice(t, 0, 2, 1);
     ASSERT_NULL(r, "slice start>=end -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_slice_end_exceeds_shape(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_slice(t, 0, 0, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_slice(t, 0, 0, 5);
     ASSERT_NULL(r, "slice end>shape -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_reshape_null(void) {
     size_t ns[] = {6};
-    ArixTensor* r = arix_tensor_reshape(NULL, ns, 1);
+    SNEPPXTensor* r = SNEPPX_tensor_reshape(NULL, ns, 1);
     ASSERT_NULL(r, "reshape NULL -> NULL");
 }
 
 static void test_reshape_invalid_total(void) {
     size_t sh[] = {2, 3};
     size_t ns[] = {5};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_reshape(t, ns, 1);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_reshape(t, ns, 1);
     ASSERT_NOT_NULL(r, "reshape mismatched still returns data");
     if (r) {
         ASSERT_EQ(r->size, 5, "size is 5 despite mismatch");
-        arix_tensor_destroy(r);
+        SNEPPX_tensor_destroy(r);
     }
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_permute_null(void) {
     size_t axes[] = {1, 0};
-    ArixTensor* r = arix_tensor_permute(NULL, axes);
+    SNEPPXTensor* r = SNEPPX_tensor_permute(NULL, axes);
     ASSERT_NULL(r, "permute NULL -> NULL");
 }
 
 static void test_transpose_null(void) {
-    ArixTensor* r = arix_tensor_transpose(NULL, 0, 1);
+    SNEPPXTensor* r = SNEPPX_tensor_transpose(NULL, 0, 1);
     ASSERT_NULL(r, "transpose NULL -> NULL");
 }
 
 static void test_transpose_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_transpose(t, 0, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_transpose(t, 0, 5);
     ASSERT_NULL(r, "transpose dim>=ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_expand_null(void) {
     size_t ns[] = {2, 3};
-    ArixTensor* r = arix_tensor_expand(NULL, ns, 2);
+    SNEPPXTensor* r = SNEPPX_tensor_expand(NULL, ns, 2);
     ASSERT_NULL(r, "expand NULL -> NULL");
 }
 
 static void test_expand_reduce_ndim(void) {
     size_t sh[] = {2, 3};
     size_t ns[] = {6};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_expand(t, ns, 1);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_expand(t, ns, 1);
     ASSERT_NULL(r, "expand fewer dims -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_unsqueeze_null(void) {
-    ArixTensor* r = arix_tensor_unsqueeze(NULL, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_unsqueeze(NULL, 0);
     ASSERT_NULL(r, "unsqueeze NULL -> NULL");
 }
 
 static void test_unsqueeze_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_unsqueeze(t, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_unsqueeze(t, 5);
     ASSERT_NULL(r, "unsqueeze dim>ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_squeeze_null(void) {
-    ArixTensor* r = arix_tensor_squeeze(NULL, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_squeeze(NULL, 0);
     ASSERT_NULL(r, "squeeze NULL -> NULL");
 }
 
 static void test_squeeze_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_squeeze(t, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_squeeze(t, 5);
     ASSERT_NOT_NULL(r, "squeeze dim>=ndim returns copy");
-    arix_tensor_destroy(t);
-    if (r) arix_tensor_destroy(r);
+    SNEPPX_tensor_destroy(t);
+    if (r) SNEPPX_tensor_destroy(r);
 }
 
 static void test_concat_null(void) {
-    ArixTensor* r = arix_tensor_concat(NULL, 0, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_concat(NULL, 0, 0);
     ASSERT_NULL(r, "concat NULL -> NULL");
 }
 
 static void test_concat_single(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* arr[] = {t};
-    ArixTensor* r = arix_tensor_concat(arr, 1, 0);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* arr[] = {t};
+    SNEPPXTensor* r = SNEPPX_tensor_concat(arr, 1, 0);
     ASSERT_NOT_NULL(r, "concat single tensor");
     ASSERT_EQ(r->shape[0], 2, "dim0 unchanged");
     ASSERT_EQ(r->shape[1], 3, "dim1 unchanged");
-    arix_tensor_destroy(t); arix_tensor_destroy(r);
+    SNEPPX_tensor_destroy(t); SNEPPX_tensor_destroy(r);
 }
 
 static void test_concat_mismatched_ndim(void) {
     size_t sh1[] = {2, 3};
     size_t sh2[] = {6};
-    ArixTensor* a = arix_tensor_ones(sh1, 2, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_ones(sh2, 1, ARIX_FLOAT32);
-    ArixTensor* arr[] = {a, b};
-    ArixTensor* r = arix_tensor_concat(arr, 2, 0);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh1, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_ones(sh2, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* arr[] = {a, b};
+    SNEPPXTensor* r = SNEPPX_tensor_concat(arr, 2, 0);
     ASSERT_NULL(r, "concat mismatched ndim -> NULL");
-    arix_tensor_destroy(a); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(a); SNEPPX_tensor_destroy(b);
 }
 
 static void test_concat_mismatched_shape(void) {
     size_t sh1[] = {2, 3};
     size_t sh2[] = {2, 4};
-    ArixTensor* a = arix_tensor_ones(sh1, 2, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_ones(sh2, 2, ARIX_FLOAT32);
-    ArixTensor* arr[] = {a, b};
-    ArixTensor* r = arix_tensor_concat(arr, 2, 0);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh1, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_ones(sh2, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* arr[] = {a, b};
+    SNEPPXTensor* r = SNEPPX_tensor_concat(arr, 2, 0);
     ASSERT_NULL(r, "concat mismatched non-concat dim -> NULL");
-    arix_tensor_destroy(a); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(a); SNEPPX_tensor_destroy(b);
 }
 
 static void test_sum_null(void) {
-    ArixTensor* r = arix_tensor_sum(NULL, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_sum(NULL, 0);
     ASSERT_NULL(r, "sum NULL -> NULL");
 }
 
 static void test_sum_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_sum(t, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_sum(t, 5);
     ASSERT_NULL(r, "sum dim>=ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_mean_null(void) {
-    ArixTensor* r = arix_tensor_mean(NULL, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_mean(NULL, 0);
     ASSERT_NULL(r, "mean NULL -> NULL");
 }
 
 static void test_mean_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_mean(t, 5);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_mean(t, 5);
     ASSERT_NULL(r, "mean dim>=ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_min_max_empty(void) {
     size_t sh[] = {0};
-    ArixTensor* t = arix_tensor_create(sh, 1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(sh, 1, SNEPPX_FLOAT32);
     if (t) {
-        float v = arix_tensor_min(t);
+        float v = SNEPPX_tensor_min(t);
         ASSERT_EQ(v, 0.0f, "min of empty -> 0");
-        v = arix_tensor_max(t);
+        v = SNEPPX_tensor_max(t);
         ASSERT_EQ(v, 0.0f, "max of empty -> 0");
-        size_t idx = arix_tensor_argmin(t);
+        size_t idx = SNEPPX_tensor_argmin(t);
         ASSERT_EQ(idx, 0, "argmin of empty -> 0");
-        idx = arix_tensor_argmax(t);
+        idx = SNEPPX_tensor_argmax(t);
         ASSERT_EQ(idx, 0, "argmax of empty -> 0");
-        arix_tensor_destroy(t);
+        SNEPPX_tensor_destroy(t);
     }
 }
 
 static void test_min_max_null(void) {
-    float v = arix_tensor_min(NULL);
+    float v = SNEPPX_tensor_min(NULL);
     ASSERT_EQ(v, 0.0f, "min NULL -> 0");
-    v = arix_tensor_max(NULL);
+    v = SNEPPX_tensor_max(NULL);
     ASSERT_EQ(v, 0.0f, "max NULL -> 0");
-    size_t idx = arix_tensor_argmin(NULL);
+    size_t idx = SNEPPX_tensor_argmin(NULL);
     ASSERT_EQ(idx, 0, "argmin NULL -> 0");
-    idx = arix_tensor_argmax(NULL);
+    idx = SNEPPX_tensor_argmax(NULL);
     ASSERT_EQ(idx, 0, "argmax NULL -> 0");
 }
 
 static void test_dot_null(void) {
     size_t sh[] = {3};
-    ArixTensor* a = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    float v = arix_tensor_dot(a, NULL);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    float v = SNEPPX_tensor_dot(a, NULL);
     ASSERT_EQ(v, 0.0f, "dot with NULL -> 0");
-    v = arix_tensor_dot(NULL, a);
+    v = SNEPPX_tensor_dot(NULL, a);
     ASSERT_EQ(v, 0.0f, "dot NULL -> 0");
-    arix_tensor_destroy(a);
+    SNEPPX_tensor_destroy(a);
 }
 
 static void test_dot_mismatched(void) {
     size_t sh1[] = {3};
     size_t sh2[] = {4};
-    ArixTensor* a = arix_tensor_ones(sh1, 1, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_ones(sh2, 1, ARIX_FLOAT32);
-    float v = arix_tensor_dot(a, b);
+    SNEPPXTensor* a = SNEPPX_tensor_ones(sh1, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_ones(sh2, 1, SNEPPX_FLOAT32);
+    float v = SNEPPX_tensor_dot(a, b);
     ASSERT_EQ(v, 0.0f, "dot mismatched -> 0");
-    arix_tensor_destroy(a); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(a); SNEPPX_tensor_destroy(b);
 }
 
 static void test_cast_null(void) {
-    ArixTensor* r = arix_tensor_cast(NULL, ARIX_FLOAT64);
+    SNEPPXTensor* r = SNEPPX_tensor_cast(NULL, SNEPPX_FLOAT64);
     ASSERT_NULL(r, "cast NULL -> NULL");
 }
 
 static void test_copy_null(void) {
-    ArixTensor* r = arix_tensor_copy(NULL);
+    SNEPPXTensor* r = SNEPPX_tensor_copy(NULL);
     ASSERT_NULL(r, "copy NULL -> NULL");
 }
 
 static void test_clone_null(void) {
-    ArixTensor* r = arix_tensor_clone(NULL);
+    SNEPPXTensor* r = SNEPPX_tensor_clone(NULL);
     ASSERT_NULL(r, "clone NULL -> NULL");
 }
 
 static void test_split_null(void) {
-    ArixTensor** r = arix_tensor_split(NULL, 2, 0);
+    SNEPPXTensor** r = SNEPPX_tensor_split(NULL, 2, 0);
     ASSERT_NULL(r, "split NULL -> NULL");
 }
 
 static void test_split_zero_splits(void) {
     size_t sh[] = {4, 4};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor** r = arix_tensor_split(t, 0, 0);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor** r = SNEPPX_tensor_split(t, 0, 0);
     ASSERT_NULL(r, "split 0 -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_split_uneven(void) {
     size_t sh[] = {4, 4};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ArixTensor** r = arix_tensor_split(t, 3, 0);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor** r = SNEPPX_tensor_split(t, 3, 0);
     ASSERT_NULL(r, "split uneven -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_relu_null(void) {
-    ArixTensor* r = arix_tensor_relu(NULL);
+    SNEPPXTensor* r = SNEPPX_tensor_relu(NULL);
     ASSERT_NULL(r, "relu NULL -> NULL");
 }
 
 static void test_sigmoid_null(void) {
-    ArixTensor* r = arix_tensor_sigmoid(NULL);
+    SNEPPXTensor* r = SNEPPX_tensor_sigmoid(NULL);
     ASSERT_NULL(r, "sigmoid NULL -> NULL");
 }
 
 static void test_softmax_null(void) {
-    ArixTensor* r = arix_tensor_softmax(NULL, 0);
+    SNEPPXTensor* r = SNEPPX_tensor_softmax(NULL, 0);
     ASSERT_NULL(r, "softmax NULL -> NULL");
 }
 
 static void test_layer_norm_null(void) {
     size_t sh[] = {4};
-    ArixTensor* g = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* b = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_layer_norm(NULL, g, b, 1e-5f);
+    SNEPPXTensor* g = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* b = SNEPPX_tensor_zeros(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_layer_norm(NULL, g, b, 1e-5f);
     ASSERT_NULL(r, "layer_norm NULL input -> NULL");
-    arix_tensor_destroy(g); arix_tensor_destroy(b);
+    SNEPPX_tensor_destroy(g); SNEPPX_tensor_destroy(b);
 }
 
 static void test_where_null(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_where(NULL, t, t);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_where(NULL, t, t);
     ASSERT_NULL(r, "where NULL condition -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_masked_select_null(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_masked_select(NULL, t);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_masked_select(NULL, t);
     ASSERT_NULL(r, "masked_select NULL src -> NULL");
-    r = arix_tensor_masked_select(t, NULL);
+    r = SNEPPX_tensor_masked_select(t, NULL);
     ASSERT_NULL(r, "masked_select NULL mask -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_gather_null(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
     size_t ish[] = {2};
-    ArixTensor* idx = arix_tensor_zeros(ish, 1, ARIX_INT32);
-    ArixTensor* r = arix_tensor_gather(NULL, 0, idx);
+    SNEPPXTensor* idx = SNEPPX_tensor_zeros(ish, 1, SNEPPX_INT32);
+    SNEPPXTensor* r = SNEPPX_tensor_gather(NULL, 0, idx);
     ASSERT_NULL(r, "gather NULL src -> NULL");
-    r = arix_tensor_gather(t, 0, NULL);
+    r = SNEPPX_tensor_gather(t, 0, NULL);
     ASSERT_NULL(r, "gather NULL idx -> NULL");
-    arix_tensor_destroy(t); arix_tensor_destroy(idx);
+    SNEPPX_tensor_destroy(t); SNEPPX_tensor_destroy(idx);
 }
 
 static void test_tile_null(void) {
     size_t reps[] = {2};
-    ArixTensor* r = arix_tensor_tile(NULL, reps, 1);
+    SNEPPXTensor* r = SNEPPX_tensor_tile(NULL, reps, 1);
     ASSERT_NULL(r, "tile NULL -> NULL");
 }
 
 static void test_repeat_null(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ArixTensor* r = arix_tensor_repeat(NULL, 2, 0);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* r = SNEPPX_tensor_repeat(NULL, 2, 0);
     ASSERT_NULL(r, "repeat NULL -> NULL");
-    r = arix_tensor_repeat(t, 2, 5);
+    r = SNEPPX_tensor_repeat(t, 2, 5);
     ASSERT_NULL(r, "repeat dim>=ndim -> NULL");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_nan_inf_ops(void) {
     size_t sh[] = {4};
-    ArixTensor* t = arix_tensor_create(sh, 1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(sh, 1, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(t, "created for nan/inf");
     float* d = (float*)t->data;
     d[0] = NAN; d[1] = INFINITY;
     d[2] = -INFINITY; d[3] = 3.14f;
-    ArixTensor* r = arix_tensor_add(t, t);
+    SNEPPXTensor* r = SNEPPX_tensor_add(t, t);
     ASSERT_NOT_NULL(r, "add with nan/inf");
     float* rd = (float*)r->data;
     ASSERT(isnan(rd[0]), "nan + nan = nan");
     ASSERT(isinf(rd[1]) && rd[1] > 0, "inf + inf = inf");
     ASSERT(isinf(rd[2]) && rd[2] < 0, "-inf + -inf = -inf");
     ASSERT_NEAR(rd[3], 6.28f, 1e-4f, "normal value preserved");
-    arix_tensor_destroy(r);
-    r = arix_tensor_mul(t, t);
+    SNEPPX_tensor_destroy(r);
+    r = SNEPPX_tensor_mul(t, t);
     ASSERT_NOT_NULL(r, "mul with nan/inf");
     rd = (float*)r->data;
     ASSERT(isnan(rd[0]), "nan * nan = nan");
     ASSERT(isinf(rd[1]) && rd[1] > 0, "inf * inf = inf");
-    arix_tensor_destroy(r);
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(r);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_unary_op_null(void) {
-    ASSERT_NULL(arix_tensor_neg(NULL), "neg NULL");
-    ASSERT_NULL(arix_tensor_abs(NULL), "abs NULL");
-    ASSERT_NULL(arix_tensor_sign(NULL), "sign NULL");
-    ASSERT_NULL(arix_tensor_floor(NULL), "floor NULL");
-    ASSERT_NULL(arix_tensor_ceil(NULL), "ceil NULL");
-    ASSERT_NULL(arix_tensor_round(NULL), "round NULL");
-    ASSERT_NULL(arix_tensor_trunc(NULL), "trunc NULL");
-    ASSERT_NULL(arix_tensor_exp(NULL), "exp NULL");
-    ASSERT_NULL(arix_tensor_log(NULL), "log NULL");
-    ASSERT_NULL(arix_tensor_sqrt(NULL), "sqrt NULL");
-    ASSERT_NULL(arix_tensor_sin(NULL), "sin NULL");
-    ASSERT_NULL(arix_tensor_cos(NULL), "cos NULL");
-    ASSERT_NULL(arix_tensor_tan(NULL), "tan NULL");
-    ASSERT_NULL(arix_tensor_asin(NULL), "asin NULL");
-    ASSERT_NULL(arix_tensor_acos(NULL), "acos NULL");
-    ASSERT_NULL(arix_tensor_atan(NULL), "atan NULL");
-    ASSERT_NULL(arix_tensor_sinh(NULL), "sinh NULL");
-    ASSERT_NULL(arix_tensor_cosh(NULL), "cosh NULL");
-    ASSERT_NULL(arix_tensor_tanh(NULL), "tanh NULL");
+    ASSERT_NULL(SNEPPX_tensor_neg(NULL), "neg NULL");
+    ASSERT_NULL(SNEPPX_tensor_abs(NULL), "abs NULL");
+    ASSERT_NULL(SNEPPX_tensor_sign(NULL), "sign NULL");
+    ASSERT_NULL(SNEPPX_tensor_floor(NULL), "floor NULL");
+    ASSERT_NULL(SNEPPX_tensor_ceil(NULL), "ceil NULL");
+    ASSERT_NULL(SNEPPX_tensor_round(NULL), "round NULL");
+    ASSERT_NULL(SNEPPX_tensor_trunc(NULL), "trunc NULL");
+    ASSERT_NULL(SNEPPX_tensor_exp(NULL), "exp NULL");
+    ASSERT_NULL(SNEPPX_tensor_log(NULL), "log NULL");
+    ASSERT_NULL(SNEPPX_tensor_sqrt(NULL), "sqrt NULL");
+    ASSERT_NULL(SNEPPX_tensor_sin(NULL), "sin NULL");
+    ASSERT_NULL(SNEPPX_tensor_cos(NULL), "cos NULL");
+    ASSERT_NULL(SNEPPX_tensor_tan(NULL), "tan NULL");
+    ASSERT_NULL(SNEPPX_tensor_asin(NULL), "asin NULL");
+    ASSERT_NULL(SNEPPX_tensor_acos(NULL), "acos NULL");
+    ASSERT_NULL(SNEPPX_tensor_atan(NULL), "atan NULL");
+    ASSERT_NULL(SNEPPX_tensor_sinh(NULL), "sinh NULL");
+    ASSERT_NULL(SNEPPX_tensor_cosh(NULL), "cosh NULL");
+    ASSERT_NULL(SNEPPX_tensor_tanh(NULL), "tanh NULL");
 }
 
 static void test_compare_op_null(void) {
     size_t sh[] = {3};
-    ArixTensor* t = arix_tensor_ones(sh, 1, ARIX_FLOAT32);
-    ASSERT_NULL(arix_tensor_eq(NULL, t), "eq NULL");
-    ASSERT_NULL(arix_tensor_eq(t, NULL), "eq NULL b");
-    ASSERT_NULL(arix_tensor_ne(NULL, t), "ne NULL");
-    ASSERT_NULL(arix_tensor_lt(NULL, t), "lt NULL");
-    ASSERT_NULL(arix_tensor_le(NULL, t), "le NULL");
-    ASSERT_NULL(arix_tensor_gt(NULL, t), "gt NULL");
-    ASSERT_NULL(arix_tensor_ge(NULL, t), "ge NULL");
-    arix_tensor_destroy(t);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 1, SNEPPX_FLOAT32);
+    ASSERT_NULL(SNEPPX_tensor_eq(NULL, t), "eq NULL");
+    ASSERT_NULL(SNEPPX_tensor_eq(t, NULL), "eq NULL b");
+    ASSERT_NULL(SNEPPX_tensor_ne(NULL, t), "ne NULL");
+    ASSERT_NULL(SNEPPX_tensor_lt(NULL, t), "lt NULL");
+    ASSERT_NULL(SNEPPX_tensor_le(NULL, t), "le NULL");
+    ASSERT_NULL(SNEPPX_tensor_gt(NULL, t), "gt NULL");
+    ASSERT_NULL(SNEPPX_tensor_ge(NULL, t), "ge NULL");
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_cumsum_cumprod_null(void) {
-    ASSERT_NULL(arix_tensor_cumsum(NULL, 0), "cumsum NULL");
-    ASSERT_NULL(arix_tensor_cumprod(NULL, 0), "cumprod NULL");
+    ASSERT_NULL(SNEPPX_tensor_cumsum(NULL, 0), "cumsum NULL");
+    ASSERT_NULL(SNEPPX_tensor_cumprod(NULL, 0), "cumprod NULL");
 }
 
 static void test_cumsum_invalid_dim(void) {
     size_t sh[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(sh, 2, ARIX_FLOAT32);
-    ASSERT_NULL(arix_tensor_cumsum(t, 5), "cumsum bad dim");
-    ASSERT_NULL(arix_tensor_cumprod(t, 5), "cumprod bad dim");
-    arix_tensor_destroy(t);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(sh, 2, SNEPPX_FLOAT32);
+    ASSERT_NULL(SNEPPX_tensor_cumsum(t, 5), "cumsum bad dim");
+    ASSERT_NULL(SNEPPX_tensor_cumprod(t, 5), "cumprod bad dim");
+    SNEPPX_tensor_destroy(t);
 }
 
 int main(void) {

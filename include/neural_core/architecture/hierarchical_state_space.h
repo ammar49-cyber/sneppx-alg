@@ -1,5 +1,5 @@
-#ifndef ARIX_HSS_H
-#define ARIX_HSS_H
+#ifndef SNEPPX_HSS_H
+#define SNEPPX_HSS_H
 
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
@@ -15,43 +15,43 @@ typedef struct {
     float dt_max;
     int use_hierarchical;
     int use_parallel_scan;
-} ArixHSSConfig;
+} SNEPPXHSSConfig;
 
 typedef struct {
-    ArixTensor* A;
-    ArixTensor* B;
-    ArixTensor* C;
-    ArixTensor* D;
-    ArixTensor* dt;
-    ArixTensor* h;
-    ArixTensor* x_proj;
-    ArixTensor* x_proj_bias;
-    ArixTensor* A_bar;
-    ArixTensor* B_bar;
-} ArixHSSLayer;
+    SNEPPXTensor* A;
+    SNEPPXTensor* B;
+    SNEPPXTensor* C;
+    SNEPPXTensor* D;
+    SNEPPXTensor* dt;
+    SNEPPXTensor* h;
+    SNEPPXTensor* x_proj;
+    SNEPPXTensor* x_proj_bias;
+    SNEPPXTensor* A_bar;
+    SNEPPXTensor* B_bar;
+} SNEPPXHSSLayer;
 
 typedef struct {
-    ArixHSSLayer** layers;
-    ArixHSSConfig config;
-    ArixTensor** norm_gamma;
-    ArixTensor** norm_beta;
-} ArixHSSModel;
+    SNEPPXHSSLayer** layers;
+    SNEPPXHSSConfig config;
+    SNEPPXTensor** norm_gamma;
+    SNEPPXTensor** norm_beta;
+} SNEPPXHSSModel;
 
-ArixHSSConfig arix_hss_config_default(void);
-ArixHSSLayer* arix_hss_layer_create(const ArixHSSConfig* config, unsigned int seed);
-void arix_hss_layer_destroy(ArixHSSLayer* layer);
-ArixHSSModel* arix_hss_model_create(const ArixHSSConfig* config, unsigned int seed);
-void arix_hss_model_destroy(ArixHSSModel* model);
-int arix_hss_forward(ArixHSSModel* model, const ArixTensor* input, ArixTensor** output);
-void arix_hss_discretize(ArixHSSLayer* layer);
-void arix_hss_step(const ArixHSSLayer* layer, const ArixTensor* x, ArixTensor* h_next);
-void arix_hss_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* h_seq, ArixTensor* y_seq);
-void arix_hss_parallel_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* h_seq, ArixTensor* y_seq);
-void arix_hss_hierarchical_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* y_seq);
-size_t arix_hss_get_params(const ArixHSSModel* model, ArixTensor** out_params, size_t max_params);
-int arix_hss_build_train_graph(ArixHSSModel* model, ArixTape* tape,
-                               ArixVariable* input_var,
-                               ArixVariable** weight_vars, size_t num_weights,
-                               ArixVariable** output_var);
+SNEPPXHSSConfig SNEPPX_hss_config_default(void);
+SNEPPXHSSLayer* SNEPPX_hss_layer_create(const SNEPPXHSSConfig* config, unsigned int seed);
+void SNEPPX_hss_layer_destroy(SNEPPXHSSLayer* layer);
+SNEPPXHSSModel* SNEPPX_hss_model_create(const SNEPPXHSSConfig* config, unsigned int seed);
+void SNEPPX_hss_model_destroy(SNEPPXHSSModel* model);
+int SNEPPX_hss_forward(SNEPPXHSSModel* model, const SNEPPXTensor* input, SNEPPXTensor** output);
+void SNEPPX_hss_discretize(SNEPPXHSSLayer* layer);
+void SNEPPX_hss_step(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x, SNEPPXTensor* h_next);
+void SNEPPX_hss_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq);
+void SNEPPX_hss_parallel_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq);
+void SNEPPX_hss_hierarchical_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* y_seq);
+size_t SNEPPX_hss_get_params(const SNEPPXHSSModel* model, SNEPPXTensor** out_params, size_t max_params);
+int SNEPPX_hss_build_train_graph(SNEPPXHSSModel* model, SNEPPXTape* tape,
+                               SNEPPXVariable* input_var,
+                               SNEPPXVariable** weight_vars, size_t num_weights,
+                               SNEPPXVariable** output_var);
 
-#endif /* ARIX_HSS_H */
+#endif /* SNEPPX_HSS_H */

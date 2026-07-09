@@ -9,7 +9,7 @@ This directory contains standalone utility programs for development and analysis
 
 ## Building
 
-Tools are built automatically as part of the main CMake build when `ARIX_BUILD_TOOLS=ON`.
+Tools are built automatically as part of the main CMake build when `SNEPPX_BUILD_TOOLS=ON`.
 
 ## Usage
 

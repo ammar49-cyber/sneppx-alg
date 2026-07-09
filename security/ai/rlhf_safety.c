@@ -93,7 +93,7 @@ static double rlhf_check_factual(const char *text, size_t len) {
     return score > 1.0 ? 1.0 : score;
 }
 
-int arix_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_type, double threshold) {
+int SNEPPX_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_type, double threshold) {
     if (!name || policy_count >= RLHF_MAX_POLICIES) return -1;
     strncpy(policies[policy_count].name, name, 63);
     policies[policy_count].weight = weight;
@@ -104,13 +104,13 @@ int arix_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_
     return policy_count++;
 }
 
-int arix_rlhf_remove_policy(int policy_id) {
+int SNEPPX_rlhf_remove_policy(int policy_id) {
     if (policy_id < 0 || policy_id >= policy_count) return -1;
     policies[policy_id].active = 0;
     return 0;
 }
 
-int arix_rlhf_score(const char *input, const char *output, rlhf_score_t *score) {
+int SNEPPX_rlhf_score(const char *input, const char *output, rlhf_score_t *score) {
     if (!input || !output || !score) return -1;
     memset(score, 0, sizeof(rlhf_score_t));
     score->harmfulness = rlhf_detect_harm(output, strlen(output));
@@ -127,7 +127,7 @@ int arix_rlhf_score(const char *input, const char *output, rlhf_score_t *score) 
     return 0;
 }
 
-int arix_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int max_violations) {
+int SNEPPX_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int max_violations) {
     if (!text || !violations) return -1;
     int found = 0;
     for (int i = 0; i < policy_count && found < max_violations; i++) {
@@ -152,7 +152,7 @@ int arix_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int
     return found;
 }
 
-int arix_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score) {
+int SNEPPX_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score) {
     if (!out || !score) return -1;
     const char *refusals[] = {
         "I cannot generate this response as it may be harmful.",
@@ -166,7 +166,7 @@ int arix_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score) {
     return 0;
 }
 
-int arix_rlhf_generate_critique(const char *output, char *critique, size_t critique_len) {
+int SNEPPX_rlhf_generate_critique(const char *output, char *critique, size_t critique_len) {
     if (!output || !critique) return -1;
     double harm = rlhf_detect_harm(output, strlen(output));
     double bias = rlhf_detect_bias(output, strlen(output));
@@ -184,7 +184,7 @@ int arix_rlhf_generate_critique(const char *output, char *critique, size_t criti
     return pos;
 }
 
-int arix_rlhf_correct_output(const char *output, char *corrected, size_t corrected_len) {
+int SNEPPX_rlhf_correct_output(const char *output, char *corrected, size_t corrected_len) {
     if (!output || !corrected) return -1;
     int pos = 0;
     for (size_t i = 0; i < strlen(output) && pos < (int)corrected_len - 1; i++) {
@@ -195,19 +195,19 @@ int arix_rlhf_correct_output(const char *output, char *corrected, size_t correct
     return pos;
 }
 
-int arix_rlhf_update_config(const rlhf_config_t *config) {
+int SNEPPX_rlhf_update_config(const rlhf_config_t *config) {
     if (!config) return -1;
     memcpy(&rlhf_config, config, sizeof(rlhf_config_t));
     return 0;
 }
 
-int arix_rlhf_get_config(rlhf_config_t *config) {
+int SNEPPX_rlhf_get_config(rlhf_config_t *config) {
     if (!config) return -1;
     memcpy(config, &rlhf_config, sizeof(rlhf_config_t));
     return 0;
 }
 
-int arix_rlhf_get_stats(rlhf_stats_t *stats) {
+int SNEPPX_rlhf_get_stats(rlhf_stats_t *stats) {
     if (!stats) return -1;
     stats->total_refusals = total_refusals;
     stats->total_corrections = total_corrections;
@@ -221,7 +221,7 @@ int arix_rlhf_get_stats(rlhf_stats_t *stats) {
     return 0;
 }
 
-int arix_rlhf_reset(void) {
+int SNEPPX_rlhf_reset(void) {
     policy_count = 0;
     total_refusals = 0;
     total_corrections = 0;
@@ -229,10 +229,10 @@ int arix_rlhf_reset(void) {
     return 0;
 }
 
-int arix_rlhf_add_default_policies(void) {
-    arix_rlhf_add_policy("harm", 0.4, RLHF_RULE_HARM, 0.7);
-    arix_rlhf_add_policy("bias", 0.3, RLHF_RULE_BIAS, 0.6);
-    arix_rlhf_add_policy("factual", 0.2, RLHF_RULE_FACTUAL, 0.4);
-    arix_rlhf_add_policy("custom_safety", 0.1, RLHF_RULE_CUSTOM, 0.5);
+int SNEPPX_rlhf_add_default_policies(void) {
+    SNEPPX_rlhf_add_policy("harm", 0.4, RLHF_RULE_HARM, 0.7);
+    SNEPPX_rlhf_add_policy("bias", 0.3, RLHF_RULE_BIAS, 0.6);
+    SNEPPX_rlhf_add_policy("factual", 0.2, RLHF_RULE_FACTUAL, 0.4);
+    SNEPPX_rlhf_add_policy("custom_safety", 0.1, RLHF_RULE_CUSTOM, 0.5);
     return 0;
 }

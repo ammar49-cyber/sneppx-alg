@@ -13,7 +13,7 @@
 #include <arm_acle.h>
 #endif
 
-uint64_t arix_timing_start(void) {
+uint64_t SNEPPX_timing_start(void) {
 #if defined(_MSC_VER)
     __cpuidex((int[]){0,0,0,0}, 0, 0);
     return __rdtsc();
@@ -41,7 +41,7 @@ uint64_t arix_timing_start(void) {
 #endif
 }
 
-uint64_t arix_timing_end(void) {
+uint64_t SNEPPX_timing_end(void) {
 #if defined(_MSC_VER)
     unsigned int aux;
     uint64_t t = __rdtscp(&aux);
@@ -72,23 +72,23 @@ uint64_t arix_timing_end(void) {
 #endif
 }
 
-void arix_timing_random_delay(uint32_t min_ns, uint32_t max_ns) {
+void SNEPPX_timing_random_delay(uint32_t min_ns, uint32_t max_ns) {
     if (max_ns <= min_ns) return;
     uint32_t range = max_ns - min_ns;
     uint32_t r;
-    arix_random_bytes((uint8_t*)&r, sizeof(r));
+    SNEPPX_random_bytes((uint8_t*)&r, sizeof(r));
     uint32_t delay = min_ns + (r % range);
-    uint64_t start = arix_timing_start();
+    uint64_t start = SNEPPX_timing_start();
     while (1) {
-        uint64_t elapsed = arix_timing_end() - start;
+        uint64_t elapsed = SNEPPX_timing_end() - start;
         if (elapsed >= delay) break;
     }
 }
 
-int arix_timing_safe_equal(const uint8_t* a, const uint8_t* b, size_t len, uint64_t* timing_ns) {
-    uint64_t t0 = arix_timing_start();
-    int result = arix_ct_equal(a, b, len);
-    uint64_t t1 = arix_timing_end();
+int SNEPPX_timing_safe_equal(const uint8_t* a, const uint8_t* b, size_t len, uint64_t* timing_ns) {
+    uint64_t t0 = SNEPPX_timing_start();
+    int result = SNEPPX_ct_equal(a, b, len);
+    uint64_t t1 = SNEPPX_timing_end();
     if (timing_ns) {
 #if defined(__x86_64__) || defined(__amd64__) || defined(_MSC_VER)
         *timing_ns = (t1 - t0) / 2400;

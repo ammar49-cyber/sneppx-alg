@@ -21,22 +21,22 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_aslr_alloc_free(void) {
-    void* p = arix_aslr_alloc(256);
+    void* p = SNEPPX_aslr_alloc(256);
     ASSERT(p != NULL, "aslr alloc 256");
-    arix_aslr_free(p, 256);
+    SNEPPX_aslr_free(p, 256);
 }
 
 static void test_aslr_alloc_randomized(void) {
-    void* p1 = arix_aslr_alloc(64);
-    void* p2 = arix_aslr_alloc(64);
+    void* p1 = SNEPPX_aslr_alloc(64);
+    void* p2 = SNEPPX_aslr_alloc(64);
     ASSERT(p1 != NULL, "aslr alloc 1");
     ASSERT(p2 != NULL, "aslr alloc 2");
-    arix_aslr_free(p1, 64);
-    arix_aslr_free(p2, 64);
+    SNEPPX_aslr_free(p1, 64);
+    SNEPPX_aslr_free(p2, 64);
 }
 
 static void test_aslr_mprotect(void) {
-    int ret = arix_aslr_mprotect(NULL, 0, ARIX_ASLR_RW);
+    int ret = SNEPPX_aslr_mprotect(NULL, 0, SNEPPX_ASLR_RW);
     ASSERT(ret == 0, "mprotect stub returns 0");
 }
 

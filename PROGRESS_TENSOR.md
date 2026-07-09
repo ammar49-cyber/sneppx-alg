@@ -18,10 +18,10 @@ Total: 5,742 LOC
 
 ## T0 Deliverables
 - [x] Audit existing tensor files (2,484 LOC across header, source, tests, benchmarks)
-- [x] Add 4 dtype helper macros: `ARIX_DTYPE_SIZE`, `ARIX_DTYPE_IS_FLOAT`, `ARIX_DTYPE_IS_INT`, `ARIX_DTYPE_IS_COMPLEX`
-- [x] Extend `ArixDevice`: +`ARIX_DEVICE_TPU`, +`ARIX_DEVICE_NPU`
-- [x] Extend `ArixLayout`: +`ARIX_LAYOUT_TILED`
-- [x] Declare `arix_tensor_save` / `arix_tensor_load`
+- [x] Add 4 dtype helper macros: `SNEPPX_DTYPE_SIZE`, `SNEPPX_DTYPE_IS_FLOAT`, `SNEPPX_DTYPE_IS_INT`, `SNEPPX_DTYPE_IS_COMPLEX`
+- [x] Extend `SNEPPXDevice`: +`SNEPPX_DEVICE_TPU`, +`SNEPPX_DEVICE_NPU`
+- [x] Extend `SNEPPXLayout`: +`SNEPPX_LAYOUT_TILED`
+- [x] Declare `SNEPPX_tensor_save` / `SNEPPX_tensor_load`
 - [x] Add stub implementations for save/load in tensor.c
 - [x] Build passes with zero errors
 - [x] All existing tests pass
@@ -68,7 +68,7 @@ Total: 5,742 LOC
 
 | Old Path | New Path |
 |----------|----------|
-| `src/arch/include/arix/` | `include/arix/` (headers) |
+| `src/arch/include/SNEPPX/` | `include/SNEPPX/` (headers) |
 | `src/arch/src/` | `kernel/` (core runtime) |
 | `src/arch/src/hss/` | `algorithms/hss/core/` |
 | `src/arch/src/ser/` | `algorithms/ser/core/` |

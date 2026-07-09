@@ -1,5 +1,5 @@
-# ARIX-Algo v0.1.0 Installer (Windows)
-Write-Host "=== ARIX-Algo v0.1.0 Installer ===" -ForegroundColor Cyan
+# SNEPPX-Algo v0.1.0 Installer (Windows)
+Write-Host "=== SNEPPX-Algo v0.1.0 Installer ===" -ForegroundColor Cyan
 Write-Host ""
 
 $ErrorActionPreference = "Stop"
@@ -46,7 +46,7 @@ New-Item -ItemType Directory -Path "build" -Force | Out-Null
 Set-Location "build"
 
 if ($hasMSVC) {
-    cmake .. -DARIX_BUILD_TESTS=ON -DARIX_BUILD_PYTHON=OFF
+    cmake .. -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=OFF
     cmake --build . --config Release
 } else {
     Write-Host "  ERROR: No C++ compiler found. Install Visual Studio Build Tools and re-run." -ForegroundColor Red
@@ -59,6 +59,6 @@ Write-Host ">> Running tests..."
 ctest --output-on-failure -C Release
 
 Write-Host ""
-Write-Host "=== ARIX-Algo v0.1.0 installed ===" -ForegroundColor Cyan
+Write-Host "=== SNEPPX-Algo v0.1.0 installed ===" -ForegroundColor Cyan
 Write-Host "Run './scripts/test.sh' to verify."
 Write-Host "See docs/ for documentation."

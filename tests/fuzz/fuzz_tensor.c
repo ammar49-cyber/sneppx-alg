@@ -2,8 +2,8 @@
  * Fuzz Tests for Tensor Operations — SKELETON
  * VERSION: v0.5
  *
- * Structured fuzzing for arix_tensor_create, arix_tensor_slice,
- * and arix_tensor_reshape.  Tests feed randomly generated shapes
+ * Structured fuzzing for SNEPPX_tensor_create, SNEPPX_tensor_slice,
+ * and SNEPPX_tensor_reshape.  Tests feed randomly generated shapes
  * and verify no crashes.
  */
 

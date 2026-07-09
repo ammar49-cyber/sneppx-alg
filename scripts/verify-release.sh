@@ -3,7 +3,7 @@ set -e
 
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <release-file>"
-    echo "Example: $0 releases/arix-algo-v0.1.0.tar.gz"
+    echo "Example: $0 releases/SNEPPX-algo-v0.1.0.tar.gz"
     exit 1
 fi
 
@@ -12,7 +12,7 @@ SIG_FILE="${RELEASE_FILE}.sig"
 PUB_FILE="$(dirname "${RELEASE_FILE}")/release-signing.pub"
 SUMS_FILE="$(dirname "${RELEASE_FILE}")/SHA256SUMS"
 
-echo "=== ARIX-Algo Release Verification ==="
+echo "=== SNEPPX-Algo Release Verification ==="
 echo ""
 
 if [ ! -f "${RELEASE_FILE}" ]; then

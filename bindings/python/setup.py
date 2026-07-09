@@ -1,11 +1,11 @@
-"""Setup for arix-algo Python package."""
+"""Setup for SneppX-ALG Python package."""
 from setuptools import setup, find_packages
 
 setup(
-    name="arix-algo",
+    name="SneppX-ALG",
     version="0.7.8",
     packages=find_packages(),
-    package_data={"arix_algo": ["_arix_c*.pyd", "_arix_c*.so"]},
+    package_data={"SneppX_ALG": ["_SNEPPX_c*.pyd", "_SNEPPX_c*.so"]},
     include_package_data=True,
     zip_safe=False,
 )

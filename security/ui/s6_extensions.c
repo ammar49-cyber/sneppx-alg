@@ -115,7 +115,7 @@ static uint32_t threat_str_hash(const char* s) {
     return h;
 }
 
-int arix_hsm_init(ArixHSMKeyStore* hsm) {
+int SNEPPX_hsm_init(SNEPPXHSMKeyStore* hsm) {
     if (!hsm) return -1;
     memset(hsm, 0, sizeof(*hsm));
     hsm->hsm_connected = 1;
@@ -127,7 +127,7 @@ int arix_hsm_init(ArixHSMKeyStore* hsm) {
     return 0;
 }
 
-int arix_hsm_store_key(ArixHSMKeyStore* hsm, const uint8_t* key_id, const uint8_t* key_data, size_t key_len) {
+int SNEPPX_hsm_store_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, const uint8_t* key_data, size_t key_len) {
     (void)hsm;
     if (!key_id || !key_data || key_len == 0 || key_len > HSM_MAX_DATA) return -1;
     if (!hsm_initialized) return -1;
@@ -141,7 +141,7 @@ int arix_hsm_store_key(ArixHSMKeyStore* hsm, const uint8_t* key_id, const uint8_
     return 0;
 }
 
-int arix_hsm_load_key(ArixHSMKeyStore* hsm, const uint8_t* key_id, uint8_t* key_data, size_t* key_len) {
+int SNEPPX_hsm_load_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, uint8_t* key_data, size_t* key_len) {
     (void)hsm;
     if (!key_id || !key_data || !key_len) return -1;
     if (!hsm_initialized) return -1;
@@ -153,7 +153,7 @@ int arix_hsm_load_key(ArixHSMKeyStore* hsm, const uint8_t* key_id, uint8_t* key_
     return 0;
 }
 
-int arix_hsm_delete_key(ArixHSMKeyStore* hsm, const uint8_t* key_id) {
+int SNEPPX_hsm_delete_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id) {
     (void)hsm;
     if (!key_id) return -1;
     if (!hsm_initialized) return -1;
@@ -163,7 +163,7 @@ int arix_hsm_delete_key(ArixHSMKeyStore* hsm, const uint8_t* key_id) {
     return 0;
 }
 
-int arix_shamir_split(const uint8_t* secret, size_t secret_len, int n, int k, uint8_t** shares, size_t* share_lens) {
+int SNEPPX_shamir_split(const uint8_t* secret, size_t secret_len, int n, int k, uint8_t** shares, size_t* share_lens) {
     if (!secret || secret_len == 0 || n < k || k < 2 || n > 16 || !shares || !share_lens) return -1;
     gf_init();
     for (int j = 0; j < n; j++) {
@@ -186,7 +186,7 @@ int arix_shamir_split(const uint8_t* secret, size_t secret_len, int n, int k, ui
     return 0;
 }
 
-int arix_shamir_reconstruct(uint8_t** shares, size_t* share_lens, int k, uint8_t* secret, size_t* secret_len) {
+int SNEPPX_shamir_reconstruct(uint8_t** shares, size_t* share_lens, int k, uint8_t* secret, size_t* secret_len) {
     if (!shares || !share_lens || k < 2 || !secret || !secret_len) return -1;
     gf_init();
     size_t len = share_lens[0] - 1;
@@ -212,28 +212,28 @@ int arix_shamir_reconstruct(uint8_t** shares, size_t* share_lens, int k, uint8_t
 }
 
 /* ---- Key Ceremony ---- */
-int arix_key_ceremony_init(ArixKeyCeremony* kc, int participants) {
+int SNEPPX_key_ceremony_init(SNEPPXKeyCeremony* kc, int participants) {
     if(!kc) return -1; memset(kc,0,sizeof(*kc)); kc->participants_required=participants; return 0;
 }
-int arix_key_ceremony_participant_approve(ArixKeyCeremony* kc, const uint8_t* token, size_t token_len) {
+int SNEPPX_key_ceremony_participant_approve(SNEPPXKeyCeremony* kc, const uint8_t* token, size_t token_len) {
     if(!kc||!token) return -1; kc->participants_present++; return 0;
 }
-int arix_key_ceremony_execute(ArixKeyCeremony* kc, uint8_t* generated_key, size_t key_len) {
+int SNEPPX_key_ceremony_execute(SNEPPXKeyCeremony* kc, uint8_t* generated_key, size_t key_len) {
     if(!kc||kc->participants_present<kc->participants_required||!generated_key) return -1;
     for(size_t i=0;i<key_len;i++) generated_key[i]=(uint8_t)(rand()%256);
     kc->approved=1; return 0;
 }
 
 /* ---- Rotation Scheduler ---- */
-int arix_key_rotation_init(ArixKeyRotationScheduler* ks, uint64_t interval_seconds) {
+int SNEPPX_key_rotation_init(SNEPPXKeyRotationScheduler* ks, uint64_t interval_seconds) {
     if(!ks) return -1; memset(ks,0,sizeof(*ks)); ks->rotation_interval_seconds=interval_seconds; ks->last_rotation=(uint64_t)time(NULL); return 0;
 }
-int arix_key_rotation_check(ArixKeyRotationScheduler* ks) {
+int SNEPPX_key_rotation_check(SNEPPXKeyRotationScheduler* ks) {
     if(!ks||!ks->auto_rotate) return 0;
     return ((uint64_t)time(NULL)-ks->last_rotation)>ks->rotation_interval_seconds?1:0;
 }
 
-int arix_security_dashboard_init(const char* listen_addr, int port) {
+int SNEPPX_security_dashboard_init(const char* listen_addr, int port) {
     if (!listen_addr) return -1;
     memset(&dash_state, 0, sizeof(dash_state));
     strncpy(dash_state.listen_addr, listen_addr, DASH_ADDR_MAX - 1);
@@ -281,7 +281,7 @@ static void dash_parse_json(const char* json) {
     else if (key_count > 0) dash_state.info_count++;
 }
 
-int arix_security_dashboard_update(const char* json_payload) {
+int SNEPPX_security_dashboard_update(const char* json_payload) {
     if (!dash_state.initialized) return -1;
     if (!json_payload) return -1;
     dash_parse_json(json_payload);
@@ -305,13 +305,13 @@ static int threat_remove_edge(int idx) {
     return 0;
 }
 
-int arix_threat_viz_init(void) {
+int SNEPPX_threat_viz_init(void) {
     memset(threat_edges, 0, sizeof(threat_edges));
     threat_edge_count = 0;
     return 0;
 }
 
-int arix_threat_viz_add_edge(const char* from, const char* to, const char* label) {
+int SNEPPX_threat_viz_add_edge(const char* from, const char* to, const char* label) {
     if (!from || !to || !label) return -1;
     if (threat_edge_count >= THREAT_MAX_EDGES) return -1;
     ThreatEdge* e = &threat_edges[threat_edge_count];
@@ -325,12 +325,12 @@ int arix_threat_viz_add_edge(const char* from, const char* to, const char* label
 }
 
 /* ---- Policy DSL ---- */
-int arix_policy_dsl_init(ArixPolicyDSL* dsl) { if(!dsl) return -1; memset(dsl,0,sizeof(*dsl)); return 0; }
-int arix_policy_dsl_add_rule(ArixPolicyDSL* dsl, const char* rule) {
+int SNEPPX_policy_dsl_init(SNEPPXPolicyDSL* dsl) { if(!dsl) return -1; memset(dsl,0,sizeof(*dsl)); return 0; }
+int SNEPPX_policy_dsl_add_rule(SNEPPXPolicyDSL* dsl, const char* rule) {
     if(!dsl||!rule||dsl->rule_count>=32) return -1;
     strncpy(dsl->rules[dsl->rule_count++],rule,255); return 0;
 }
-int arix_policy_dsl_compile(ArixPolicyDSL* dsl, uint8_t* bytecode, size_t* bytecode_len) {
+int SNEPPX_policy_dsl_compile(SNEPPXPolicyDSL* dsl, uint8_t* bytecode, size_t* bytecode_len) {
     if (!dsl || !bytecode || !bytecode_len) return -1;
     size_t pos = 0;
     for (int i = 0; i < dsl->rule_count; i++) {
@@ -347,7 +347,7 @@ int arix_policy_dsl_compile(ArixPolicyDSL* dsl, uint8_t* bytecode, size_t* bytec
     return 0;
 }
 
-int arix_compliance_report(const char* report_type, const char* output_path) {
+int SNEPPX_compliance_report(const char* report_type, const char* output_path) {
     if (!report_type || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
     if (!f) return -1;
@@ -398,7 +398,7 @@ int arix_compliance_report(const char* report_type, const char* output_path) {
     return 0;
 }
 
-int arix_hsm_list_keys(uint8_t* key_ids, int max) {
+int SNEPPX_hsm_list_keys(uint8_t* key_ids, int max) {
     if (!key_ids || max <= 0) return -1;
     if (!hsm_initialized) return 0;
     int count = 0;
@@ -411,7 +411,7 @@ int arix_hsm_list_keys(uint8_t* key_ids, int max) {
     return count;
 }
 
-int arix_hsm_get_key_count(void) {
+int SNEPPX_hsm_get_key_count(void) {
     if (!hsm_initialized) return 0;
     int count = 0;
     for (int i = 0; i < HSM_MAX_SLOTS; i++) {
@@ -420,7 +420,7 @@ int arix_hsm_get_key_count(void) {
     return count;
 }
 
-int arix_hsm_generate_key(uint8_t* key_id_out, int key_type) {
+int SNEPPX_hsm_generate_key(uint8_t* key_id_out, int key_type) {
     (void)key_type;
     if (!key_id_out) return -1;
     if (!hsm_initialized) return -1;
@@ -438,7 +438,7 @@ int arix_hsm_generate_key(uint8_t* key_id_out, int key_type) {
     return 0;
 }
 
-int arix_hsm_wrap_key(const uint8_t* key_id, const uint8_t* wrapping_key_id, uint8_t* wrapped_out, size_t* wrapped_len) {
+int SNEPPX_hsm_wrap_key(const uint8_t* key_id, const uint8_t* wrapping_key_id, uint8_t* wrapped_out, size_t* wrapped_len) {
     if (!key_id || !wrapping_key_id || !wrapped_out || !wrapped_len) return -1;
     if (!hsm_initialized) return -1;
     int slot = hsm_find_slot(key_id, NULL);
@@ -461,7 +461,7 @@ int arix_hsm_wrap_key(const uint8_t* key_id, const uint8_t* wrapping_key_id, uin
     return 0;
 }
 
-int arix_hsm_unwrap_key(const uint8_t* wrapped, size_t wrapped_len, const uint8_t* wrapping_key_id, uint8_t* key_id_out) {
+int SNEPPX_hsm_unwrap_key(const uint8_t* wrapped, size_t wrapped_len, const uint8_t* wrapping_key_id, uint8_t* key_id_out) {
     if (!wrapped || !wrapping_key_id || !key_id_out || wrapped_len < 8) return -1;
     if (!hsm_initialized) return -1;
     int wrap_slot = hsm_find_slot(wrapping_key_id, NULL);
@@ -484,21 +484,21 @@ int arix_hsm_unwrap_key(const uint8_t* wrapped, size_t wrapped_len, const uint8_
     return 0;
 }
 
-int arix_shamir_split_5_of_9(const uint8_t* secret, size_t secret_len, uint8_t** shares, size_t* share_lens) {
-    return arix_shamir_split(secret, secret_len, 9, 5, shares, share_lens);
+int SNEPPX_shamir_split_5_of_9(const uint8_t* secret, size_t secret_len, uint8_t** shares, size_t* share_lens) {
+    return SNEPPX_shamir_split(secret, secret_len, 9, 5, shares, share_lens);
 }
 
-int arix_shamir_reconstruct_5_of_9(uint8_t** shares, size_t* share_lens, uint8_t* secret, size_t* secret_len) {
-    return arix_shamir_reconstruct(shares, share_lens, 5, secret, secret_len);
+int SNEPPX_shamir_reconstruct_5_of_9(uint8_t** shares, size_t* share_lens, uint8_t* secret, size_t* secret_len) {
+    return SNEPPX_shamir_reconstruct(shares, share_lens, 5, secret, secret_len);
 }
 
-int arix_shamir_get_share_count(size_t secret_len, int n, int k) {
+int SNEPPX_shamir_get_share_count(size_t secret_len, int n, int k) {
     (void)secret_len;
     if (n < k || k < 2 || n > 16) return -1;
     return n;
 }
 
-int arix_key_ceremony_get_status(ArixKeyCeremony* kc, int* approved, int* present, int* required) {
+int SNEPPX_key_ceremony_get_status(SNEPPXKeyCeremony* kc, int* approved, int* present, int* required) {
     if (!kc || !approved || !present || !required) return -1;
     *approved = kc->approved;
     *present = kc->participants_present;
@@ -506,43 +506,43 @@ int arix_key_ceremony_get_status(ArixKeyCeremony* kc, int* approved, int* presen
     return 0;
 }
 
-int arix_key_ceremony_cancel(ArixKeyCeremony* kc) {
+int SNEPPX_key_ceremony_cancel(SNEPPXKeyCeremony* kc) {
     if (!kc) return -1;
     memset(kc, 0, sizeof(*kc));
     return 0;
 }
 
-int arix_key_ceremony_set_timeout(ArixKeyCeremony* kc, int seconds) {
+int SNEPPX_key_ceremony_set_timeout(SNEPPXKeyCeremony* kc, int seconds) {
     if (!kc || seconds < 0) return -1;
     (void)seconds;
     return 0;
 }
 
-int arix_key_rotation_force_rotate(ArixKeyRotationScheduler* ks) {
+int SNEPPX_key_rotation_force_rotate(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     ks->last_rotation = (uint64_t)time(NULL);
     return 0;
 }
 
-int arix_key_rotation_get_remaining(ArixKeyRotationScheduler* ks) {
+int SNEPPX_key_rotation_get_remaining(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     uint64_t elapsed = (uint64_t)time(NULL) - ks->last_rotation;
     if (elapsed >= ks->rotation_interval_seconds) return 0;
     return (int)(ks->rotation_interval_seconds - elapsed);
 }
 
-int arix_key_rotation_set_auto(ArixKeyRotationScheduler* ks, int enabled) {
+int SNEPPX_key_rotation_set_auto(SNEPPXKeyRotationScheduler* ks, int enabled) {
     if (!ks) return -1;
     ks->auto_rotate = (enabled != 0);
     return 0;
 }
 
-int arix_key_rotation_get_count(ArixKeyRotationScheduler* ks) {
+int SNEPPX_key_rotation_get_count(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     return 0;
 }
 
-int arix_security_dashboard_add_widget(const char* name, int type, const char* data) {
+int SNEPPX_security_dashboard_add_widget(const char* name, int type, const char* data) {
     if (!name || !data) return -1;
     if (!dash_state.initialized) return -1;
     if (type == 1) dash_state.critical_alerts++;
@@ -551,14 +551,14 @@ int arix_security_dashboard_add_widget(const char* name, int type, const char* d
     return 0;
 }
 
-int arix_security_dashboard_remove_widget(const char* name) {
+int SNEPPX_security_dashboard_remove_widget(const char* name) {
     if (!name) return -1;
     if (!dash_state.initialized) return -1;
     (void)name;
     return 0;
 }
 
-int arix_security_dashboard_get_status(char* status_out) {
+int SNEPPX_security_dashboard_get_status(char* status_out) {
     if (!status_out) return -1;
     if (!dash_state.initialized) return -1;
     sprintf(status_out,
@@ -569,23 +569,23 @@ int arix_security_dashboard_get_status(char* status_out) {
     return 0;
 }
 
-int arix_threat_viz_remove_edge(const char* from, const char* to) {
+int SNEPPX_threat_viz_remove_edge(const char* from, const char* to) {
     int idx = threat_find_edge(from, to);
     if (idx < 0) return -1;
     return threat_remove_edge(idx);
 }
 
-int arix_threat_viz_clear(void) {
+int SNEPPX_threat_viz_clear(void) {
     memset(threat_edges, 0, sizeof(threat_edges));
     threat_edge_count = 0;
     return 0;
 }
 
-int arix_threat_viz_get_edge_count(void) {
+int SNEPPX_threat_viz_get_edge_count(void) {
     return threat_edge_count;
 }
 
-int arix_threat_viz_export_dot(const char* output_path) {
+int SNEPPX_threat_viz_export_dot(const char* output_path) {
     if (!output_path) return -1;
     FILE* f = fopen(output_path, "w");
     if (!f) return -1;
@@ -600,13 +600,13 @@ int arix_threat_viz_export_dot(const char* output_path) {
     return 0;
 }
 
-int arix_policy_dsl_set_rule(ArixPolicyDSL* dsl, int index, const char* rule) {
+int SNEPPX_policy_dsl_set_rule(SNEPPXPolicyDSL* dsl, int index, const char* rule) {
     if (!dsl || !rule || index < 0 || index >= dsl->rule_count) return -1;
     strncpy(dsl->rules[index], rule, 255);
     return 0;
 }
 
-int arix_policy_dsl_remove_rule(ArixPolicyDSL* dsl, int index) {
+int SNEPPX_policy_dsl_remove_rule(SNEPPXPolicyDSL* dsl, int index) {
     if (!dsl || index < 0 || index >= dsl->rule_count) return -1;
     for (int i = index; i < dsl->rule_count - 1; i++) {
         strncpy(dsl->rules[i], dsl->rules[i + 1], 255);
@@ -616,12 +616,12 @@ int arix_policy_dsl_remove_rule(ArixPolicyDSL* dsl, int index) {
     return 0;
 }
 
-int arix_policy_dsl_get_rule_count(ArixPolicyDSL* dsl) {
+int SNEPPX_policy_dsl_get_rule_count(SNEPPXPolicyDSL* dsl) {
     if (!dsl) return -1;
     return dsl->rule_count;
 }
 
-int arix_policy_dsl_validate(ArixPolicyDSL* dsl) {
+int SNEPPX_policy_dsl_validate(SNEPPXPolicyDSL* dsl) {
     if (!dsl) return -1;
     for (int i = 0; i < dsl->rule_count; i++) {
         const char* r = dsl->rules[i];
@@ -630,13 +630,13 @@ int arix_policy_dsl_validate(ArixPolicyDSL* dsl) {
     return 1;
 }
 
-int arix_compliance_report_set_company(const char* name) {
+int SNEPPX_compliance_report_set_company(const char* name) {
     if (!name) return -1;
     (void)name;
     return 0;
 }
 
-int arix_compliance_report_add_finding(const char* control_id, const char* status, const char* description) {
+int SNEPPX_compliance_report_add_finding(const char* control_id, const char* status, const char* description) {
     if (!control_id || !status || !description) return -1;
     (void)control_id;
     (void)status;
@@ -644,8 +644,8 @@ int arix_compliance_report_add_finding(const char* control_id, const char* statu
     return 0;
 }
 
-int arix_compliance_report_generate_pdf(const char* report_type, const char* output_path) {
-    return arix_compliance_report(report_type, output_path);
+int SNEPPX_compliance_report_generate_pdf(const char* report_type, const char* output_path) {
+    return SNEPPX_compliance_report(report_type, output_path);
 }
 
 static int hsm_list_callback_count = 0;
@@ -710,11 +710,11 @@ static int dash_find_widget_index(const char* name) {
     return -1;
 }
 
-static void policy_rebuild_bytecode(ArixPolicyDSL* dsl) {
+static void policy_rebuild_bytecode(SNEPPXPolicyDSL* dsl) {
     if (!dsl) return;
     uint8_t tmp[4096];
     size_t tmplen = sizeof(tmp);
-    int ret = arix_policy_dsl_compile(dsl, tmp, &tmplen);
+    int ret = SNEPPX_policy_dsl_compile(dsl, tmp, &tmplen);
     if (ret == 0) {
     }
 }
@@ -729,7 +729,7 @@ static uint64_t rotation_now_seconds(void) {
     return (uint64_t)time(NULL);
 }
 
-static int rotation_is_overdue(ArixKeyRotationScheduler* ks) {
+static int rotation_is_overdue(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return 0;
     uint64_t elapsed = rotation_now_seconds() - ks->last_rotation;
     return (elapsed > ks->rotation_interval_seconds * 2) ? 1 : 0;
@@ -763,11 +763,11 @@ static void dash_reset_counters(void) {
     dash_state.max_connections = 100;
 }
 
-static int policy_compile_and_check(ArixPolicyDSL* dsl, const char* input) {
+static int policy_compile_and_check(SNEPPXPolicyDSL* dsl, const char* input) {
     if (!dsl || !input) return -1;
     uint8_t bc[4096];
     size_t bclen = sizeof(bc);
-    return arix_policy_dsl_compile(dsl, bc, &bclen);
+    return SNEPPX_policy_dsl_compile(dsl, bc, &bclen);
 }
 
 static int hsm_generate_symmetric_key(int key_id, int bits) {
@@ -795,17 +795,17 @@ static int dash_get_widget_count(void) {
     return 0;
 }
 
-static int rotation_should_rotate_now(ArixKeyRotationScheduler* ks) {
+static int rotation_should_rotate_now(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return 0;
     uint64_t now = rotation_now_seconds();
     return (now - ks->last_rotation >= ks->rotation_interval_seconds) ? 1 : 0;
 }
 
-static void rotation_reset_timer(ArixKeyRotationScheduler* ks) {
+static void rotation_reset_timer(SNEPPXKeyRotationScheduler* ks) {
     if (ks) ks->last_rotation = rotation_now_seconds();
 }
 
-static uint64_t rotation_get_remaining_seconds(ArixKeyRotationScheduler* ks) {
+static uint64_t rotation_get_remaining_seconds(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return 0;
     uint64_t elapsed = rotation_now_seconds() - ks->last_rotation;
     return (elapsed >= ks->rotation_interval_seconds) ? 0 : ks->rotation_interval_seconds - elapsed;

@@ -2,48 +2,48 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 
-ArixSERModel* arix_ser_model_create(const ArixSERConfig* config, unsigned int seed, size_t num_layers) {
-    ArixSERModel* model = (ArixSERModel*)arix_malloc(sizeof(ArixSERModel), 64);
+SNEPPXSERModel* SNEPPX_ser_model_create(const SNEPPXSERConfig* config, unsigned int seed, size_t num_layers) {
+    SNEPPXSERModel* model = (SNEPPXSERModel*)SNEPPX_malloc(sizeof(SNEPPXSERModel), 64);
     if (!model) return NULL;
-    memset(model, 0, sizeof(ArixSERModel));
+    memset(model, 0, sizeof(SNEPPXSERModel));
 
     model->config = *config;
     model->num_layers = num_layers;
 
-    model->layers = (ArixSERLayer**)arix_malloc(num_layers * sizeof(ArixSERLayer*), 64);
+    model->layers = (SNEPPXSERLayer**)SNEPPX_malloc(num_layers * sizeof(SNEPPXSERLayer*), 64);
     if (!model->layers) {
-        arix_free(model, sizeof(ArixSERModel));
+        SNEPPX_free(model, sizeof(SNEPPXSERModel));
         return NULL;
     }
-    memset(model->layers, 0, num_layers * sizeof(ArixSERLayer*));
+    memset(model->layers, 0, num_layers * sizeof(SNEPPXSERLayer*));
 
     for (size_t i = 0; i < num_layers; i++) {
-        model->layers[i] = arix_ser_layer_create(config, seed + (unsigned int)i * 100);
+        model->layers[i] = SNEPPX_ser_layer_create(config, seed + (unsigned int)i * 100);
     }
 
     return model;
 }
 
-void arix_ser_model_destroy(ArixSERModel* model) {
+void SNEPPX_ser_model_destroy(SNEPPXSERModel* model) {
     if (!model) return;
     for (size_t i = 0; i < model->num_layers; i++) {
-        if (model->layers[i]) arix_ser_layer_destroy(model->layers[i]);
+        if (model->layers[i]) SNEPPX_ser_layer_destroy(model->layers[i]);
     }
-    arix_free(model->layers, model->num_layers * sizeof(ArixSERLayer*));
-    arix_free(model, sizeof(ArixSERModel));
+    SNEPPX_free(model->layers, model->num_layers * sizeof(SNEPPXSERLayer*));
+    SNEPPX_free(model, sizeof(SNEPPXSERModel));
 }
 
-size_t arix_ser_get_params(const ArixSERModel* model, ArixTensor** out, size_t max_out) {
+size_t SNEPPX_ser_get_params(const SNEPPXSERModel* model, SNEPPXTensor** out, size_t max_out) {
     if (!model) return 0;
     size_t count = 0;
     for (size_t l = 0; l < model->num_layers; l++) {
-        ArixSERLayer* layer = model->layers[l];
+        SNEPPXSERLayer* layer = model->layers[l];
         if (out && count < max_out) out[count] = layer->router;
         count++;
         if (out && count < max_out) out[count] = layer->router_bias;
         count++;
         for (size_t e = 0; e < model->config.num_experts; e++) {
-            ArixExpert* exp = layer->experts[e];
+            SNEPPXExpert* exp = layer->experts[e];
             if (out && count < max_out) out[count] = exp->w1; count++;
             if (out && count < max_out) out[count] = exp->b1; count++;
             if (out && count < max_out) out[count] = exp->w2; count++;

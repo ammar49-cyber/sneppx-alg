@@ -21,24 +21,24 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_canary_set_check(void) {
-    uint64_t canary = arix_canary_set();
+    uint64_t canary = SNEPPX_canary_set();
     ASSERT(canary != 0, "canary value non-zero");
-    int ok = arix_canary_check(canary);
+    int ok = SNEPPX_canary_check(canary);
     ASSERT(ok, "canary check passes");
 }
 
 static void test_canary_detect_tamper(void) {
-    uint64_t canary = arix_canary_set();
+    uint64_t canary = SNEPPX_canary_set();
     canary ^= 0xFF;
-    int ok = arix_canary_check(canary);
+    int ok = SNEPPX_canary_check(canary);
     ASSERT(!ok, "tampered canary fails check");
 }
 
 static void test_canary_refresh(void) {
-    uint64_t c1 = arix_canary_set();
-    uint64_t c2 = arix_canary_refresh();
+    uint64_t c1 = SNEPPX_canary_set();
+    uint64_t c2 = SNEPPX_canary_refresh();
     ASSERT(c2 != c1, "refreshed canary differs");
-    int ok = arix_canary_check(c2);
+    int ok = SNEPPX_canary_check(c2);
     ASSERT(ok, "refreshed canary valid");
 }
 

@@ -4,19 +4,19 @@
 #include <sstream>
 #include <iostream>
 
-namespace arix {
+namespace SNEPPX {
 
-ArixObfCFGFlattener::ArixObfCFGFlattener() : rng(std::random_device{}()) {}
+SNEPPXObfCFGFlattener::SNEPPXObfCFGFlattener() : rng(std::random_device{}()) {}
 
-void ArixObfCFGFlattener::set_seed(uint64_t seed) {
+void SNEPPXObfCFGFlattener::set_seed(uint64_t seed) {
     rng.seed(seed);
 }
 
-uint64_t ArixObfCFGFlattener::assign_random_state() {
+uint64_t SNEPPXObfCFGFlattener::assign_random_state() {
     return rng();
 }
 
-void ArixObfCFGFlattener::flatten(ArixObfCFG& cfg) {
+void SNEPPXObfCFGFlattener::flatten(SNEPPXObfCFG& cfg) {
     if (cfg.blocks.empty()) return;
 
     std::unordered_map<uint64_t, uint64_t> state_map;
@@ -32,8 +32,8 @@ void ArixObfCFGFlattener::flatten(ArixObfCFG& cfg) {
         auto& block = pair.second;
         if (block->id == dispatcher_id) continue;
 
-        ArixObfInstruction switch_inst;
-        switch_inst.type = ArixObfInstType::JMP;
+        SNEPPXObfInstruction switch_inst;
+        switch_inst.type = SNEPPXObfInstType::JMP;
         std::stringstream ss;
         ss << "state_" << state_map[block->id];
         switch_inst.operand1 = ss.str();
@@ -52,33 +52,33 @@ void ArixObfCFGFlattener::flatten(ArixObfCFG& cfg) {
         }
     }
 
-    ArixObfInstruction entry_set;
-    entry_set.type = ArixObfInstType::MOV;
+    SNEPPXObfInstruction entry_set;
+    entry_set.type = SNEPPXObfInstType::MOV;
     entry_set.result = "state_var";
     entry_set.operand1 = std::to_string(state_map[cfg.entry_block]);
     dispatcher->instructions.push_back(entry_set);
 
-    ArixObfInstruction dispatch_loop;
-    dispatch_loop.type = ArixObfInstType::CMP;
+    SNEPPXObfInstruction dispatch_loop;
+    dispatch_loop.type = SNEPPXObfInstType::CMP;
     dispatch_loop.operand1 = "state_var";
     dispatch_loop.operand2 = "0";
     dispatcher->instructions.push_back(dispatch_loop);
 
-    ArixObfInstruction exit_check;
-    exit_check.type = ArixObfInstType::JZ;
+    SNEPPXObfInstruction exit_check;
+    exit_check.type = SNEPPXObfInstType::JZ;
     exit_check.operand1 = "exit";
     dispatcher->instructions.push_back(exit_check);
 
     for (auto& pair : cfg.blocks) {
         if (pair.second->id == dispatcher_id || pair.second->id == cfg.exit_block) continue;
-        ArixObfInstruction case_inst;
-        case_inst.type = ArixObfInstType::CMP;
+        SNEPPXObfInstruction case_inst;
+        case_inst.type = SNEPPXObfInstType::CMP;
         case_inst.operand1 = "state_var";
         case_inst.operand2 = std::to_string(state_map[pair.second->id]);
         dispatcher->instructions.push_back(case_inst);
 
-        ArixObfInstruction jmp_inst;
-        jmp_inst.type = ArixObfInstType::JZ;
+        SNEPPXObfInstruction jmp_inst;
+        jmp_inst.type = SNEPPXObfInstType::JZ;
         std::stringstream label_ss;
         label_ss << "block_" << pair.second->id;
         jmp_inst.operand1 = label_ss.str();
@@ -89,7 +89,7 @@ void ArixObfCFGFlattener::flatten(ArixObfCFG& cfg) {
     add_opaque_predicates(cfg, state_map);
 }
 
-void ArixObfCFGFlattener::insert_junk_states(ArixObfCFG& cfg, std::unordered_map<uint64_t, uint64_t>& state_map) {
+void SNEPPXObfCFGFlattener::insert_junk_states(SNEPPXObfCFG& cfg, std::unordered_map<uint64_t, uint64_t>& state_map) {
     uint64_t dispatcher_id = cfg.blocks.size() + 1;
     for (auto& pair : cfg.blocks) {
         (void)pair;
@@ -98,13 +98,13 @@ void ArixObfCFGFlattener::insert_junk_states(ArixObfCFG& cfg, std::unordered_map
             auto junk_block = cfg.blocks[junk_id];
             uint64_t junk_state = assign_random_state();
 
-            ArixObfInstruction nop;
-            nop.type = ArixObfInstType::NOP;
+            SNEPPXObfInstruction nop;
+            nop.type = SNEPPXObfInstType::NOP;
             nop.operand1 = "junk_" + std::to_string(junk_id);
             junk_block->instructions.push_back(nop);
 
-            ArixObfInstruction dead_jmp;
-            dead_jmp.type = ArixObfInstType::JMP;
+            SNEPPXObfInstruction dead_jmp;
+            dead_jmp.type = SNEPPXObfInstType::JMP;
             dead_jmp.operand1 = "dead_end_" + std::to_string(junk_id);
             junk_block->instructions.push_back(dead_jmp);
 
@@ -113,13 +113,13 @@ void ArixObfCFGFlattener::insert_junk_states(ArixObfCFG& cfg, std::unordered_map
     }
 }
 
-void ArixObfCFGFlattener::add_opaque_predicates(ArixObfCFG& cfg, std::unordered_map<uint64_t, uint64_t>& state_map) {
+void SNEPPXObfCFGFlattener::add_opaque_predicates(SNEPPXObfCFG& cfg, std::unordered_map<uint64_t, uint64_t>& state_map) {
     for (auto& pair : cfg.blocks) {
         auto& block = pair.second;
         if (block->instructions.empty()) continue;
 
-        ArixObfInstruction opaque_cond;
-        opaque_cond.type = ArixObfInstType::CMP;
+        SNEPPXObfInstruction opaque_cond;
+        opaque_cond.type = SNEPPXObfInstType::CMP;
         uint64_t a = rng();
         uint64_t b = rng();
         opaque_cond.operand1 = std::to_string(a * a);
@@ -127,26 +127,26 @@ void ArixObfCFGFlattener::add_opaque_predicates(ArixObfCFG& cfg, std::unordered_
         opaque_cond.result = "always_true_" + std::to_string(block->id);
         block->instructions.insert(block->instructions.begin(), opaque_cond);
 
-        ArixObfInstruction opaque_jmp;
-        opaque_jmp.type = ArixObfInstType::JZ;
+        SNEPPXObfInstruction opaque_jmp;
+        opaque_jmp.type = SNEPPXObfInstType::JZ;
         opaque_jmp.operand1 = "opaque_next_" + std::to_string(block->id);
         block->instructions.insert(block->instructions.begin() + 1, opaque_jmp);
     }
 }
 
-void ArixObfCFGFlattener::unflatten(ArixObfCFG& cfg) {
+void SNEPPXObfCFGFlattener::unflatten(SNEPPXObfCFG& cfg) {
     uint64_t dispatcher_id = 0;
     for (auto& pair : cfg.blocks) {
         if (pair.second->is_entry) {
             auto& insts = pair.second->instructions;
             for (size_t i = 0; i < insts.size(); ) {
-                if (insts[i].type == ArixObfInstType::CMP &&
+                if (insts[i].type == SNEPPXObfInstType::CMP &&
                     insts[i].operand1 == "state_var") {
                     insts.erase(insts.begin() + i);
-                } else if (insts[i].type == ArixObfInstType::JZ &&
+                } else if (insts[i].type == SNEPPXObfInstType::JZ &&
                            insts[i].operand1.find("block_") != std::string::npos) {
                     insts.erase(insts.begin() + i);
-                } else if (insts[i].type == ArixObfInstType::MOV &&
+                } else if (insts[i].type == SNEPPXObfInstType::MOV &&
                            insts[i].result == "state_var") {
                     insts.erase(insts.begin() + i);
                 } else {
@@ -170,7 +170,7 @@ void ArixObfCFGFlattener::unflatten(ArixObfCFG& cfg) {
                 inst.operand1.find("opaque_next_") != std::string::npos ||
                 inst.operand1.find("always_true_") != std::string::npos ||
                 inst.operand1.find("state_") != std::string::npos) {
-                inst.type = ArixObfInstType::NOP;
+                inst.type = SNEPPXObfInstType::NOP;
                 inst.operand1.clear();
                 inst.operand2.clear();
                 inst.result.clear();
@@ -187,4 +187,4 @@ void ArixObfCFGFlattener::unflatten(ArixObfCFG& cfg) {
     }
 }
 
-} // namespace arix
+} // namespace SNEPPX

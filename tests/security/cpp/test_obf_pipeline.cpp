@@ -21,25 +21,25 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_obf_pipeline_create(void) {
-    ArixObfPipeline* pipe = arix_obf_pipeline_create(42);
+    SNEPPXObfPipeline* pipe = SNEPPX_obf_pipeline_create(42);
     ASSERT(pipe != NULL, "obf pipeline created");
-    arix_obf_pipeline_destroy(pipe);
+    SNEPPX_obf_pipeline_destroy(pipe);
 }
 
 static void test_obf_pipeline_add_pass(void) {
-    ArixObfPipeline* pipe = arix_obf_pipeline_create(42);
-    arix_obf_pipeline_add_pass(pipe, ARIX_OBF_INST_SUBST);
-    arix_obf_pipeline_add_pass(pipe, ARIX_OBF_CFG_FLATTEN);
+    SNEPPXObfPipeline* pipe = SNEPPX_obf_pipeline_create(42);
+    SNEPPX_obf_pipeline_add_pass(pipe, SNEPPX_OBF_INST_SUBST);
+    SNEPPX_obf_pipeline_add_pass(pipe, SNEPPX_OBF_CFG_FLATTEN);
     ASSERT(pipe != NULL, "passes added");
-    arix_obf_pipeline_destroy(pipe);
+    SNEPPX_obf_pipeline_destroy(pipe);
 }
 
 static void test_obf_pipeline_run(void) {
-    ArixObfPipeline* pipe = arix_obf_pipeline_create(42);
-    arix_obf_pipeline_add_pass(pipe, ARIX_OBF_INST_SUBST);
-    int ret = arix_obf_pipeline_run(pipe, NULL, 0, NULL, 0);
+    SNEPPXObfPipeline* pipe = SNEPPX_obf_pipeline_create(42);
+    SNEPPX_obf_pipeline_add_pass(pipe, SNEPPX_OBF_INST_SUBST);
+    int ret = SNEPPX_obf_pipeline_run(pipe, NULL, 0, NULL, 0);
     ASSERT(ret == 0, "pipeline run stub");
-    arix_obf_pipeline_destroy(pipe);
+    SNEPPX_obf_pipeline_destroy(pipe);
 }
 
 int main(void) {

@@ -4,33 +4,33 @@
 #include <math.h>
 #include <stdlib.h>
 
-ArixOutputVerifier* arix_arc_output_verifier_create(size_t output_dim, size_t num_layers, unsigned int seed) {
-    ArixOutputVerifier* verifier = (ArixOutputVerifier*)arix_malloc(sizeof(ArixOutputVerifier), 64);
+SNEPPXOutputVerifier* SNEPPX_arc_output_verifier_create(size_t output_dim, size_t num_layers, unsigned int seed) {
+    SNEPPXOutputVerifier* verifier = (SNEPPXOutputVerifier*)SNEPPX_malloc(sizeof(SNEPPXOutputVerifier), 64);
     if (!verifier) return NULL;
-    memset(verifier, 0, sizeof(ArixOutputVerifier));
+    memset(verifier, 0, sizeof(SNEPPXOutputVerifier));
 
     verifier->num_layers = num_layers;
     verifier->history_idx = 0;
     verifier->history_filled = 0;
 
-    verifier->verification_weights = (ArixTensor**)arix_malloc(num_layers * sizeof(ArixTensor*), 64);
-    verifier->verification_biases = (ArixTensor**)arix_malloc(num_layers * sizeof(ArixTensor*), 64);
+    verifier->verification_weights = (SNEPPXTensor**)SNEPPX_malloc(num_layers * sizeof(SNEPPXTensor*), 64);
+    verifier->verification_biases = (SNEPPXTensor**)SNEPPX_malloc(num_layers * sizeof(SNEPPXTensor*), 64);
     if (!verifier->verification_weights || !verifier->verification_biases) {
-        arix_free(verifier->verification_weights, num_layers * sizeof(ArixTensor*));
-        arix_free(verifier->verification_biases, num_layers * sizeof(ArixTensor*));
-        arix_free(verifier, sizeof(ArixOutputVerifier));
+        SNEPPX_free(verifier->verification_weights, num_layers * sizeof(SNEPPXTensor*));
+        SNEPPX_free(verifier->verification_biases, num_layers * sizeof(SNEPPXTensor*));
+        SNEPPX_free(verifier, sizeof(SNEPPXOutputVerifier));
         return NULL;
     }
-    memset(verifier->verification_weights, 0, num_layers * sizeof(ArixTensor*));
-    memset(verifier->verification_biases, 0, num_layers * sizeof(ArixTensor*));
+    memset(verifier->verification_weights, 0, num_layers * sizeof(SNEPPXTensor*));
+    memset(verifier->verification_biases, 0, num_layers * sizeof(SNEPPXTensor*));
 
     size_t shape_oo[] = {output_dim, output_dim};
     size_t shape_o1[] = {output_dim};
 
     unsigned long state = seed;
     for (size_t l = 0; l < num_layers; l++) {
-        verifier->verification_weights[l] = arix_tensor_create(shape_oo, 2, ARIX_FLOAT32);
-        verifier->verification_biases[l] = arix_tensor_zeros(shape_o1, 1, ARIX_FLOAT32);
+        verifier->verification_weights[l] = SNEPPX_tensor_create(shape_oo, 2, SNEPPX_FLOAT32);
+        verifier->verification_biases[l] = SNEPPX_tensor_zeros(shape_o1, 1, SNEPPX_FLOAT32);
         if (verifier->verification_weights[l]) {
             float* wd = (float*)verifier->verification_weights[l]->data;
             for (size_t i = 0; i < output_dim * output_dim; i += 2) {
@@ -48,29 +48,29 @@ ArixOutputVerifier* arix_arc_output_verifier_create(size_t output_dim, size_t nu
     }
 
     size_t shape_h[] = {10, output_dim};
-    verifier->consistency_history = arix_tensor_zeros(shape_h, 2, ARIX_FLOAT32);
+    verifier->consistency_history = SNEPPX_tensor_zeros(shape_h, 2, SNEPPX_FLOAT32);
 
     return verifier;
 }
 
-void arix_arc_output_verifier_destroy(ArixOutputVerifier* verifier) {
+void SNEPPX_arc_output_verifier_destroy(SNEPPXOutputVerifier* verifier) {
     if (!verifier) return;
     for (size_t i = 0; i < verifier->num_layers; i++) {
-        if (verifier->verification_weights[i]) arix_tensor_destroy(verifier->verification_weights[i]);
-        if (verifier->verification_biases[i]) arix_tensor_destroy(verifier->verification_biases[i]);
+        if (verifier->verification_weights[i]) SNEPPX_tensor_destroy(verifier->verification_weights[i]);
+        if (verifier->verification_biases[i]) SNEPPX_tensor_destroy(verifier->verification_biases[i]);
     }
-    arix_free(verifier->verification_weights, verifier->num_layers * sizeof(ArixTensor*));
-    arix_free(verifier->verification_biases, verifier->num_layers * sizeof(ArixTensor*));
-    if (verifier->consistency_history) arix_tensor_destroy(verifier->consistency_history);
-    arix_free(verifier, sizeof(ArixOutputVerifier));
+    SNEPPX_free(verifier->verification_weights, verifier->num_layers * sizeof(SNEPPXTensor*));
+    SNEPPX_free(verifier->verification_biases, verifier->num_layers * sizeof(SNEPPXTensor*));
+    if (verifier->consistency_history) SNEPPX_tensor_destroy(verifier->consistency_history);
+    SNEPPX_free(verifier, sizeof(SNEPPXOutputVerifier));
 }
 
-void arix_arc_verify_output(ArixOutputVerifier* verifier, const ArixTensor* output, ArixTensor** verified_output, float* confidence) {
+void SNEPPX_arc_verify_output(SNEPPXOutputVerifier* verifier, const SNEPPXTensor* output, SNEPPXTensor** verified_output, float* confidence) {
     size_t batch = output->shape[0];
     size_t dim = output->shape[1];
 
     size_t shape_v[] = {batch, dim};
-    *verified_output = arix_tensor_create(shape_v, 2, ARIX_FLOAT32);
+    *verified_output = SNEPPX_tensor_create(shape_v, 2, SNEPPX_FLOAT32);
     if (!*verified_output) { *confidence = 0.0f; return; }
     float* out_data = (float*)output->data;
     float* ver_data = (float*)(*verified_output)->data;

@@ -1,5 +1,5 @@
-#ifndef ARIX_PROMPT_FILTER_H
-#define ARIX_PROMPT_FILTER_H
+#ifndef SNEPPX_PROMPT_FILTER_H
+#define SNEPPX_PROMPT_FILTER_H
 /*
  * S5 AI Sanitizer — Prompt Injection & Jailbreak Detection
  * Filters incoming prompts for known injection patterns, jailbreak attempts,
@@ -13,41 +13,41 @@
 extern "C" {
 #endif
 
-#define ARIX_MAX_PATTERNS 256
-#define ARIX_PATTERN_MAX_LEN 128
+#define SNEPPX_MAX_PATTERNS 256
+#define SNEPPX_PATTERN_MAX_LEN 128
 
 typedef enum {
-    ARIX_FILTER_CLEAN = 0,
-    ARIX_FILTER_INJECTION = 1,
-    ARIX_FILTER_JAILBREAK = 2,
-    ARIX_FILTER_ADVERSARIAL = 3,
-    ARIX_FILTER_SUSPICIOUS = 4,
-} ArixFilterResult;
+    SNEPPX_FILTER_CLEAN = 0,
+    SNEPPX_FILTER_INJECTION = 1,
+    SNEPPX_FILTER_JAILBREAK = 2,
+    SNEPPX_FILTER_ADVERSARIAL = 3,
+    SNEPPX_FILTER_SUSPICIOUS = 4,
+} SNEPPXFilterResult;
 
 typedef struct {
-    char pattern[ARIX_PATTERN_MAX_LEN];
-    ArixFilterResult classification;
+    char pattern[SNEPPX_PATTERN_MAX_LEN];
+    SNEPPXFilterResult classification;
     int is_active;
-} ArixFilterPattern;
+} SNEPPXFilterPattern;
 
 typedef struct {
-    ArixFilterPattern patterns[ARIX_MAX_PATTERNS];
+    SNEPPXFilterPattern patterns[SNEPPX_MAX_PATTERNS];
     int pattern_count;
     int enabled;
     int max_token_length;
     double anomaly_threshold;
-} ArixPromptFilter;
+} SNEPPXPromptFilter;
 
-int  arix_prompt_filter_init(ArixPromptFilter* pf);
-void arix_prompt_filter_destroy(ArixPromptFilter* pf);
-int  arix_prompt_filter_add_pattern(ArixPromptFilter* pf, const char* pattern,
-                                     ArixFilterResult classification);
-ArixFilterResult arix_prompt_filter_scan(ArixPromptFilter* pf,
+int  SNEPPX_prompt_filter_init(SNEPPXPromptFilter* pf);
+void SNEPPX_prompt_filter_destroy(SNEPPXPromptFilter* pf);
+int  SNEPPX_prompt_filter_add_pattern(SNEPPXPromptFilter* pf, const char* pattern,
+                                     SNEPPXFilterResult classification);
+SNEPPXFilterResult SNEPPX_prompt_filter_scan(SNEPPXPromptFilter* pf,
                                           const char* prompt, size_t len);
-int  arix_prompt_filter_sanitize(ArixPromptFilter* pf,
+int  SNEPPX_prompt_filter_sanitize(SNEPPXPromptFilter* pf,
                                   const char* prompt, size_t len,
                                   char* sanitized, size_t* sanitized_len);
-void arix_prompt_filter_load_defaults(ArixPromptFilter* pf);
+void SNEPPX_prompt_filter_load_defaults(SNEPPXPromptFilter* pf);
 
 #ifdef __cplusplus
 }

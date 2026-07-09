@@ -1,4 +1,4 @@
-if(ARIX_BUILD_TESTS)
+if(SNEPPX_BUILD_TESTS)
     enable_testing()
     add_executable(test_fuzz fuzz_tensor.c)
     target_link_libraries(test_fuzz PRIVATE neural_core_kernel neural_architecture_layer neural_security_c)

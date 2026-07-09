@@ -11,9 +11,9 @@ else
     VERSION="$(head -1 "$VERSION_FILE" | sed 's/.*v//;s/ .*//')"
 fi
 
-RELEASE_DIR="${ROOT_DIR}/releases/arix-algo-v${VERSION}"
-TARBALL="${ROOT_DIR}/releases/arix-algo-v${VERSION}.tar.gz"
-ZIPFILE="${ROOT_DIR}/releases/arix-algo-v${VERSION}.zip"
+RELEASE_DIR="${ROOT_DIR}/releases/SNEPPX-algo-v${VERSION}"
+TARBALL="${ROOT_DIR}/releases/SNEPPX-algo-v${VERSION}.tar.gz"
+ZIPFILE="${ROOT_DIR}/releases/SNEPPX-algo-v${VERSION}.zip"
 
 mkdir -p "$RELEASE_DIR"
 
@@ -26,15 +26,15 @@ rsync -a --exclude='.git/' --exclude='build/' --exclude='build_standalone/' \
     "$ROOT_DIR"/ "$RELEASE_DIR/"
 
 # Create tarball
-(cd "$ROOT_DIR/releases" && tar czf "$TARBALL" "arix-algo-v${VERSION}/")
+(cd "$ROOT_DIR/releases" && tar czf "$TARBALL" "SNEPPX-algo-v${VERSION}/")
 
 # Create zip
-(cd "$ROOT_DIR/releases" && zip -rq "$ZIPFILE" "arix-algo-v${VERSION}/")
+(cd "$ROOT_DIR/releases" && zip -rq "$ZIPFILE" "SNEPPX-algo-v${VERSION}/")
 
 # Generate checksums
 cd "$ROOT_DIR/releases"
-sha256sum "arix-algo-v${VERSION}.tar.gz" "arix-algo-v${VERSION}.zip" > SHA256SUMS
-sha512sum "arix-algo-v${VERSION}.tar.gz" "arix-algo-v${VERSION}.zip" > SHA512SUMS
+sha256sum "SNEPPX-algo-v${VERSION}.tar.gz" "SNEPPX-algo-v${VERSION}.zip" > SHA256SUMS
+sha512sum "SNEPPX-algo-v${VERSION}.tar.gz" "SNEPPX-algo-v${VERSION}.zip" > SHA512SUMS
 
 # Sign if signing script exists
 if [ -x "${ROOT_DIR}/scripts/sign-release.sh" ]; then

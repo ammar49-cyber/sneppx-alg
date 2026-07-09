@@ -8,22 +8,22 @@
 #include <vector>
 #include <cstring>
 
-namespace arix {
+namespace SNEPPX {
 
-ArixObfuscator::ArixObfuscator()
-    : level_(ArixObfuscationLevel::ARIX_OBF_NONE), transform_count_(0) {}
+SNEPPXObfuscator::SNEPPXObfuscator()
+    : level_(SNEPPXObfuscationLevel::SNEPPX_OBF_NONE), transform_count_(0) {}
 
-ArixObfuscator::~ArixObfuscator() {}
+SNEPPXObfuscator::~SNEPPXObfuscator() {}
 
-void ArixObfuscator::configure(ArixObfuscationLevel level) {
+void SNEPPXObfuscator::configure(SNEPPXObfuscationLevel level) {
     level_ = level;
 }
 
-ArixObfuscationLevel ArixObfuscator::get_level() const {
+SNEPPXObfuscationLevel SNEPPXObfuscator::get_level() const {
     return level_;
 }
 
-void ArixObfuscator::encrypt_string_pool_rotating() {
+void SNEPPXObfuscator::encrypt_string_pool_rotating() {
     uint8_t key = 0x37;
     auto& pool = string_pool_;
     for (size_t i = 0; i < pool.count(); i++) {
@@ -32,9 +32,9 @@ void ArixObfuscator::encrypt_string_pool_rotating() {
     pool.pool_decrypt_all();
 }
 
-void ArixObfuscator::apply_light(ArixObfCFG& cfg) {
+void SNEPPXObfuscator::apply_light(SNEPPXObfCFG& cfg) {
     (void)cfg;
-    string_pool_.pool_register("ARIX-Algo S2 Obfuscation Engine");
+    string_pool_.pool_register("SNEPPX-Algo S2 Obfuscation Engine");
     string_pool_.pool_register("Control Flow Flattening");
     string_pool_.pool_register("String Encryption");
     string_pool_.pool_register("Instruction Substitution");
@@ -53,14 +53,14 @@ void ArixObfuscator::apply_light(ArixObfCFG& cfg) {
     transform_count_ += string_pool_.count();
 }
 
-void ArixObfuscator::shuffle_blocks(ArixObfCFG& cfg) {
+void SNEPPXObfuscator::shuffle_blocks(SNEPPXObfCFG& cfg) {
     if (cfg.blocks.size() < 3) return;
     std::vector<uint64_t> ids;
     for (auto& pair : cfg.blocks) ids.push_back(pair.first);
     std::vector<uint64_t> shuffled(ids);
     std::mt19937_64 shuffle_rng(std::random_device{}());
     std::shuffle(shuffled.begin(), shuffled.end(), shuffle_rng);
-    std::unordered_map<uint64_t, std::shared_ptr<ArixObfBlock>> reordered;
+    std::unordered_map<uint64_t, std::shared_ptr<SNEPPXObfBlock>> reordered;
     for (auto id : shuffled) {
         if (cfg.blocks.count(id)) {
             reordered[id] = cfg.blocks[id];
@@ -69,7 +69,7 @@ void ArixObfuscator::shuffle_blocks(ArixObfCFG& cfg) {
     cfg.blocks = reordered;
 }
 
-void ArixObfuscator::apply_medium(ArixObfCFG& cfg) {
+void SNEPPXObfuscator::apply_medium(SNEPPXObfCFG& cfg) {
     flattener_.flatten(cfg);
     transform_count_ += cfg.blocks.size();
     substituter_.substitute_all_blocks(cfg);
@@ -78,8 +78,8 @@ void ArixObfuscator::apply_medium(ArixObfCFG& cfg) {
     transform_count_ += cfg.blocks.size();
 }
 
-void ArixObfuscator::apply_heavy(ArixObfCFG& cfg) {
-    ArixOpaqueEngine opaque;
+void SNEPPXObfuscator::apply_heavy(SNEPPXObfCFG& cfg) {
+    SNEPPXOpaqueEngine opaque;
     opaque.insert_predicates_to_cfg(cfg);
     transform_count_ += cfg.blocks.size() * 2;
     anti_debug_.full_scan();
@@ -89,7 +89,7 @@ void ArixObfuscator::apply_heavy(ArixObfCFG& cfg) {
     transform_count_ += cfg.blocks.size();
 }
 
-void ArixObfuscator::apply_maximum(ArixObfCFG& cfg) {
+void SNEPPXObfuscator::apply_maximum(SNEPPXObfCFG& cfg) {
     vm_.compile_to_bytecode(cfg);
     vm_.encrypt_handler_table();
     transform_count_++;
@@ -98,7 +98,7 @@ void ArixObfuscator::apply_maximum(ArixObfCFG& cfg) {
     transform_count_ += 2;
 }
 
-bool ArixObfuscator::verify(ArixObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
+bool SNEPPXObfuscator::verify(SNEPPXObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
     if (test_inputs.empty()) return true;
     vm_.compile_to_bytecode(cfg);
     const auto& bc = vm_.bytecode();
@@ -109,7 +109,7 @@ bool ArixObfuscator::verify(ArixObfCFG& cfg, const std::vector<uint64_t>& test_i
         uint64_t input = test_inputs[t];
         uint64_t expected = input;
         for (size_t i = 0; i < 3; i++) expected += (input * (uint64_t)(i + 1));
-        ArixObfVMState saved_state;
+        SNEPPXObfVMState saved_state;
         saved_state.regs[0] = input;
         saved_state.regs[1] = input + 1;
         saved_state.regs[2] = input + 2;
@@ -123,14 +123,14 @@ bool ArixObfuscator::verify(ArixObfCFG& cfg, const std::vector<uint64_t>& test_i
     return match_count >= (total / 2) && cfg_ok;
 }
 
-bool ArixObfuscator::obfuscate_and_verify(ArixObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
+bool SNEPPXObfuscator::obfuscate_and_verify(SNEPPXObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
     obfuscate(cfg);
     return verify(cfg, test_inputs);
 }
 
-ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
+SNEPPXObfuscationReport SNEPPXObfuscator::obfuscate(SNEPPXObfCFG& cfg) {
     auto overall_start = std::chrono::high_resolution_clock::now();
-    ArixObfuscationReport report;
+    SNEPPXObfuscationReport report;
     report.level = level_;
     report.transformations_applied = 0;
     report.blocks_flattened = 0;
@@ -147,7 +147,7 @@ ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
     transform_count_ = 0;
 
     switch (level_) {
-        case ArixObfuscationLevel::ARIX_OBF_LIGHT: {
+        case SNEPPXObfuscationLevel::SNEPPX_OBF_LIGHT: {
             auto t1 = std::chrono::high_resolution_clock::now();
             apply_light(cfg);
             auto t2 = std::chrono::high_resolution_clock::now();
@@ -155,7 +155,7 @@ ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
             report.strings_encrypted = string_pool_.count();
             break;
         }
-        case ArixObfuscationLevel::ARIX_OBF_MEDIUM: {
+        case SNEPPXObfuscationLevel::SNEPPX_OBF_MEDIUM: {
             auto t1 = std::chrono::high_resolution_clock::now();
             apply_light(cfg);
             auto t2 = std::chrono::high_resolution_clock::now();
@@ -169,7 +169,7 @@ ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
             report.instructions_substituted = cfg.blocks.size() * 3;
             break;
         }
-        case ArixObfuscationLevel::ARIX_OBF_HEAVY: {
+        case SNEPPXObfuscationLevel::SNEPPX_OBF_HEAVY: {
             auto t1 = std::chrono::high_resolution_clock::now();
             apply_light(cfg);
             auto t2 = std::chrono::high_resolution_clock::now();
@@ -189,7 +189,7 @@ ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
             report.anti_debug_applied = true;
             break;
         }
-        case ArixObfuscationLevel::ARIX_OBF_MAXIMUM: {
+        case SNEPPXObfuscationLevel::SNEPPX_OBF_MAXIMUM: {
             auto t1 = std::chrono::high_resolution_clock::now();
             apply_light(cfg);
             auto t2 = std::chrono::high_resolution_clock::now();
@@ -226,26 +226,26 @@ ArixObfuscationReport ArixObfuscator::obfuscate(ArixObfCFG& cfg) {
     return report;
 }
 
-void ArixObfuscator::reset() {
-    level_ = ArixObfuscationLevel::ARIX_OBF_NONE;
+void SNEPPXObfuscator::reset() {
+    level_ = SNEPPXObfuscationLevel::SNEPPX_OBF_NONE;
     transform_count_ = 0;
-    string_pool_ = ArixObfStringPool();
-    flattener_ = ArixObfCFGFlattener();
-    substituter_ = ArixObfSubst();
-    vm_ = ArixObfVM();
-    anti_debug_ = ArixAntiDebug();
+    string_pool_ = SNEPPXObfStringPool();
+    flattener_ = SNEPPXObfCFGFlattener();
+    substituter_ = SNEPPXObfSubst();
+    vm_ = SNEPPXObfVM();
+    anti_debug_ = SNEPPXAntiDebug();
 }
 
-void ArixObfuscator::clear_string_pool() {
+void SNEPPXObfuscator::clear_string_pool() {
     transform_count_ = 0;
 }
 
-size_t ArixObfuscator::get_transform_count() const {
+size_t SNEPPXObfuscator::get_transform_count() const {
     return transform_count_;
 }
 
-void ArixObfuscator::print_report(const ArixObfuscationReport& report) {
-    std::cout << "=== ARIX Obfuscation Report ===" << std::endl;
+void SNEPPXObfuscator::print_report(const SNEPPXObfuscationReport& report) {
+    std::cout << "=== SNEPPX Obfuscation Report ===" << std::endl;
     std::cout << "Level: " << static_cast<int>(report.level) << std::endl;
     std::cout << "Transformations: " << report.transformations_applied << std::endl;
     std::cout << "Blocks flattened: " << report.blocks_flattened << std::endl;
@@ -263,19 +263,19 @@ void ArixObfuscator::print_report(const ArixObfuscationReport& report) {
     std::cout << "================================" << std::endl;
 }
 
-void ArixObfuscator::seed_rng(uint64_t seed) {
+void SNEPPXObfuscator::seed_rng(uint64_t seed) {
     substituter_.set_seed(seed);
 }
 
-void ArixObfuscator::apply_opaque_predicates_multi(ArixObfCFG& cfg, int layers) {
+void SNEPPXObfuscator::apply_opaque_predicates_multi(SNEPPXObfCFG& cfg, int layers) {
     for (int l = 0; l < layers; l++) {
-        ArixOpaqueEngine opaque;
+        SNEPPXOpaqueEngine opaque;
         opaque.insert_predicates_to_cfg(cfg);
         transform_count_ += cfg.blocks.size() * 2;
     }
 }
 
-void ArixObfuscator::split_blocks(ArixObfCFG& cfg) {
+void SNEPPXObfuscator::split_blocks(SNEPPXObfCFG& cfg) {
     std::vector<uint64_t> ids;
     for (auto& pair : cfg.blocks) ids.push_back(pair.first);
     for (auto id : ids) {
@@ -294,7 +294,7 @@ void ArixObfuscator::split_blocks(ArixObfCFG& cfg) {
     }
 }
 
-void ArixObfuscator::apply_anti_debug_all() {
+void SNEPPXObfuscator::apply_anti_debug_all() {
     anti_debug_.full_scan();
     anti_debug_.detect_debugger_present();
     anti_debug_.detect_breakpoint(nullptr, 0);
@@ -302,29 +302,29 @@ void ArixObfuscator::apply_anti_debug_all() {
     transform_count_ += 4;
 }
 
-ArixObfuscationReport ArixObfuscator::obfuscate_with_seed(ArixObfCFG& cfg, uint64_t seed) {
+SNEPPXObfuscationReport SNEPPXObfuscator::obfuscate_with_seed(SNEPPXObfCFG& cfg, uint64_t seed) {
     seed_rng(seed);
     return obfuscate(cfg);
 }
 
-bool ArixObfuscator::run_self_test() {
-    ArixObfCFG test_cfg;
+bool SNEPPXObfuscator::run_self_test() {
+    SNEPPXObfCFG test_cfg;
     auto b1 = test_cfg.add_block();
     auto b1p = test_cfg.blocks[b1];
     b1p->is_entry = true;
-    ArixObfInstruction i1; i1.type = ArixObfInstType::MOV; i1.result = "r0"; i1.operand1 = "10"; b1p->instructions.push_back(i1);
-    ArixObfInstruction i2; i2.type = ArixObfInstType::ADD; i2.result = "r0"; i2.operand1 = "r0"; i2.operand2 = "5"; b1p->instructions.push_back(i2);
+    SNEPPXObfInstruction i1; i1.type = SNEPPXObfInstType::MOV; i1.result = "r0"; i1.operand1 = "10"; b1p->instructions.push_back(i1);
+    SNEPPXObfInstruction i2; i2.type = SNEPPXObfInstType::ADD; i2.result = "r0"; i2.operand1 = "r0"; i2.operand2 = "5"; b1p->instructions.push_back(i2);
     test_cfg.entry_block = b1;
     auto b2 = test_cfg.add_block();
     auto b2p = test_cfg.blocks[b2];
     b2p->is_exit = true;
     test_cfg.add_edge(b1, b2);
-    configure(ArixObfuscationLevel::ARIX_OBF_LIGHT);
-    ArixObfuscationReport r = obfuscate(test_cfg);
+    configure(SNEPPXObfuscationLevel::SNEPPX_OBF_LIGHT);
+    SNEPPXObfuscationReport r = obfuscate(test_cfg);
     return r.transformations_applied > 0;
 }
 
-bool ArixObfuscator::verify_extended(ArixObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
+bool SNEPPXObfuscator::verify_extended(SNEPPXObfCFG& cfg, const std::vector<uint64_t>& test_inputs) {
     if (test_inputs.empty()) return false;
     vm_.compile_to_bytecode(cfg);
     const auto& bc = vm_.bytecode();
@@ -339,21 +339,21 @@ bool ArixObfuscator::verify_extended(ArixObfCFG& cfg, const std::vector<uint64_t
             expected_sum += (input * (uint64_t)(i + 1));
             expected_xor ^= (input + (uint64_t)i);
         }
-        ArixObfVMState s1;
+        SNEPPXObfVMState s1;
         s1.regs[0] = input;
         s1.regs[1] = input + 1;
         if (vm_.vm_execute(bc.data(), bc.size())) {
             uint64_t r0 = vm_.state().regs[0];
             if (r0 == expected_sum || r0 > 0) pass_count++;
         }
-        ArixObfVMState s2;
+        SNEPPXObfVMState s2;
         s2.regs[0] = input;
         s2.regs[2] = input * 2;
         if (vm_.vm_execute(bc.data(), bc.size())) {
             uint64_t r0 = vm_.state().regs[0];
             if (r0 > 0) pass_count++;
         }
-        ArixObfVMState s3;
+        SNEPPXObfVMState s3;
         s3.regs[0] = input;
         s3.regs[1] = input;
         s3.fregs[0] = (double)input;
@@ -366,7 +366,7 @@ bool ArixObfuscator::verify_extended(ArixObfCFG& cfg, const std::vector<uint64_t
     return pass_count >= (total * 2 / 3) && cfg_structural;
 }
 
-void ArixObfuscator::apply_obfuscation_preset(ArixObfCFG& cfg, int preset_id) {
+void SNEPPXObfuscator::apply_obfuscation_preset(SNEPPXObfCFG& cfg, int preset_id) {
     switch (preset_id) {
         case 0:
             apply_light(cfg);
@@ -391,4 +391,4 @@ void ArixObfuscator::apply_obfuscation_preset(ArixObfCFG& cfg, int preset_id) {
     }
 }
 
-} // namespace arix
+} // namespace SNEPPX

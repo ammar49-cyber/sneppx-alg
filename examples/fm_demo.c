@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void print_bank_summary(const char* label, ArixFMMemoryBank* bank) {
+static void print_bank_summary(const char* label, SNEPPXFMMemoryBank* bank) {
     printf("  %s: %zu/%zu entries", label, bank->num_entries, bank->max_entries);
     if (bank->num_entries > 0) {
         float* vd = (float*)bank->values->data;
@@ -16,22 +16,22 @@ static void print_bank_summary(const char* label, ArixFMMemoryBank* bank) {
 int main(void) {
     printf("=== FM Demo: Federated Memory Sync ===\n");
 
-    ArixFMConfig cfg = arix_fm_config_default();
+    SNEPPXFMConfig cfg = SNEPPX_fm_config_default();
     cfg.num_nodes = 4;
     cfg.memory_dim = 16;
     cfg.memory_capacity = 32;
     cfg.sync_interval = 1000;
     cfg.privacy_epsilon = 100.0f;
 
-    ArixFMController* ctrl = arix_fm_controller_create(&cfg);
+    SNEPPXFMController* ctrl = SNEPPX_fm_controller_create(&cfg);
     if (!ctrl) { printf("ERROR: create controller\n"); return 1; }
 
     size_t sh[] = {16};
     unsigned long s = 42;
     for (size_t n = 0; n < 4; n++) {
         for (int k = 0; k < 5; k++) {
-            ArixTensor* key = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
-            ArixTensor* val = arix_tensor_zeros(sh, 1, ARIX_FLOAT32);
+            SNEPPXTensor* key = SNEPPX_tensor_zeros(sh, 1, SNEPPX_FLOAT32);
+            SNEPPXTensor* val = SNEPPX_tensor_zeros(sh, 1, SNEPPX_FLOAT32);
             for (size_t j = 0; j < 16; j++) {
                 s = s * 1103515245UL + 12345UL;
                 float v = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 2.0f;
@@ -40,9 +40,9 @@ int main(void) {
                 v = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 2.0f;
                 ((float*)val->data)[j] = v + (float)(n * 10);
             }
-            arix_fm_memory_bank_write(ctrl->nodes[n]->memory_bank, key, val);
-            arix_tensor_destroy(key);
-            arix_tensor_destroy(val);
+            SNEPPX_fm_memory_bank_write(ctrl->nodes[n]->memory_bank, key, val);
+            SNEPPX_tensor_destroy(key);
+            SNEPPX_tensor_destroy(val);
         }
     }
 
@@ -52,7 +52,7 @@ int main(void) {
         print_bank_summary(label, ctrl->nodes[n]->memory_bank);
     }
 
-    int r = arix_fm_sync_all_reduce(ctrl);
+    int r = SNEPPX_fm_sync_all_reduce(ctrl);
     printf("\nSync result: %d\n", r);
     printf("Sync round: %zu\n", ctrl->sync_state.sync_round);
 
@@ -64,14 +64,14 @@ int main(void) {
 
     printf("\n=== FM Forward ===\n");
     size_t in_sh[] = {4, 16};
-    ArixTensor* input = arix_tensor_zeros(in_sh, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_zeros(in_sh, 2, SNEPPX_FLOAT32);
     for (size_t i = 0; i < input->size; i++) {
         s = s * 1103515245UL + 12345UL;
         ((float*)input->data)[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 0.5f;
     }
 
-    ArixTensor* output = NULL;
-    r = arix_fm_forward(ctrl, 0, input, &output);
+    SNEPPXTensor* output = NULL;
+    r = SNEPPX_fm_forward(ctrl, 0, input, &output);
     printf("Forward result: %d\n", r);
     if (output) {
         printf("Output shape: [%zu, %zu]\n", output->shape[0], output->shape[1]);
@@ -91,9 +91,9 @@ int main(void) {
 
     print_bank_summary("After forward", ctrl->nodes[0]->memory_bank);
 
-    arix_tensor_destroy(input);
-    if (output) arix_tensor_destroy(output);
-    arix_fm_controller_destroy(ctrl);
+    SNEPPX_tensor_destroy(input);
+    if (output) SNEPPX_tensor_destroy(output);
+    SNEPPX_fm_controller_destroy(ctrl);
     printf("Demo complete.\n");
     return 0;
 }

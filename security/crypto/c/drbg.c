@@ -4,19 +4,19 @@
 #include <string.h>
 
 static void sha256_f(const uint8_t* in, size_t in_len, uint8_t out[32]) {
-    ArixSHA512Context ctx;
-    arix_sha512_init(&ctx);
-    arix_sha512_update(&ctx,in,in_len);
+    SNEPPXSHA512Context ctx;
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx,in,in_len);
     uint8_t full[64];
-    arix_sha512_finish(&ctx,full);
+    SNEPPX_sha512_finish(&ctx,full);
     memcpy(out,full,32);
 }
 
-int arix_drbg_init(ArixDRBG* ctx, const uint8_t* entropy, size_t entropy_len, const uint8_t* nonce, size_t nonce_len) {
+int SNEPPX_drbg_init(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_len, const uint8_t* nonce, size_t nonce_len) {
     if (!ctx||!entropy||entropy_len<48) return -1;
     memset(ctx,0,sizeof(*ctx));
 
-    uint8_t seed[ARIX_DRBG_SEED_SIZE];
+    uint8_t seed[SNEPPX_DRBG_SEED_SIZE];
     size_t sl=0;
     if (entropy) { memcpy(seed,entropy,entropy_len); sl=entropy_len; }
     if (nonce) { memcpy(seed+sl,nonce,nonce_len); sl+=nonce_len; }
@@ -34,59 +34,59 @@ int arix_drbg_init(ArixDRBG* ctx, const uint8_t* entropy, size_t entropy_len, co
     return 0;
 }
 
-int arix_drbg_reseed(ArixDRBG* ctx, const uint8_t* entropy, size_t entropy_len) {
+int SNEPPX_drbg_reseed(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_len) {
     if (!ctx||!ctx->hb.initialized||!entropy) return -1;
-    uint8_t seed[ARIX_DRBG_SEED_SIZE+256];
-    memcpy(seed,ctx->hb.v,ARIX_DRBG_SEED_SIZE);
-    memcpy(seed+ARIX_DRBG_SEED_SIZE,entropy,entropy_len);
+    uint8_t seed[SNEPPX_DRBG_SEED_SIZE+256];
+    memcpy(seed,ctx->hb.v,SNEPPX_DRBG_SEED_SIZE);
+    memcpy(seed+SNEPPX_DRBG_SEED_SIZE,entropy,entropy_len);
     uint8_t hash[32];
-    sha256_f(seed,ARIX_DRBG_SEED_SIZE+entropy_len,hash);
+    sha256_f(seed,SNEPPX_DRBG_SEED_SIZE+entropy_len,hash);
     memcpy(ctx->hb.v,hash,32);
     memcpy(ctx->hb.v+32,seed+32,16);
     ctx->hb.reseed_counter=1;
     return 0;
 }
 
-int arix_drbg_generate(ArixDRBG* ctx, uint8_t* out, size_t out_len) {
-    if (!ctx||!ctx->hb.initialized||!out||out_len>ARIX_DRBG_MAX_OUTPUT) return -1;
+int SNEPPX_drbg_generate(SNEPPXDRBG* ctx, uint8_t* out, size_t out_len) {
+    if (!ctx||!ctx->hb.initialized||!out||out_len>SNEPPX_DRBG_MAX_OUTPUT) return -1;
     if (ctx->hb.reseed_counter>10000) return -1;
 
     size_t generated=0;
-    uint8_t v[ARIX_DRBG_SEED_SIZE];
-    memcpy(v,ctx->hb.v,ARIX_DRBG_SEED_SIZE);
+    uint8_t v[SNEPPX_DRBG_SEED_SIZE];
+    memcpy(v,ctx->hb.v,SNEPPX_DRBG_SEED_SIZE);
 
     while (generated<out_len) {
-        sha256_f(v,ARIX_DRBG_SEED_SIZE,v);
+        sha256_f(v,SNEPPX_DRBG_SEED_SIZE,v);
         size_t copy=(out_len-generated<32)?out_len-generated:32;
         memcpy(out+generated,v,copy);
         generated+=copy;
     }
 
     uint8_t hash[32];
-    sha256_f(ctx->hb.c,ARIX_DRBG_SEED_SIZE,hash);
-    for (int i=0;i<ARIX_DRBG_SEED_SIZE;i++) ctx->hb.v[i]^=hash[i%32];
+    sha256_f(ctx->hb.c,SNEPPX_DRBG_SEED_SIZE,hash);
+    for (int i=0;i<SNEPPX_DRBG_SEED_SIZE;i++) ctx->hb.v[i]^=hash[i%32];
 
     ctx->hb.reseed_counter++;
     return 0;
 }
 
-void arix_drbg_destroy(ArixDRBG* ctx) {
+void SNEPPX_drbg_destroy(SNEPPXDRBG* ctx) {
     if (ctx) {
         volatile uint8_t* p=(volatile uint8_t*)ctx;
         for (size_t i=0;i<sizeof(*ctx);i++) p[i]=0;
     }
 }
 
-int arix_drbg_self_test(void) {
-    ArixDRBG ctx;
+int SNEPPX_drbg_self_test(void) {
+    SNEPPXDRBG ctx;
     uint8_t entropy[48],nonce[16],out[64];
     memset(entropy,0x12,48);
     memset(nonce,0x34,16);
-    if (arix_drbg_init(&ctx,entropy,48,nonce,16)!=0) return -1;
-    if (arix_drbg_generate(&ctx,out,64)!=0) return -1;
+    if (SNEPPX_drbg_init(&ctx,entropy,48,nonce,16)!=0) return -1;
+    if (SNEPPX_drbg_generate(&ctx,out,64)!=0) return -1;
     int all_zero=1;
     for (int i=0;i<64;i++) if (out[i]) all_zero=0;
     if (all_zero) return -1;
-    arix_drbg_destroy(&ctx);
+    SNEPPX_drbg_destroy(&ctx);
     return 0;
 }

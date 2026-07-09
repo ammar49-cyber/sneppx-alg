@@ -4,29 +4,29 @@
 #include <math.h>
 #include <stdlib.h>
 
-ArixARCConfig arix_arc_config_default(void) {
-    ArixARCConfig cfg;
+SNEPPXARCConfig SNEPPX_arc_config_default(void) {
+    SNEPPXARCConfig cfg;
     cfg.input_guard_strength = 0.7f;
-    cfg.gradient_obfuscation_method = ARIX_OBF_MIXED;
+    cfg.gradient_obfuscation_method = SNEPPX_OBF_MIXED;
     cfg.gradient_noise_scale = 0.01f;
     cfg.gradient_clip_max = 1.0f;
     cfg.output_verify_layers = 2;
     cfg.output_verify_threshold = 0.9f;
     cfg.adversarial_training = 1;
-    cfg.attack_simulation_types = ARIX_ATTACK_FGSM | ARIX_ATTACK_PGD | ARIX_ATTACK_CW;
+    cfg.attack_simulation_types = SNEPPX_ATTACK_FGSM | SNEPPX_ATTACK_PGD | SNEPPX_ATTACK_CW;
     return cfg;
 }
 
-ArixInputGuard* arix_input_guard_create(size_t input_dim, unsigned int seed) {
-    ArixInputGuard* guard = (ArixInputGuard*)arix_malloc(sizeof(ArixInputGuard), 64);
+SNEPPXInputGuard* SNEPPX_input_guard_create(size_t input_dim, unsigned int seed) {
+    SNEPPXInputGuard* guard = (SNEPPXInputGuard*)SNEPPX_malloc(sizeof(SNEPPXInputGuard), 64);
     if (!guard) return NULL;
-    memset(guard, 0, sizeof(ArixInputGuard));
+    memset(guard, 0, sizeof(SNEPPXInputGuard));
 
     size_t shape_pp[] = {input_dim, input_dim};
     size_t shape_n1[] = {input_dim};
-    guard->projection_matrix = arix_tensor_create(shape_pp, 2, ARIX_FLOAT32);
-    guard->norm_stats_mean = arix_tensor_zeros(shape_n1, 1, ARIX_FLOAT32);
-    guard->norm_stats_var = arix_tensor_zeros(shape_n1, 1, ARIX_FLOAT32);
+    guard->projection_matrix = SNEPPX_tensor_create(shape_pp, 2, SNEPPX_FLOAT32);
+    guard->norm_stats_mean = SNEPPX_tensor_zeros(shape_n1, 1, SNEPPX_FLOAT32);
+    guard->norm_stats_var = SNEPPX_tensor_zeros(shape_n1, 1, SNEPPX_FLOAT32);
     guard->anomaly_threshold = 2.5f;
 
     if (guard->projection_matrix) {
@@ -52,21 +52,21 @@ ArixInputGuard* arix_input_guard_create(size_t input_dim, unsigned int seed) {
     return guard;
 }
 
-void arix_input_guard_destroy(ArixInputGuard* guard) {
+void SNEPPX_input_guard_destroy(SNEPPXInputGuard* guard) {
     if (!guard) return;
-    if (guard->projection_matrix) arix_tensor_destroy(guard->projection_matrix);
-    if (guard->norm_stats_mean) arix_tensor_destroy(guard->norm_stats_mean);
-    if (guard->norm_stats_var) arix_tensor_destroy(guard->norm_stats_var);
-    arix_free(guard, sizeof(ArixInputGuard));
+    if (guard->projection_matrix) SNEPPX_tensor_destroy(guard->projection_matrix);
+    if (guard->norm_stats_mean) SNEPPX_tensor_destroy(guard->norm_stats_mean);
+    if (guard->norm_stats_var) SNEPPX_tensor_destroy(guard->norm_stats_var);
+    SNEPPX_free(guard, sizeof(SNEPPXInputGuard));
 }
 
-void arix_arc_input_guard_forward(ArixInputGuard* guard, const ArixTensor* input, ArixTensor** sanitized, float* anomaly_score) {
+void SNEPPX_arc_input_guard_forward(SNEPPXInputGuard* guard, const SNEPPXTensor* input, SNEPPXTensor** sanitized, float* anomaly_score) {
     size_t batch = input->shape[0];
     size_t dim = input->shape[1];
     float* in_data = (float*)input->data;
 
     size_t shape_s[] = {batch, dim};
-    *sanitized = arix_tensor_create(shape_s, 2, ARIX_FLOAT32);
+    *sanitized = SNEPPX_tensor_create(shape_s, 2, SNEPPX_FLOAT32);
     if (!*sanitized) { *anomaly_score = 0.0f; return; }
     float* out_data = (float*)(*sanitized)->data;
 

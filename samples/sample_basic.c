@@ -1,5 +1,5 @@
 /*
- * Basic ARIX-Algo Sample — SKELETON
+ * Basic SNEPPX-Algo Sample — SKELETON
  * VERSION: v0.5
  *
  * Demonstrates tensor creation, model construction, and training loop.
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    printf("ARIX-Algo Basic Sample (skeleton)\n");
+    printf("SNEPPX-Algo Basic Sample (skeleton)\n");
     printf("This sample will demonstrate:\n");
     printf("  1. Tensor creation and manipulation\n");
     printf("  2. Model definition (HSS + SER)\n");

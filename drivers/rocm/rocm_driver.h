@@ -1,5 +1,5 @@
-#ifndef ARIX_ROCM_DRIVER_H
-#define ARIX_ROCM_DRIVER_H
+#ifndef SNEPPX_ROCM_DRIVER_H
+#define SNEPPX_ROCM_DRIVER_H
 /*
  * ROCm Driver Interface — v1.0 (AMD GPU acceleration)
  *
@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-typedef struct ArixTensor ArixTensor;
+typedef struct SNEPPXTensor SNEPPXTensor;
 
 typedef struct {
     char     name[256];
@@ -31,29 +31,29 @@ typedef struct {
     int      gcn_arch_minor;
     int      num_cus;
     int      supports_matrix_core;
-} ArixROCmDeviceProps;
+} SNEPPXROCmDeviceProps;
 
-typedef struct ArixROCmStream {
+typedef struct SNEPPXROCmStream {
     void*    handle;
     int      device_id;
-} ArixROCmStream;
+} SNEPPXROCmStream;
 
-typedef struct ArixROCmEvent {
+typedef struct SNEPPXROCmEvent {
     void*    handle;
     int      device_id;
-} ArixROCmEvent;
+} SNEPPXROCmEvent;
 
 typedef struct {
     int                     device_id;
-    ArixROCmDeviceProps     props;
+    SNEPPXROCmDeviceProps     props;
     size_t                  alloc_bytes;
     size_t                  peak_alloc_bytes;
-    ArixROCmStream**        streams;
+    SNEPPXROCmStream**        streams;
     int                     num_streams;
     void*                   blas_handle;
     void*                   dnn_handle;
     int                     error_state;
-} ArixROCmContext;
+} SNEPPXROCmContext;
 
 typedef struct {
     const char*      kernel_name;
@@ -61,37 +61,37 @@ typedef struct {
     int              grid_x, grid_y, grid_z;
     int              group_x, group_y, group_z;
     size_t           local_mem_bytes;
-    ArixROCmStream*  stream;
-} ArixROCmKernelLaunch;
+    SNEPPXROCmStream*  stream;
+} SNEPPXROCmKernelLaunch;
 
-int arix_rocm_register_driver(void);
+int SNEPPX_rocm_register_driver(void);
 
-int  arix_rocm_get_device_count(int* count);
-int  arix_rocm_get_device_props(int dev_id, ArixROCmDeviceProps* props);
-int  arix_rocm_set_device(int dev_id);
+int  SNEPPX_rocm_get_device_count(int* count);
+int  SNEPPX_rocm_get_device_props(int dev_id, SNEPPXROCmDeviceProps* props);
+int  SNEPPX_rocm_set_device(int dev_id);
 
-ArixROCmContext* arix_rocm_create_context(int device_id);
-void             arix_rocm_destroy_context(ArixROCmContext* ctx);
+SNEPPXROCmContext* SNEPPX_rocm_create_context(int device_id);
+void             SNEPPX_rocm_destroy_context(SNEPPXROCmContext* ctx);
 
-int arix_rocm_stream_create(ArixROCmStream** stream);
-void arix_rocm_stream_destroy(ArixROCmStream* stream);
-int arix_rocm_stream_synchronize(ArixROCmStream* stream);
-int arix_rocm_event_create(ArixROCmEvent** event);
-void arix_rocm_event_destroy(ArixROCmEvent* event);
-int arix_rocm_event_record(ArixROCmEvent* event, ArixROCmStream* stream);
-int arix_rocm_event_synchronize(ArixROCmEvent* event);
+int SNEPPX_rocm_stream_create(SNEPPXROCmStream** stream);
+void SNEPPX_rocm_stream_destroy(SNEPPXROCmStream* stream);
+int SNEPPX_rocm_stream_synchronize(SNEPPXROCmStream* stream);
+int SNEPPX_rocm_event_create(SNEPPXROCmEvent** event);
+void SNEPPX_rocm_event_destroy(SNEPPXROCmEvent* event);
+int SNEPPX_rocm_event_record(SNEPPXROCmEvent* event, SNEPPXROCmStream* stream);
+int SNEPPX_rocm_event_synchronize(SNEPPXROCmEvent* event);
 
-int arix_rocm_mem_alloc(void** dev_ptr, size_t bytes);
-int arix_rocm_mem_free(void* dev_ptr);
-int arix_rocm_mem_htod(void* dev_dst, const void* host_src, size_t bytes);
-int arix_rocm_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes);
-int arix_rocm_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes);
+int SNEPPX_rocm_mem_alloc(void** dev_ptr, size_t bytes);
+int SNEPPX_rocm_mem_free(void* dev_ptr);
+int SNEPPX_rocm_mem_htod(void* dev_dst, const void* host_src, size_t bytes);
+int SNEPPX_rocm_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes);
+int SNEPPX_rocm_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes);
 
-int arix_rocm_launch_kernel(const ArixROCmKernelLaunch* launch);
-int arix_rocm_launch_kernel_async(const ArixROCmKernelLaunch* launch);
+int SNEPPX_rocm_launch_kernel(const SNEPPXROCmKernelLaunch* launch);
+int SNEPPX_rocm_launch_kernel_async(const SNEPPXROCmKernelLaunch* launch);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_ROCM_DRIVER_H */
+#endif /* SNEPPX_ROCM_DRIVER_H */

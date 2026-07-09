@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ARIX-Algo.
+All notable changes to SNEPPX-Algo.
 
 ## [0.1.1] — 2026-06-30
 
@@ -20,7 +20,7 @@ All notable changes to ARIX-Algo.
 
 ### Fixed
 
-- arix_sample_from_logits: rand() == RAND_MAX edge case
+- SNEPPX_sample_from_logits: rand() == RAND_MAX edge case
 - data_pipeline.c: buffer overflow in offsets allocation, line_by_line tokenization
 - test_inference.c: duplicate tests_failed macro conflict with test_common.h
 

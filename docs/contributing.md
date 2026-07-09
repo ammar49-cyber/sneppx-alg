@@ -9,12 +9,12 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full contributor agreement, pa
 ### Setup
 
 ```bash
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build && cd build
 
 # Debug build for development
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
 
 # Run tests
@@ -54,12 +54,12 @@ ctest -R test_tensor
 ### Build Options
 
 ```bash
-cmake .. -DARIX_BUILD_TESTS=ON       # Build tests (default: ON)
-cmake .. -DARIX_BUILD_BENCHMARKS=ON  # Build benchmarks (default: ON)
-cmake .. -DARIX_BUILD_PYTHON=ON      # Build Python bindings
-cmake .. -DARIX_USE_ASAN=ON          # Enable AddressSanitizer
-cmake .. -DARIX_USE_UBSAN=ON         # Enable UndefinedBehaviorSanitizer
-cmake .. -DARIX_USE_LTO=ON           # Enable Link-Time Optimization
+cmake .. -DSNEPPX_BUILD_TESTS=ON       # Build tests (default: ON)
+cmake .. -DSNEPPX_BUILD_BENCHMARKS=ON  # Build benchmarks (default: ON)
+cmake .. -DSNEPPX_BUILD_PYTHON=ON      # Build Python bindings
+cmake .. -DSNEPPX_USE_ASAN=ON          # Enable AddressSanitizer
+cmake .. -DSNEPPX_USE_UBSAN=ON         # Enable UndefinedBehaviorSanitizer
+cmake .. -DSNEPPX_USE_LTO=ON           # Enable Link-Time Optimization
 ```
 
 ### Presets
@@ -105,9 +105,9 @@ cmake --preset asan
 
 ## Communication
 
-- **Patches**: algoarix@gmail.com
-- **Security**: algoarix@gmail.com
-- **Conduct**: algoarix@gmail.com
+- **Patches**: algoSNEPPX@gmail.com
+- **Security**: algoSNEPPX@gmail.com
+- **Conduct**: algoSNEPPX@gmail.com
 - **No**: GitHub issues, Discord, Slack
 
 ## Code Review

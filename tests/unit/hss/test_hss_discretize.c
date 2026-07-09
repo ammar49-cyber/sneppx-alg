@@ -34,7 +34,7 @@ static void test_discretize_zoh(void) {
     float B[] = {1.0f, 0.0f, 0.0f, 1.0f};
     float dt = 0.1f;
     float Ad[4], Bd[4];
-    arix_hss_discretize_zoh(A, B, 2, dt, Ad, Bd);
+    SNEPPX_hss_discretize_zoh(A, B, 2, dt, Ad, Bd);
     ASSERT(Ad[0] > 0.9f, "Ad[0] positive");
     ASSERT(Ad[3] > 0.9f, "Ad[3] positive");
     ASSERT_NEAR(Ad[1], 0.0f, 1e-6f, "Ad[1] zero");
@@ -46,7 +46,7 @@ static void test_discretize_bilinear(void) {
     float B[] = {1.0f};
     float dt = 0.1f;
     float Ad[1], Bd[1];
-    arix_hss_discretize_bilinear(A, B, 1, dt, Ad, Bd);
+    SNEPPX_hss_discretize_bilinear(A, B, 1, dt, Ad, Bd);
     ASSERT(Ad[0] > 0.8f, "Ad bilinear positive");
     ASSERT(Bd[0] > 0.0f, "Bd bilinear positive");
 }
@@ -56,7 +56,7 @@ static void test_discretize_identity(void) {
     float B[] = {1.0f};
     float dt = 1.0f;
     float Ad[1], Bd[1];
-    arix_hss_discretize_zoh(A, B, 1, dt, Ad, Bd);
+    SNEPPX_hss_discretize_zoh(A, B, 1, dt, Ad, Bd);
     ASSERT_NEAR(Ad[0], 1.0f, 1e-4f, "Ad identity");
     ASSERT_NEAR(Bd[0], 1.0f, 1e-4f, "Bd identity");
 }

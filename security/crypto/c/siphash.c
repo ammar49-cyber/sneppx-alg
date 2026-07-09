@@ -2,14 +2,14 @@
 #include <string.h>
 
 static uint64_t rotl64(uint64_t x, int b) { return (x<<b)|(x>>(64-b)); }
-static void sipround(ArixSipHash* sh) {
+static void sipround(SNEPPXSipHash* sh) {
     sh->v0+=sh->v1; sh->v1=rotl64(sh->v1,13); sh->v1^=sh->v0; sh->v0=rotl64(sh->v0,32);
     sh->v2+=sh->v3; sh->v3=rotl64(sh->v3,16); sh->v3^=sh->v2;
     sh->v0+=sh->v3; sh->v3=rotl64(sh->v3,21); sh->v3^=sh->v0;
     sh->v2+=sh->v1; sh->v1=rotl64(sh->v1,17); sh->v1^=sh->v2; sh->v2=rotl64(sh->v2,32);
 }
 
-void arix_siphash_init(ArixSipHash* sh, const uint8_t key[16]) {
+void SNEPPX_siphash_init(SNEPPXSipHash* sh, const uint8_t key[16]) {
     memset(sh,0,sizeof(*sh));
     sh->k0=((uint64_t*)key)[0];
     sh->k1=((uint64_t*)key)[1];
@@ -20,7 +20,7 @@ void arix_siphash_init(ArixSipHash* sh, const uint8_t key[16]) {
     sh->c_rounds=2; sh->d_rounds=4;
 }
 
-void arix_siphash_update(ArixSipHash* sh, const uint8_t* data, size_t len) {
+void SNEPPX_siphash_update(SNEPPXSipHash* sh, const uint8_t* data, size_t len) {
     uint64_t m;
     size_t off=0;
     while (len-off>=8) {
@@ -37,24 +37,24 @@ void arix_siphash_update(ArixSipHash* sh, const uint8_t* data, size_t len) {
     sh->v0^=m;
 }
 
-uint64_t arix_siphash_finalize(ArixSipHash* sh) {
+uint64_t SNEPPX_siphash_finalize(SNEPPXSipHash* sh) {
     sh->v2^=0xFF;
     for (int i=0;i<sh->d_rounds;i++) sipround(sh);
     return sh->v0^sh->v1^sh->v2^sh->v3;
 }
 
-uint64_t arix_siphash(const uint8_t key[16], const uint8_t* data, size_t len) {
-    ArixSipHash sh;
-    arix_siphash_init(&sh,key);
-    arix_siphash_update(&sh,data,len);
-    return arix_siphash_finalize(&sh);
+uint64_t SNEPPX_siphash(const uint8_t key[16], const uint8_t* data, size_t len) {
+    SNEPPXSipHash sh;
+    SNEPPX_siphash_init(&sh,key);
+    SNEPPX_siphash_update(&sh,data,len);
+    return SNEPPX_siphash_finalize(&sh);
 }
 
-void arix_siphash_24_init(ArixSipHash* sh, const uint8_t key[16]) {
-    arix_siphash_init(&sh,key);
+void SNEPPX_siphash_24_init(SNEPPXSipHash* sh, const uint8_t key[16]) {
+    SNEPPX_siphash_init(&sh,key);
     sh->c_rounds=2; sh->d_rounds=4;
 }
 
-uint64_t arix_siphash_24(const uint8_t key[16], const uint8_t* data, size_t len) {
-    return arix_siphash(key,data,len);
+uint64_t SNEPPX_siphash_24(const uint8_t key[16], const uint8_t* data, size_t len) {
+    return SNEPPX_siphash(key,data,len);
 }

@@ -3,16 +3,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int arix_model_init(ArixFormalModel* model) {
+int SNEPPX_model_init(SNEPPXFormalModel* model) {
     if (!model) return -1;
     memset(model, 0, sizeof(*model));
     model->initial_state = 0;
     return 0;
 }
 
-int arix_model_add_state(ArixFormalModel* model, uint32_t state_id, int is_accepting, int is_error) {
-    if (!model || model->state_count >= ARIX_MODEL_MAX_STATES) return -1;
-    ArixModelState* s = &model->states[model->state_count];
+int SNEPPX_model_add_state(SNEPPXFormalModel* model, uint32_t state_id, int is_accepting, int is_error) {
+    if (!model || model->state_count >= SNEPPX_MODEL_MAX_STATES) return -1;
+    SNEPPXModelState* s = &model->states[model->state_count];
     s->state_id = state_id;
     s->next_count = 0;
     s->is_accepting = is_accepting;
@@ -20,7 +20,7 @@ int arix_model_add_state(ArixFormalModel* model, uint32_t state_id, int is_accep
     return model->state_count++;
 }
 
-int arix_model_add_transition(ArixFormalModel* model, uint32_t from, uint32_t to) {
+int SNEPPX_model_add_transition(SNEPPXFormalModel* model, uint32_t from, uint32_t to) {
     if (!model) return -1;
     for (int i = 0; i < model->state_count; i++) {
         if (model->states[i].state_id == from && model->states[i].next_count < 8) {
@@ -31,20 +31,20 @@ int arix_model_add_transition(ArixFormalModel* model, uint32_t from, uint32_t to
     return -1;
 }
 
-int arix_model_set_property(ArixFormalModel* model, const char* property) {
+int SNEPPX_model_set_property(SNEPPXFormalModel* model, const char* property) {
     if (!model || !property) return -1;
-    strncpy(model->property, property, ARIX_MODEL_PROP_MAX_LEN - 1);
+    strncpy(model->property, property, SNEPPX_MODEL_PROP_MAX_LEN - 1);
     return 0;
 }
 
-ArixModelCheckResult arix_model_check(ArixFormalModel* model) {
-    ArixModelCheckResult result;
+SNEPPXModelCheckResult SNEPPX_model_check(SNEPPXFormalModel* model) {
+    SNEPPXModelCheckResult result;
     memset(&result, 0, sizeof(result));
     if (!model) { result.property_satisfied = 0; return result; }
 
     result.total_states = model->state_count;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    int stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    int stack[SNEPPX_MODEL_MAX_STATES];
     int stack_top = 0;
     stack[stack_top++] = model->initial_state;
     visited[model->initial_state] = 1;
@@ -64,7 +64,7 @@ ArixModelCheckResult arix_model_check(ArixFormalModel* model) {
                 }
                 if (found && !visited[next]) {
                     visited[next] = 1;
-                    if (stack_top < ARIX_MODEL_MAX_STATES) stack[stack_top++] = next;
+                    if (stack_top < SNEPPX_MODEL_MAX_STATES) stack[stack_top++] = next;
                 }
             }
         }
@@ -75,7 +75,7 @@ ArixModelCheckResult arix_model_check(ArixFormalModel* model) {
     return result;
 }
 
-int arix_model_verify_invariant(ArixFormalModel* model, int (*invariant)(uint32_t state_id)) {
+int SNEPPX_model_verify_invariant(SNEPPXFormalModel* model, int (*invariant)(uint32_t state_id)) {
     if (!model || !invariant) return 0;
     for (int i = 0; i < model->state_count; i++) {
         if (!invariant(model->states[i].state_id)) return 0;
@@ -83,10 +83,10 @@ int arix_model_verify_invariant(ArixFormalModel* model, int (*invariant)(uint32_
     return 1;
 }
 
-int arix_model_check_reachability(ArixFormalModel* model, uint32_t from_state, uint32_t to_state) {
+int SNEPPX_model_check_reachability(SNEPPXFormalModel* model, uint32_t from_state, uint32_t to_state) {
     if (!model) return 0;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    int stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    int stack[SNEPPX_MODEL_MAX_STATES];
     int stack_top = 0;
     stack[stack_top++] = from_state;
     visited[from_state] = 1;
@@ -100,7 +100,7 @@ int arix_model_check_reachability(ArixFormalModel* model, uint32_t from_state, u
                 uint32_t next = model->states[i].next_states[j];
                 if (!visited[next]) {
                     visited[next] = 1;
-                    if (stack_top < ARIX_MODEL_MAX_STATES) stack[stack_top++] = next;
+                    if (stack_top < SNEPPX_MODEL_MAX_STATES) stack[stack_top++] = next;
                 }
             }
         }
@@ -108,20 +108,20 @@ int arix_model_check_reachability(ArixFormalModel* model, uint32_t from_state, u
     return 0;
 }
 
-int arix_model_get_state_count(ArixFormalModel* model) {
+int SNEPPX_model_get_state_count(SNEPPXFormalModel* model) {
     if (!model) return -1;
     return model->state_count;
 }
 
-void arix_model_reset(ArixFormalModel* model) {
+void SNEPPX_model_reset(SNEPPXFormalModel* model) {
     if (!model) return;
-    memset(model->states, 0, sizeof(ArixModelState) * model->state_count);
+    memset(model->states, 0, sizeof(SNEPPXModelState) * model->state_count);
     model->state_count = 0;
     model->initial_state = 0;
-    memset(model->property, 0, ARIX_MODEL_PROP_MAX_LEN);
+    memset(model->property, 0, SNEPPX_MODEL_PROP_MAX_LEN);
 }
 
-int arix_model_check_deadlock(ArixFormalModel* model) {
+int SNEPPX_model_check_deadlock(SNEPPXFormalModel* model) {
     if (!model) return -1;
     int deadlock_count = 0;
     for (int i = 0; i < model->state_count; i++) {
@@ -131,11 +131,11 @@ int arix_model_check_deadlock(ArixFormalModel* model) {
     return deadlock_count;
 }
 
-int arix_model_export_dot(ArixFormalModel* model, const char* output_path) {
+int SNEPPX_model_export_dot(SNEPPXFormalModel* model, const char* output_path) {
     if (!model || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
     if (!f) return -1;
-    fprintf(f, "digraph ArixModel {\n");
+    fprintf(f, "digraph SNEPPXModel {\n");
     fprintf(f, "    rankdir=LR;\n");
     for (int i = 0; i < model->state_count; i++) {
         const char* shape = "ellipse";
@@ -156,18 +156,18 @@ int arix_model_export_dot(ArixFormalModel* model, const char* output_path) {
     return 0;
 }
 
-int arix_model_add_transition_labeled(ArixFormalModel* model, uint32_t from, uint32_t to, const char* label) {
+int SNEPPX_model_add_transition_labeled(SNEPPXFormalModel* model, uint32_t from, uint32_t to, const char* label) {
     if (!model || !label) return -1;
     (void)label;
-    return arix_model_add_transition(model, from, to);
+    return SNEPPX_model_add_transition(model, from, to);
 }
 
-int arix_model_find_trace(ArixFormalModel* model, uint32_t from, uint32_t to, uint32_t* trace, int max_len) {
+int SNEPPX_model_find_trace(SNEPPXFormalModel* model, uint32_t from, uint32_t to, uint32_t* trace, int max_len) {
     if (!model || !trace || max_len <= 0) return -1;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    int parent[ARIX_MODEL_MAX_STATES];
-    for (int i = 0; i < ARIX_MODEL_MAX_STATES; i++) parent[i] = -1;
-    int queue[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    int parent[SNEPPX_MODEL_MAX_STATES];
+    for (int i = 0; i < SNEPPX_MODEL_MAX_STATES; i++) parent[i] = -1;
+    int queue[SNEPPX_MODEL_MAX_STATES];
     int qh = 0, qt = 0;
     queue[qt++] = from;
     visited[from] = 1;
@@ -191,7 +191,7 @@ int arix_model_find_trace(ArixFormalModel* model, uint32_t from, uint32_t to, ui
                 if (!visited[next]) {
                     visited[next] = 1;
                     parent[next] = cur;
-                    if (qt < ARIX_MODEL_MAX_STATES) queue[qt++] = next;
+                    if (qt < SNEPPX_MODEL_MAX_STATES) queue[qt++] = next;
                 }
             }
         }
@@ -199,21 +199,21 @@ int arix_model_find_trace(ArixFormalModel* model, uint32_t from, uint32_t to, ui
     return -1;
 }
 
-int arix_model_get_reachable(ArixFormalModel* model) {
+int SNEPPX_model_get_reachable(SNEPPXFormalModel* model) {
     if (!model) return -1;
-    ArixModelCheckResult r = arix_model_check(model);
+    SNEPPXModelCheckResult r = SNEPPX_model_check(model);
     return r.reachable_states;
 }
 
-int arix_model_get_deadlock_count(ArixFormalModel* model) {
-    return arix_model_check_deadlock(model);
+int SNEPPX_model_get_deadlock_count(SNEPPXFormalModel* model) {
+    return SNEPPX_model_check_deadlock(model);
 }
 
-int arix_model_has_cycle(ArixFormalModel* model) {
+int SNEPPX_model_has_cycle(SNEPPXFormalModel* model) {
     if (!model) return 0;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    int rec_stack[ARIX_MODEL_MAX_STATES] = {0};
-    int stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    int rec_stack[SNEPPX_MODEL_MAX_STATES] = {0};
+    int stack[SNEPPX_MODEL_MAX_STATES];
     int sp = 0;
     stack[sp++] = model->initial_state;
     while (sp > 0) {
@@ -227,7 +227,7 @@ int arix_model_has_cycle(ArixFormalModel* model) {
             for (int j = 0; j < model->states[i].next_count; j++) {
                 uint32_t next = model->states[i].next_states[j];
                 if (!visited[next]) {
-                    if (sp < ARIX_MODEL_MAX_STATES) stack[sp++] = next;
+                    if (sp < SNEPPX_MODEL_MAX_STATES) stack[sp++] = next;
                 } else if (rec_stack[next]) {
                     return 1;
                 }
@@ -238,11 +238,11 @@ int arix_model_has_cycle(ArixFormalModel* model) {
     return 0;
 }
 
-int arix_model_get_cycle(ArixFormalModel* model, uint32_t* cycle, int max_len) {
+int SNEPPX_model_get_cycle(SNEPPXFormalModel* model, uint32_t* cycle, int max_len) {
     if (!model || !cycle || max_len < 2) return -1;
     (void)cycle;
     (void)max_len;
-    if (arix_model_has_cycle(model)) {
+    if (SNEPPX_model_has_cycle(model)) {
         cycle[0] = model->initial_state;
         cycle[1] = model->initial_state;
         return 2;
@@ -250,13 +250,13 @@ int arix_model_get_cycle(ArixFormalModel* model, uint32_t* cycle, int max_len) {
     return -1;
 }
 
-int arix_model_minimize(ArixFormalModel* model) {
+int SNEPPX_model_minimize(SNEPPXFormalModel* model) {
     if (!model) return -1;
-    ArixModelCheckResult r = arix_model_check(model);
-    uint32_t reachable[ARIX_MODEL_MAX_STATES];
+    SNEPPXModelCheckResult r = SNEPPX_model_check(model);
+    uint32_t reachable[SNEPPX_MODEL_MAX_STATES];
     int reach_count = 0;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    int stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    int stack[SNEPPX_MODEL_MAX_STATES];
     int sp = 0;
     stack[sp++] = model->initial_state;
     visited[model->initial_state] = 1;
@@ -269,12 +269,12 @@ int arix_model_minimize(ArixFormalModel* model) {
                 uint32_t next = model->states[i].next_states[j];
                 if (!visited[next]) {
                     visited[next] = 1;
-                    if (sp < ARIX_MODEL_MAX_STATES) stack[sp++] = next;
+                    if (sp < SNEPPX_MODEL_MAX_STATES) stack[sp++] = next;
                 }
             }
         }
     }
-    ArixModelState kept[ARIX_MODEL_MAX_STATES];
+    SNEPPXModelState kept[SNEPPX_MODEL_MAX_STATES];
     int kept_count = 0;
     for (int i = 0; i < reach_count; i++) {
         for (int j = 0; j < model->state_count; j++) {
@@ -284,21 +284,21 @@ int arix_model_minimize(ArixFormalModel* model) {
             }
         }
     }
-    memcpy(model->states, kept, sizeof(ArixModelState) * kept_count);
+    memcpy(model->states, kept, sizeof(SNEPPXModelState) * kept_count);
     model->state_count = kept_count;
     return 0;
 }
 
-int arix_model_check_liveness(ArixFormalModel* model, const char* property) {
+int SNEPPX_model_check_liveness(SNEPPXFormalModel* model, const char* property) {
     if (!model || !property) return 0;
     (void)property;
-    return arix_model_has_cycle(model) ? 0 : 1;
+    return SNEPPX_model_has_cycle(model) ? 0 : 1;
 }
 
-static int model_reachable_from_start(ArixFormalModel* model, uint32_t target) {
+static int model_reachable_from_start(SNEPPXFormalModel* model, uint32_t target) {
     if (!model) return 0;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    uint32_t stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    uint32_t stack[SNEPPX_MODEL_MAX_STATES];
     int sp = 0;
     stack[sp++] = 0;
     visited[0] = 1;
@@ -309,7 +309,7 @@ static int model_reachable_from_start(ArixFormalModel* model, uint32_t target) {
             if (model->states[i].state_id != cur) continue;
             for (int j = 0; j < model->states[i].next_count; j++) {
                 uint32_t n = model->states[i].next_states[j];
-                if (n < (uint32_t)ARIX_MODEL_MAX_STATES && !visited[n]) {
+                if (n < (uint32_t)SNEPPX_MODEL_MAX_STATES && !visited[n]) {
                     visited[n] = 1;
                     stack[sp++] = n;
                 }
@@ -319,10 +319,10 @@ static int model_reachable_from_start(ArixFormalModel* model, uint32_t target) {
     return 0;
 }
 
-static int model_all_states_reachable(ArixFormalModel* model) {
+static int model_all_states_reachable(SNEPPXFormalModel* model) {
     if (!model || model->state_count == 0) return 0;
-    int visited[ARIX_MODEL_MAX_STATES] = {0};
-    uint32_t stack[ARIX_MODEL_MAX_STATES];
+    int visited[SNEPPX_MODEL_MAX_STATES] = {0};
+    uint32_t stack[SNEPPX_MODEL_MAX_STATES];
     int sp = 0;
     stack[sp++] = 0;
     visited[0] = 1;
@@ -332,7 +332,7 @@ static int model_all_states_reachable(ArixFormalModel* model) {
             if (model->states[i].state_id != cur) continue;
             for (int j = 0; j < model->states[i].next_count; j++) {
                 uint32_t n = model->states[i].next_states[j];
-                if (n < (uint32_t)ARIX_MODEL_MAX_STATES && !visited[n]) {
+                if (n < (uint32_t)SNEPPX_MODEL_MAX_STATES && !visited[n]) {
                     visited[n] = 1;
                     stack[sp++] = n;
                 }
@@ -346,7 +346,7 @@ static int model_all_states_reachable(ArixFormalModel* model) {
     return (reachable == model->state_count) ? 1 : 0;
 }
 
-static int model_find_deadlock_states(ArixFormalModel* model, uint32_t* deadlocks, int max) {
+static int model_find_deadlock_states(SNEPPXFormalModel* model, uint32_t* deadlocks, int max) {
     if (!model || !deadlocks || max <= 0) return 0;
     int count = 0;
     for (int i = 0; i < model->state_count && count < max; i++) {
@@ -357,7 +357,7 @@ static int model_find_deadlock_states(ArixFormalModel* model, uint32_t* deadlock
     return count;
 }
 
-static int model_count_transitions(ArixFormalModel* model) {
+static int model_count_transitions(SNEPPXFormalModel* model) {
     if (!model) return 0;
     int count = 0;
     for (int i = 0; i < model->state_count; i++) count += model->states[i].next_count;

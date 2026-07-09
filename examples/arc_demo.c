@@ -4,24 +4,24 @@
 #include <stdlib.h>
 
 int main(void) {
-    ArixARCConfig cfg = arix_arc_config_default();
-    ArixARCLayer* layer = arix_arc_layer_create(&cfg, 16, 16, 42);
+    SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 16, 16, 42);
     if (!layer) { printf("ERROR: create layer\n"); return 1; }
 
     size_t shape_in[] = {8, 16};
 
-    ArixTensor* normal_input = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* normal_input = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* nd = (float*)normal_input->data;
     for (size_t i = 0; i < 8 * 16; i++) nd[i] = 0.1f;
 
     printf("=== Normal Input ===\n");
-    ArixTensor* out_normal = NULL;
+    SNEPPXTensor* out_normal = NULL;
     float metrics_n[4];
-    arix_arc_forward(layer, normal_input, &out_normal, metrics_n);
+    SNEPPX_arc_forward(layer, normal_input, &out_normal, metrics_n);
     printf("Anomaly score: %f, Confidence: %f, Clamp ratio: %f, Output norm: %f\n",
            metrics_n[0], metrics_n[1], metrics_n[2], metrics_n[3]);
 
-    ArixTensor* extreme_input = arix_tensor_zeros(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* extreme_input = SNEPPX_tensor_zeros(shape_in, 2, SNEPPX_FLOAT32);
     float* ed = (float*)extreme_input->data;
     unsigned long s = 123;
     for (size_t i = 0; i < 8 * 16; i++) {
@@ -30,20 +30,20 @@ int main(void) {
     }
 
     printf("\n=== Extreme Input ===\n");
-    ArixTensor* out_extreme = NULL;
+    SNEPPXTensor* out_extreme = NULL;
     float metrics_e[4];
-    arix_arc_forward(layer, extreme_input, &out_extreme, metrics_e);
+    SNEPPX_arc_forward(layer, extreme_input, &out_extreme, metrics_e);
     printf("Anomaly score: %f, Confidence: %f, Clamp ratio: %f, Output norm: %f\n",
            metrics_e[0], metrics_e[1], metrics_e[2], metrics_e[3]);
 
     printf("\n=== FGSM Attack Simulation ===\n");
     size_t shape_small[] = {4, 16};
-    ArixTensor* clean = arix_tensor_zeros(shape_small, 2, ARIX_FLOAT32);
+    SNEPPXTensor* clean = SNEPPX_tensor_zeros(shape_small, 2, SNEPPX_FLOAT32);
     float* cd = (float*)clean->data;
     for (size_t i = 0; i < 4 * 16; i++) cd[i] = 0.1f;
 
-    ArixTensor* adv = NULL;
-    arix_arc_simulate_attack(clean, ARIX_ATTACK_FGSM, 0.1f, &adv);
+    SNEPPXTensor* adv = NULL;
+    SNEPPX_arc_simulate_attack(clean, SNEPPX_ATTACK_FGSM, 0.1f, &adv);
     float max_pert = 0.0f;
     float* ad = (float*)adv->data;
     for (size_t i = 0; i < 4 * 16; i++) {
@@ -62,13 +62,13 @@ int main(void) {
     }
     printf("Normal output: %s\n", any ? "ISSUE" : "CLEAN");
 
-    arix_tensor_destroy(normal_input);
-    arix_tensor_destroy(out_normal);
-    arix_tensor_destroy(extreme_input);
-    arix_tensor_destroy(out_extreme);
-    arix_tensor_destroy(clean);
-    arix_tensor_destroy(adv);
-    arix_arc_layer_destroy(layer);
+    SNEPPX_tensor_destroy(normal_input);
+    SNEPPX_tensor_destroy(out_normal);
+    SNEPPX_tensor_destroy(extreme_input);
+    SNEPPX_tensor_destroy(out_extreme);
+    SNEPPX_tensor_destroy(clean);
+    SNEPPX_tensor_destroy(adv);
+    SNEPPX_arc_layer_destroy(layer);
     printf("Demo complete.\n");
     return any ? 1 : 0;
 }

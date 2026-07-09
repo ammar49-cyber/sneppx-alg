@@ -1,10 +1,10 @@
-#ifndef ARIX_THREAD_INTERNAL_H
-#define ARIX_THREAD_INTERNAL_H
+#ifndef SNEPPX_THREAD_INTERNAL_H
+#define SNEPPX_THREAD_INTERNAL_H
 /*
  * Thread Pool Internal — v0.5
  *
  * PURPOSE: Internal work-stealing scheduler, thread-safe task queue,
- * and per-worker data structures for the arix_threadpool.  Implements
+ * and per-worker data structures for the SNEPPX_threadpool.  Implements
  * a work-stealing algorithm: each worker has a double-ended queue (deque)
  * of tasks; idle workers steal from the tail of another worker's deque.
  *
@@ -19,18 +19,18 @@
 extern "C" {
 #endif
 
-typedef void (*ArixTaskFn)(void* arg);
+typedef void (*SNEPPXTaskFn)(void* arg);
 
 typedef struct {
-    ArixTaskFn  fn;
+    SNEPPXTaskFn  fn;
     void*       arg;
     uint64_t    id;
     int         priority;
-} ArixTask;
+} SNEPPXTask;
 
-typedef struct ArixWorker {
+typedef struct SNEPPXWorker {
     int            worker_id;
-    ArixTask*      deque;
+    SNEPPXTask*      deque;
     size_t         deque_capacity;
     size_t         deque_head;
     size_t         deque_tail;
@@ -38,41 +38,41 @@ typedef struct ArixWorker {
     int            is_running;
     uint64_t       tasks_executed;
     uint64_t       tasks_stolen;
-} ArixWorker;
+} SNEPPXWorker;
 
 typedef struct {
-    ArixWorker** workers;
+    SNEPPXWorker** workers;
     int          num_workers;
     int          num_threads;
     volatile int shutdown_flag;
     void*        global_lock;
-    ArixTask*    global_queue;
+    SNEPPXTask*    global_queue;
     size_t       global_queue_capacity;
     size_t       global_queue_size;
-} ArixThreadScheduler;
+} SNEPPXThreadScheduler;
 
 /* ---------- Scheduler lifecycle ---------- */
-int  arix_scheduler_init(ArixThreadScheduler* sched, int num_workers);
-void arix_scheduler_destroy(ArixThreadScheduler* sched);
-int  arix_scheduler_start(ArixThreadScheduler* sched);
-int  arix_scheduler_stop(ArixThreadScheduler* sched);
+int  SNEPPX_scheduler_init(SNEPPXThreadScheduler* sched, int num_workers);
+void SNEPPX_scheduler_destroy(SNEPPXThreadScheduler* sched);
+int  SNEPPX_scheduler_start(SNEPPXThreadScheduler* sched);
+int  SNEPPX_scheduler_stop(SNEPPXThreadScheduler* sched);
 
 /* ---------- Task submission ---------- */
-int  arix_scheduler_submit(ArixThreadScheduler* sched, ArixTaskFn fn, void* arg, int priority);
-int  arix_scheduler_submit_stealable(ArixThreadScheduler* sched, ArixTaskFn fn, void* arg);
+int  SNEPPX_scheduler_submit(SNEPPXThreadScheduler* sched, SNEPPXTaskFn fn, void* arg, int priority);
+int  SNEPPX_scheduler_submit_stealable(SNEPPXThreadScheduler* sched, SNEPPXTaskFn fn, void* arg);
 
 /* ---------- Worker operations ---------- */
-int  arix_worker_init(ArixWorker* worker, int id);
-void arix_worker_destroy(ArixWorker* worker);
-int  arix_worker_push_task(ArixWorker* worker, ArixTask task);
-int  arix_worker_steal_task(ArixWorker* thief, ArixWorker* victim, ArixTask* out);
+int  SNEPPX_worker_init(SNEPPXWorker* worker, int id);
+void SNEPPX_worker_destroy(SNEPPXWorker* worker);
+int  SNEPPX_worker_push_task(SNEPPXWorker* worker, SNEPPXTask task);
+int  SNEPPX_worker_steal_task(SNEPPXWorker* thief, SNEPPXWorker* victim, SNEPPXTask* out);
 
 /* ---------- Synchronization ---------- */
-void arix_scheduler_wait_idle(ArixThreadScheduler* sched);
-int  arix_scheduler_worker_count(const ArixThreadScheduler* sched);
+void SNEPPX_scheduler_wait_idle(SNEPPXThreadScheduler* sched);
+int  SNEPPX_scheduler_worker_count(const SNEPPXThreadScheduler* sched);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_THREAD_INTERNAL_H */
+#endif /* SNEPPX_THREAD_INTERNAL_H */

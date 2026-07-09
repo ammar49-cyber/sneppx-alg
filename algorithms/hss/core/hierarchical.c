@@ -1,6 +1,6 @@
 #include "hierarchical_state_space.h"
 
-void arix_hss_hierarchical_scan(const ArixHSSLayer* layer, const ArixTensor* x_seq, ArixTensor* y_seq) {
+void SNEPPX_hss_hierarchical_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* y_seq) {
     /* For v0.1, hierarchical scan delegates to standard scan.
        Future multi-scale implementation:
        - Coarse scale: low-resolution state updates every N steps
@@ -10,10 +10,10 @@ void arix_hss_hierarchical_scan(const ArixHSSLayer* layer, const ArixTensor* x_s
     size_t s_dim = layer->A_bar->shape[0];
 
     size_t shape_hs[] = {seq_len, s_dim};
-    ArixTensor* h_seq = arix_tensor_create(shape_hs, 2, ARIX_FLOAT32);
+    SNEPPXTensor* h_seq = SNEPPX_tensor_create(shape_hs, 2, SNEPPX_FLOAT32);
 
     if (h_seq) {
-        arix_hss_scan(layer, x_seq, h_seq, y_seq);
-        arix_tensor_destroy(h_seq);
+        SNEPPX_hss_scan(layer, x_seq, h_seq, y_seq);
+        SNEPPX_tensor_destroy(h_seq);
     }
 }

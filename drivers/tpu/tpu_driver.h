@@ -1,5 +1,5 @@
-#ifndef ARIX_TPU_DRIVER_H
-#define ARIX_TPU_DRIVER_H
+#ifndef SNEPPX_TPU_DRIVER_H
+#define SNEPPX_TPU_DRIVER_H
 /*
  * TPU Driver Interface — v2.0 (Google TPU / custom ASIC acceleration)
  *
@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-typedef struct ArixTensor ArixTensor;
+typedef struct SNEPPXTensor SNEPPXTensor;
 
 /* ---------- TPU device capabilities ---------- */
 typedef struct {
@@ -30,55 +30,55 @@ typedef struct {
     int      supports_bfloat16;
     int      supports_int8;
     int      supports_sparse_core;
-} ArixTPUDeviceProps;
+} SNEPPXTPUDeviceProps;
 
 /* ---------- PjRt-style client / executable handles (opaque) ---------- */
-typedef struct ArixTPUClient {
+typedef struct SNEPPXTPUClient {
     void*    pjrt_client;             /* PJRT_Client* */
     int      device_id;
-} ArixTPUClient;
+} SNEPPXTPUClient;
 
-typedef struct ArixTPUExecutable {
+typedef struct SNEPPXTPUExecutable {
     void*    pjrt_executable;         /* PJRT_Executable* */
     size_t   input_count;
     size_t   output_count;
-} ArixTPUExecutable;
+} SNEPPXTPUExecutable;
 
 typedef struct {
     int                device_id;
-    ArixTPUDeviceProps props;
-    ArixTPUClient*     client;
+    SNEPPXTPUDeviceProps props;
+    SNEPPXTPUClient*     client;
     size_t             alloc_bytes;
     int                error_state;
-} ArixTPUContext;
+} SNEPPXTPUContext;
 
 /* ---------- Driver lifecycle ---------- */
-int  arix_tpu_register_driver(void);
-int  arix_tpu_get_device_count(int* count);
-int  arix_tpu_get_device_props(int dev_id, ArixTPUDeviceProps* props);
-ArixTPUContext* arix_tpu_create_context(int device_id);
-void            arix_tpu_destroy_context(ArixTPUContext* ctx);
+int  SNEPPX_tpu_register_driver(void);
+int  SNEPPX_tpu_get_device_count(int* count);
+int  SNEPPX_tpu_get_device_props(int dev_id, SNEPPXTPUDeviceProps* props);
+SNEPPXTPUContext* SNEPPX_tpu_create_context(int device_id);
+void            SNEPPX_tpu_destroy_context(SNEPPXTPUContext* ctx);
 
 /* ---------- Memory ---------- */
-int arix_tpu_mem_alloc(void** dev_ptr, size_t bytes, ArixTPUContext* ctx);
-int arix_tpu_mem_free(void* dev_ptr, ArixTPUContext* ctx);
-int arix_tpu_mem_htod(void* dev_dst, const void* host_src, size_t bytes, ArixTPUContext* ctx);
-int arix_tpu_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes, ArixTPUContext* ctx);
+int SNEPPX_tpu_mem_alloc(void** dev_ptr, size_t bytes, SNEPPXTPUContext* ctx);
+int SNEPPX_tpu_mem_free(void* dev_ptr, SNEPPXTPUContext* ctx);
+int SNEPPX_tpu_mem_htod(void* dev_dst, const void* host_src, size_t bytes, SNEPPXTPUContext* ctx);
+int SNEPPX_tpu_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes, SNEPPXTPUContext* ctx);
 
 /* ---------- Compilation and execution (XLA) ---------- */
-ArixTPUExecutable* arix_tpu_compile(const char* hlo_module, size_t hlo_len, ArixTPUContext* ctx);
-void               arix_tpu_executable_destroy(ArixTPUExecutable* exec);
-int                arix_tpu_execute(ArixTPUExecutable* exec,
-                                    ArixTensor** inputs, size_t num_inputs,
-                                    ArixTensor** outputs, size_t num_outputs,
-                                    ArixTPUContext* ctx);
+SNEPPXTPUExecutable* SNEPPX_tpu_compile(const char* hlo_module, size_t hlo_len, SNEPPXTPUContext* ctx);
+void               SNEPPX_tpu_executable_destroy(SNEPPXTPUExecutable* exec);
+int                SNEPPX_tpu_execute(SNEPPXTPUExecutable* exec,
+                                    SNEPPXTensor** inputs, size_t num_inputs,
+                                    SNEPPXTensor** outputs, size_t num_outputs,
+                                    SNEPPXTPUContext* ctx);
 
 /* ---------- Collective operations (v2.0) ---------- */
-int arix_tpu_all_reduce(void* send_buf, void* recv_buf, size_t count,
-                        int dtype, int reduce_op, ArixTPUContext* ctx);
+int SNEPPX_tpu_all_reduce(void* send_buf, void* recv_buf, size_t count,
+                        int dtype, int reduce_op, SNEPPXTPUContext* ctx);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_TPU_DRIVER_H */
+#endif /* SNEPPX_TPU_DRIVER_H */

@@ -1,5 +1,5 @@
-#ifndef ARIX_MODEL_CHECKING_H
-#define ARIX_MODEL_CHECKING_H
+#ifndef SNEPPX_MODEL_CHECKING_H
+#define SNEPPX_MODEL_CHECKING_H
 /*
  * S8 Formal Verification — Model Checking Framework
  * Lightweight model checking for crypto primitives, data flow, and invariants.
@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-#define ARIX_MODEL_MAX_STATES 1024
-#define ARIX_MODEL_MAX_TRANSITIONS 4096
-#define ARIX_MODEL_PROP_MAX_LEN 256
+#define SNEPPX_MODEL_MAX_STATES 1024
+#define SNEPPX_MODEL_MAX_TRANSITIONS 4096
+#define SNEPPX_MODEL_PROP_MAX_LEN 256
 
 typedef struct {
     uint32_t state_id;
@@ -22,14 +22,14 @@ typedef struct {
     int next_count;
     int is_accepting;
     int is_error;
-} ArixModelState;
+} SNEPPXModelState;
 
 typedef struct {
-    ArixModelState states[ARIX_MODEL_MAX_STATES];
+    SNEPPXModelState states[SNEPPX_MODEL_MAX_STATES];
     int state_count;
     int initial_state;
-    char property[ARIX_MODEL_PROP_MAX_LEN];
-} ArixFormalModel;
+    char property[SNEPPX_MODEL_PROP_MAX_LEN];
+} SNEPPXFormalModel;
 
 typedef struct {
     int total_states;
@@ -37,15 +37,15 @@ typedef struct {
     int deadlock_states;
     int error_states;
     int property_satisfied;
-    char counterexample[ARIX_MODEL_PROP_MAX_LEN];
-} ArixModelCheckResult;
+    char counterexample[SNEPPX_MODEL_PROP_MAX_LEN];
+} SNEPPXModelCheckResult;
 
-int  arix_model_init(ArixFormalModel* model);
-int  arix_model_add_state(ArixFormalModel* model, uint32_t state_id, int is_accepting, int is_error);
-int  arix_model_add_transition(ArixFormalModel* model, uint32_t from, uint32_t to);
-int  arix_model_set_property(ArixFormalModel* model, const char* property);
-ArixModelCheckResult arix_model_check(ArixFormalModel* model);
-int  arix_model_verify_invariant(ArixFormalModel* model, int (*invariant)(uint32_t state_id));
+int  SNEPPX_model_init(SNEPPXFormalModel* model);
+int  SNEPPX_model_add_state(SNEPPXFormalModel* model, uint32_t state_id, int is_accepting, int is_error);
+int  SNEPPX_model_add_transition(SNEPPXFormalModel* model, uint32_t from, uint32_t to);
+int  SNEPPX_model_set_property(SNEPPXFormalModel* model, const char* property);
+SNEPPXModelCheckResult SNEPPX_model_check(SNEPPXFormalModel* model);
+int  SNEPPX_model_verify_invariant(SNEPPXFormalModel* model, int (*invariant)(uint32_t state_id));
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
-#ifndef ARIX_FM_H
-#define ARIX_FM_H
+#ifndef SNEPPX_FM_H
+#define SNEPPX_FM_H
 
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
@@ -7,105 +7,105 @@
 #include <stdint.h>
 
 typedef enum {
-    ARIX_SYNC_ALL_REDUCE,
-    ARIX_SYNC_GOSSIP,
-    ARIX_SYNC_TOPOLOGY
-} ArixFMSyncMethod;
+    SNEPPX_SYNC_ALL_REDUCE,
+    SNEPPX_SYNC_GOSSIP,
+    SNEPPX_SYNC_TOPOLOGY
+} SNEPPXFMSyncMethod;
 
 typedef struct {
-    ArixTensor* keys;
-    ArixTensor* values;
-    ArixTensor* timestamps;
-    ArixTensor* access_counts;
+    SNEPPXTensor* keys;
+    SNEPPXTensor* values;
+    SNEPPXTensor* timestamps;
+    SNEPPXTensor* access_counts;
     size_t num_entries;
     size_t max_entries;
-} ArixFMMemoryBank;
+} SNEPPXFMMemoryBank;
 
 typedef struct {
     size_t node_id;
-    ArixFMMemoryBank* memory_bank;
-    ArixTensor* gradient_accumulator;
+    SNEPPXFMMemoryBank* memory_bank;
+    SNEPPXTensor* gradient_accumulator;
     uint64_t last_sync_time;
     int is_online;
     float trust_score;
-} ArixFMNode;
+} SNEPPXFMNode;
 
 typedef struct {
     size_t num_nodes;
     size_t memory_dim;
     size_t memory_capacity;
     size_t sync_interval;
-    ArixFMSyncMethod sync_method;
+    SNEPPXFMSyncMethod sync_method;
     float compression_ratio;
     float privacy_epsilon;
     int catastrophic_forgetting_protection;
     float ewm_alpha;
-} ArixFMConfig;
+} SNEPPXFMConfig;
 
 typedef struct {
-    ArixTensor* global_memory;
+    SNEPPXTensor* global_memory;
     size_t sync_round;
     float* node_contributions;
     size_t* conflict_log;
     size_t conflict_count;
-} ArixFMSyncState;
+} SNEPPXFMSyncState;
 
 typedef struct {
-    ArixFMNode** nodes;
-    ArixFMConfig config;
-    ArixFMSyncState sync_state;
+    SNEPPXFMNode** nodes;
+    SNEPPXFMConfig config;
+    SNEPPXFMSyncState sync_state;
     size_t step_counter;
-} ArixFMController;
+} SNEPPXFMController;
 
-ArixFMConfig arix_fm_config_default(void);
-ArixFMMemoryBank* arix_fm_memory_bank_create(size_t memory_dim, size_t capacity);
-void arix_fm_memory_bank_destroy(ArixFMMemoryBank* bank);
-int arix_fm_memory_bank_write(ArixFMMemoryBank* bank, const ArixTensor* key, const ArixTensor* value);
-ArixTensor* arix_fm_memory_bank_read(ArixFMMemoryBank* bank, const ArixTensor* key);
-void arix_fm_memory_bank_forget(ArixFMMemoryBank* bank, float forget_rate);
-ArixFMNode* arix_fm_node_create(size_t node_id, size_t memory_dim, size_t capacity);
-void arix_fm_node_destroy(ArixFMNode* node);
-ArixFMController* arix_fm_controller_create(const ArixFMConfig* config);
-void arix_fm_controller_destroy(ArixFMController* ctrl);
-int arix_fm_sync_all_reduce(ArixFMController* ctrl);
-int arix_fm_sync_gossip(ArixFMController* ctrl, size_t num_pairs);
-int arix_fm_sync_topology(ArixFMController* ctrl);
-ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio);
-void arix_fm_add_privacy_noise(ArixTensor* data, float epsilon);
-int arix_fm_forward(ArixFMController* ctrl, size_t node_id, const ArixTensor* input, ArixTensor** output);
+SNEPPXFMConfig SNEPPX_fm_config_default(void);
+SNEPPXFMMemoryBank* SNEPPX_fm_memory_bank_create(size_t memory_dim, size_t capacity);
+void SNEPPX_fm_memory_bank_destroy(SNEPPXFMMemoryBank* bank);
+int SNEPPX_fm_memory_bank_write(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key, const SNEPPXTensor* value);
+SNEPPXTensor* SNEPPX_fm_memory_bank_read(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key);
+void SNEPPX_fm_memory_bank_forget(SNEPPXFMMemoryBank* bank, float forget_rate);
+SNEPPXFMNode* SNEPPX_fm_node_create(size_t node_id, size_t memory_dim, size_t capacity);
+void SNEPPX_fm_node_destroy(SNEPPXFMNode* node);
+SNEPPXFMController* SNEPPX_fm_controller_create(const SNEPPXFMConfig* config);
+void SNEPPX_fm_controller_destroy(SNEPPXFMController* ctrl);
+int SNEPPX_fm_sync_all_reduce(SNEPPXFMController* ctrl);
+int SNEPPX_fm_sync_gossip(SNEPPXFMController* ctrl, size_t num_pairs);
+int SNEPPX_fm_sync_topology(SNEPPXFMController* ctrl);
+SNEPPXTensor* SNEPPX_fm_compress_gradients(const SNEPPXTensor* gradients, float ratio);
+void SNEPPX_fm_add_privacy_noise(SNEPPXTensor* data, float epsilon);
+int SNEPPX_fm_forward(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* input, SNEPPXTensor** output);
 
 // Training graph support (FM has no trainable params, pass-through only)
-size_t arix_fm_get_params(const ArixFMController* ctrl, ArixTensor** out_params, size_t max_params);
-int arix_fm_build_train_graph(ArixFMController* ctrl, ArixTape* tape,
-                               ArixVariable* input_var,
-                               ArixVariable** weight_vars, size_t num_weights,
-                               ArixVariable** output_var);
+size_t SNEPPX_fm_get_params(const SNEPPXFMController* ctrl, SNEPPXTensor** out_params, size_t max_params);
+int SNEPPX_fm_build_train_graph(SNEPPXFMController* ctrl, SNEPPXTape* tape,
+                               SNEPPXVariable* input_var,
+                               SNEPPXVariable** weight_vars, size_t num_weights,
+                               SNEPPXVariable** output_var);
 
 // ── Error-compensated gradient compression (EF-SGD) ──────────────────────────
 
 typedef struct {
-    ArixTensor* error_buffer;
-    ArixTensor* compressed_grad;
+    SNEPPXTensor* error_buffer;
+    SNEPPXTensor* compressed_grad;
     float compression_ratio;
     size_t dim;
-} ArixFMErrorFeedback;
+} SNEPPXFMErrorFeedback;
 
-ArixFMErrorFeedback* arix_fm_error_feedback_create(size_t dim, float ratio);
-void arix_fm_error_feedback_destroy(ArixFMErrorFeedback* ef);
-ArixTensor* arix_fm_compress_with_error(ArixFMErrorFeedback* ef, const ArixTensor* gradient);
+SNEPPXFMErrorFeedback* SNEPPX_fm_error_feedback_create(size_t dim, float ratio);
+void SNEPPX_fm_error_feedback_destroy(SNEPPXFMErrorFeedback* ef);
+SNEPPXTensor* SNEPPX_fm_compress_with_error(SNEPPXFMErrorFeedback* ef, const SNEPPXTensor* gradient);
 
 // ── Exponential moving average (catastrophic forgetting) ─────────────────────
 
-void arix_fm_ewm_update(ArixFMMemoryBank* bank, float alpha);
+void SNEPPX_fm_ewm_update(SNEPPXFMMemoryBank* bank, float alpha);
 
 // ── Adaptive sync frequency ──────────────────────────────────────────────────
 
-float arix_fm_compute_change_rate(ArixFMMemoryBank* bank, const ArixTensor* new_values);
-size_t arix_fm_adaptive_sync_interval(ArixFMController* ctrl, float base_interval);
+float SNEPPX_fm_compute_change_rate(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* new_values);
+size_t SNEPPX_fm_adaptive_sync_interval(SNEPPXFMController* ctrl, float base_interval);
 
 // ── Gradient send / receive ──────────────────────────────────────────────────
 
-int arix_fm_send_gradients(ArixFMController* ctrl, size_t node_id, const ArixTensor* gradients);
-int arix_fm_receive_gradients(ArixFMController* ctrl, size_t node_id, ArixTensor* aggregated);
+int SNEPPX_fm_send_gradients(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* gradients);
+int SNEPPX_fm_receive_gradients(SNEPPXFMController* ctrl, size_t node_id, SNEPPXTensor* aggregated);
 
-#endif /* ARIX_FM_H */
+#endif /* SNEPPX_FM_H */

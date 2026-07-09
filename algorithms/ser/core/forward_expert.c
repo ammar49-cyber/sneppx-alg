@@ -11,7 +11,7 @@ static float swish(float x) {
     return x / (1.0f + expf(-x));
 }
 
-void arix_ser_expert_forward(const ArixExpert* expert, const ArixTensor* input, ArixTensor* output) {
+void SNEPPX_ser_expert_forward(const SNEPPXExpert* expert, const SNEPPXTensor* input, SNEPPXTensor* output) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];
     size_t e_dim = expert->w1->shape[0];
@@ -37,9 +37,9 @@ void arix_ser_expert_forward(const ArixExpert* expert, const ArixTensor* input, 
                 sum += w1_data[e * i_dim + i] * in_t[i];
             }
             switch (expert->activation) {
-                case ARIX_ACT_RELU: hidden[e] = (sum > 0.0f) ? sum : 0.0f; break;
-                case ARIX_ACT_GELU: hidden[e] = gelu(sum); break;
-                case ARIX_ACT_SWISH: hidden[e] = swish(sum); break;
+                case SNEPPX_ACT_RELU: hidden[e] = (sum > 0.0f) ? sum : 0.0f; break;
+                case SNEPPX_ACT_GELU: hidden[e] = gelu(sum); break;
+                case SNEPPX_ACT_SWISH: hidden[e] = swish(sum); break;
                 default: hidden[e] = sum; break;
             }
         }

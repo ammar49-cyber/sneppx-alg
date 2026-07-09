@@ -14,26 +14,26 @@ static int tests_failed = 0;
 
 void test_vm_add() {
     TEST("vm_add_registers");
-    arix::ArixObfVM vm;
+    SNEPPX::SNEPPXObfVM vm;
 
     std::vector<uint8_t> bytecode;
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(0);
     bytecode.push_back(10);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(1);
     bytecode.push_back(20);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::ADD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::ADD));
     bytecode.push_back(0);
     bytecode.push_back(1);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::HALT));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::HALT));
     bytecode.push_back(0);
     bytecode.push_back(0);
     bytecode.push_back(0);
@@ -47,26 +47,26 @@ void test_vm_add() {
 
 void test_vm_loop() {
     TEST("vm_simple_loop");
-    arix::ArixObfVM vm;
+    SNEPPX::SNEPPXObfVM vm;
 
     std::vector<uint8_t> bytecode;
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(0);
     bytecode.push_back(0);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(1);
     bytecode.push_back(5);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::ADD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::ADD));
     bytecode.push_back(0);
     bytecode.push_back(1);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::HALT));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::HALT));
     bytecode.push_back(0);
     bytecode.push_back(0);
     bytecode.push_back(0);
@@ -80,16 +80,16 @@ void test_vm_loop() {
 
 void test_handler_encryption() {
     TEST("handler_encryption");
-    arix::ArixObfVM vm;
+    SNEPPX::SNEPPXObfVM vm;
 
     vm.encrypt_handler_table();
 
     std::vector<uint8_t> bytecode;
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(0);
     bytecode.push_back(42);
     bytecode.push_back(0);
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::HALT));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::HALT));
     bytecode.push_back(0);
     bytecode.push_back(0);
     bytecode.push_back(0);
@@ -103,36 +103,36 @@ void test_handler_encryption() {
 
 void test_vm_arithmetic() {
     TEST("vm_arithmetic_chain");
-    arix::ArixObfVM vm;
+    SNEPPX::SNEPPXObfVM vm;
 
     std::vector<uint8_t> bytecode;
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(0);
     bytecode.push_back(7);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(1);
     bytecode.push_back(3);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::MUL));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::MUL));
     bytecode.push_back(0);
     bytecode.push_back(1);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::LOAD));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::LOAD));
     bytecode.push_back(2);
     bytecode.push_back(2);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::SUB));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::SUB));
     bytecode.push_back(0);
     bytecode.push_back(2);
     bytecode.push_back(0);
 
-    bytecode.push_back(static_cast<uint8_t>(arix::ArixObfBytecode::HALT));
+    bytecode.push_back(static_cast<uint8_t>(SNEPPX::SNEPPXObfBytecode::HALT));
     bytecode.push_back(0);
     bytecode.push_back(0);
     bytecode.push_back(0);

@@ -74,7 +74,7 @@ static int add_process(int pid, const char *comm) {
     return process_count++;
 }
 
-int arix_breakout_detect_ns_change(int pid, const char *comm) {
+int SNEPPX_breakout_detect_ns_change(int pid, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
     if (idx < 0) return 0;
@@ -89,7 +89,7 @@ int arix_breakout_detect_ns_change(int pid, const char *comm) {
     return 0;
 }
 
-int arix_breakout_detect_mount(int pid, const char *target, const char *comm) {
+int SNEPPX_breakout_detect_mount(int pid, const char *target, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
     if (idx < 0) return 0;
@@ -114,7 +114,7 @@ int arix_breakout_detect_mount(int pid, const char *target, const char *comm) {
     return 0;
 }
 
-int arix_breakout_detect_capability(int pid, uint64_t cap_effective, const char *comm) {
+int SNEPPX_breakout_detect_capability(int pid, uint64_t cap_effective, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
     if (idx < 0) return 0;
@@ -142,7 +142,7 @@ int arix_breakout_detect_capability(int pid, uint64_t cap_effective, const char 
     return 0;
 }
 
-int arix_breakout_check_file_access(const char *path) {
+int SNEPPX_breakout_check_file_access(const char *path) {
     if (!path) return 0;
     for (int i = 0; suspicious_paths[i]; i++) {
         if (strstr(path, suspicious_paths[i]) == path ||
@@ -155,7 +155,7 @@ int arix_breakout_check_file_access(const char *path) {
     return 0;
 }
 
-int arix_breakout_detect_syscall(int pid, const char *syscall_name, const char *comm) {
+int SNEPPX_breakout_detect_syscall(int pid, const char *syscall_name, const char *comm) {
     if (!syscall_name) return 0;
     for (int i = 0; suspicious_syscalls[i]; i++) {
         if (strcmp(syscall_name, suspicious_syscalls[i]) == 0) {
@@ -173,7 +173,7 @@ int arix_breakout_detect_syscall(int pid, const char *syscall_name, const char *
     return 0;
 }
 
-int arix_breakout_add_watch_file(const char *path) {
+int SNEPPX_breakout_add_watch_file(const char *path) {
     if (!path || watch_file_count >= BREAKOUT_WATCH_FILES) return -1;
     strncpy(watch_files[watch_file_count].path, path, 255);
     watch_files[watch_file_count].access_count = 0;
@@ -183,7 +183,7 @@ int arix_breakout_add_watch_file(const char *path) {
     return 0;
 }
 
-int arix_breakout_get_stats(breakout_stats_t *stats) {
+int SNEPPX_breakout_get_stats(breakout_stats_t *stats) {
     if (!stats) return -1;
     stats->total_breakout_attempts = total_breakout_attempts;
     stats->total_blocks = total_blocks;
@@ -195,7 +195,7 @@ int arix_breakout_get_stats(breakout_stats_t *stats) {
     return 0;
 }
 
-int arix_breakout_reset(void) {
+int SNEPPX_breakout_reset(void) {
     process_count = 0;
     watch_file_count = 0;
     total_breakout_attempts = 0;

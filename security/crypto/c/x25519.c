@@ -72,14 +72,14 @@ static void fe_invert(uint64_t* r, const uint64_t* a) {
 }
 #endif
 
-void arix_x25519_clamp(uint8_t scalar[32]) {
+void SNEPPX_x25519_clamp(uint8_t scalar[32]) {
     scalar[0]&=248; scalar[31]&=127; scalar[31]|=64;
 }
 
 #ifndef NO_UINT128
-void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
+void SNEPPX_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
     uint64_t x[4],z[4],x1[4],z1[4],a[4],b[4],c[4],d[4],e[4],f[4];
-    uint8_t e_[32]; memcpy(e_,scalar,32); arix_x25519_clamp(e_);
+    uint8_t e_[32]; memcpy(e_,scalar,32); SNEPPX_x25519_clamp(e_);
 
     memset(x,0,32); memset(z,0,32); x[0]=1;
     for (int i=0;i<4;i++) { x1[i]=((uint64_t*)point)[i]; z1[i]=0; } z1[0]=1;
@@ -101,24 +101,24 @@ void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const ui
     for (int i=0;i<32;i++) out[31-i]=p[i];
 }
 #else
-void arix_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
+void SNEPPX_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
     (void)out; (void)scalar; (void)point;
 }
 #endif
 
-void arix_x25519_keygen(uint8_t public_key[32], uint8_t secret_key[32]) {
-    arix_random_bytes(secret_key,32);
-    arix_x25519_clamp(secret_key);
-    arix_x25519_scalar_mult(public_key,secret_key,basepoint);
+void SNEPPX_x25519_keygen(uint8_t public_key[32], uint8_t secret_key[32]) {
+    SNEPPX_random_bytes(secret_key,32);
+    SNEPPX_x25519_clamp(secret_key);
+    SNEPPX_x25519_scalar_mult(public_key,secret_key,basepoint);
 }
 
-int arix_x25519_shared_secret(uint8_t shared[32], const uint8_t secret_key[32], const uint8_t public_key[32]) {
+int SNEPPX_x25519_shared_secret(uint8_t shared[32], const uint8_t secret_key[32], const uint8_t public_key[32]) {
     if (!shared||!secret_key||!public_key) return -1;
-    arix_x25519_scalar_mult(shared,secret_key,public_key);
+    SNEPPX_x25519_scalar_mult(shared,secret_key,public_key);
     return 0;
 }
 
-int arix_x25519_scalar_valid(const uint8_t scalar[32]) {
+int SNEPPX_x25519_scalar_valid(const uint8_t scalar[32]) {
     if (!scalar) return 0;
     for (int i=0;i<32;i++) if (scalar[i]) return 1;
     return 0;

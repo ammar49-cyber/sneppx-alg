@@ -19,7 +19,7 @@ static void layer_norm(float* data, size_t n, const float* gamma, const float* b
     }
 }
 
-static int process_sequence(ArixHSSModel* model, const float* input_seq,
+static int process_sequence(SNEPPXHSSModel* model, const float* input_seq,
                             float* output_seq, size_t seq_len, size_t input_dim) {
     size_t s_dim = model->config.state_dim;
     size_t o_dim = model->config.output_dim;
@@ -33,8 +33,8 @@ static int process_sequence(ArixHSSModel* model, const float* input_seq,
     memcpy(cur_buf, input_seq, seq_len * input_dim * sizeof(float));
 
     for (size_t l = 0; l < model->config.num_layers; l++) {
-        ArixHSSLayer* layer = model->layers[l];
-        arix_hss_discretize(layer);
+        SNEPPXHSSLayer* layer = model->layers[l];
+        SNEPPX_hss_discretize(layer);
 
         float* x_proj_data = (float*)layer->x_proj->data;
         float* x_proj_bias_data = (float*)layer->x_proj_bias->data;
@@ -56,20 +56,20 @@ static int process_sequence(ArixHSSModel* model, const float* input_seq,
         }
 
         size_t shape_xs[] = {seq_len, cur_dim};
-        ArixTensor x_seq;
+        SNEPPXTensor x_seq;
         x_seq.data = cur_buf;
         x_seq.shape = shape_xs;
         x_seq.ndim = 2;
         x_seq.size = seq_len * cur_dim;
         x_seq.item_size = sizeof(float);
-        x_seq.dtype = ARIX_FLOAT32;
+        x_seq.dtype = SNEPPX_FLOAT32;
         x_seq.strides = NULL;
 
         size_t shape_hs[] = {seq_len, s_dim};
         size_t shape_ys[] = {seq_len, o_dim};
-        ArixTensor h_seq;
+        SNEPPXTensor h_seq;
         float* h_seq_data = (float*)malloc(seq_len * s_dim * sizeof(float));
-        ArixTensor y_seq;
+        SNEPPXTensor y_seq;
         float* y_seq_data = (l == model->config.num_layers - 1) ? output_seq : buf;
         if (!h_seq_data) { free(buf); free(cur_buf); return -1; }
         h_seq.data = h_seq_data;
@@ -77,22 +77,22 @@ static int process_sequence(ArixHSSModel* model, const float* input_seq,
         h_seq.ndim = 2;
         h_seq.size = seq_len * s_dim;
         h_seq.item_size = sizeof(float);
-        h_seq.dtype = ARIX_FLOAT32;
+        h_seq.dtype = SNEPPX_FLOAT32;
         h_seq.strides = NULL;
         y_seq.data = y_seq_data;
         y_seq.shape = shape_ys;
         y_seq.ndim = 2;
         y_seq.size = seq_len * o_dim;
         y_seq.item_size = sizeof(float);
-        y_seq.dtype = ARIX_FLOAT32;
+        y_seq.dtype = SNEPPX_FLOAT32;
         y_seq.strides = NULL;
 
         if (model->config.use_hierarchical) {
-            arix_hss_hierarchical_scan(layer, &x_seq, &y_seq);
+            SNEPPX_hss_hierarchical_scan(layer, &x_seq, &y_seq);
         } else if (model->config.use_parallel_scan && s_dim <= 1024) {
-            arix_hss_parallel_scan(layer, &x_seq, &h_seq, &y_seq);
+            SNEPPX_hss_parallel_scan(layer, &x_seq, &h_seq, &y_seq);
         } else {
-            arix_hss_scan(layer, &x_seq, &h_seq, &y_seq);
+            SNEPPX_hss_scan(layer, &x_seq, &h_seq, &y_seq);
         }
 
         free(h_seq_data);
@@ -111,7 +111,7 @@ static int process_sequence(ArixHSSModel* model, const float* input_seq,
     return 0;
 }
 
-int arix_hss_forward(ArixHSSModel* model, const ArixTensor* input, ArixTensor** output) {
+int SNEPPX_hss_forward(SNEPPXHSSModel* model, const SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!model || !input || !output) return -1;
 
     size_t batch, seq_len, input_dim;
@@ -129,7 +129,7 @@ int arix_hss_forward(ArixHSSModel* model, const ArixTensor* input, ArixTensor** 
 
     size_t o_dim = model->config.output_dim;
     size_t shape_out[] = {batch, seq_len, o_dim};
-    *output = arix_tensor_create(shape_out, 3, ARIX_FLOAT32);
+    *output = SNEPPX_tensor_create(shape_out, 3, SNEPPX_FLOAT32);
     if (!*output) return -1;
 
     float* input_data = (float*)input->data;

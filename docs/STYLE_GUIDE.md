@@ -1,13 +1,13 @@
 # Style Guide
 
-ARIX-Algo follows strict coding conventions for consistency across the codebase.
+SNEPPX-Algo follows strict coding conventions for consistency across the codebase.
 
 ## C Style
 
 ### Naming
-- **Functions**: `snake_case` with `arix_` prefix: `arix_tensor_create`, `arix_hss_forward`
-- **Types**: `PascalCase` with `Arix` prefix: `ArixTensor`, `ArixHSSConfig`
-- **Macros**: `UPPER_SNAKE_CASE`: `ARIX_FLOAT32`, `ARIX_MAX_DIMS`
+- **Functions**: `snake_case` with `SNEPPX_` prefix: `SNEPPX_tensor_create`, `SNEPPX_hss_forward`
+- **Types**: `PascalCase` with `SNEPPX` prefix: `SNEPPXTensor`, `SNEPPXHSSConfig`
+- **Macros**: `UPPER_SNAKE_CASE`: `SNEPPX_FLOAT32`, `SNEPPX_MAX_DIMS`
 - **Constants**: `UPPER_SNAKE_CASE`: `MAX_TOKEN_LEN`
 - **File-scope statics**: `s_` prefix: `s_global_pool`
 
@@ -23,7 +23,7 @@ ARIX-Algo follows strict coding conventions for consistency across the codebase.
 - **Comments**: `//` for single line, `/* */` for block. No trailing comments on code lines.
 
 ### Headers
-- Include guards: `#ifndef ARIX_MODULE_NAME_H` / `#define ARIX_MODULE_NAME_H`
+- Include guards: `#ifndef SNEPPX_MODULE_NAME_H` / `#define SNEPPX_MODULE_NAME_H`
 - Standard headers first, then project headers, alphabetically
 - Forward declarations preferred over includes when possible
 
@@ -34,7 +34,7 @@ ARIX-Algo follows strict coding conventions for consistency across the codebase.
 - Never assert in production code paths
 
 ### Memory
-- Always use `arix_malloc` / `arix_free` with size tracking
+- Always use `SNEPPX_malloc` / `SNEPPX_free` with size tracking
 - Parameter order: output params before input params where possible
 - Document ownership transfer
 

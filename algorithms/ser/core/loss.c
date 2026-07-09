@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-float arix_ser_load_balance_loss(const ArixTensor* gate_weights, const int* expert_indices, size_t num_tokens) {
+float SNEPPX_ser_load_balance_loss(const SNEPPXTensor* gate_weights, const int* expert_indices, size_t num_tokens) {
     size_t n_act = gate_weights->shape[1];
     int n_exp = 0;
     for (size_t i = 0; i < num_tokens * n_act; i++) {

@@ -14,9 +14,9 @@ static int tests_failed = 0;
 
 void test_keypair_generate(void) {
     printf("\n--- test_keypair_generate ---\n");
-    ArixEd25519Keypair kps[100];
+    SNEPPXEd25519Keypair kps[100];
     for (int i = 0; i < 100; i++) {
-        int ret = arix_ed25519_keypair_generate(&kps[i]);
+        int ret = SNEPPX_ed25519_keypair_generate(&kps[i]);
         TEST("keypair generate success", ret == 0);
         if (i > 0) {
             int dup = memcmp(kps[i].public_key, kps[i-1].public_key, 32) == 0;
@@ -30,60 +30,60 @@ void test_keypair_generate(void) {
 
 void test_sign_verify(void) {
     printf("\n--- test_sign_verify ---\n");
-    ArixEd25519Keypair kp;
-    arix_ed25519_keypair_generate(&kp);
+    SNEPPXEd25519Keypair kp;
+    SNEPPX_ed25519_keypair_generate(&kp);
 
-    uint8_t msg[] = "Hello, ARIX-Algo Ed25519!";
-    ArixEd25519Signature sig;
-    int ret = arix_ed25519_sign(&kp, msg, sizeof(msg), &sig);
+    uint8_t msg[] = "Hello, SNEPPX-Algo Ed25519!";
+    SNEPPXEd25519Signature sig;
+    int ret = SNEPPX_ed25519_sign(&kp, msg, sizeof(msg), &sig);
     TEST("sign success", ret == 0);
 
-    ret = arix_ed25519_verify(kp.public_key, msg, sizeof(msg), &sig);
+    ret = SNEPPX_ed25519_verify(kp.public_key, msg, sizeof(msg), &sig);
     TEST("verify success", ret == 1);
 
-    ArixEd25519Keypair wrong_kp;
-    arix_ed25519_keypair_generate(&wrong_kp);
-    ret = arix_ed25519_verify(wrong_kp.public_key, msg, sizeof(msg), &sig);
+    SNEPPXEd25519Keypair wrong_kp;
+    SNEPPX_ed25519_keypair_generate(&wrong_kp);
+    ret = SNEPPX_ed25519_verify(wrong_kp.public_key, msg, sizeof(msg), &sig);
     TEST("verify wrong key fails", ret == 0 || ret == -1);
 }
 
 void test_signature_malleability(void) {
     printf("\n--- test_signature_malleability ---\n");
-    ArixEd25519Keypair kp;
-    arix_ed25519_keypair_generate(&kp);
+    SNEPPXEd25519Keypair kp;
+    SNEPPX_ed25519_keypair_generate(&kp);
     uint8_t msg[] = "Test message";
-    ArixEd25519Signature sig, modified;
-    arix_ed25519_sign(&kp, msg, sizeof(msg), &sig);
+    SNEPPXEd25519Signature sig, modified;
+    SNEPPX_ed25519_sign(&kp, msg, sizeof(msg), &sig);
     memcpy(&modified, &sig, sizeof(sig));
 
     modified.data[0] ^= 1;
-    int ret = arix_ed25519_verify(kp.public_key, msg, sizeof(msg), &modified);
+    int ret = SNEPPX_ed25519_verify(kp.public_key, msg, sizeof(msg), &modified);
     TEST("modified S fails", ret == 0 || ret == -1);
 
     memcpy(&modified, &sig, sizeof(sig));
     modified.data[10] ^= 1;
-    ret = arix_ed25519_verify(kp.public_key, msg, sizeof(msg), &modified);
+    ret = SNEPPX_ed25519_verify(kp.public_key, msg, sizeof(msg), &modified);
     TEST("modified R fails", ret == 0 || ret == -1);
 }
 
 void test_large_message(void) {
     printf("\n--- test_large_message ---\n");
-    ArixEd25519Keypair kp;
-    arix_ed25519_keypair_generate(&kp);
+    SNEPPXEd25519Keypair kp;
+    SNEPPX_ed25519_keypair_generate(&kp);
     size_t len = 1024 * 1024;
     uint8_t* msg = (uint8_t*)malloc(len);
     if (!msg) { printf("SKIP: large_message (malloc failed)\n"); return; }
     memset(msg, 'A', len);
-    ArixEd25519Signature sig;
-    int ret = arix_ed25519_sign(&kp, msg, len, &sig);
+    SNEPPXEd25519Signature sig;
+    int ret = SNEPPX_ed25519_sign(&kp, msg, len, &sig);
     TEST("sign 1MB", ret == 0);
-    ret = arix_ed25519_verify(kp.public_key, msg, len, &sig);
+    ret = SNEPPX_ed25519_verify(kp.public_key, msg, len, &sig);
     TEST("verify 1MB", ret == 1);
     free(msg);
 }
 
 int main(void) {
-    printf("=== ARIX-Ed25519 Test Suite ===\n");
+    printf("=== SNEPPX-Ed25519 Test Suite ===\n");
     test_keypair_generate();
     test_sign_verify();
     test_signature_malleability();

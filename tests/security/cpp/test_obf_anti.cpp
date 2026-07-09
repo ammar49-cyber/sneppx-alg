@@ -13,7 +13,7 @@ static int tests_failed = 0;
 
 void test_detect_ptrace() {
     TEST("detect_ptrace_no_debugger");
-    arix::ArixAntiDebug anti;
+    SNEPPX::SNEPPXAntiDebug anti;
 
     bool detected = anti.detect_ptrace();
 
@@ -23,7 +23,7 @@ void test_detect_ptrace() {
 
 void test_timing() {
     TEST("timing_measurement");
-    arix::ArixAntiDebug anti;
+    SNEPPX::SNEPPXAntiDebug anti;
 
     bool anomaly = anti.detect_timing_anomaly();
 
@@ -33,7 +33,7 @@ void test_timing() {
 
 void test_breakpoint_scan() {
     TEST("breakpoint_scan");
-    arix::ArixAntiDebug anti;
+    SNEPPX::SNEPPXAntiDebug anti;
 
     uint8_t clean_code[] = { 0x48, 0x89, 0xE5, 0x48, 0x83, 0xEC, 0x20 };
     bool found_clean = anti.detect_breakpoint(clean_code, sizeof(clean_code));
@@ -48,7 +48,7 @@ void test_breakpoint_scan() {
 
 void test_detect_vm() {
     TEST("detect_vm");
-    arix::ArixAntiDebug anti;
+    SNEPPX::SNEPPXAntiDebug anti;
 
     bool is_vm = anti.detect_vm();
 
@@ -58,15 +58,15 @@ void test_detect_vm() {
 
 void test_action_config() {
     TEST("action_config");
-    arix::ArixAntiDebug anti;
+    SNEPPX::SNEPPXAntiDebug anti;
 
-    ASSERT(anti.get_action() == arix::ArixAntiDebugAction::WIPE_AND_EXIT, "default action");
+    ASSERT(anti.get_action() == SNEPPX::SNEPPXAntiDebugAction::WIPE_AND_EXIT, "default action");
 
-    anti.set_action(arix::ArixAntiDebugAction::CRASH);
-    ASSERT(anti.get_action() == arix::ArixAntiDebugAction::CRASH, "action change");
+    anti.set_action(SNEPPX::SNEPPXAntiDebugAction::CRASH);
+    ASSERT(anti.get_action() == SNEPPX::SNEPPXAntiDebugAction::CRASH, "action change");
 
-    anti.set_action(arix::ArixAntiDebugAction::SILENT_EXIT);
-    ASSERT(anti.get_action() == arix::ArixAntiDebugAction::SILENT_EXIT, "action change 2");
+    anti.set_action(SNEPPX::SNEPPXAntiDebugAction::SILENT_EXIT);
+    ASSERT(anti.get_action() == SNEPPX::SNEPPXAntiDebugAction::SILENT_EXIT, "action change 2");
 
     PASS();
 }

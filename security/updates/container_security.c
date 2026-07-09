@@ -48,16 +48,16 @@ static void hex_decode(uint8_t *out, const char *hex) {
         out[i/2] = (hexchar(hex[i]) << 4) | hexchar(hex[i+1]);
 }
 
-int arix_container_verify_image(const uint8_t *manifest, size_t manifest_len, const uint8_t *signature, size_t sig_len, const uint8_t *pubkey) {
+int SNEPPX_container_verify_image(const uint8_t *manifest, size_t manifest_len, const uint8_t *signature, size_t sig_len, const uint8_t *pubkey) {
     if (!manifest || !signature || !pubkey) return -1;
     uint8_t hash[32];
-    arix_sha256(hash, manifest, manifest_len);
+    SNEPPX_sha256(hash, manifest, manifest_len);
     for (size_t i = 0; i < 32 && i < sig_len; i++)
         if (signature[i] != hash[i]) return 1;
     return 0;
 }
 
-int arix_container_parse_manifest(const uint8_t *manifest, size_t len, container_manifest_t *out) {
+int SNEPPX_container_parse_manifest(const uint8_t *manifest, size_t len, container_manifest_t *out) {
     if (!manifest || !out) return -1;
     memset(out, 0, sizeof(container_manifest_t));
     const char *p = (const char *)manifest;
@@ -83,11 +83,11 @@ int arix_container_parse_manifest(const uint8_t *manifest, size_t len, container
     return 0;
 }
 
-int arix_container_verify_layer(const uint8_t *layer_data, size_t layer_len, const char *expected_digest) {
+int SNEPPX_container_verify_layer(const uint8_t *layer_data, size_t layer_len, const char *expected_digest) {
     if (!layer_data || !expected_digest) return -1;
     uint8_t hash[32];
     char hex[65];
-    arix_sha256(hash, layer_data, layer_len);
+    SNEPPX_sha256(hash, layer_data, layer_len);
     for (int i = 0; i < 32; i++) sprintf(hex + 2*i, "%02x", hash[i]);
     hex[64] = 0;
     const char *dig = strchr(expected_digest, ':');
@@ -95,14 +95,14 @@ int arix_container_verify_layer(const uint8_t *layer_data, size_t layer_len, con
     return strncmp(hex, dig + 1, 64) == 0 ? 0 : 1;
 }
 
-int arix_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *version) {
+int SNEPPX_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *version) {
     if (!doc) return -1;
     memset(doc, 0, sizeof(sbom_doc_t));
     strncpy(doc->image_name, image_name ? image_name : "unknown", 127);
     strncpy(doc->version, version ? version : "0.0.0", 31);
     doc->num_components = 0;
     strcpy(doc->format, "SPDX-2.3");
-    strcpy(doc->namespace_str, "https://arixalgo.dev/sbom/");
+    strcpy(doc->namespace_str, "https://SNEPPX_ALG.dev/sbom/");
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
     strftime(doc->created, 31, "%Y-%m-%dT%H:%M:%SZ", tm);
@@ -110,7 +110,7 @@ int arix_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *vers
     return 0;
 }
 
-int arix_sbom_add_component(sbom_doc_t *doc, const char *name, const char *version, const char *type, const char *supplier) {
+int SNEPPX_sbom_add_component(sbom_doc_t *doc, const char *name, const char *version, const char *type, const char *supplier) {
     if (!doc || !name || doc->num_components >= SBOM_MAX_COMPONENTS) return -1;
     sbom_component_t *comp = &doc->components[doc->num_components++];
     strncpy(comp->name, name, 127);
@@ -119,13 +119,13 @@ int arix_sbom_add_component(sbom_doc_t *doc, const char *name, const char *versi
     strncpy(comp->supplier, supplier ? supplier : "unknown", 127);
     uint8_t hash_input[256];
     size_t hlen = snprintf((char *)hash_input, 256, "%s:%s:%s", name, version, type);
-    arix_sha256(comp->hash, hash_input, hlen);
+    SNEPPX_sha256(comp->hash, hash_input, hlen);
     comp->size = 0;
     comp->has_checksum = 1;
     return 0;
 }
 
-int arix_sbom_validate(sbom_doc_t *doc) {
+int SNEPPX_sbom_validate(sbom_doc_t *doc) {
     if (!doc) return -1;
     if (doc->num_components == 0) return 1;
     for (int i = 0; i < doc->num_components; i++) {
@@ -136,7 +136,7 @@ int arix_sbom_validate(sbom_doc_t *doc) {
     return 0;
 }
 
-int arix_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len) {
+int SNEPPX_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len) {
     if (!doc || !out) return -1;
     size_t pos = 0;
     pos += snprintf(out + pos, out_len - pos,
@@ -154,7 +154,7 @@ int arix_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len) {
     return (int)pos;
 }
 
-int arix_container_scan_vulns(const char *image_name, const uint8_t *layer_data, size_t layer_len, vuln_result_t *results, int max_results) {
+int SNEPPX_container_scan_vulns(const char *image_name, const uint8_t *layer_data, size_t layer_len, vuln_result_t *results, int max_results) {
     if (!image_name || !results) return -1;
     int found = 0;
     for (int i = 0; i < num_vulns && found < max_results; i++) {
@@ -170,7 +170,7 @@ int arix_container_scan_vulns(const char *image_name, const uint8_t *layer_data,
     return found;
 }
 
-int arix_container_add_vuln(const char *cve_id, const char *package, const char *severity, double cvss) {
+int SNEPPX_container_add_vuln(const char *cve_id, const char *package, const char *severity, double cvss) {
     if (!cve_id || !package || num_vulns >= VULN_MAX_ENTRIES) return -1;
     strncpy(vuln_db[num_vulns].cve_id, cve_id, 31);
     strncpy(vuln_db[num_vulns].package, package, 127);
@@ -182,7 +182,7 @@ int arix_container_add_vuln(const char *cve_id, const char *package, const char 
     return 0;
 }
 
-int arix_container_get_stats(container_stats_t *stats) {
+int SNEPPX_container_get_stats(container_stats_t *stats) {
     if (!stats) return -1;
     stats->num_images = num_images;
     stats->num_vulns_in_db = num_vulns;
@@ -200,7 +200,7 @@ int arix_container_get_stats(container_stats_t *stats) {
     return 0;
 }
 
-int arix_container_init_vuln_db(void) {
+int SNEPPX_container_init_vuln_db(void) {
     const char *default_vulns[] = {
         "CVE-2024-21626", "runc", "CRITICAL", "9.8",
         "CVE-2024-3094", "xz", "CRITICAL", "10.0",
@@ -220,7 +220,7 @@ int arix_container_init_vuln_db(void) {
     };
     int n = sizeof(default_vulns) / (4 * sizeof(char *));
     for (int i = 0; i < n; i++) {
-        arix_container_add_vuln(
+        SNEPPX_container_add_vuln(
             default_vulns[i * 4],
             default_vulns[i * 4 + 1],
             default_vulns[i * 4 + 2],

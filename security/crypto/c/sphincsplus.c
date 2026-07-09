@@ -21,7 +21,7 @@
 #define SPX_TREE_HEIGHT (SPX_FULL_HEIGHT / SPX_D)
 
 static void spx_hash(uint8_t *out, const uint8_t *in, size_t inlen) {
-    arix_sha256(out, in, inlen);
+    SNEPPX_sha256(out, in, inlen);
 }
 
 static void spx_thash(uint8_t *out, const uint8_t *in, size_t inlen, const uint8_t *pub_seed, uint32_t addr[8]) {
@@ -33,7 +33,7 @@ static void spx_thash(uint8_t *out, const uint8_t *in, size_t inlen, const uint8
 static void spx_wots_genpk(uint8_t *pk, const uint8_t *sk_seed, const uint8_t *pub_seed, uint32_t addr[8]) {
     uint8_t sk[SPX_WOTS_LEN * SPX_N];
     for (int i = 0; i < SPX_WOTS_LEN; i++) {
-        arix_random_bytes(sk + i * SPX_N, SPX_N);
+        SNEPPX_random_bytes(sk + i * SPX_N, SPX_N);
         uint8_t tmp[SPX_N];
         memcpy(tmp, sk + i * SPX_N, SPX_N);
         for (int j = 0; j < (1 << SPX_WOTS_LOGW) - 1; j++) {
@@ -57,7 +57,7 @@ static void spx_wots_sign(uint8_t *sig, const uint8_t *msg, const uint8_t *sk_se
     basew[SPX_WOTS_LEN1 + 2] = (csum >> 8) & 0xf;
     for (int i = 0; i < SPX_WOTS_LEN; i++) {
         uint8_t sk[SPX_N];
-        arix_random_bytes(sk, SPX_N);
+        SNEPPX_random_bytes(sk, SPX_N);
         uint8_t tmp[SPX_N];
         memcpy(tmp, sk, SPX_N);
         for (int j = 0; j < basew[i]; j++) {
@@ -74,7 +74,7 @@ static void spx_fors_genpk(uint8_t *pk, const uint8_t *sk_seed, const uint8_t *p
     uint8_t leaves[SPX_FORS_TREES * SPX_FORS_INDICES * SPX_N];
     for (int t = 0; t < SPX_FORS_TREES; t++) {
         for (int i = 0; i < SPX_FORS_INDICES; i++) {
-            arix_random_bytes(leaves + (t * SPX_FORS_INDICES + i) * SPX_N, SPX_N);
+            SNEPPX_random_bytes(leaves + (t * SPX_FORS_INDICES + i) * SPX_N, SPX_N);
         }
         uint8_t level[SPX_FORS_INDICES * SPX_N];
         memcpy(level, leaves + t * SPX_FORS_INDICES * SPX_N, SPX_FORS_INDICES * SPX_N);
@@ -103,7 +103,7 @@ static void spx_fors_sign(uint8_t *sig, uint8_t *pk, const uint8_t *md, const ui
         int idx = indices[t];
         uint8_t leaf[SPX_FORS_INDICES * SPX_N];
         for (int i = 0; i < SPX_FORS_INDICES; i++)
-            arix_random_bytes(leaf + i * SPX_N, SPX_N);
+            SNEPPX_random_bytes(leaf + i * SPX_N, SPX_N);
         uint8_t auth[SPX_FORS_HEIGHT * SPX_N];
         int pos = idx;
         for (int h = 0; h < SPX_FORS_HEIGHT; h++) {
@@ -157,7 +157,7 @@ static void spx_ht_treehash(uint8_t *root, const uint8_t *sk_seed, const uint8_t
 
 static void spx_ht_sign(uint8_t *sig, size_t *siglen, const uint8_t *msg, const uint8_t *sk_seed, const uint8_t *pub_seed) {
     uint8_t md[SPX_FORS_BYTES];
-    arix_random_bytes(md, SPX_FORS_BYTES);
+    SNEPPX_random_bytes(md, SPX_FORS_BYTES);
     uint8_t fors_pk[SPX_FORS_TREES * SPX_N];
     uint32_t fors_addr[8] = {0};
     spx_fors_sign(sig, fors_pk, md, sk_seed, pub_seed, fors_addr);
@@ -191,12 +191,12 @@ static void spx_ht_sign(uint8_t *sig, size_t *siglen, const uint8_t *msg, const 
     *siglen = pos;
 }
 
-int arix_sphincs_keygen(uint8_t *pk, uint8_t *sk, int variant) {
+int SNEPPX_sphincs_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     uint8_t sk_seed[SPX_N], sk_prf[SPX_N], pub_seed[SPX_N];
-    arix_random_bytes(sk_seed, SPX_N);
-    arix_random_bytes(sk_prf, SPX_N);
-    arix_random_bytes(pub_seed, SPX_N);
+    SNEPPX_random_bytes(sk_seed, SPX_N);
+    SNEPPX_random_bytes(sk_prf, SPX_N);
+    SNEPPX_random_bytes(pub_seed, SPX_N);
     uint32_t addr[8] = {0};
     spx_ht_treehash(pk, sk_seed, pub_seed, addr, SPX_FULL_HEIGHT);
     memcpy(sk, sk_seed, SPX_N);
@@ -205,7 +205,7 @@ int arix_sphincs_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     return 0;
 }
 
-int arix_sphincs_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
+int SNEPPX_sphincs_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
     if (!sig || !siglen || !m || !sk) return -1;
     uint8_t sk_seed[SPX_N], pub_seed[SPX_N];
     memcpy(sk_seed, sk, SPX_N);
@@ -214,7 +214,7 @@ int arix_sphincs_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mle
     return 0;
 }
 
-int arix_sphincs_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk, int variant) {
+int SNEPPX_sphincs_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk, int variant) {
     if (!sig || !pk) return -1;
     return 0;
 }

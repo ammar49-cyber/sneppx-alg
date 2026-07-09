@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <float.h>
 
-static size_t compute_offset(const ArixTensor* tensor, const size_t* indices) {
+static size_t compute_offset(const SNEPPXTensor* tensor, const size_t* indices) {
     size_t offset = 0;
     for (size_t i = 0; i < tensor->ndim; i++) {
         offset += indices[i] * tensor->strides[i];
@@ -15,7 +15,7 @@ static size_t compute_offset(const ArixTensor* tensor, const size_t* indices) {
     return offset;
 }
 
-static size_t compute_offset_flat(const ArixTensor* tensor, size_t flat_idx) {
+static size_t compute_offset_flat(const SNEPPXTensor* tensor, size_t flat_idx) {
     size_t offset = 0;
     size_t remaining = flat_idx;
     for (size_t i = 0; i < tensor->ndim; i++) {
@@ -36,17 +36,17 @@ static size_t compute_offset_flat(const ArixTensor* tensor, size_t flat_idx) {
 }
 
 static void* aligned_alloc_wrapper(size_t size, size_t alignment) {
-    return arix_malloc(size, alignment);
+    return SNEPPX_malloc(size, alignment);
 }
 
-/* ===== ArixStorage implementation ===== */
+/* ===== SNEPPXStorage implementation ===== */
 
-ArixStorage* arix_storage_create(size_t num_bytes) {
-    ArixStorage* s = (ArixStorage*)aligned_alloc_wrapper(sizeof(ArixStorage), 64);
+SNEPPXStorage* SNEPPX_storage_create(size_t num_bytes) {
+    SNEPPXStorage* s = (SNEPPXStorage*)aligned_alloc_wrapper(sizeof(SNEPPXStorage), 64);
     if (!s) return NULL;
     s->data = aligned_alloc_wrapper(num_bytes, 64);
     if (!s->data && num_bytes > 0) {
-        arix_free(s, sizeof(ArixStorage));
+        SNEPPX_free(s, sizeof(SNEPPXStorage));
         return NULL;
     }
     s->num_bytes = num_bytes;
@@ -54,40 +54,40 @@ ArixStorage* arix_storage_create(size_t num_bytes) {
     return s;
 }
 
-void arix_storage_retain(ArixStorage* s) {
+void SNEPPX_storage_retain(SNEPPXStorage* s) {
     if (s) s->ref_count++;
 }
 
-void arix_storage_release(ArixStorage* s) {
+void SNEPPX_storage_release(SNEPPXStorage* s) {
     if (!s) return;
     if (--s->ref_count <= 0) {
-        if (s->data) arix_free(s->data, s->num_bytes);
-        arix_free(s, sizeof(ArixStorage));
+        if (s->data) SNEPPX_free(s->data, s->num_bytes);
+        SNEPPX_free(s, sizeof(SNEPPXStorage));
     }
 }
 
 /* ===== View creation helpers ===== */
 
-static ArixTensor* tensor_view_alloc(const ArixTensor* src) {
-    ArixTensor* t = (ArixTensor*)aligned_alloc_wrapper(sizeof(ArixTensor), 64);
+static SNEPPXTensor* tensor_view_alloc(const SNEPPXTensor* src) {
+    SNEPPXTensor* t = (SNEPPXTensor*)aligned_alloc_wrapper(sizeof(SNEPPXTensor), 64);
     if (!t) return NULL;
     size_t ndim = src->ndim > 0 ? src->ndim : 1;
     t->shape = (size_t*)aligned_alloc_wrapper(ndim * sizeof(size_t), 64);
     t->strides = (size_t*)aligned_alloc_wrapper(ndim * sizeof(size_t), 64);
     if (!t->shape || !t->strides) {
-        arix_free(t->shape, ndim * sizeof(size_t));
-        arix_free(t->strides, ndim * sizeof(size_t));
-        arix_free(t, sizeof(ArixTensor));
+        SNEPPX_free(t->shape, ndim * sizeof(size_t));
+        SNEPPX_free(t->strides, ndim * sizeof(size_t));
+        SNEPPX_free(t, sizeof(SNEPPXTensor));
         return NULL;
     }
     return t;
 }
 
-ArixTensor* arix_tensor_as_strided(const ArixTensor* src, size_t offset, const size_t* shape, size_t ndim, const size_t* strides) {
+SNEPPXTensor* SNEPPX_tensor_as_strided(const SNEPPXTensor* src, size_t offset, const size_t* shape, size_t ndim, const size_t* strides) {
     if (!src) return NULL;
-    ArixTensor* t = tensor_view_alloc(src);
+    SNEPPXTensor* t = tensor_view_alloc(src);
     if (!t) return NULL;
-    arix_storage_retain(src->storage);
+    SNEPPX_storage_retain(src->storage);
     t->storage = src->storage;
     t->offset = offset;
     t->ndim = ndim;
@@ -108,7 +108,7 @@ ArixTensor* arix_tensor_as_strided(const ArixTensor* src, size_t offset, const s
     return t;
 }
 
-ArixTensor* arix_tensor_narrow(const ArixTensor* src, size_t dim, size_t start, size_t size) {
+SNEPPXTensor* SNEPPX_tensor_narrow(const SNEPPXTensor* src, size_t dim, size_t start, size_t size) {
     if (!src || dim >= src->ndim || start + size > src->shape[dim]) return NULL;
     size_t new_shape[16], new_strides[16];
     for (size_t i = 0; i < src->ndim; i++) {
@@ -117,14 +117,14 @@ ArixTensor* arix_tensor_narrow(const ArixTensor* src, size_t dim, size_t start, 
     }
     new_shape[dim] = size;
     size_t offset = src->offset + start * src->strides[dim];
-    return arix_tensor_as_strided(src, offset, new_shape, src->ndim, new_strides);
+    return SNEPPX_tensor_as_strided(src, offset, new_shape, src->ndim, new_strides);
 }
 
 /* ===== Backward-compat: ensure storage exists for legacy code paths ===== */
-static ArixStorage* ensure_storage(ArixTensor* t) {
+static SNEPPXStorage* ensure_storage(SNEPPXTensor* t) {
     if (!t->storage) {
         size_t nb = t->size * t->item_size;
-        t->storage = arix_storage_create(nb);
+        t->storage = SNEPPX_storage_create(nb);
         if (t->storage && t->data) {
             memcpy(t->storage->data, t->data, nb);
             /* keep data pointing to storage */
@@ -135,37 +135,37 @@ static ArixStorage* ensure_storage(ArixTensor* t) {
     return t->storage;
 }
 
-static void arix_tensor_fill_scalar(ArixTensor* t, double value) {
+static void SNEPPX_tensor_fill_scalar(SNEPPXTensor* t, double value) {
     unsigned char* data = (unsigned char*)t->data;
     size_t n = t->size;
     switch (t->dtype) {
-        case ARIX_FLOAT32: { float v = (float)value; for (size_t i = 0; i < n; i++) ((float*)data)[i] = v; break; }
-        case ARIX_FLOAT64: { double v = value; for (size_t i = 0; i < n; i++) ((double*)data)[i] = v; break; }
-        case ARIX_FLOAT16:
-        case ARIX_BFLOAT16:
-        case ARIX_FLOAT8:  { float v = (float)value; for (size_t i = 0; i < n; i++) ((float*)data)[i] = v; break; }
-        case ARIX_INT32:   { int32_t v = (int32_t)value; for (size_t i = 0; i < n; i++) ((int32_t*)data)[i] = v; break; }
-        case ARIX_INT64:   { int64_t v = (int64_t)value; for (size_t i = 0; i < n; i++) ((int64_t*)data)[i] = v; break; }
-        case ARIX_INT16:   { int16_t v = (int16_t)value; for (size_t i = 0; i < n; i++) ((int16_t*)data)[i] = v; break; }
-        case ARIX_INT8:    { int8_t v = (int8_t)value; for (size_t i = 0; i < n; i++) ((int8_t*)data)[i] = v; break; }
-        case ARIX_UINT8:   { uint8_t v = (uint8_t)value; for (size_t i = 0; i < n; i++) ((uint8_t*)data)[i] = v; break; }
-        case ARIX_BOOL:    { uint8_t v = value != 0.0 ? 1 : 0; for (size_t i = 0; i < n; i++) ((uint8_t*)data)[i] = v; break; }
-        case ARIX_COMPLEX64:
-        case ARIX_COMPLEX128: { memset(data, 0, n * t->item_size); break; }
+        case SNEPPX_FLOAT32: { float v = (float)value; for (size_t i = 0; i < n; i++) ((float*)data)[i] = v; break; }
+        case SNEPPX_FLOAT64: { double v = value; for (size_t i = 0; i < n; i++) ((double*)data)[i] = v; break; }
+        case SNEPPX_FLOAT16:
+        case SNEPPX_BFLOAT16:
+        case SNEPPX_FLOAT8:  { float v = (float)value; for (size_t i = 0; i < n; i++) ((float*)data)[i] = v; break; }
+        case SNEPPX_INT32:   { int32_t v = (int32_t)value; for (size_t i = 0; i < n; i++) ((int32_t*)data)[i] = v; break; }
+        case SNEPPX_INT64:   { int64_t v = (int64_t)value; for (size_t i = 0; i < n; i++) ((int64_t*)data)[i] = v; break; }
+        case SNEPPX_INT16:   { int16_t v = (int16_t)value; for (size_t i = 0; i < n; i++) ((int16_t*)data)[i] = v; break; }
+        case SNEPPX_INT8:    { int8_t v = (int8_t)value; for (size_t i = 0; i < n; i++) ((int8_t*)data)[i] = v; break; }
+        case SNEPPX_UINT8:   { uint8_t v = (uint8_t)value; for (size_t i = 0; i < n; i++) ((uint8_t*)data)[i] = v; break; }
+        case SNEPPX_BOOL:    { uint8_t v = value != 0.0 ? 1 : 0; for (size_t i = 0; i < n; i++) ((uint8_t*)data)[i] = v; break; }
+        case SNEPPX_COMPLEX64:
+        case SNEPPX_COMPLEX128: { memset(data, 0, n * t->item_size); break; }
     }
 }
 
-ArixTensor* arix_tensor_create(const size_t* shape, size_t ndim, ArixDtype dtype) {
+SNEPPXTensor* SNEPPX_tensor_create(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     if (ndim > 0 && !shape) return NULL;
-    ArixTensor* tensor = (ArixTensor*)aligned_alloc_wrapper(sizeof(ArixTensor), 64);
+    SNEPPXTensor* tensor = (SNEPPXTensor*)aligned_alloc_wrapper(sizeof(SNEPPXTensor), 64);
     if (!tensor) return NULL;
 
     tensor->ndim = ndim;
     tensor->dtype = dtype;
-    tensor->item_size = arix_tensor_dtype_size(dtype);
-    tensor->device = ARIX_DEVICE_CPU;
+    tensor->item_size = SNEPPX_tensor_dtype_size(dtype);
+    tensor->device = SNEPPX_DEVICE_CPU;
     tensor->device_id = 0;
-    tensor->layout = ARIX_LAYOUT_ROW_MAJOR;
+    tensor->layout = SNEPPX_LAYOUT_ROW_MAJOR;
     tensor->owns_data = 1;
     tensor->backend_handle = NULL;
     tensor->storage = NULL;
@@ -175,9 +175,9 @@ ArixTensor* arix_tensor_create(const size_t* shape, size_t ndim, ArixDtype dtype
     tensor->shape = (size_t*)aligned_alloc_wrapper(safe_ndim * sizeof(size_t), 64);
     tensor->strides = (size_t*)aligned_alloc_wrapper(safe_ndim * sizeof(size_t), 64);
     if (!tensor->shape || !tensor->strides) {
-        arix_free(tensor->shape, safe_ndim * sizeof(size_t));
-        arix_free(tensor->strides, safe_ndim * sizeof(size_t));
-        arix_free(tensor, sizeof(ArixTensor));
+        SNEPPX_free(tensor->shape, safe_ndim * sizeof(size_t));
+        SNEPPX_free(tensor->strides, safe_ndim * sizeof(size_t));
+        SNEPPX_free(tensor, sizeof(SNEPPXTensor));
         return NULL;
     }
 
@@ -196,11 +196,11 @@ ArixTensor* arix_tensor_create(const size_t* shape, size_t ndim, ArixDtype dtype
     }
 
     size_t num_bytes = total * tensor->item_size;
-    tensor->storage = arix_storage_create(num_bytes);
+    tensor->storage = SNEPPX_storage_create(num_bytes);
     if (!tensor->storage) {
-        arix_free(tensor->shape, ndim * sizeof(size_t));
-        arix_free(tensor->strides, ndim * sizeof(size_t));
-        arix_free(tensor, sizeof(ArixTensor));
+        SNEPPX_free(tensor->shape, ndim * sizeof(size_t));
+        SNEPPX_free(tensor->strides, ndim * sizeof(size_t));
+        SNEPPX_free(tensor, sizeof(SNEPPXTensor));
         return NULL;
     }
     tensor->data = tensor->storage->data;
@@ -208,116 +208,116 @@ ArixTensor* arix_tensor_create(const size_t* shape, size_t ndim, ArixDtype dtype
     return tensor;
 }
 
-void arix_tensor_destroy(ArixTensor* tensor) {
+void SNEPPX_tensor_destroy(SNEPPXTensor* tensor) {
     if (!tensor) return;
-    arix_storage_release(tensor->storage);
+    SNEPPX_storage_release(tensor->storage);
     size_t ndim = tensor->ndim > 0 ? tensor->ndim : 1;
-    arix_free(tensor->shape, ndim * sizeof(size_t));
-    arix_free(tensor->strides, ndim * sizeof(size_t));
-    arix_free(tensor, sizeof(ArixTensor));
+    SNEPPX_free(tensor->shape, ndim * sizeof(size_t));
+    SNEPPX_free(tensor->strides, ndim * sizeof(size_t));
+    SNEPPX_free(tensor, sizeof(SNEPPXTensor));
 }
 
-float arix_tensor_get_f32(const ArixTensor* tensor, const size_t* indices) {
-    if (tensor->dtype != ARIX_FLOAT32) return 0.0f;
+float SNEPPX_tensor_get_f32(const SNEPPXTensor* tensor, const size_t* indices) {
+    if (tensor->dtype != SNEPPX_FLOAT32) return 0.0f;
     size_t offset = compute_offset(tensor, indices);
     return ((float*)tensor->data)[offset];
 }
 
-void arix_tensor_set_f32(ArixTensor* tensor, const size_t* indices, float value) {
-    if (tensor->dtype != ARIX_FLOAT32) return;
+void SNEPPX_tensor_set_f32(SNEPPXTensor* tensor, const size_t* indices, float value) {
+    if (tensor->dtype != SNEPPX_FLOAT32) return;
     size_t offset = compute_offset(tensor, indices);
     ((float*)tensor->data)[offset] = value;
 }
 
-double arix_tensor_get_f64(const ArixTensor* tensor, const size_t* indices) {
-    if (tensor->dtype != ARIX_FLOAT64) return 0.0;
+double SNEPPX_tensor_get_f64(const SNEPPXTensor* tensor, const size_t* indices) {
+    if (tensor->dtype != SNEPPX_FLOAT64) return 0.0;
     size_t offset = compute_offset(tensor, indices);
     return ((double*)tensor->data)[offset];
 }
 
-void arix_tensor_set_f64(ArixTensor* tensor, const size_t* indices, double value) {
-    if (tensor->dtype != ARIX_FLOAT64) return;
+void SNEPPX_tensor_set_f64(SNEPPXTensor* tensor, const size_t* indices, double value) {
+    if (tensor->dtype != SNEPPX_FLOAT64) return;
     size_t offset = compute_offset(tensor, indices);
     ((double*)tensor->data)[offset] = value;
 }
 
-int32_t arix_tensor_get_i32(const ArixTensor* tensor, const size_t* indices) {
-    if (tensor->dtype != ARIX_INT32) return 0;
+int32_t SNEPPX_tensor_get_i32(const SNEPPXTensor* tensor, const size_t* indices) {
+    if (tensor->dtype != SNEPPX_INT32) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((int32_t*)tensor->data)[offset];
 }
 
-void arix_tensor_set_i32(ArixTensor* tensor, const size_t* indices, int32_t value) {
-    if (tensor->dtype != ARIX_INT32) return;
+void SNEPPX_tensor_set_i32(SNEPPXTensor* tensor, const size_t* indices, int32_t value) {
+    if (tensor->dtype != SNEPPX_INT32) return;
     size_t offset = compute_offset(tensor, indices);
     ((int32_t*)tensor->data)[offset] = value;
 }
 
-int64_t arix_tensor_get_i64(const ArixTensor* tensor, const size_t* indices) {
-    if (tensor->dtype != ARIX_INT64) return 0;
+int64_t SNEPPX_tensor_get_i64(const SNEPPXTensor* tensor, const size_t* indices) {
+    if (tensor->dtype != SNEPPX_INT64) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((int64_t*)tensor->data)[offset];
 }
 
-void arix_tensor_set_i64(ArixTensor* tensor, const size_t* indices, int64_t value) {
-    if (tensor->dtype != ARIX_INT64) return;
+void SNEPPX_tensor_set_i64(SNEPPXTensor* tensor, const size_t* indices, int64_t value) {
+    if (tensor->dtype != SNEPPX_INT64) return;
     size_t offset = compute_offset(tensor, indices);
     ((int64_t*)tensor->data)[offset] = value;
 }
 
-uint8_t arix_tensor_get_bool(const ArixTensor* tensor, const size_t* indices) {
-    if (tensor->dtype != ARIX_BOOL) return 0;
+uint8_t SNEPPX_tensor_get_bool(const SNEPPXTensor* tensor, const size_t* indices) {
+    if (tensor->dtype != SNEPPX_BOOL) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((uint8_t*)tensor->data)[offset];
 }
 
-void arix_tensor_set_bool(ArixTensor* tensor, const size_t* indices, uint8_t value) {
-    if (tensor->dtype != ARIX_BOOL) return;
+void SNEPPX_tensor_set_bool(SNEPPXTensor* tensor, const size_t* indices, uint8_t value) {
+    if (tensor->dtype != SNEPPX_BOOL) return;
     size_t offset = compute_offset(tensor, indices);
     ((uint8_t*)tensor->data)[offset] = value ? 1 : 0;
 }
 
-void arix_tensor_fill_f32(ArixTensor* tensor, float value) {
-    if (!tensor || tensor->dtype != ARIX_FLOAT32) return;
+void SNEPPX_tensor_fill_f32(SNEPPXTensor* tensor, float value) {
+    if (!tensor || tensor->dtype != SNEPPX_FLOAT32) return;
     float* data = (float*)tensor->data;
     for (size_t i = 0; i < tensor->size; i++) data[i] = value;
 }
 
-void arix_tensor_fill_f64(ArixTensor* tensor, double value) {
-    if (!tensor || tensor->dtype != ARIX_FLOAT64) return;
+void SNEPPX_tensor_fill_f64(SNEPPXTensor* tensor, double value) {
+    if (!tensor || tensor->dtype != SNEPPX_FLOAT64) return;
     double* data = (double*)tensor->data;
     for (size_t i = 0; i < tensor->size; i++) data[i] = value;
 }
 
-ArixTensor* arix_tensor_empty(const size_t* shape, size_t ndim, ArixDtype dtype) {
-    return arix_tensor_create(shape, ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_empty(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
+    return SNEPPX_tensor_create(shape, ndim, dtype);
 }
 
-ArixTensor* arix_tensor_zeros(const size_t* shape, size_t ndim, ArixDtype dtype) {
-    ArixTensor* tensor = arix_tensor_create(shape, ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_zeros(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
     memset(tensor->data, 0, tensor->size * tensor->item_size);
     return tensor;
 }
 
-ArixTensor* arix_tensor_ones(const size_t* shape, size_t ndim, ArixDtype dtype) {
-    ArixTensor* tensor = arix_tensor_create(shape, ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_ones(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
     size_t n = tensor->size;
-    if (dtype == ARIX_FLOAT32 || dtype == ARIX_FLOAT16 || dtype == ARIX_BFLOAT16 || dtype == ARIX_FLOAT8) {
+    if (dtype == SNEPPX_FLOAT32 || dtype == SNEPPX_FLOAT16 || dtype == SNEPPX_BFLOAT16 || dtype == SNEPPX_FLOAT8) {
         float* data = (float*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = 1.0f;
-    } else if (dtype == ARIX_FLOAT64) {
+    } else if (dtype == SNEPPX_FLOAT64) {
         double* data = (double*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = 1.0;
-    } else if (dtype == ARIX_INT32 || dtype == ARIX_INT64 || dtype == ARIX_INT16 || dtype == ARIX_INT8 || dtype == ARIX_UINT8 || dtype == ARIX_BOOL) {
+    } else if (dtype == SNEPPX_INT32 || dtype == SNEPPX_INT64 || dtype == SNEPPX_INT16 || dtype == SNEPPX_INT8 || dtype == SNEPPX_UINT8 || dtype == SNEPPX_BOOL) {
         memset(tensor->data, 1, n * tensor->item_size);
     }
     return tensor;
 }
 
-ArixTensor* arix_tensor_full(const size_t* shape, size_t ndim, ArixDtype dtype, const void* value) {
-    ArixTensor* tensor = arix_tensor_create(shape, ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_full(const size_t* shape, size_t ndim, SNEPPXDtype dtype, const void* value) {
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor || !value) return tensor;
     size_t item_size = tensor->item_size;
     unsigned char* data = (unsigned char*)tensor->data;
@@ -327,55 +327,55 @@ ArixTensor* arix_tensor_full(const size_t* shape, size_t ndim, ArixDtype dtype, 
     return tensor;
 }
 
-ArixTensor* arix_tensor_arange(float start, float stop, float step, ArixDtype dtype) {
+SNEPPXTensor* SNEPPX_tensor_arange(float start, float stop, float step, SNEPPXDtype dtype) {
     if (step == 0.0f) return NULL;
     if ((step > 0.0f && start >= stop) || (step < 0.0f && start <= stop)) return NULL;
     size_t n = (size_t)((stop - start) / step);
     size_t shape[] = {n};
-    ArixTensor* tensor = arix_tensor_create(shape, 1, dtype);
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, 1, dtype);
     if (!tensor) return NULL;
-    if (dtype == ARIX_FLOAT32) {
+    if (dtype == SNEPPX_FLOAT32) {
         float* data = (float*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = start + i * step;
-    } else if (dtype == ARIX_FLOAT64) {
+    } else if (dtype == SNEPPX_FLOAT64) {
         double* data = (double*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = (double)(start + i * step);
-    } else if (dtype == ARIX_INT32) {
+    } else if (dtype == SNEPPX_INT32) {
         int32_t* data = (int32_t*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = (int32_t)(start + i * step);
-    } else if (dtype == ARIX_INT64) {
+    } else if (dtype == SNEPPX_INT64) {
         int64_t* data = (int64_t*)tensor->data;
         for (size_t i = 0; i < n; i++) data[i] = (int64_t)(start + i * step);
     }
     return tensor;
 }
 
-ArixTensor* arix_tensor_linspace(float start, float stop, size_t steps, ArixDtype dtype) {
+SNEPPXTensor* SNEPPX_tensor_linspace(float start, float stop, size_t steps, SNEPPXDtype dtype) {
     if (steps == 0) return NULL;
     size_t shape[] = {steps};
-    ArixTensor* tensor = arix_tensor_create(shape, 1, dtype);
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, 1, dtype);
     if (!tensor) return NULL;
     float step = (steps > 1) ? (stop - start) / (float)(steps - 1) : 0.0f;
-    if (dtype == ARIX_FLOAT32) {
+    if (dtype == SNEPPX_FLOAT32) {
         float* data = (float*)tensor->data;
         for (size_t i = 0; i < steps; i++) data[i] = start + i * step;
-    } else if (dtype == ARIX_FLOAT64) {
+    } else if (dtype == SNEPPX_FLOAT64) {
         double* data = (double*)tensor->data;
         for (size_t i = 0; i < steps; i++) data[i] = (double)(start + i * step);
     }
     return tensor;
 }
 
-ArixTensor* arix_tensor_eye(size_t n, ArixDtype dtype) {
+SNEPPXTensor* SNEPPX_tensor_eye(size_t n, SNEPPXDtype dtype) {
     size_t shape[] = {n, n};
-    ArixTensor* tensor = arix_tensor_zeros(shape, 2, dtype);
+    SNEPPXTensor* tensor = SNEPPX_tensor_zeros(shape, 2, dtype);
     if (!tensor) return NULL;
     unsigned char* data = (unsigned char*)tensor->data;
     size_t is = tensor->item_size;
     for (size_t i = 0; i < n; i++) {
-        if (dtype == ARIX_FLOAT64) {
+        if (dtype == SNEPPX_FLOAT64) {
             *(double*)(data + (i * n + i) * is) = 1.0;
-        } else if (dtype == ARIX_INT32 || dtype == ARIX_INT64) {
+        } else if (dtype == SNEPPX_INT32 || dtype == SNEPPX_INT64) {
             memset(data + (i * n + i) * is, 1, is);
         } else {
             *(float*)(data + (i * n + i) * is) = 1.0f;
@@ -391,8 +391,8 @@ static float uniform_01(void) {
     return (float)((lcg_state >> 16) & 0x7FFF) / 32767.0f;
 }
 
-ArixTensor* arix_tensor_randn(const size_t* shape, size_t ndim, ArixDtype dtype) {
-    ArixTensor* tensor = arix_tensor_create(shape, ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_randn(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
     float* data = (float*)tensor->data;
     for (size_t i = 0; i < tensor->size; i += 2) {
@@ -408,24 +408,24 @@ ArixTensor* arix_tensor_randn(const size_t* shape, size_t ndim, ArixDtype dtype)
     return tensor;
 }
 
-ArixTensor* arix_tensor_copy(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_copy(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    ArixTensor* dst = arix_tensor_create(src->shape, src->ndim, src->dtype);
+    SNEPPXTensor* dst = SNEPPX_tensor_create(src->shape, src->ndim, src->dtype);
     if (!dst) return NULL;
     memcpy(dst->data, src->data, src->size * src->item_size);
     return dst;
 }
 
-ArixTensor* arix_tensor_clone(const ArixTensor* src) {
-    return arix_tensor_copy(src);
+SNEPPXTensor* SNEPPX_tensor_clone(const SNEPPXTensor* src) {
+    return SNEPPX_tensor_copy(src);
 }
 
-ArixTensor* arix_tensor_slice(const ArixTensor* src, size_t dim, size_t start, size_t end) {
+SNEPPXTensor* SNEPPX_tensor_slice(const SNEPPXTensor* src, size_t dim, size_t start, size_t end) {
     if (!src || dim >= src->ndim || start >= end || end > src->shape[dim]) return NULL;
-    return arix_tensor_narrow(src, dim, start, end - start);
+    return SNEPPX_tensor_narrow(src, dim, start, end - start);
 }
 
-ArixTensor* arix_tensor_reshape(const ArixTensor* src, const size_t* new_shape, size_t new_ndim) {
+SNEPPXTensor* SNEPPX_tensor_reshape(const SNEPPXTensor* src, const size_t* new_shape, size_t new_ndim) {
     if (!src) return NULL;
     size_t new_size = 1;
     size_t auto_idx = new_ndim;
@@ -440,38 +440,38 @@ ArixTensor* arix_tensor_reshape(const ArixTensor* src, const size_t* new_shape, 
     for (size_t i = 0; i < new_ndim; i++) {
         resolved_shape[i] = (i == auto_idx) ? (src->size / new_size) : new_shape[i];
     }
-    if (arix_tensor_is_contiguous(src) && src->ndim > 0) {
+    if (SNEPPX_tensor_is_contiguous(src) && src->ndim > 0) {
         size_t new_strides[16];
         size_t stride = 1;
         for (size_t i = new_ndim; i > 0; i--) {
             new_strides[i - 1] = stride;
             stride *= resolved_shape[i - 1];
         }
-        return arix_tensor_as_strided(src, src->offset, resolved_shape, new_ndim, new_strides);
+        return SNEPPX_tensor_as_strided(src, src->offset, resolved_shape, new_ndim, new_strides);
     }
-    ArixTensor* result = arix_tensor_empty(resolved_shape, new_ndim, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(resolved_shape, new_ndim, src->dtype);
     if (!result) return NULL;
     memcpy(result->data, src->data, src->size * src->item_size);
     return result;
 }
 
-ArixTensor* arix_tensor_permute(const ArixTensor* src, const size_t* axes) {
+SNEPPXTensor* SNEPPX_tensor_permute(const SNEPPXTensor* src, const size_t* axes) {
     if (!src) return NULL;
     size_t new_shape[16], new_strides[16];
     for (size_t i = 0; i < src->ndim; i++) {
         new_shape[i] = src->shape[axes[i]];
         new_strides[i] = src->strides[axes[i]];
     }
-    return arix_tensor_as_strided(src, src->offset, new_shape, src->ndim, new_strides);
+    return SNEPPX_tensor_as_strided(src, src->offset, new_shape, src->ndim, new_strides);
 }
 
-ArixTensor* arix_tensor_expand(const ArixTensor* src, const size_t* new_shape, size_t new_ndim) {
+SNEPPXTensor* SNEPPX_tensor_expand(const SNEPPXTensor* src, const size_t* new_shape, size_t new_ndim) {
     if (!src || new_ndim < src->ndim) return NULL;
-    ArixTensor* result = arix_tensor_empty(new_shape, new_ndim, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(new_shape, new_ndim, src->dtype);
     if (!result) return NULL;
     size_t* src_indices = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
     size_t* dst_indices = (size_t*)aligned_alloc_wrapper(new_ndim * sizeof(size_t), 64);
-    if (!src_indices || !dst_indices) { arix_free(src_indices, src->ndim * sizeof(size_t)); arix_free(dst_indices, new_ndim * sizeof(size_t)); arix_tensor_destroy(result); return NULL; }
+    if (!src_indices || !dst_indices) { SNEPPX_free(src_indices, src->ndim * sizeof(size_t)); SNEPPX_free(dst_indices, new_ndim * sizeof(size_t)); SNEPPX_tensor_destroy(result); return NULL; }
     memset(src_indices, 0, src->ndim * sizeof(size_t));
     memset(dst_indices, 0, new_ndim * sizeof(size_t));
     unsigned char* src_data = (unsigned char*)src->data;
@@ -491,13 +491,13 @@ ArixTensor* arix_tensor_expand(const ArixTensor* src, const size_t* new_shape, s
         size_t soff = compute_offset(src, src_indices);
         memcpy(dst_data + flat * is, src_data + soff * is, is);
     }
-    arix_free(src_indices, src->ndim * sizeof(size_t));
-    arix_free(dst_indices, new_ndim * sizeof(size_t));
+    SNEPPX_free(src_indices, src->ndim * sizeof(size_t));
+    SNEPPX_free(dst_indices, new_ndim * sizeof(size_t));
     return result;
 }
 
-ArixTensor* arix_tensor_squeeze(const ArixTensor* src, size_t dim) {
-    if (!src || dim >= src->ndim || src->shape[dim] != 1) return arix_tensor_copy(src);
+SNEPPXTensor* SNEPPX_tensor_squeeze(const SNEPPXTensor* src, size_t dim) {
+    if (!src || dim >= src->ndim || src->shape[dim] != 1) return SNEPPX_tensor_copy(src);
     size_t new_ndim = src->ndim - 1;
     size_t new_shape[16], new_strides[16];
     size_t j = 0;
@@ -508,10 +508,10 @@ ArixTensor* arix_tensor_squeeze(const ArixTensor* src, size_t dim) {
             j++;
         }
     }
-    return arix_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
+    return SNEPPX_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
 }
 
-ArixTensor* arix_tensor_unsqueeze(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_unsqueeze(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim > src->ndim) return NULL;
     size_t new_ndim = src->ndim + 1;
     size_t new_shape[16], new_strides[16];
@@ -526,12 +526,12 @@ ArixTensor* arix_tensor_unsqueeze(const ArixTensor* src, size_t dim) {
             j++;
         }
     }
-    return arix_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
+    return SNEPPX_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
 }
 
-ArixTensor* arix_tensor_concat(const ArixTensor** tensors, size_t num_tensors, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_concat(const SNEPPXTensor** tensors, size_t num_tensors, size_t dim) {
     if (!tensors || num_tensors == 0) return NULL;
-    const ArixTensor* first = tensors[0];
+    const SNEPPXTensor* first = tensors[0];
     if (!first || dim >= first->ndim) return NULL;
     size_t total_dim = 0;
     for (size_t t = 0; t < num_tensors; t++) {
@@ -545,8 +545,8 @@ ArixTensor* arix_tensor_concat(const ArixTensor** tensors, size_t num_tensors, s
     if (!new_shape) return NULL;
     for (size_t i = 0; i < first->ndim; i++) new_shape[i] = first->shape[i];
     new_shape[dim] = total_dim;
-    ArixTensor* result = arix_tensor_empty(new_shape, first->ndim, first->dtype);
-    arix_free(new_shape, first->ndim * sizeof(size_t));
+    SNEPPXTensor* result = SNEPPX_tensor_empty(new_shape, first->ndim, first->dtype);
+    SNEPPX_free(new_shape, first->ndim * sizeof(size_t));
     if (!result) return NULL;
     unsigned char* dst = (unsigned char*)result->data;
     size_t item_size = first->item_size;
@@ -560,24 +560,24 @@ ArixTensor* arix_tensor_concat(const ArixTensor** tensors, size_t num_tensors, s
     return result;
 }
 
-ArixTensor** arix_tensor_split(const ArixTensor* src, size_t num_splits, size_t dim) {
+SNEPPXTensor** SNEPPX_tensor_split(const SNEPPXTensor* src, size_t num_splits, size_t dim) {
     if (!src || num_splits == 0 || dim >= src->ndim || src->shape[dim] % num_splits != 0) return NULL;
     size_t split_size = src->shape[dim] / num_splits;
-    ArixTensor** results = (ArixTensor**)aligned_alloc_wrapper(num_splits * sizeof(ArixTensor*), 64);
+    SNEPPXTensor** results = (SNEPPXTensor**)aligned_alloc_wrapper(num_splits * sizeof(SNEPPXTensor*), 64);
     if (!results) return NULL;
-    memset(results, 0, num_splits * sizeof(ArixTensor*));
+    memset(results, 0, num_splits * sizeof(SNEPPXTensor*));
     for (size_t s = 0; s < num_splits; s++) {
-        results[s] = arix_tensor_slice(src, dim, s * split_size, (s + 1) * split_size);
+        results[s] = SNEPPX_tensor_slice(src, dim, s * split_size, (s + 1) * split_size);
         if (!results[s]) {
-            for (size_t k = 0; k < s; k++) arix_tensor_destroy(results[k]);
-            arix_free(results, num_splits * sizeof(ArixTensor*));
+            for (size_t k = 0; k < s; k++) SNEPPX_tensor_destroy(results[k]);
+            SNEPPX_free(results, num_splits * sizeof(SNEPPXTensor*));
             return NULL;
         }
     }
     return results;
 }
 
-ArixTensor* arix_tensor_tile(const ArixTensor* src, const size_t* reps, size_t reps_ndim) {
+SNEPPXTensor* SNEPPX_tensor_tile(const SNEPPXTensor* src, const size_t* reps, size_t reps_ndim) {
     if (!src || !reps) return NULL;
     size_t out_ndim = (src->ndim > reps_ndim) ? src->ndim : reps_ndim;
     size_t out_shape[16];
@@ -587,13 +587,13 @@ ArixTensor* arix_tensor_tile(const ArixTensor* src, const size_t* reps, size_t r
         size_t r = (i < reps_ndim) ? reps[i] : 1;
         out_shape[i] = s * r;
     }
-    ArixTensor* result = arix_tensor_empty(out_shape, out_ndim, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(out_shape, out_ndim, src->dtype);
     if (!result) return NULL;
     unsigned char* src_data = (unsigned char*)src->data;
     unsigned char* dst_data = (unsigned char*)result->data;
     size_t is = src->item_size;
     size_t* indices = (size_t*)aligned_alloc_wrapper(out_ndim * sizeof(size_t), 64);
-    if (!indices) { arix_tensor_destroy(result); return NULL; }
+    if (!indices) { SNEPPX_tensor_destroy(result); return NULL; }
     for (size_t flat = 0; flat < result->size; flat++) {
         size_t tmp = flat;
         for (size_t i = out_ndim; i > 0; i--) {
@@ -607,29 +607,29 @@ ArixTensor* arix_tensor_tile(const ArixTensor* src, const size_t* reps, size_t r
         }
         memcpy(dst_data + flat * is, src_data + src_flat * is, is);
     }
-    arix_free(indices, out_ndim * sizeof(size_t));
+    SNEPPX_free(indices, out_ndim * sizeof(size_t));
     return result;
 }
 
-ArixTensor* arix_tensor_repeat(const ArixTensor* src, size_t repeats, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_repeat(const SNEPPXTensor* src, size_t repeats, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     size_t* reps = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
     if (!reps) return NULL;
     for (size_t i = 0; i < src->ndim; i++) reps[i] = (i == dim) ? repeats : 1;
-    ArixTensor* result = arix_tensor_tile(src, reps, src->ndim);
-    arix_free(reps, src->ndim * sizeof(size_t));
+    SNEPPXTensor* result = SNEPPX_tensor_tile(src, reps, src->ndim);
+    SNEPPX_free(reps, src->ndim * sizeof(size_t));
     return result;
 }
 
-ArixTensor* arix_tensor_gather(const ArixTensor* src, size_t dim, const ArixTensor* indices) {
+SNEPPXTensor* SNEPPX_tensor_gather(const SNEPPXTensor* src, size_t dim, const SNEPPXTensor* indices) {
     if (!src || !indices || dim >= src->ndim || indices->ndim != src->ndim) return NULL;
-    ArixTensor* result = arix_tensor_empty(indices->shape, indices->ndim, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(indices->shape, indices->ndim, src->dtype);
     if (!result) return NULL;
     unsigned char* src_data = (unsigned char*)src->data;
     unsigned char* dst_data = (unsigned char*)result->data;
     size_t is = src->item_size;
     size_t* idx = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
-    if (!idx) { arix_tensor_destroy(result); return NULL; }
+    if (!idx) { SNEPPX_tensor_destroy(result); return NULL; }
     int32_t* idx_data = (int32_t*)indices->data;
     for (size_t flat = 0; flat < result->size; flat++) {
         size_t tmp = flat;
@@ -643,11 +643,11 @@ ArixTensor* arix_tensor_gather(const ArixTensor* src, size_t dim, const ArixTens
         size_t soff = compute_offset(src, idx);
         memcpy(dst_data + flat * is, src_data + soff * is, is);
     }
-    arix_free(idx, src->ndim * sizeof(size_t));
+    SNEPPX_free(idx, src->ndim * sizeof(size_t));
     return result;
 }
 
-ArixTensor* arix_tensor_scatter(ArixTensor* dest, size_t dim, const ArixTensor* indices, const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_scatter(SNEPPXTensor* dest, size_t dim, const SNEPPXTensor* indices, const SNEPPXTensor* src) {
     if (!dest || !indices || !src || dim >= dest->ndim) return NULL;
     unsigned char* src_data = (unsigned char*)src->data;
     size_t is = dest->item_size;
@@ -666,11 +666,11 @@ ArixTensor* arix_tensor_scatter(ArixTensor* dest, size_t dim, const ArixTensor* 
         size_t doff = compute_offset(dest, idx);
         memcpy(((unsigned char*)dest->data) + doff * is, src_data + flat * is, is);
     }
-    arix_free(idx, dest->ndim * sizeof(size_t));
+    SNEPPX_free(idx, dest->ndim * sizeof(size_t));
     return dest;
 }
 
-ArixTensor* arix_tensor_masked_select(const ArixTensor* src, const ArixTensor* mask) {
+SNEPPXTensor* SNEPPX_tensor_masked_select(const SNEPPXTensor* src, const SNEPPXTensor* mask) {
     if (!src || !mask || src->size != mask->size) return NULL;
     unsigned char* mask_data = (unsigned char*)mask->data;
     size_t count = 0;
@@ -678,7 +678,7 @@ ArixTensor* arix_tensor_masked_select(const ArixTensor* src, const ArixTensor* m
         if (mask_data[i]) count++;
     }
     size_t shape[] = {count};
-    ArixTensor* result = arix_tensor_empty(shape, 1, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(shape, 1, src->dtype);
     if (!result) return NULL;
     unsigned char* src_data = (unsigned char*)src->data;
     unsigned char* dst_data = (unsigned char*)result->data;
@@ -693,7 +693,7 @@ ArixTensor* arix_tensor_masked_select(const ArixTensor* src, const ArixTensor* m
     return result;
 }
 
-ArixTensor* arix_tensor_masked_fill(ArixTensor* src, const ArixTensor* mask, const void* value) {
+SNEPPXTensor* SNEPPX_tensor_masked_fill(SNEPPXTensor* src, const SNEPPXTensor* mask, const void* value) {
     if (!src || !mask || !value || src->size != mask->size) return src;
     unsigned char* mask_data = (unsigned char*)mask->data;
     unsigned char* src_data = (unsigned char*)src->data;
@@ -706,11 +706,11 @@ ArixTensor* arix_tensor_masked_fill(ArixTensor* src, const ArixTensor* mask, con
     return src;
 }
 
-ArixTensor* arix_tensor_where(const ArixTensor* condition, const ArixTensor* x, const ArixTensor* y) {
+SNEPPXTensor* SNEPPX_tensor_where(const SNEPPXTensor* condition, const SNEPPXTensor* x, const SNEPPXTensor* y) {
     if (!condition || !x || !y) return NULL;
     size_t n = x->size < y->size ? x->size : y->size;
     if (condition->size < n) n = condition->size;
-    ArixTensor* result = arix_tensor_copy(x);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(x);
     if (!result) return NULL;
     unsigned char* cond_data = (unsigned char*)condition->data;
     unsigned char* y_data = (unsigned char*)y->data;
@@ -724,27 +724,27 @@ ArixTensor* arix_tensor_where(const ArixTensor* condition, const ArixTensor* x, 
     return result;
 }
 
-ArixTensor* arix_tensor_cast(const ArixTensor* src, ArixDtype dtype) {
-    if (!src || dtype == src->dtype) return arix_tensor_copy(src);
-    ArixTensor* result = arix_tensor_empty(src->shape, src->ndim, dtype);
+SNEPPXTensor* SNEPPX_tensor_cast(const SNEPPXTensor* src, SNEPPXDtype dtype) {
+    if (!src || dtype == src->dtype) return SNEPPX_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(src->shape, src->ndim, dtype);
     if (!result) return NULL;
     size_t n = src->size;
-    if (src->dtype == ARIX_FLOAT32 && dtype == ARIX_FLOAT64) {
+    if (src->dtype == SNEPPX_FLOAT32 && dtype == SNEPPX_FLOAT64) {
         float* s = (float*)src->data; double* d = (double*)result->data;
         for (size_t i = 0; i < n; i++) d[i] = (double)s[i];
-    } else if (src->dtype == ARIX_FLOAT64 && dtype == ARIX_FLOAT32) {
+    } else if (src->dtype == SNEPPX_FLOAT64 && dtype == SNEPPX_FLOAT32) {
         double* s = (double*)src->data; float* d = (float*)result->data;
         for (size_t i = 0; i < n; i++) d[i] = (float)s[i];
-    } else if (src->dtype == ARIX_FLOAT32 && dtype == ARIX_INT32) {
+    } else if (src->dtype == SNEPPX_FLOAT32 && dtype == SNEPPX_INT32) {
         float* s = (float*)src->data; int32_t* d = (int32_t*)result->data;
         for (size_t i = 0; i < n; i++) d[i] = (int32_t)s[i];
-    } else if (src->dtype == ARIX_INT32 && dtype == ARIX_FLOAT32) {
+    } else if (src->dtype == SNEPPX_INT32 && dtype == SNEPPX_FLOAT32) {
         int32_t* s = (int32_t*)src->data; float* d = (float*)result->data;
         for (size_t i = 0; i < n; i++) d[i] = (float)s[i];
-    } else if (dtype == ARIX_FLOAT32) {
+    } else if (dtype == SNEPPX_FLOAT32) {
         float* d = (float*)result->data;
         for (size_t i = 0; i < n; i++) {
-            d[i] = arix_tensor_get_f32(src, (size_t[]){i});
+            d[i] = SNEPPX_tensor_get_f32(src, (size_t[]){i});
         }
     } else {
         memcpy(result->data, src->data, n * result->item_size);
@@ -752,21 +752,21 @@ ArixTensor* arix_tensor_cast(const ArixTensor* src, ArixDtype dtype) {
     return result;
 }
 
-ArixTensor* arix_tensor_to_device(const ArixTensor* src, ArixDevice device) {
+SNEPPXTensor* SNEPPX_tensor_to_device(const SNEPPXTensor* src, SNEPPXDevice device) {
     (void)device;
     if (!src) return NULL;
-    ArixTensor* dst = arix_tensor_copy(src);
+    SNEPPXTensor* dst = SNEPPX_tensor_copy(src);
     if (!dst) return NULL;
     dst->device = device;
     return dst;
 }
 
-ArixTensor* arix_tensor_to_layout(const ArixTensor* src, ArixLayout layout) {
+SNEPPXTensor* SNEPPX_tensor_to_layout(const SNEPPXTensor* src, SNEPPXLayout layout) {
     if (!src) return NULL;
-    if (src->layout == layout) return arix_tensor_copy(src);
-    ArixTensor* dst = arix_tensor_copy(src);
+    if (src->layout == layout) return SNEPPX_tensor_copy(src);
+    SNEPPXTensor* dst = SNEPPX_tensor_copy(src);
     if (!dst) return NULL;
-    if (layout == ARIX_LAYOUT_COL_MAJOR && src->ndim == 2) {
+    if (layout == SNEPPX_LAYOUT_COL_MAJOR && src->ndim == 2) {
         size_t m = src->shape[0], n = src->shape[1];
         float* s = (float*)src->data;
         float* d = (float*)dst->data;
@@ -780,7 +780,7 @@ ArixTensor* arix_tensor_to_layout(const ArixTensor* src, ArixLayout layout) {
     return dst;
 }
 
-int arix_tensor_save(const ArixTensor* src, const char* path) {
+int SNEPPX_tensor_save(const SNEPPXTensor* src, const char* path) {
     if (!src || !path) return -1;
     FILE* f = fopen(path, "wb");
     if (!f) return -1;
@@ -801,7 +801,7 @@ int arix_tensor_save(const ArixTensor* src, const char* path) {
     return 0;
 }
 
-ArixTensor* arix_tensor_load(const char* path) {
+SNEPPXTensor* SNEPPX_tensor_load(const char* path) {
     if (!path) return NULL;
     FILE* f = fopen(path, "rb");
     if (!f) return NULL;
@@ -818,30 +818,30 @@ ArixTensor* arix_tensor_load(const char* path) {
     }
     uint32_t dtype;
     if (fread(&dtype, sizeof(dtype), 1, f) != 1) { fclose(f); return NULL; }
-    ArixTensor* tensor = arix_tensor_create(shape, (size_t)ndim, (ArixDtype)dtype);
+    SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, (size_t)ndim, (SNEPPXDtype)dtype);
     if (!tensor) { fclose(f); return NULL; }
     size_t bytes = tensor->size * tensor->item_size;
-    if (fread(tensor->data, bytes, 1, f) != 1) { arix_tensor_destroy(tensor); fclose(f); return NULL; }
+    if (fread(tensor->data, bytes, 1, f) != 1) { SNEPPX_tensor_destroy(tensor); fclose(f); return NULL; }
     fclose(f);
     return tensor;
 }
 
 /* Forward declaration of contiguity helper */
-static const ArixTensor* tensor_prep_contiguous(const ArixTensor* src, ArixTensor** out);
+static const SNEPPXTensor* tensor_prep_contiguous(const SNEPPXTensor* src, SNEPPXTensor** out);
 
-static ArixTensor* compare_op(const ArixTensor* a, const ArixTensor* b, int (*cmp)(float, float)) {
+static SNEPPXTensor* compare_op(const SNEPPXTensor* a, const SNEPPXTensor* b, int (*cmp)(float, float)) {
     if (!a || !b) return NULL;
-    ArixTensor* ta = NULL, *tb = NULL;
+    SNEPPXTensor* ta = NULL, *tb = NULL;
     a = tensor_prep_contiguous(a, &ta);
     b = tensor_prep_contiguous(b, &tb);
     size_t n = a->size < b->size ? a->size : b->size;
-    ArixTensor* result = arix_tensor_empty(a->shape, a->ndim, ARIX_BOOL);
-    if (!result) { if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_empty(a->shape, a->ndim, SNEPPX_BOOL);
+    if (!result) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
     uint8_t* rd = (uint8_t*)result->data;
     for (size_t i = 0; i < n; i++) rd[i] = cmp(ad[i], bd[i]) ? 1 : 0;
-    if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb);
+    if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb);
     return result;
 }
 
@@ -852,40 +852,40 @@ static int cmp_le(float a, float b) { return a <= b; }
 static int cmp_gt(float a, float b) { return a > b; }
 static int cmp_ge(float a, float b) { return a >= b; }
 
-ArixTensor* arix_tensor_eq(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_eq); }
-ArixTensor* arix_tensor_ne(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_ne); }
-ArixTensor* arix_tensor_lt(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_lt); }
-ArixTensor* arix_tensor_le(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_le); }
-ArixTensor* arix_tensor_gt(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_gt); }
-ArixTensor* arix_tensor_ge(const ArixTensor* a, const ArixTensor* b) { return compare_op(a, b, cmp_ge); }
+SNEPPXTensor* SNEPPX_tensor_eq(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_eq); }
+SNEPPXTensor* SNEPPX_tensor_ne(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_ne); }
+SNEPPXTensor* SNEPPX_tensor_lt(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_lt); }
+SNEPPXTensor* SNEPPX_tensor_le(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_le); }
+SNEPPXTensor* SNEPPX_tensor_gt(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_gt); }
+SNEPPXTensor* SNEPPX_tensor_ge(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_ge); }
 
 /* Helper: binary op with contiguity support */
 #define BINARY_OP_F32(name, body) \
-ArixTensor* arix_tensor_##name(const ArixTensor* a, const ArixTensor* b) { \
+SNEPPXTensor* SNEPPX_tensor_##name(const SNEPPXTensor* a, const SNEPPXTensor* b) { \
     if (!a || !b) return NULL; \
-    ArixTensor* ta = NULL, *tb = NULL; \
+    SNEPPXTensor* ta = NULL, *tb = NULL; \
     a = tensor_prep_contiguous(a, &ta); \
     b = tensor_prep_contiguous(b, &tb); \
     size_t sz = a->size < b->size ? a->size : b->size; \
-    ArixTensor* result = arix_tensor_create(a->shape, a->ndim, ARIX_FLOAT32); \
-    if (!result) { if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); return NULL; } \
+    SNEPPXTensor* result = SNEPPX_tensor_create(a->shape, a->ndim, SNEPPX_FLOAT32); \
+    if (!result) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; } \
     float* rd = (float*)result->data; \
     float* ad = (float*)a->data; \
     float* bd = (float*)b->data; \
     for (size_t i = 0; i < sz; i++) { body; } \
-    if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); \
+    if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); \
     return result; \
 }
 
 /* add has broadcasting support */
-ArixTensor* arix_tensor_add(const ArixTensor* a, const ArixTensor* b) {
+SNEPPXTensor* SNEPPX_tensor_add(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b) return NULL;
-    ArixTensor* ta = NULL, *tb = NULL;
+    SNEPPXTensor* ta = NULL, *tb = NULL;
     a = tensor_prep_contiguous(a, &ta);
     b = tensor_prep_contiguous(b, &tb);
     size_t sz = a->size < b->size ? a->size : b->size;
-    ArixTensor* result = arix_tensor_create(a->shape, a->ndim, ARIX_FLOAT32);
-    if (!result) { if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_create(a->shape, a->ndim, SNEPPX_FLOAT32);
+    if (!result) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
     float* rd = (float*)result->data;
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
@@ -895,7 +895,7 @@ ArixTensor* arix_tensor_add(const ArixTensor* a, const ArixTensor* b) {
         size_t last = a->shape[a->ndim - 1];
         for (size_t i = 0; i < a->size; i++) rd[i] = ad[i] + bd[i % last];
     }
-    if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb);
+    if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb);
     return result;
 }
 BINARY_OP_F32(sub, rd[i] = ad[i] - bd[i])
@@ -910,58 +910,58 @@ BINARY_OP_F32(pow, rd[i] = powf(ad[i], bd[i]))
  * The caller must destroy *out after use (if non-NULL).
  * Returns a pointer usable for flat-indexed access (either src or the copy).
  */
-static const ArixTensor* tensor_prep_contiguous(const ArixTensor* src, ArixTensor** out) {
+static const SNEPPXTensor* tensor_prep_contiguous(const SNEPPXTensor* src, SNEPPXTensor** out) {
     *out = NULL;
-    if (!src || arix_tensor_is_contiguous(src)) return src;
-    *out = arix_tensor_contiguous(src);
+    if (!src || SNEPPX_tensor_is_contiguous(src)) return src;
+    *out = SNEPPX_tensor_contiguous(src);
     return *out ? *out : src;
 }
 
-static ArixTensor* unary_op_f32(const ArixTensor* src, float (*op)(float)) {
+static SNEPPXTensor* unary_op_f32(const SNEPPXTensor* src, float (*op)(float)) {
     if (!src) return NULL;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
-    ArixTensor* result = arix_tensor_create(src->shape, src->ndim, ARIX_FLOAT32);
-    if (!result) { if (tmp) arix_tensor_destroy(tmp); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_create(src->shape, src->ndim, SNEPPX_FLOAT32);
+    if (!result) { if (tmp) SNEPPX_tensor_destroy(tmp); return NULL; }
     float* sd = (float*)src->data;
     float* rd = (float*)result->data;
     for (size_t i = 0; i < src->size; i++) rd[i] = op(sd[i]);
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return result;
 }
 
 static float negate_f32(float x) { return -x; }
 static float sign_f32(float x) { return (x > 0) ? 1.0f : (x < 0) ? -1.0f : 0.0f; }
 
-ArixTensor* arix_tensor_neg(const ArixTensor* src) { return unary_op_f32(src, negate_f32); }
-ArixTensor* arix_tensor_abs(const ArixTensor* src) { return unary_op_f32(src, fabsf); }
-ArixTensor* arix_tensor_sign(const ArixTensor* src) { return unary_op_f32(src, sign_f32); }
-ArixTensor* arix_tensor_floor(const ArixTensor* src) { return unary_op_f32(src, floorf); }
-ArixTensor* arix_tensor_ceil(const ArixTensor* src) { return unary_op_f32(src, ceilf); }
-ArixTensor* arix_tensor_round(const ArixTensor* src) { return unary_op_f32(src, roundf); }
-ArixTensor* arix_tensor_trunc(const ArixTensor* src) { return unary_op_f32(src, truncf); }
-ArixTensor* arix_tensor_exp(const ArixTensor* src) { return unary_op_f32(src, expf); }
-ArixTensor* arix_tensor_log(const ArixTensor* src) { return unary_op_f32(src, logf); }
-ArixTensor* arix_tensor_sqrt(const ArixTensor* src) { return unary_op_f32(src, sqrtf); }
-ArixTensor* arix_tensor_sin(const ArixTensor* src) { return unary_op_f32(src, sinf); }
-ArixTensor* arix_tensor_cos(const ArixTensor* src) { return unary_op_f32(src, cosf); }
-ArixTensor* arix_tensor_tan(const ArixTensor* src) { return unary_op_f32(src, tanf); }
-ArixTensor* arix_tensor_asin(const ArixTensor* src) { return unary_op_f32(src, asinf); }
-ArixTensor* arix_tensor_acos(const ArixTensor* src) { return unary_op_f32(src, acosf); }
-ArixTensor* arix_tensor_atan(const ArixTensor* src) { return unary_op_f32(src, atanf); }
-ArixTensor* arix_tensor_sinh(const ArixTensor* src) { return unary_op_f32(src, sinhf); }
-ArixTensor* arix_tensor_cosh(const ArixTensor* src) { return unary_op_f32(src, coshf); }
-ArixTensor* arix_tensor_tanh(const ArixTensor* src) { return unary_op_f32(src, tanhf); }
+SNEPPXTensor* SNEPPX_tensor_neg(const SNEPPXTensor* src) { return unary_op_f32(src, negate_f32); }
+SNEPPXTensor* SNEPPX_tensor_abs(const SNEPPXTensor* src) { return unary_op_f32(src, fabsf); }
+SNEPPXTensor* SNEPPX_tensor_sign(const SNEPPXTensor* src) { return unary_op_f32(src, sign_f32); }
+SNEPPXTensor* SNEPPX_tensor_floor(const SNEPPXTensor* src) { return unary_op_f32(src, floorf); }
+SNEPPXTensor* SNEPPX_tensor_ceil(const SNEPPXTensor* src) { return unary_op_f32(src, ceilf); }
+SNEPPXTensor* SNEPPX_tensor_round(const SNEPPXTensor* src) { return unary_op_f32(src, roundf); }
+SNEPPXTensor* SNEPPX_tensor_trunc(const SNEPPXTensor* src) { return unary_op_f32(src, truncf); }
+SNEPPXTensor* SNEPPX_tensor_exp(const SNEPPXTensor* src) { return unary_op_f32(src, expf); }
+SNEPPXTensor* SNEPPX_tensor_log(const SNEPPXTensor* src) { return unary_op_f32(src, logf); }
+SNEPPXTensor* SNEPPX_tensor_sqrt(const SNEPPXTensor* src) { return unary_op_f32(src, sqrtf); }
+SNEPPXTensor* SNEPPX_tensor_sin(const SNEPPXTensor* src) { return unary_op_f32(src, sinf); }
+SNEPPXTensor* SNEPPX_tensor_cos(const SNEPPXTensor* src) { return unary_op_f32(src, cosf); }
+SNEPPXTensor* SNEPPX_tensor_tan(const SNEPPXTensor* src) { return unary_op_f32(src, tanf); }
+SNEPPXTensor* SNEPPX_tensor_asin(const SNEPPXTensor* src) { return unary_op_f32(src, asinf); }
+SNEPPXTensor* SNEPPX_tensor_acos(const SNEPPXTensor* src) { return unary_op_f32(src, acosf); }
+SNEPPXTensor* SNEPPX_tensor_atan(const SNEPPXTensor* src) { return unary_op_f32(src, atanf); }
+SNEPPXTensor* SNEPPX_tensor_sinh(const SNEPPXTensor* src) { return unary_op_f32(src, sinhf); }
+SNEPPXTensor* SNEPPX_tensor_cosh(const SNEPPXTensor* src) { return unary_op_f32(src, coshf); }
+SNEPPXTensor* SNEPPX_tensor_tanh(const SNEPPXTensor* src) { return unary_op_f32(src, tanhf); }
 
-ArixTensor* arix_tensor_sum(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_sum(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
     size_t out_ndim = src->ndim;
     size_t out_shape[16];
     for (size_t i = 0; i < src->ndim; i++) out_shape[i] = (i == dim) ? 1 : src->shape[i];
-    ArixTensor* result = arix_tensor_zeros(out_shape, out_ndim, ARIX_FLOAT32);
-    if (!result) { if (tmp) arix_tensor_destroy(tmp); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
+    if (!result) { if (tmp) SNEPPX_tensor_destroy(tmp); return NULL; }
     float* sd = (float*)src->data;
     float* rd = (float*)result->data;
     size_t inner = 1, outer = 1, reduce = src->shape[dim];
@@ -974,13 +974,13 @@ ArixTensor* arix_tensor_sum(const ArixTensor* src, size_t dim) {
             }
         }
     }
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return result;
 }
 
-ArixTensor* arix_tensor_mean(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_mean(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* sum = arix_tensor_sum(src, dim);
+    SNEPPXTensor* sum = SNEPPX_tensor_sum(src, dim);
     if (!sum) return NULL;
     float* rd = (float*)sum->data;
     float inv_n = 1.0f / (float)src->shape[dim];
@@ -988,17 +988,17 @@ ArixTensor* arix_tensor_mean(const ArixTensor* src, size_t dim) {
     return sum;
 }
 
-ArixTensor* arix_tensor_var(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_var(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
-    ArixTensor* mean = arix_tensor_mean(src, dim);
-    if (!mean) { if (tmp) arix_tensor_destroy(tmp); return NULL; }
+    SNEPPXTensor* mean = SNEPPX_tensor_mean(src, dim);
+    if (!mean) { if (tmp) SNEPPX_tensor_destroy(tmp); return NULL; }
     size_t inner = 1, outer = 1, reduce = src->shape[dim];
     for (size_t i = 0; i < dim; i++) outer *= src->shape[i];
     for (size_t i = dim + 1; i < src->ndim; i++) inner *= src->shape[i];
-    ArixTensor* result = arix_tensor_zeros(mean->shape, mean->ndim, ARIX_FLOAT32);
-    if (!result) { arix_tensor_destroy(mean); if (tmp) arix_tensor_destroy(tmp); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(mean->shape, mean->ndim, SNEPPX_FLOAT32);
+    if (!result) { SNEPPX_tensor_destroy(mean); if (tmp) SNEPPX_tensor_destroy(tmp); return NULL; }
     float* sd = (float*)src->data;
     float* md = (float*)mean->data;
     float* rd = (float*)result->data;
@@ -1012,66 +1012,66 @@ ArixTensor* arix_tensor_var(const ArixTensor* src, size_t dim) {
     }
     float inv_n = 1.0f / (float)reduce;
     for (size_t i = 0; i < result->size; i++) rd[i] *= inv_n;
-    arix_tensor_destroy(mean);
-    if (tmp) arix_tensor_destroy(tmp);
+    SNEPPX_tensor_destroy(mean);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return result;
 }
 
-ArixTensor* arix_tensor_std(const ArixTensor* src, size_t dim) {
-    ArixTensor* v = arix_tensor_var(src, dim);
+SNEPPXTensor* SNEPPX_tensor_std(const SNEPPXTensor* src, size_t dim) {
+    SNEPPXTensor* v = SNEPPX_tensor_var(src, dim);
     if (!v) return NULL;
     float* d = (float*)v->data;
     for (size_t i = 0; i < v->size; i++) d[i] = sqrtf(d[i]);
     return v;
 }
 
-float arix_tensor_min(const ArixTensor* src) {
+float SNEPPX_tensor_min(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0.0f;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
     float* d = (float*)src->data;
     float val = d[0];
     for (size_t i = 1; i < src->size; i++) if (d[i] < val) val = d[i];
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return val;
 }
 
-float arix_tensor_max(const ArixTensor* src) {
+float SNEPPX_tensor_max(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0.0f;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
     float* d = (float*)src->data;
     float val = d[0];
     for (size_t i = 1; i < src->size; i++) if (d[i] > val) val = d[i];
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return val;
 }
 
-size_t arix_tensor_argmin(const ArixTensor* src) {
+size_t SNEPPX_tensor_argmin(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
     float* d = (float*)src->data;
     size_t idx = 0;
     for (size_t i = 1; i < src->size; i++) if (d[i] < d[idx]) idx = i;
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return idx;
 }
 
-size_t arix_tensor_argmax(const ArixTensor* src) {
+size_t SNEPPX_tensor_argmax(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0;
-    ArixTensor* tmp = NULL;
+    SNEPPXTensor* tmp = NULL;
     src = tensor_prep_contiguous(src, &tmp);
     float* d = (float*)src->data;
     size_t idx = 0;
     for (size_t i = 1; i < src->size; i++) if (d[i] > d[idx]) idx = i;
-    if (tmp) arix_tensor_destroy(tmp);
+    if (tmp) SNEPPX_tensor_destroy(tmp);
     return idx;
 }
 
-ArixTensor* arix_tensor_cumsum(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_cumsum(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     size_t inner = 1, outer = 1;
     for (size_t i = 0; i < dim; i++) outer *= src->shape[i];
@@ -1088,9 +1088,9 @@ ArixTensor* arix_tensor_cumsum(const ArixTensor* src, size_t dim) {
     return result;
 }
 
-ArixTensor* arix_tensor_cumprod(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_cumprod(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     size_t inner = 1, outer = 1;
     for (size_t i = 0; i < dim; i++) outer *= src->shape[i];
@@ -1107,7 +1107,7 @@ ArixTensor* arix_tensor_cumprod(const ArixTensor* src, size_t dim) {
     return result;
 }
 
-float arix_tensor_dot(const ArixTensor* a, const ArixTensor* b) {
+float SNEPPX_tensor_dot(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b || a->size != b->size) return 0.0f;
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
@@ -1116,16 +1116,16 @@ float arix_tensor_dot(const ArixTensor* a, const ArixTensor* b) {
     return sum;
 }
 
-ArixTensor* arix_tensor_matmul(const ArixTensor* a, const ArixTensor* b) {
+SNEPPXTensor* SNEPPX_tensor_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b || a->ndim != 2 || b->ndim != 2) return NULL;
-    ArixTensor* ta = NULL, *tb = NULL;
+    SNEPPXTensor* ta = NULL, *tb = NULL;
     a = tensor_prep_contiguous(a, &ta);
     b = tensor_prep_contiguous(b, &tb);
     size_t m = a->shape[0], k = a->shape[1], n = b->shape[1];
-    if (k != b->shape[0]) { if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); return NULL; }
+    if (k != b->shape[0]) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
     size_t shape_c[] = {m, n};
-    ArixTensor* result = arix_tensor_zeros(shape_c, 2, ARIX_FLOAT32);
-    if (!result) { if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb); return NULL; }
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape_c, 2, SNEPPX_FLOAT32);
+    if (!result) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
     float* rd = (float*)result->data;
@@ -1133,29 +1133,29 @@ ArixTensor* arix_tensor_matmul(const ArixTensor* a, const ArixTensor* b) {
         for (size_t j = 0; j < n; j++)
             for (size_t l = 0; l < k; l++)
                 rd[i * n + j] += ad[i * k + l] * bd[l * n + j];
-    if (ta) arix_tensor_destroy(ta); if (tb) arix_tensor_destroy(tb);
+    if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb);
     return result;
 }
 
-ArixTensor* arix_tensor_transpose(const ArixTensor* src, size_t dim1, size_t dim2) {
+SNEPPXTensor* SNEPPX_tensor_transpose(const SNEPPXTensor* src, size_t dim1, size_t dim2) {
     if (!src || dim1 >= src->ndim || dim2 >= src->ndim) return NULL;
     size_t* axes = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
     if (!axes) return NULL;
     for (size_t i = 0; i < src->ndim; i++) axes[i] = i;
     axes[dim1] = dim2;
     axes[dim2] = dim1;
-    ArixTensor* result = arix_tensor_permute(src, axes);
-    arix_free(axes, src->ndim * sizeof(size_t));
+    SNEPPXTensor* result = SNEPPX_tensor_permute(src, axes);
+    SNEPPX_free(axes, src->ndim * sizeof(size_t));
     return result;
 }
 
-ArixTensor* arix_tensor_inverse(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_inverse(const SNEPPXTensor* src) {
     if (!src || src->ndim != 2 || src->shape[0] != src->shape[1]) return NULL;
     size_t n = src->shape[0];
-    ArixTensor* result = arix_tensor_create(src->shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_create(src->shape, 2, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* a = (float*)aligned_alloc_wrapper(n * n * 2 * sizeof(float), 64);
-    if (!a) { arix_tensor_destroy(result); return NULL; }
+    if (!a) { SNEPPX_tensor_destroy(result); return NULL; }
     float* s = (float*)src->data;
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j < n; j++) a[i * 2 * n + j] = s[i * n + j];
@@ -1168,7 +1168,7 @@ ArixTensor* arix_tensor_inverse(const ArixTensor* src) {
         if (pivot != i)
             for (size_t j = 0; j < 2 * n; j++) { float t = a[i * 2 * n + j]; a[i * 2 * n + j] = a[pivot * 2 * n + j]; a[pivot * 2 * n + j] = t; }
         float piv = a[i * 2 * n + i];
-        if (fabsf(piv) < 1e-10f) { arix_free(a, n * n * 2 * sizeof(float)); arix_tensor_destroy(result); return NULL; }
+        if (fabsf(piv) < 1e-10f) { SNEPPX_free(a, n * n * 2 * sizeof(float)); SNEPPX_tensor_destroy(result); return NULL; }
         for (size_t j = 0; j < 2 * n; j++) a[i * 2 * n + j] /= piv;
         for (size_t k = 0; k < n; k++) {
             if (k == i) continue;
@@ -1180,11 +1180,11 @@ ArixTensor* arix_tensor_inverse(const ArixTensor* src) {
     for (size_t i = 0; i < n; i++)
         for (size_t j = 0; j < n; j++)
             rd[i * n + j] = a[i * 2 * n + n + j];
-    arix_free(a, n * n * 2 * sizeof(float));
+    SNEPPX_free(a, n * n * 2 * sizeof(float));
     return result;
 }
 
-float arix_tensor_det(const ArixTensor* src) {
+float SNEPPX_tensor_det(const SNEPPXTensor* src) {
     if (!src || src->ndim != 2 || src->shape[0] != src->shape[1]) return 0.0f;
     size_t n = src->shape[0];
     float* m = (float*)aligned_alloc_wrapper(n * n * sizeof(float), 64);
@@ -1200,7 +1200,7 @@ float arix_tensor_det(const ArixTensor* src) {
             for (size_t j = 0; j < n; j++) { float t = m[i * n + j]; m[i * n + j] = m[pivot * n + j]; m[pivot * n + j] = t; }
             det = -det;
         }
-        if (fabsf(m[i * n + i]) < 1e-10f) { arix_free(m, n * n * sizeof(float)); return 0.0f; }
+        if (fabsf(m[i * n + i]) < 1e-10f) { SNEPPX_free(m, n * n * sizeof(float)); return 0.0f; }
         det *= m[i * n + i];
         for (size_t j = i + 1; j < n; j++) {
             float f = m[j * n + i] / m[i * n + i];
@@ -1208,11 +1208,11 @@ float arix_tensor_det(const ArixTensor* src) {
                 m[j * n + k] -= f * m[i * n + k];
         }
     }
-    arix_free(m, n * n * sizeof(float));
+    SNEPPX_free(m, n * n * sizeof(float));
     return det;
 }
 
-ArixTensor* arix_tensor_conv1d(const ArixTensor* input, const ArixTensor* kernel, size_t stride, size_t padding) {
+SNEPPXTensor* SNEPPX_tensor_conv1d(const SNEPPXTensor* input, const SNEPPXTensor* kernel, size_t stride, size_t padding) {
     if (!input || !kernel || stride == 0) return NULL;
     size_t L = input->shape[input->ndim - 1];
     size_t K = kernel->shape[kernel->ndim - 1];
@@ -1222,7 +1222,7 @@ ArixTensor* arix_tensor_conv1d(const ArixTensor* input, const ArixTensor* kernel
     size_t out_shape[16];
     for (size_t i = 0; i < out_ndim - 1; i++) out_shape[i] = input->shape[i];
     out_shape[out_ndim - 1] = out_len;
-    ArixTensor* result = arix_tensor_zeros(out_shape, out_ndim, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* id = (float*)input->data;
     float* kd = (float*)kernel->data;
@@ -1248,7 +1248,7 @@ ArixTensor* arix_tensor_conv1d(const ArixTensor* input, const ArixTensor* kernel
     return result;
 }
 
-ArixTensor* arix_tensor_conv2d(const ArixTensor* input, const ArixTensor* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w) {
+SNEPPXTensor* SNEPPX_tensor_conv2d(const SNEPPXTensor* input, const SNEPPXTensor* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w) {
     if (!input || !kernel || stride_h == 0 || stride_w == 0) return NULL;
     size_t H = input->shape[input->ndim - 2], W = input->shape[input->ndim - 1];
     size_t KH = kernel->shape[kernel->ndim - 2], KW = kernel->shape[kernel->ndim - 1];
@@ -1260,7 +1260,7 @@ ArixTensor* arix_tensor_conv2d(const ArixTensor* input, const ArixTensor* kernel
     for (size_t i = 0; i < out_ndim - 2; i++) out_shape[i] = input->shape[i];
     out_shape[out_ndim - 2] = out_h;
     out_shape[out_ndim - 1] = out_w;
-    ArixTensor* result = arix_tensor_zeros(out_shape, out_ndim, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* id = (float*)input->data;
     float* kd = (float*)kernel->data;
@@ -1292,7 +1292,7 @@ ArixTensor* arix_tensor_conv2d(const ArixTensor* input, const ArixTensor* kernel
     return result;
 }
 
-ArixTensor* arix_tensor_pool1d(const ArixTensor* src, size_t kernel_size, size_t stride) {
+SNEPPXTensor* SNEPPX_tensor_pool1d(const SNEPPXTensor* src, size_t kernel_size, size_t stride) {
     if (!src || kernel_size == 0 || stride == 0) return NULL;
     size_t L = src->shape[src->ndim - 1];
     size_t out_len = (L - kernel_size) / stride + 1;
@@ -1301,7 +1301,7 @@ ArixTensor* arix_tensor_pool1d(const ArixTensor* src, size_t kernel_size, size_t
     size_t out_shape[16];
     for (size_t i = 0; i < out_ndim - 1; i++) out_shape[i] = src->shape[i];
     out_shape[out_ndim - 1] = out_len;
-    ArixTensor* result = arix_tensor_zeros(out_shape, out_ndim, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* sd = (float*)src->data;
     float* rd = (float*)result->data;
@@ -1321,7 +1321,7 @@ ArixTensor* arix_tensor_pool1d(const ArixTensor* src, size_t kernel_size, size_t
     return result;
 }
 
-ArixTensor* arix_tensor_pool2d(const ArixTensor* src, size_t kernel_h, size_t kernel_w, size_t stride_h, size_t stride_w) {
+SNEPPXTensor* SNEPPX_tensor_pool2d(const SNEPPXTensor* src, size_t kernel_h, size_t kernel_w, size_t stride_h, size_t stride_w) {
     if (!src || kernel_h == 0 || kernel_w == 0 || stride_h == 0 || stride_w == 0) return NULL;
     size_t H = src->shape[src->ndim - 2], W = src->shape[src->ndim - 1];
     size_t out_h = (H - kernel_h) / stride_h + 1;
@@ -1332,7 +1332,7 @@ ArixTensor* arix_tensor_pool2d(const ArixTensor* src, size_t kernel_h, size_t ke
     for (size_t i = 0; i < out_ndim - 2; i++) out_shape[i] = src->shape[i];
     out_shape[out_ndim - 2] = out_h;
     out_shape[out_ndim - 1] = out_w;
-    ArixTensor* result = arix_tensor_zeros(out_shape, out_ndim, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* sd = (float*)src->data;
     float* rd = (float*)result->data;
@@ -1355,9 +1355,9 @@ ArixTensor* arix_tensor_pool2d(const ArixTensor* src, size_t kernel_h, size_t ke
     return result;
 }
 
-ArixTensor* arix_tensor_softmax(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_softmax(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     size_t inner = 1, outer = 1, reduce = src->shape[dim];
     for (size_t i = 0; i < dim; i++) outer *= src->shape[i];
@@ -1385,27 +1385,27 @@ ArixTensor* arix_tensor_softmax(const ArixTensor* src, size_t dim) {
     return result;
 }
 
-ArixTensor* arix_tensor_log_softmax(const ArixTensor* src, size_t dim) {
+SNEPPXTensor* SNEPPX_tensor_log_softmax(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
-    ArixTensor* sm = arix_tensor_softmax(src, dim);
+    SNEPPXTensor* sm = SNEPPX_tensor_softmax(src, dim);
     if (!sm) return NULL;
     float* d = (float*)sm->data;
     for (size_t i = 0; i < sm->size; i++) d[i] = logf(d[i] + 1e-10f);
     return sm;
 }
 
-ArixTensor* arix_tensor_relu(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_relu(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     for (size_t i = 0; i < result->size; i++) if (rd[i] < 0) rd[i] = 0.0f;
     return result;
 }
 
-ArixTensor* arix_tensor_gelu(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_gelu(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     for (size_t i = 0; i < result->size; i++) {
@@ -1415,9 +1415,9 @@ ArixTensor* arix_tensor_gelu(const ArixTensor* src) {
     return result;
 }
 
-ArixTensor* arix_tensor_silu(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_silu(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     for (size_t i = 0; i < result->size; i++) {
@@ -1427,9 +1427,9 @@ ArixTensor* arix_tensor_silu(const ArixTensor* src) {
     return result;
 }
 
-ArixTensor* arix_tensor_sigmoid(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_sigmoid(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     for (size_t i = 0; i < result->size; i++) {
@@ -1438,10 +1438,10 @@ ArixTensor* arix_tensor_sigmoid(const ArixTensor* src) {
     return result;
 }
 
-ArixTensor* arix_tensor_dropout(const ArixTensor* src, float rate, unsigned int seed) {
+SNEPPXTensor* SNEPPX_tensor_dropout(const SNEPPXTensor* src, float rate, unsigned int seed) {
     (void)seed;
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     unsigned long s = (seed) ? (unsigned long)seed : 123456789;
@@ -1455,9 +1455,9 @@ ArixTensor* arix_tensor_dropout(const ArixTensor* src, float rate, unsigned int 
     return result;
 }
 
-ArixTensor* arix_tensor_layer_norm(const ArixTensor* src, const ArixTensor* gamma, const ArixTensor* beta, float eps) {
+SNEPPXTensor* SNEPPX_tensor_layer_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, float eps) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     size_t d = src->shape[src->ndim - 1];
     size_t n = src->size / d;
@@ -1481,9 +1481,9 @@ ArixTensor* arix_tensor_layer_norm(const ArixTensor* src, const ArixTensor* gamm
     return result;
 }
 
-ArixTensor* arix_tensor_batch_norm(const ArixTensor* src, const ArixTensor* gamma, const ArixTensor* beta, const ArixTensor* running_mean, const ArixTensor* running_var, float eps) {
+SNEPPXTensor* SNEPPX_tensor_batch_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, const SNEPPXTensor* running_mean, const SNEPPXTensor* running_var, float eps) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     float* gd = gamma ? (float*)gamma->data : NULL;
@@ -1508,9 +1508,9 @@ ArixTensor* arix_tensor_batch_norm(const ArixTensor* src, const ArixTensor* gamm
     return result;
 }
 
-ArixTensor* arix_tensor_group_norm(const ArixTensor* src, const ArixTensor* gamma, const ArixTensor* beta, size_t num_groups, float eps) {
+SNEPPXTensor* SNEPPX_tensor_group_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, size_t num_groups, float eps) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     float* rd = (float*)result->data;
     size_t c = src->shape[1];
@@ -1547,9 +1547,9 @@ ArixTensor* arix_tensor_group_norm(const ArixTensor* src, const ArixTensor* gamm
     return result;
 }
 
-ArixTensor* arix_tensor_instance_norm(const ArixTensor* src, const ArixTensor* gamma, const ArixTensor* beta, float eps) {
+SNEPPXTensor* SNEPPX_tensor_instance_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, float eps) {
     if (!src) return NULL;
-    ArixTensor* result = arix_tensor_copy(src);
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
     if (!result) return NULL;
     size_t n = src->shape[0], c = src->shape[1];
     size_t hw = src->size / (n * c);
@@ -1578,22 +1578,22 @@ ArixTensor* arix_tensor_instance_norm(const ArixTensor* src, const ArixTensor* g
     return result;
 }
 
-static size_t read_index(const ArixTensor* t, size_t i) {
+static size_t read_index(const SNEPPXTensor* t, size_t i) {
     switch (t->dtype) {
-        case ARIX_INT32:  return (size_t)((int32_t*)t->data)[i];
-        case ARIX_INT64:  return (size_t)((int64_t*)t->data)[i];
-        case ARIX_FLOAT32: return (size_t)((float*)t->data)[i];
+        case SNEPPX_INT32:  return (size_t)((int32_t*)t->data)[i];
+        case SNEPPX_INT64:  return (size_t)((int64_t*)t->data)[i];
+        case SNEPPX_FLOAT32: return (size_t)((float*)t->data)[i];
         default: return ((size_t*)t->data)[i];
     }
 }
 
-ArixTensor* arix_tensor_embedding(const ArixTensor* weight, const ArixTensor* indices) {
+SNEPPXTensor* SNEPPX_tensor_embedding(const SNEPPXTensor* weight, const SNEPPXTensor* indices) {
     if (!weight || !indices || weight->ndim != 2) return NULL;
     size_t num_embeddings = weight->shape[0];
     size_t embedding_dim = weight->shape[1];
     size_t n = indices->size;
     size_t out_shape[] = {n, embedding_dim};
-    ArixTensor* result = arix_tensor_empty(out_shape, 2, weight->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_empty(out_shape, 2, weight->dtype);
     if (!result) return NULL;
     unsigned char* wd = (unsigned char*)weight->data;
     unsigned char* rd = (unsigned char*)result->data;
@@ -1606,12 +1606,12 @@ ArixTensor* arix_tensor_embedding(const ArixTensor* weight, const ArixTensor* in
     return result;
 }
 
-ArixTensor* arix_tensor_cross_entropy(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_cross_entropy(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target) return NULL;
     size_t n = pred->size / pred->shape[pred->ndim - 1];
     size_t c = pred->shape[pred->ndim - 1];
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1627,10 +1627,10 @@ ArixTensor* arix_tensor_cross_entropy(const ArixTensor* pred, const ArixTensor* 
     return result;
 }
 
-ArixTensor* arix_tensor_mse_loss(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_mse_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1641,10 +1641,10 @@ ArixTensor* arix_tensor_mse_loss(const ArixTensor* pred, const ArixTensor* targe
     return result;
 }
 
-ArixTensor* arix_tensor_mae_loss(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_mae_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1655,12 +1655,12 @@ ArixTensor* arix_tensor_mae_loss(const ArixTensor* pred, const ArixTensor* targe
     return result;
 }
 
-ArixTensor* arix_tensor_nll_loss(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_nll_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target) return NULL;
     size_t n = pred->size / pred->shape[pred->ndim - 1];
     size_t c = pred->shape[pred->ndim - 1];
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1675,10 +1675,10 @@ ArixTensor* arix_tensor_nll_loss(const ArixTensor* pred, const ArixTensor* targe
     return result;
 }
 
-ArixTensor* arix_tensor_kl_div(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_kl_div(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1691,10 +1691,10 @@ ArixTensor* arix_tensor_kl_div(const ArixTensor* pred, const ArixTensor* target)
     return result;
 }
 
-ArixTensor* arix_tensor_binary_cross_entropy(const ArixTensor* pred, const ArixTensor* target) {
+SNEPPXTensor* SNEPPX_tensor_binary_cross_entropy(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
-    ArixTensor* result = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* pd = (float*)pred->data;
     float* td = (float*)target->data;
@@ -1707,7 +1707,7 @@ ArixTensor* arix_tensor_binary_cross_entropy(const ArixTensor* pred, const ArixT
     return result;
 }
 
-void arix_tensor_print(const ArixTensor* tensor) {
+void SNEPPX_tensor_print(const SNEPPXTensor* tensor) {
     if (!tensor) return;
     printf("Tensor shape: [");
     for (size_t i = 0; i < tensor->ndim; i++) {
@@ -1715,10 +1715,10 @@ void arix_tensor_print(const ArixTensor* tensor) {
         if (i < tensor->ndim - 1) printf(", ");
     }
     printf("]\n");
-    printf("Dtype: %s\n", arix_tensor_dtype_name(tensor->dtype));
+    printf("Dtype: %s\n", SNEPPX_tensor_dtype_name(tensor->dtype));
     printf("Size: %zu elements\n", tensor->size);
-    printf("Device: %s\n", tensor->device == ARIX_DEVICE_CPU ? "cpu" : "cuda");
-    if (tensor->dtype == ARIX_FLOAT32) {
+    printf("Device: %s\n", tensor->device == SNEPPX_DEVICE_CPU ? "cpu" : "cuda");
+    if (tensor->dtype == SNEPPX_FLOAT32) {
         size_t n = tensor->size < 20 ? tensor->size : 20;
         printf("Data (first %zu): [", n);
         float* data = (float*)tensor->data;
@@ -1727,7 +1727,7 @@ void arix_tensor_print(const ArixTensor* tensor) {
             if (i < n - 1) printf(", ");
         }
         printf("]\n");
-    } else if (tensor->dtype == ARIX_INT32) {
+    } else if (tensor->dtype == SNEPPX_INT32) {
         size_t n = tensor->size < 20 ? tensor->size : 20;
         printf("Data (first %zu): [", n);
         int32_t* data = (int32_t*)tensor->data;
@@ -1739,20 +1739,20 @@ void arix_tensor_print(const ArixTensor* tensor) {
     }
 }
 
-ArixTensor* arix_tensor_contiguous(const ArixTensor* src) {
+SNEPPXTensor* SNEPPX_tensor_contiguous(const SNEPPXTensor* src) {
     if (!src) return NULL;
-    if (arix_tensor_is_contiguous(src)) {
-        arix_storage_retain(src->storage);
-        return arix_tensor_as_strided(src, src->offset, src->shape, src->ndim, src->strides);
+    if (SNEPPX_tensor_is_contiguous(src)) {
+        SNEPPX_storage_retain(src->storage);
+        return SNEPPX_tensor_as_strided(src, src->offset, src->shape, src->ndim, src->strides);
     }
-    ArixTensor* result = arix_tensor_create(src->shape, src->ndim, src->dtype);
+    SNEPPXTensor* result = SNEPPX_tensor_create(src->shape, src->ndim, src->dtype);
     if (!result) return NULL;
     /* Strided copy: iterate over all indices */
     unsigned char* dst = (unsigned char*)result->data;
     unsigned char* src_data = (unsigned char*)src->data;
     size_t is = src->item_size;
     size_t* indices = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
-    if (!indices) { arix_tensor_destroy(result); return NULL; }
+    if (!indices) { SNEPPX_tensor_destroy(result); return NULL; }
     memset(indices, 0, src->ndim * sizeof(size_t));
     for (size_t flat = 0; flat < src->size; flat++) {
         size_t tmp = flat;
@@ -1765,35 +1765,35 @@ ArixTensor* arix_tensor_contiguous(const ArixTensor* src) {
             offset += indices[i] * src->strides[i];
         memcpy(dst + flat * is, src_data + offset * is, is);
     }
-    arix_free(indices, src->ndim * sizeof(size_t));
+    SNEPPX_free(indices, src->ndim * sizeof(size_t));
     return result;
 }
 
-size_t arix_tensor_dtype_size(ArixDtype dtype) {
+size_t SNEPPX_tensor_dtype_size(SNEPPXDtype dtype) {
     switch (dtype) {
-        case ARIX_FLOAT8:    return 1;
-        case ARIX_FLOAT16:   return 2;
-        case ARIX_BFLOAT16:  return 2;
-        case ARIX_FLOAT32:   return sizeof(float);
-        case ARIX_FLOAT64:   return sizeof(double);
-        case ARIX_INT8:      return 1;
-        case ARIX_INT16:     return 2;
-        case ARIX_INT32:     return sizeof(int32_t);
-        case ARIX_INT64:     return sizeof(int64_t);
-        case ARIX_UINT8:     return 1;
-        case ARIX_BOOL:      return 1;
-        case ARIX_COMPLEX64: return 8;
-        case ARIX_COMPLEX128: return 16;
+        case SNEPPX_FLOAT8:    return 1;
+        case SNEPPX_FLOAT16:   return 2;
+        case SNEPPX_BFLOAT16:  return 2;
+        case SNEPPX_FLOAT32:   return sizeof(float);
+        case SNEPPX_FLOAT64:   return sizeof(double);
+        case SNEPPX_INT8:      return 1;
+        case SNEPPX_INT16:     return 2;
+        case SNEPPX_INT32:     return sizeof(int32_t);
+        case SNEPPX_INT64:     return sizeof(int64_t);
+        case SNEPPX_UINT8:     return 1;
+        case SNEPPX_BOOL:      return 1;
+        case SNEPPX_COMPLEX64: return 8;
+        case SNEPPX_COMPLEX128: return 16;
     }
     return 0;
 }
 
-size_t arix_tensor_numel(const ArixTensor* tensor) {
+size_t SNEPPX_tensor_numel(const SNEPPXTensor* tensor) {
     if (!tensor) return 0;
     return tensor->size;
 }
 
-int arix_tensor_is_contiguous(const ArixTensor* tensor) {
+int SNEPPX_tensor_is_contiguous(const SNEPPXTensor* tensor) {
     if (!tensor || tensor->ndim == 0) return 1;
     size_t expected = 1;
     for (size_t i = tensor->ndim; i > 0; i--) {
@@ -1803,21 +1803,21 @@ int arix_tensor_is_contiguous(const ArixTensor* tensor) {
     return 1;
 }
 
-const char* arix_tensor_dtype_name(ArixDtype dtype) {
+const char* SNEPPX_tensor_dtype_name(SNEPPXDtype dtype) {
     switch (dtype) {
-        case ARIX_FLOAT8:    return "float8";
-        case ARIX_FLOAT16:   return "float16";
-        case ARIX_BFLOAT16:  return "bfloat16";
-        case ARIX_FLOAT32:   return "float32";
-        case ARIX_FLOAT64:   return "float64";
-        case ARIX_INT8:      return "int8";
-        case ARIX_INT16:     return "int16";
-        case ARIX_INT32:     return "int32";
-        case ARIX_INT64:     return "int64";
-        case ARIX_UINT8:     return "uint8";
-        case ARIX_BOOL:      return "bool";
-        case ARIX_COMPLEX64: return "complex64";
-        case ARIX_COMPLEX128:return "complex128";
+        case SNEPPX_FLOAT8:    return "float8";
+        case SNEPPX_FLOAT16:   return "float16";
+        case SNEPPX_BFLOAT16:  return "bfloat16";
+        case SNEPPX_FLOAT32:   return "float32";
+        case SNEPPX_FLOAT64:   return "float64";
+        case SNEPPX_INT8:      return "int8";
+        case SNEPPX_INT16:     return "int16";
+        case SNEPPX_INT32:     return "int32";
+        case SNEPPX_INT64:     return "int64";
+        case SNEPPX_UINT8:     return "uint8";
+        case SNEPPX_BOOL:      return "bool";
+        case SNEPPX_COMPLEX64: return "complex64";
+        case SNEPPX_COMPLEX128:return "complex128";
     }
     return "unknown";
 }

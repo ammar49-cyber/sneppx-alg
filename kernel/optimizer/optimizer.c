@@ -4,13 +4,13 @@
 #include <math.h>
 #include <stdlib.h>
 
-ArixOptimizerConfig arix_optimizer_config_default(void) {
-    ArixOptimizerConfig cfg;
+SNEPPXOptimizerConfig SNEPPX_optimizer_config_default(void) {
+    SNEPPXOptimizerConfig cfg;
     cfg.learning_rate = 0.01f;
     cfg.momentum = 0.9f;
     cfg.weight_decay = 1e-4f;
     cfg.grad_clip = 1.0f;
-    cfg.type = ARIX_OPTIMIZER_SGD;
+    cfg.type = SNEPPX_OPTIMIZER_SGD;
     cfg.beta1 = 0.9f;
     cfg.beta2 = 0.999f;
     cfg.epsilon = 1e-8f;
@@ -20,28 +20,28 @@ ArixOptimizerConfig arix_optimizer_config_default(void) {
     return cfg;
 }
 
-static ArixTensor** alloc_bufs(size_t n, size_t sz, size_t ndim, const size_t* shape) {
-    ArixTensor** bufs = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+static SNEPPXTensor** alloc_bufs(size_t n, size_t sz, size_t ndim, const size_t* shape) {
+    SNEPPXTensor** bufs = (SNEPPXTensor**)SNEPPX_malloc(n * sizeof(SNEPPXTensor*), 64);
     if (!bufs) return NULL;
-    memset(bufs, 0, n * sizeof(ArixTensor*));
+    memset(bufs, 0, n * sizeof(SNEPPXTensor*));
     for (size_t i = 0; i < n; i++) {
-        bufs[i] = arix_tensor_zeros(shape, ndim, ARIX_FLOAT32);
+        bufs[i] = SNEPPX_tensor_zeros(shape, ndim, SNEPPX_FLOAT32);
     }
     return bufs;
 }
 
-static void free_bufs(ArixTensor** bufs, size_t n) {
+static void free_bufs(SNEPPXTensor** bufs, size_t n) {
     if (!bufs) return;
     for (size_t i = 0; i < n; i++)
-        if (bufs[i]) arix_tensor_destroy(bufs[i]);
-    arix_free(bufs, n * sizeof(ArixTensor*));
+        if (bufs[i]) SNEPPX_tensor_destroy(bufs[i]);
+    SNEPPX_free(bufs, n * sizeof(SNEPPXTensor*));
 }
 
-ArixOptimizer* arix_optimizer_create(const ArixOptimizerConfig* config) {
+SNEPPXOptimizer* SNEPPX_optimizer_create(const SNEPPXOptimizerConfig* config) {
     if (!config) return NULL;
-    ArixOptimizer* opt = (ArixOptimizer*)arix_malloc(sizeof(ArixOptimizer), 64);
+    SNEPPXOptimizer* opt = (SNEPPXOptimizer*)SNEPPX_malloc(sizeof(SNEPPXOptimizer), 64);
     if (!opt) return NULL;
-    memset(opt, 0, sizeof(ArixOptimizer));
+    memset(opt, 0, sizeof(SNEPPXOptimizer));
     opt->learning_rate = config->learning_rate;
     opt->momentum = config->momentum;
     opt->weight_decay = config->weight_decay;
@@ -61,12 +61,12 @@ ArixOptimizer* arix_optimizer_create(const ArixOptimizerConfig* config) {
     return opt;
 }
 
-void arix_optimizer_destroy(ArixOptimizer* opt) {
+void SNEPPX_optimizer_destroy(SNEPPXOptimizer* opt) {
     if (!opt) return;
     free_bufs(opt->momentum_buffers, opt->num_params);
     free_bufs(opt->state_buf2, opt->num_params);
     free_bufs(opt->state_buf3, opt->num_params);
-    arix_free(opt, sizeof(ArixOptimizer));
+    SNEPPX_free(opt, sizeof(SNEPPXOptimizer));
 }
 
 static float clip_grad(float g, float clip) {
@@ -75,7 +75,7 @@ static float clip_grad(float g, float clip) {
     return g;
 }
 
-static void ensure_bufs(ArixOptimizer* opt, ArixTensor** params, size_t n) {
+static void ensure_bufs(SNEPPXOptimizer* opt, SNEPPXTensor** params, size_t n) {
     if (opt->num_params == n) return;
     free_bufs(opt->momentum_buffers, opt->num_params);
     free_bufs(opt->state_buf2, opt->num_params);
@@ -85,31 +85,31 @@ static void ensure_bufs(ArixOptimizer* opt, ArixTensor** params, size_t n) {
     opt->state_buf3 = NULL;
     opt->num_params = 0;
 
-    opt->momentum_buffers = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
+    opt->momentum_buffers = (SNEPPXTensor**)SNEPPX_malloc(n * sizeof(SNEPPXTensor*), 64);
     if (!opt->momentum_buffers) return;
-    memset(opt->momentum_buffers, 0, n * sizeof(ArixTensor*));
+    memset(opt->momentum_buffers, 0, n * sizeof(SNEPPXTensor*));
 
-    if (opt->type == ARIX_OPTIMIZER_ADAM || opt->type == ARIX_OPTIMIZER_ADAMW ||
-        opt->type == ARIX_OPTIMIZER_ADAMAX || opt->type == ARIX_OPTIMIZER_RMSPROP ||
-        opt->type == ARIX_OPTIMIZER_ADAGRAD || opt->type == ARIX_OPTIMIZER_ADADELTA) {
-        opt->state_buf2 = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
-        if (opt->state_buf2) memset(opt->state_buf2, 0, n * sizeof(ArixTensor*));
+    if (opt->type == SNEPPX_OPTIMIZER_ADAM || opt->type == SNEPPX_OPTIMIZER_ADAMW ||
+        opt->type == SNEPPX_OPTIMIZER_ADAMAX || opt->type == SNEPPX_OPTIMIZER_RMSPROP ||
+        opt->type == SNEPPX_OPTIMIZER_ADAGRAD || opt->type == SNEPPX_OPTIMIZER_ADADELTA) {
+        opt->state_buf2 = (SNEPPXTensor**)SNEPPX_malloc(n * sizeof(SNEPPXTensor*), 64);
+        if (opt->state_buf2) memset(opt->state_buf2, 0, n * sizeof(SNEPPXTensor*));
     }
-    if (opt->type == ARIX_OPTIMIZER_ADADELTA) {
-        opt->state_buf3 = (ArixTensor**)arix_malloc(n * sizeof(ArixTensor*), 64);
-        if (opt->state_buf3) memset(opt->state_buf3, 0, n * sizeof(ArixTensor*));
+    if (opt->type == SNEPPX_OPTIMIZER_ADADELTA) {
+        opt->state_buf3 = (SNEPPXTensor**)SNEPPX_malloc(n * sizeof(SNEPPXTensor*), 64);
+        if (opt->state_buf3) memset(opt->state_buf3, 0, n * sizeof(SNEPPXTensor*));
     }
 
     for (size_t i = 0; i < n; i++) {
         if (!params[i]) continue;
-        opt->momentum_buffers[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
-        if (opt->state_buf2) opt->state_buf2[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
-        if (opt->state_buf3) opt->state_buf3[i] = arix_tensor_zeros(params[i]->shape, params[i]->ndim, ARIX_FLOAT32);
+        opt->momentum_buffers[i] = SNEPPX_tensor_zeros(params[i]->shape, params[i]->ndim, SNEPPX_FLOAT32);
+        if (opt->state_buf2) opt->state_buf2[i] = SNEPPX_tensor_zeros(params[i]->shape, params[i]->ndim, SNEPPX_FLOAT32);
+        if (opt->state_buf3) opt->state_buf3[i] = SNEPPX_tensor_zeros(params[i]->shape, params[i]->ndim, SNEPPX_FLOAT32);
     }
     opt->num_params = n;
 }
 
-static void step_sgd(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+static void step_sgd(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
     for (size_t i = 0; i < n; i++) {
         if (!params[i] || !grads[i]) continue;
         float* pd = (float*)params[i]->data;
@@ -136,7 +136,7 @@ static void step_sgd(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads
     }
 }
 
-static void step_adam(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n, int decoupled_wd) {
+static void step_adam(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n, int decoupled_wd) {
     float lr = opt->learning_rate, b1 = opt->beta1, b2 = opt->beta2;
     float eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
     float bias1 = 1.0f, bias2 = 1.0f;
@@ -166,7 +166,7 @@ static void step_adam(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grad
     }
 }
 
-static void step_adamax(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+static void step_adamax(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
     float lr = opt->learning_rate, b1 = opt->beta1, b2 = opt->beta2;
     float eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
     float bias1 = 1.0f;
@@ -190,7 +190,7 @@ static void step_adamax(ArixOptimizer* opt, ArixTensor** params, ArixTensor** gr
     }
 }
 
-static void step_rmsprop(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+static void step_rmsprop(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
     float lr = opt->learning_rate, alpha = opt->beta1, eps = opt->epsilon;
     float wd = opt->weight_decay, clip = opt->grad_clip, mu = opt->momentum;
 
@@ -217,7 +217,7 @@ static void step_rmsprop(ArixOptimizer* opt, ArixTensor** params, ArixTensor** g
     }
 }
 
-static void step_adagrad(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+static void step_adagrad(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
     float lr = opt->learning_rate, eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
 
     for (size_t i = 0; i < n; i++) {
@@ -236,7 +236,7 @@ static void step_adagrad(ArixOptimizer* opt, ArixTensor** params, ArixTensor** g
     }
 }
 
-static void step_adadelta(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t n) {
+static void step_adadelta(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
     float rho = opt->rho, eps = opt->epsilon, wd = opt->weight_decay, clip = opt->grad_clip;
 
     for (size_t i = 0; i < n; i++) {
@@ -258,29 +258,29 @@ static void step_adadelta(ArixOptimizer* opt, ArixTensor** params, ArixTensor** 
     }
 }
 
-void arix_optimizer_step(ArixOptimizer* opt, ArixTensor** params, ArixTensor** grads, size_t num_params) {
+void SNEPPX_optimizer_step(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t num_params) {
     if (!opt || !params || !grads || num_params == 0) return;
     ensure_bufs(opt, params, num_params);
     if (opt->num_params == 0) return;
     opt->step_count++;
 
     switch (opt->type) {
-        case ARIX_OPTIMIZER_SGD:      step_sgd(opt, params, grads, num_params); break;
-        case ARIX_OPTIMIZER_ADAM:     step_adam(opt, params, grads, num_params, 0); break;
-        case ARIX_OPTIMIZER_ADAMW:    step_adam(opt, params, grads, num_params, 1); break;
-        case ARIX_OPTIMIZER_ADAMAX:   step_adamax(opt, params, grads, num_params); break;
-        case ARIX_OPTIMIZER_RMSPROP:  step_rmsprop(opt, params, grads, num_params); break;
-        case ARIX_OPTIMIZER_ADAGRAD:  step_adagrad(opt, params, grads, num_params); break;
-        case ARIX_OPTIMIZER_ADADELTA: step_adadelta(opt, params, grads, num_params); break;
+        case SNEPPX_OPTIMIZER_SGD:      step_sgd(opt, params, grads, num_params); break;
+        case SNEPPX_OPTIMIZER_ADAM:     step_adam(opt, params, grads, num_params, 0); break;
+        case SNEPPX_OPTIMIZER_ADAMW:    step_adam(opt, params, grads, num_params, 1); break;
+        case SNEPPX_OPTIMIZER_ADAMAX:   step_adamax(opt, params, grads, num_params); break;
+        case SNEPPX_OPTIMIZER_RMSPROP:  step_rmsprop(opt, params, grads, num_params); break;
+        case SNEPPX_OPTIMIZER_ADAGRAD:  step_adagrad(opt, params, grads, num_params); break;
+        case SNEPPX_OPTIMIZER_ADADELTA: step_adadelta(opt, params, grads, num_params); break;
     }
 }
 
-ArixLRScheduler* arix_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_t step_size) {
+SNEPPXLRScheduler* SNEPPX_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_t step_size) {
     if (!lr_ptr) return NULL;
-    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
     if (!s) return NULL;
-    memset(s, 0, sizeof(ArixLRScheduler));
-    s->type = ARIX_LR_STEP;
+    memset(s, 0, sizeof(SNEPPXLRScheduler));
+    s->type = SNEPPX_LR_STEP;
     s->lr_ptr = lr_ptr;
     s->gamma = gamma;
     s->step_size = step_size;
@@ -288,24 +288,24 @@ ArixLRScheduler* arix_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_t st
     return s;
 }
 
-ArixLRScheduler* arix_lr_scheduler_exponential(float* lr_ptr, float gamma) {
+SNEPPXLRScheduler* SNEPPX_lr_scheduler_exponential(float* lr_ptr, float gamma) {
     if (!lr_ptr) return NULL;
-    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
     if (!s) return NULL;
-    memset(s, 0, sizeof(ArixLRScheduler));
-    s->type = ARIX_LR_EXPONENTIAL;
+    memset(s, 0, sizeof(SNEPPXLRScheduler));
+    s->type = SNEPPX_LR_EXPONENTIAL;
     s->lr_ptr = lr_ptr;
     s->gamma = gamma;
     s->mode_min = 1;
     return s;
 }
 
-ArixLRScheduler* arix_lr_scheduler_cosine(float* lr_ptr, float min_lr, float max_lr, size_t total_steps) {
+SNEPPXLRScheduler* SNEPPX_lr_scheduler_cosine(float* lr_ptr, float min_lr, float max_lr, size_t total_steps) {
     if (!lr_ptr) return NULL;
-    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
     if (!s) return NULL;
-    memset(s, 0, sizeof(ArixLRScheduler));
-    s->type = ARIX_LR_COSINE;
+    memset(s, 0, sizeof(SNEPPXLRScheduler));
+    s->type = SNEPPX_LR_COSINE;
     s->lr_ptr = lr_ptr;
     s->min_lr = min_lr;
     s->max_lr = max_lr;
@@ -314,12 +314,12 @@ ArixLRScheduler* arix_lr_scheduler_cosine(float* lr_ptr, float min_lr, float max
     return s;
 }
 
-ArixLRScheduler* arix_lr_scheduler_reduce_on_plateau(float* lr_ptr, float factor, size_t patience, int mode_min) {
+SNEPPXLRScheduler* SNEPPX_lr_scheduler_reduce_on_plateau(float* lr_ptr, float factor, size_t patience, int mode_min) {
     if (!lr_ptr) return NULL;
-    ArixLRScheduler* s = (ArixLRScheduler*)arix_malloc(sizeof(ArixLRScheduler), 64);
+    SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
     if (!s) return NULL;
-    memset(s, 0, sizeof(ArixLRScheduler));
-    s->type = ARIX_LR_REDUCE_ON_PLATEAU;
+    memset(s, 0, sizeof(SNEPPXLRScheduler));
+    s->type = SNEPPX_LR_REDUCE_ON_PLATEAU;
     s->lr_ptr = lr_ptr;
     s->factor = factor;
     s->patience = patience;
@@ -328,64 +328,64 @@ ArixLRScheduler* arix_lr_scheduler_reduce_on_plateau(float* lr_ptr, float factor
     return s;
 }
 
-void arix_lr_scheduler_destroy(ArixLRScheduler* sched) {
-    arix_free(sched, sizeof(ArixLRScheduler));
+void SNEPPX_lr_scheduler_destroy(SNEPPXLRScheduler* sched) {
+    SNEPPX_free(sched, sizeof(SNEPPXLRScheduler));
 }
 
-ArixOptimizer* arix_sgd_create(float lr, float momentum, float weight_decay) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default();
-    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_SGD;
+SNEPPXOptimizer* SNEPPX_sgd_create(float lr, float momentum, float weight_decay) {
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_SGD;
     cfg.momentum = momentum; cfg.weight_decay = weight_decay;
-    return arix_optimizer_create(&cfg);
+    return SNEPPX_optimizer_create(&cfg);
 }
 
-ArixOptimizer* arix_adam_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default();
-    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAM;
+SNEPPXOptimizer* SNEPPX_adam_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAM;
     cfg.beta1 = beta1; cfg.beta2 = beta2; cfg.epsilon = eps; cfg.weight_decay = weight_decay;
-    return arix_optimizer_create(&cfg);
+    return SNEPPX_optimizer_create(&cfg);
 }
 
-ArixOptimizer* arix_adamw_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default();
-    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAMW;
+SNEPPXOptimizer* SNEPPX_adamw_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAMW;
     cfg.beta1 = beta1; cfg.beta2 = beta2; cfg.epsilon = eps; cfg.weight_decay = weight_decay;
-    return arix_optimizer_create(&cfg);
+    return SNEPPX_optimizer_create(&cfg);
 }
 
-ArixOptimizer* arix_rmsprop_create(float lr, float alpha, float eps, float momentum, float weight_decay) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default();
-    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_RMSPROP;
+SNEPPXOptimizer* SNEPPX_rmsprop_create(float lr, float alpha, float eps, float momentum, float weight_decay) {
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_RMSPROP;
     cfg.beta1 = alpha; cfg.epsilon = eps; cfg.momentum = momentum; cfg.weight_decay = weight_decay;
-    return arix_optimizer_create(&cfg);
+    return SNEPPX_optimizer_create(&cfg);
 }
 
-ArixOptimizer* arix_adagrad_create(float lr, float eps, float weight_decay) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default();
-    cfg.learning_rate = lr; cfg.type = ARIX_OPTIMIZER_ADAGRAD;
+SNEPPXOptimizer* SNEPPX_adagrad_create(float lr, float eps, float weight_decay) {
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAGRAD;
     cfg.epsilon = eps; cfg.weight_decay = weight_decay;
-    return arix_optimizer_create(&cfg);
+    return SNEPPX_optimizer_create(&cfg);
 }
 
-void arix_lr_scheduler_step(ArixLRScheduler* sched, float current_loss) {
+void SNEPPX_lr_scheduler_step(SNEPPXLRScheduler* sched, float current_loss) {
     if (!sched || !sched->lr_ptr) return;
     sched->last_epoch++;
 
     switch (sched->type) {
-        case ARIX_LR_STEP:
+        case SNEPPX_LR_STEP:
             if (sched->step_size > 0 && sched->last_epoch % sched->step_size == 0)
                 *sched->lr_ptr *= sched->gamma;
             break;
-        case ARIX_LR_EXPONENTIAL:
+        case SNEPPX_LR_EXPONENTIAL:
             *sched->lr_ptr *= sched->gamma;
             break;
-        case ARIX_LR_COSINE: {
+        case SNEPPX_LR_COSINE: {
             float progress = (float)sched->last_epoch / (float)(sched->total_steps > 0 ? sched->total_steps : 1);
             if (progress > 1.0f) progress = 1.0f;
             *sched->lr_ptr = sched->min_lr + 0.5f * (sched->max_lr - sched->min_lr) * (1.0f + cosf((float)3.14159265f * progress));
             break;
         }
-        case ARIX_LR_REDUCE_ON_PLATEAU: {
+        case SNEPPX_LR_REDUCE_ON_PLATEAU: {
             int improved = sched->mode_min ? (current_loss < sched->best_loss) : (current_loss > sched->best_loss);
             if (improved) {
                 sched->best_loss = current_loss;

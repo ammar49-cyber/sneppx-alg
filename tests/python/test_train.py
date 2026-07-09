@@ -1,5 +1,5 @@
 import numpy as np
-from arix_algo import Model, Trainer
+from SneppX_ALG import Model, Trainer
 
 
 def test_train_step():

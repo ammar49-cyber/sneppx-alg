@@ -32,51 +32,51 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 
 static void test_create_2d(void) {
     size_t shape[] = {2, 3};
-    ArixTensor* t = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
     ASSERT(t->ndim == 2, "ndim == 2");
     ASSERT(t->shape[0] == 2, "shape[0] == 2");
     ASSERT(t->shape[1] == 3, "shape[1] == 3");
     ASSERT(t->size == 6, "size == 6");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_zeros(void) {
     size_t shape[] = {2, 2};
-    ArixTensor* t = arix_tensor_zeros(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_zeros(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
     float* data = (float*)t->data;
     for (size_t i = 0; i < 4; i++) {
         ASSERT(data[i] == 0.0f, "all zeros");
     }
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_ones(void) {
     size_t shape[] = {2, 2};
-    ArixTensor* t = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
     float* data = (float*)t->data;
     for (size_t i = 0; i < 4; i++) {
         ASSERT(data[i] == 1.0f, "all ones");
     }
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_set_get(void) {
     size_t shape[] = {3, 3};
-    ArixTensor* t = arix_tensor_zeros(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_zeros(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
     size_t indices[] = {1, 2};
-    arix_tensor_set_f32(t, indices, 3.14f);
-    float val = arix_tensor_get_f32(t, indices);
+    SNEPPX_tensor_set_f32(t, indices, 3.14f);
+    float val = SNEPPX_tensor_get_f32(t, indices);
     ASSERT_NEAR(val, 3.14f, 1e-4f, "value at [1,2] == 3.14");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_randn_range(void) {
     size_t shape[] = {100};
-    ArixTensor* t = arix_tensor_randn(shape, 1, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_randn(shape, 1, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
     float* data = (float*)t->data;
     float min_val = data[0], max_val = data[0];
@@ -86,15 +86,15 @@ static void test_randn_range(void) {
     }
     ASSERT(min_val > -5.0f, "min > -5.0");
     ASSERT(max_val < 5.0f, "max < 5.0");
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 static void test_print(void) {
     size_t shape[] = {2, 3};
-    ArixTensor* t = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
     ASSERT(t != NULL, "tensor not null");
-    arix_tensor_print(t);
-    arix_tensor_destroy(t);
+    SNEPPX_tensor_print(t);
+    SNEPPX_tensor_destroy(t);
 }
 
 int main(void) {

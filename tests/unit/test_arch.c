@@ -21,27 +21,27 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_arch_has_avx(void) {
-    int has = arix_arch_has_avx();
+    int has = SNEPPX_arch_has_avx();
     ASSERT(has == 0 || has == 1, "has_avx returns boolean");
 }
 
 static void test_arch_has_avx2(void) {
-    int has = arix_arch_has_avx2();
+    int has = SNEPPX_arch_has_avx2();
     ASSERT(has == 0 || has == 1, "has_avx2 returns boolean");
 }
 
 static void test_arch_has_neon(void) {
-    int has = arix_arch_has_neon();
+    int has = SNEPPX_arch_has_neon();
     ASSERT(has == 0 || has == 1, "has_neon returns boolean");
 }
 
 static void test_arch_num_cores(void) {
-    int cores = arix_arch_num_cores();
+    int cores = SNEPPX_arch_num_cores();
     ASSERT(cores > 0, "num_cores > 0");
 }
 
 static void test_arch_cache_line_size(void) {
-    int sz = arix_arch_cache_line_size();
+    int sz = SNEPPX_arch_cache_line_size();
     ASSERT(sz > 0, "cache line size > 0");
 }
 

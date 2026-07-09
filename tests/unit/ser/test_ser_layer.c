@@ -20,18 +20,18 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_layer_forward(void) {
-    ArixSERConfig cfg = arix_ser_config_default();
+    SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4; cfg.num_active = 2; cfg.input_dim = 16;
     cfg.expert_dim = 32; cfg.output_dim = 16;
-    ArixSERLayer* layer = arix_ser_layer_create(&cfg, 42);
+    SNEPPXSERLayer* layer = SNEPPX_ser_layer_create(&cfg, 42);
     ASSERT(layer != NULL, "layer not null");
 
     size_t shape_in[] = {16, 16};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* output = NULL;
-    arix_ser_forward(layer, input, &output);
+    SNEPPXTensor* output = NULL;
+    SNEPPX_ser_forward(layer, input, &output);
     ASSERT(output != NULL, "output not null");
     ASSERT(output->shape[0] == 16, "output tokens == 16");
     ASSERT(output->shape[1] == 16, "output dim == 16");
@@ -43,35 +43,35 @@ static void test_layer_forward(void) {
     }
     ASSERT(ok, "all finite");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(output);
-    arix_ser_layer_destroy(layer);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_ser_layer_destroy(layer);
 }
 
 static void test_layer_load_balance(void) {
-    ArixSERConfig cfg = arix_ser_config_default();
+    SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4; cfg.num_active = 2; cfg.input_dim = 16;
     cfg.expert_dim = 32; cfg.output_dim = 16;
-    ArixSERLayer* layer = arix_ser_layer_create(&cfg, 42);
+    SNEPPXSERLayer* layer = SNEPPX_ser_layer_create(&cfg, 42);
     ASSERT(layer != NULL, "layer not null");
 
     size_t shape_in[] = {16, 16};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* gw = NULL;
+    SNEPPXTensor* gw = NULL;
     int* ei = NULL;
-    arix_ser_route(layer, input, &gw, &ei);
+    SNEPPX_ser_route(layer, input, &gw, &ei);
     ASSERT(gw != NULL, "gw not null");
 
-    float loss = arix_ser_load_balance_loss(gw, ei, 16);
+    float loss = SNEPPX_ser_load_balance_loss(gw, ei, 16);
     ASSERT(isfinite(loss), "loss is finite");
     ASSERT(loss >= 0.0f, "loss >= 0");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(gw);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(gw);
     free(ei);
-    arix_ser_layer_destroy(layer);
+    SNEPPX_ser_layer_destroy(layer);
 }
 
 int main(void) {

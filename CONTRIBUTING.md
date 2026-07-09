@@ -1,8 +1,8 @@
-# Contributing to ARIX-Algo
+# Contributing to SNEPPX-Algo
 
 ## Governance
 
-BDFL: Ammar [ARIX] <algoarix@gmail.com>
+BDFL: Ammar [SNEPPX] <algoSNEPPX@gmail.com>
 
 All decisions final. No voting. No committees.
 
@@ -16,7 +16,7 @@ git format-patch -1 HEAD
 
 ### 2. Email Your Patch
 
-Send to algoarix@gmail.com with subject prefix `[PATCH]`.
+Send to algoSNEPPX@gmail.com with subject prefix `[PATCH]`.
 
 ### 3. Wait for Review
 

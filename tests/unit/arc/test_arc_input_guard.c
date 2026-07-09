@@ -10,19 +10,19 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_guard_create(void) {
-    ArixInputGuard* g = arix_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
     ASSERT(g != NULL, "guard not null");
     ASSERT(g->projection_matrix->shape[0] == 64, "proj rows 64");
     ASSERT(g->projection_matrix->shape[1] == 64, "proj cols 64");
-    arix_input_guard_destroy(g);
+    SNEPPX_input_guard_destroy(g);
 }
 
 static void test_guard_normal_input(void) {
-    ArixInputGuard* g = arix_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
     ASSERT(g != NULL, "guard not null");
 
     size_t shape_in[] = {8, 64};
-    ArixTensor* input = arix_tensor_create(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     unsigned long s = 123;
     for (size_t i = 0; i < 8 * 64; i++) {
@@ -30,25 +30,25 @@ static void test_guard_normal_input(void) {
         d[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 0.2f;
     }
 
-    ArixTensor* sanitized = NULL;
+    SNEPPXTensor* sanitized = NULL;
     float score = 0.0f;
-    arix_arc_input_guard_forward(g, input, &sanitized, &score);
+    SNEPPX_arc_input_guard_forward(g, input, &sanitized, &score);
     ASSERT(sanitized != NULL, "sanitized not null");
     ASSERT(score < 0.1f, "anomaly_score < 0.1");
     ASSERT(sanitized->shape[0] == 8, "batch ok");
     ASSERT(sanitized->shape[1] == 64, "dim ok");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(sanitized);
-    arix_input_guard_destroy(g);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(sanitized);
+    SNEPPX_input_guard_destroy(g);
 }
 
 static void test_guard_anomaly_input(void) {
-    ArixInputGuard* g = arix_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
     ASSERT(g != NULL, "guard not null");
 
     size_t shape_in[] = {8, 64};
-    ArixTensor* input = arix_tensor_create(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create(shape_in, 2, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     unsigned long s = 123;
     for (size_t i = 0; i < 8 * 64; i++) {
@@ -56,15 +56,15 @@ static void test_guard_anomaly_input(void) {
         d[i] = ((float)((s >> 16) & 0x7FFF) / 32767.0f - 0.5f) * 20.0f;
     }
 
-    ArixTensor* sanitized = NULL;
+    SNEPPXTensor* sanitized = NULL;
     float score = 0.0f;
-    arix_arc_input_guard_forward(g, input, &sanitized, &score);
+    SNEPPX_arc_input_guard_forward(g, input, &sanitized, &score);
     ASSERT(sanitized != NULL, "sanitized not null");
     ASSERT(score > 0.5f, "anomaly_score > 0.5");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(sanitized);
-    arix_input_guard_destroy(g);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(sanitized);
+    SNEPPX_input_guard_destroy(g);
 }
 
 int main(void) {

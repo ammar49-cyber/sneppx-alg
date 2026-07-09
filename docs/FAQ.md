@@ -2,14 +2,14 @@
 
 ## General
 
-**Q: What is ARIX-Algo?**  
+**Q: What is SNEPPX-Algo?**  
 A: A composable, cryptographically-secure AI algorithm pipeline built with security as a first principle.
 
 **Q: Is this a production-ready framework?**  
 A: No — v0.1.x is a research prototype. The architecture is real, the math is sound, but GPU support, distributed training, and formal verification are future work.
 
 **Q: Can I use it as a PyTorch replacement?**  
-A: That is not the goal. ARIX-Algo explores a different design axis: security in every instruction. Interop with PyTorch via ONNX or custom export may come in v1.0+.
+A: That is not the goal. SNEPPX-Algo explores a different design axis: security in every instruction. Interop with PyTorch via ONNX or custom export may come in v1.0+.
 
 ## Build
 
@@ -44,7 +44,7 @@ A: Not yet. S0 passes standard test vectors (NIST, RFC 8439, RFC 8032) but has n
 ## Contributing
 
 **Q: How do I submit a patch?**  
-A: Email `git format-patch` output to algoarix@gmail.com. No pull requests. See CONTRIBUTING.md.
+A: Email `git format-patch` output to algoSNEPPX@gmail.com. No pull requests. See CONTRIBUTING.md.
 
 **Q: Can I become a maintainer?**  
 A: Not at this time. The project uses a BDFL governance model.

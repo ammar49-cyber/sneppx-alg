@@ -10,27 +10,27 @@ static uint32_t hash_djb2(const uint8_t* data, size_t len) {
     return h;
 }
 
-int arix_tuf_init(ArixTUFMetadata* tuf) {
+int SNEPPX_tuf_init(SNEPPXTUFMetadata* tuf) {
     if (!tuf) return -1; memset(tuf, 0, sizeof(*tuf));
     for (int i = 0; i < 32; i++) { tuf->root_key[i] = (uint8_t)(rand() % 256); tuf->targets_key[i] = (uint8_t)(rand() % 256); tuf->snapshot_key[i] = (uint8_t)(rand() % 256); tuf->timestamp_key[i] = (uint8_t)(rand() % 256); }
     tuf->initialized = 1; return 0;
 }
 
-int arix_tuf_sign_root(ArixTUFMetadata* tuf, const uint8_t* data, size_t len, uint8_t* sig, size_t* sig_len) {
+int SNEPPX_tuf_sign_root(SNEPPXTUFMetadata* tuf, const uint8_t* data, size_t len, uint8_t* sig, size_t* sig_len) {
     if (!tuf || !data || !sig || !sig_len || *sig_len < 32) return -1;
     for (size_t i = 0; i < len && i < 32; i++) sig[i] = data[i] ^ tuf->root_key[i];
     for (size_t i = len; i < 32; i++) sig[i] = tuf->root_key[i];
     *sig_len = 32; return 0;
 }
 
-int arix_tuf_verify_targets(ArixTUFMetadata* tuf, const uint8_t* targets_json, size_t len) {
+int SNEPPX_tuf_verify_targets(SNEPPXTUFMetadata* tuf, const uint8_t* targets_json, size_t len) {
     if (!tuf || !targets_json) return -1;
     uint32_t h = hash_djb2(targets_json, len);
     uint32_t expected = tuf->targets_key[0] | ((uint32_t)tuf->targets_key[1] << 8) | ((uint32_t)tuf->targets_key[2] << 16) | ((uint32_t)tuf->targets_key[3] << 24);
     return (h == expected) ? 0 : -1;
 }
 
-int arix_bsdiff(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len) {
+int SNEPPX_bsdiff(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len) {
     if (!old_data || !new_data || !patch || !patch_len) return -1;
     size_t pos = 0, old_pos = 0, new_pos = 0;
     while (old_pos < old_len && new_pos < new_len) {
@@ -56,7 +56,7 @@ int arix_bsdiff(const uint8_t* old_data, size_t old_len, const uint8_t* new_data
     *patch_len = pos; return 0;
 }
 
-int arix_bspatch(const uint8_t* old_data, size_t old_len, const uint8_t* patch, size_t patch_len, uint8_t* new_data, size_t* new_len) {
+int SNEPPX_bspatch(const uint8_t* old_data, size_t old_len, const uint8_t* patch, size_t patch_len, uint8_t* new_data, size_t* new_len) {
     (void)old_data; (void)old_len;
     if (!patch || !new_data || !new_len) return -1;
     size_t pos = 0, out_pos = 0;
@@ -75,11 +75,11 @@ int arix_bspatch(const uint8_t* old_data, size_t old_len, const uint8_t* patch, 
     *new_len = out_pos; return 0;
 }
 
-int arix_ab_partition_init(ArixABPartition* ab) {
+int SNEPPX_ab_partition_init(SNEPPXABPartition* ab) {
     if (!ab) return -1; memset(ab, 0, sizeof(*ab)); ab->active_slot = 0; ab->inactive_slot = 1; ab->swap_ready = 0; return 0;
 }
 
-int arix_ab_partition_mark_good(ArixABPartition* ab, int slot) {
+int SNEPPX_ab_partition_mark_good(SNEPPXABPartition* ab, int slot) {
     if (!ab) return -1;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
     uint64_t t = (uint64_t)time(NULL) ^ (uint64_t)(uintptr_t)ab;
@@ -87,7 +87,7 @@ int arix_ab_partition_mark_good(ArixABPartition* ab, int slot) {
     return 0;
 }
 
-int arix_ab_partition_swap(ArixABPartition* ab) {
+int SNEPPX_ab_partition_swap(SNEPPXABPartition* ab) {
     if (!ab) return -1;
     uint8_t* target_hash = ab->active_slot == 0 ? ab->slot_b_hash : ab->slot_a_hash;
     int all_zero = 1;
@@ -96,7 +96,7 @@ int arix_ab_partition_swap(ArixABPartition* ab) {
     int tmp = ab->active_slot; ab->active_slot = ab->inactive_slot; ab->inactive_slot = tmp; ab->swap_ready = 1; return 0;
 }
 
-int arix_manifest_verify(const char* manifest_path, const uint8_t* signature, size_t sig_len) {
+int SNEPPX_manifest_verify(const char* manifest_path, const uint8_t* signature, size_t sig_len) {
     if (!manifest_path || !signature) return -1;
     FILE* f = fopen(manifest_path, "rb"); if (!f) return -1;
     fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
@@ -107,34 +107,34 @@ int arix_manifest_verify(const char* manifest_path, const uint8_t* signature, si
     return (h == sig_val) ? 0 : 1;
 }
 
-int arix_tpm_pcr_read(int pcr_index, uint8_t* out, size_t* out_len) {
+int SNEPPX_tpm_pcr_read(int pcr_index, uint8_t* out, size_t* out_len) {
     if (!out || !out_len || *out_len < 32) return -1;
     for (int i = 0; i < 32; i++) out[i] = (uint8_t)((pcr_index * 7 + i * 13) & 0xFF);
     *out_len = 32; return 0;
 }
 
-int arix_tpm_quote(const uint8_t* nonce, size_t nonce_len, uint8_t* quote, size_t* quote_len) {
+int SNEPPX_tpm_quote(const uint8_t* nonce, size_t nonce_len, uint8_t* quote, size_t* quote_len) {
     if (!nonce || !quote || !quote_len || *quote_len < 64) return -1;
     memset(quote, 0, 64);
     for (size_t i = 0; i < nonce_len && i < 32; i++) quote[i] = nonce[i] ^ 0xA5;
-    uint8_t pcr[32]; size_t pcr_len = 32; arix_tpm_pcr_read(0, pcr, &pcr_len);
+    uint8_t pcr[32]; size_t pcr_len = 32; SNEPPX_tpm_pcr_read(0, pcr, &pcr_len);
     memcpy(quote + 32, pcr, 32);
     *quote_len = 64; return 0;
 }
 
-int arix_canary_rollout_init(ArixCanaryRollout* cr, int total, int canary) {
+int SNEPPX_canary_rollout_init(SNEPPXCanaryRollout* cr, int total, int canary) {
     if (!cr || total <= 0 || canary <= 0 || canary > total) return -1;
     memset(cr, 0, sizeof(*cr)); cr->total_nodes = total; cr->canary_nodes = canary; cr->promoted = 0; return 0;
 }
 
-int arix_canary_rollout_promote(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_promote(SNEPPXCanaryRollout* cr) {
     if (!cr) return -1;
     int new_canary = cr->canary_nodes * 2;
     cr->canary_nodes = new_canary > cr->total_nodes ? cr->total_nodes : new_canary;
     cr->promoted = 1; return 0;
 }
 
-int arix_offline_bundle_create(ArixOfflineBundle* ob, const uint8_t* data, size_t data_len, const uint8_t* signing_key, size_t key_len) {
+int SNEPPX_offline_bundle_create(SNEPPXOfflineBundle* ob, const uint8_t* data, size_t data_len, const uint8_t* signing_key, size_t key_len) {
     if (!ob || !data || !signing_key) return -1;
     memset(ob, 0, sizeof(*ob));
     ob->bundle_size = data_len;
@@ -145,11 +145,11 @@ int arix_offline_bundle_create(ArixOfflineBundle* ob, const uint8_t* data, size_
     ob->signed_offline = 1; return 0;
 }
 
-int arix_dep_resolver_init(ArixDepResolver* dr) {
+int SNEPPX_dep_resolver_init(SNEPPXDepResolver* dr) {
     if (!dr) return -1; memset(dr, 0, sizeof(*dr)); dr->resolved = 0; return 0;
 }
 
-int arix_dep_resolver_add_dep(ArixDepResolver* dr, const char* name, uint32_t maj, uint32_t min, uint32_t pat) {
+int SNEPPX_dep_resolver_add_dep(SNEPPXDepResolver* dr, const char* name, uint32_t maj, uint32_t min, uint32_t pat) {
     if (!dr || !name) return -1;
     strncpy(dr->name, name, 63); dr->version_major = maj; dr->version_minor = min; dr->version_patch = pat; return 0;
 }
@@ -157,7 +157,7 @@ int arix_dep_resolver_add_dep(ArixDepResolver* dr, const char* name, uint32_t ma
 static int deps_visited[64];
 static int dep_cycle_detected = 0;
 
-static void dep_dfs(ArixDepResolver* dr, int idx, int* dep_graph, int n) {
+static void dep_dfs(SNEPPXDepResolver* dr, int idx, int* dep_graph, int n) {
     if (dep_cycle_detected) return;
     if (deps_visited[idx] == 1) { dep_cycle_detected = 1; return; }
     if (deps_visited[idx] == 2) return;
@@ -168,7 +168,7 @@ static void dep_dfs(ArixDepResolver* dr, int idx, int* dep_graph, int n) {
     deps_visited[idx] = 2;
 }
 
-int arix_dep_resolver_resolve(ArixDepResolver* dr) {
+int SNEPPX_dep_resolver_resolve(SNEPPXDepResolver* dr) {
     if (!dr) return -1;
     int dep_graph[64 * 64] = {0};
     int n = 1;
@@ -179,31 +179,31 @@ int arix_dep_resolver_resolve(ArixDepResolver* dr) {
     dr->resolved = 1; return 0;
 }
 
-int arix_tuf_generate_keypair(int key_type) {
-    if (key_type < 0 || key_type >= ARIX_TUF_MAX_KEYS) return -1;
+int SNEPPX_tuf_generate_keypair(int key_type) {
+    if (key_type < 0 || key_type >= SNEPPX_TUF_MAX_KEYS) return -1;
     return key_type * 100 + (rand() % 100);
 }
 
-int arix_tuf_revoke_key(int key_type) {
-    if (key_type < 0 || key_type >= ARIX_TUF_MAX_KEYS) return -1;
+int SNEPPX_tuf_revoke_key(int key_type) {
+    if (key_type < 0 || key_type >= SNEPPX_TUF_MAX_KEYS) return -1;
     return 0;
 }
 
-int arix_bsdiff_with_signature(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len, const uint8_t* signing_key, size_t key_len) {
+int SNEPPX_bsdiff_with_signature(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len, const uint8_t* signing_key, size_t key_len) {
     if (!old_data || !new_data || !patch || !patch_len || !signing_key) return -1;
-    int ret = arix_bsdiff(old_data, old_len, new_data, new_len, patch, patch_len);
+    int ret = SNEPPX_bsdiff(old_data, old_len, new_data, new_len, patch, patch_len);
     if (ret != 0) return ret;
     for (size_t i = 0; i < *patch_len && i < key_len; i++)
         patch[i] ^= signing_key[i % key_len];
     return 0;
 }
 
-int arix_ab_rollback(int slot) {
+int SNEPPX_ab_rollback(int slot) {
     if (slot < 0 || slot > 1) return -1;
     return 0;
 }
 
-int arix_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_t* sealed_len, uint32_t pcr_mask) {
+int SNEPPX_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_t* sealed_len, uint32_t pcr_mask) {
     if (!data || !sealed || !sealed_len || *sealed_len < data_len + 8) return -1;
     (void)pcr_mask;
     memcpy(sealed, data, data_len);
@@ -216,7 +216,7 @@ int arix_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_t*
     return 0;
 }
 
-int arix_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, size_t* data_len, uint32_t pcr_mask) {
+int SNEPPX_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, size_t* data_len, uint32_t pcr_mask) {
     if (!sealed || !data || !data_len || sealed_len < 8) return -1;
     (void)pcr_mask;
     if (!(sealed[sealed_len - 4] == 0x5E && sealed[sealed_len - 3] == 0xA1 && sealed[sealed_len - 2] == 0x1E && sealed[sealed_len - 1] == 0xD))
@@ -228,12 +228,12 @@ int arix_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, siz
     return 0;
 }
 
-int arix_canary_rollout_get_percentage(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_get_percentage(SNEPPXCanaryRollout* cr) {
     if (!cr || cr->total_nodes <= 0) return 0;
     return (cr->canary_nodes * 100) / cr->total_nodes;
 }
 
-int arix_offline_bundle_verify(ArixOfflineBundle* bundle, const uint8_t* public_key, size_t key_len) {
+int SNEPPX_offline_bundle_verify(SNEPPXOfflineBundle* bundle, const uint8_t* public_key, size_t key_len) {
     if (!bundle || !public_key) return -1;
     (void)key_len;
     if (!bundle->signed_offline) return -1;
@@ -242,7 +242,7 @@ int arix_offline_bundle_verify(ArixOfflineBundle* bundle, const uint8_t* public_
     return (h != 0) ? 0 : -1;
 }
 static int key_type_valid(int key_type) {
-    return (key_type >= 0 && key_type < ARIX_TUF_MAX_KEYS);
+    return (key_type >= 0 && key_type < SNEPPX_TUF_MAX_KEYS);
 }
 
 static uint32_t hash_xor(const uint8_t* data, size_t len) {
@@ -251,11 +251,11 @@ static uint32_t hash_xor(const uint8_t* data, size_t len) {
     return h;
 }
 
-int arix_tuf_is_initialized(ArixTUFMetadata* tuf) {
+int SNEPPX_tuf_is_initialized(SNEPPXTUFMetadata* tuf) {
     return tuf ? tuf->initialized : 0;
 }
 
-int arix_tuf_get_key(ArixTUFMetadata* tuf, int key_type, uint8_t* key_out, size_t key_len) {
+int SNEPPX_tuf_get_key(SNEPPXTUFMetadata* tuf, int key_type, uint8_t* key_out, size_t key_len) {
     if (!tuf || !key_out || !key_type_valid(key_type)) return -1;
     if (key_len < 32) return -1;
     switch (key_type) {
@@ -268,7 +268,7 @@ int arix_tuf_get_key(ArixTUFMetadata* tuf, int key_type, uint8_t* key_out, size_
     return 0;
 }
 
-int arix_bsdiff_total_size(const uint8_t* patch, size_t patch_len) {
+int SNEPPX_bsdiff_total_size(const uint8_t* patch, size_t patch_len) {
     if (!patch || patch_len < 4) return 0;
     size_t total = 0;
     size_t pos = 0;
@@ -291,19 +291,19 @@ int arix_bsdiff_total_size(const uint8_t* patch, size_t patch_len) {
     return (int)total;
 }
 
-int arix_ab_partition_get_active_slot(ArixABPartition* ab) {
+int SNEPPX_ab_partition_get_active_slot(SNEPPXABPartition* ab) {
     return ab ? ab->active_slot : -1;
 }
 
-int arix_ab_partition_get_inactive_slot(ArixABPartition* ab) {
+int SNEPPX_ab_partition_get_inactive_slot(SNEPPXABPartition* ab) {
     return ab ? ab->inactive_slot : -1;
 }
 
-int arix_ab_partition_is_swap_ready(ArixABPartition* ab) {
+int SNEPPX_ab_partition_is_swap_ready(SNEPPXABPartition* ab) {
     return ab ? ab->swap_ready : 0;
 }
 
-int arix_manifest_verify_from_buffer(const uint8_t* manifest_data, size_t data_len, const uint8_t* signature, size_t sig_len) {
+int SNEPPX_manifest_verify_from_buffer(const uint8_t* manifest_data, size_t data_len, const uint8_t* signature, size_t sig_len) {
     if (!manifest_data || !signature) return -1;
     uint32_t h = hash_djb2(manifest_data, data_len);
     uint32_t sig_val = 0;
@@ -311,39 +311,39 @@ int arix_manifest_verify_from_buffer(const uint8_t* manifest_data, size_t data_l
     return (h == sig_val) ? 0 : 1;
 }
 
-int arix_tpm_extend(int pcr_index, const uint8_t* digest, size_t digest_len) {
+int SNEPPX_tpm_extend(int pcr_index, const uint8_t* digest, size_t digest_len) {
     if (pcr_index < 0 || pcr_index >= TPM_PCR_COUNT || !digest || digest_len == 0) return -1;
     return 0;
 }
 
-int arix_canary_rollout_get_total(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_get_total(SNEPPXCanaryRollout* cr) {
     return cr ? cr->total_nodes : 0;
 }
 
-int arix_canary_rollout_get_canary(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_get_canary(SNEPPXCanaryRollout* cr) {
     return cr ? cr->canary_nodes : 0;
 }
 
-int arix_canary_rollout_has_promoted(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_has_promoted(SNEPPXCanaryRollout* cr) {
     return cr ? cr->promoted : 0;
 }
 
-int arix_offline_bundle_is_signed(ArixOfflineBundle* ob) {
+int SNEPPX_offline_bundle_is_signed(SNEPPXOfflineBundle* ob) {
     return ob ? ob->signed_offline : 0;
 }
 
-int arix_offline_bundle_get_size(ArixOfflineBundle* ob) {
+int SNEPPX_offline_bundle_get_size(SNEPPXOfflineBundle* ob) {
     return ob ? (int)ob->bundle_size : 0;
 }
 
-int arix_dep_resolver_is_resolved(ArixDepResolver* dr) {
+int SNEPPX_dep_resolver_is_resolved(SNEPPXDepResolver* dr) {
     return dr ? dr->resolved : 0;
 }
 
-void arix_dep_resolver_reset(ArixDepResolver* dr) {
+void SNEPPX_dep_resolver_reset(SNEPPXDepResolver* dr) {
     if (dr) { memset(dr, 0, sizeof(*dr)); dr->resolved = 0; }
 }
-int arix_tuf_set_key(ArixTUFMetadata* tuf, int key_type, const uint8_t* key, size_t key_len) {
+int SNEPPX_tuf_set_key(SNEPPXTUFMetadata* tuf, int key_type, const uint8_t* key, size_t key_len) {
     if (!tuf || !key || key_len < 32 || !key_type_valid(key_type)) return -1;
     switch (key_type) {
         case 0: memcpy(tuf->root_key, key, 32); break;
@@ -355,29 +355,29 @@ int arix_tuf_set_key(ArixTUFMetadata* tuf, int key_type, const uint8_t* key, siz
     return 0;
 }
 
-int arix_ab_mark_slot_bad(ArixABPartition* ab, int slot) {
+int SNEPPX_ab_mark_slot_bad(SNEPPXABPartition* ab, int slot) {
     if (!ab || (slot != 0 && slot != 1)) return -1;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
     memset(target, 0, 32);
     return 0;
 }
 
-int arix_ab_slot_is_good(ArixABPartition* ab, int slot) {
+int SNEPPX_ab_slot_is_good(SNEPPXABPartition* ab, int slot) {
     if (!ab || (slot != 0 && slot != 1)) return 0;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
     for (int i = 0; i < 32; i++) if (target[i]) return 1;
     return 0;
 }
 
-void arix_tpm_set_variable(int index, uint32_t value) {
+void SNEPPX_tpm_set_variable(int index, uint32_t value) {
     (void)index; (void)value;
 }
 
-uint32_t arix_tpm_get_variable(int index) {
+uint32_t SNEPPX_tpm_get_variable(int index) {
     (void)index;
     return 0;
 }
-int arix_ab_force_swap(ArixABPartition* ab) {
+int SNEPPX_ab_force_swap(SNEPPXABPartition* ab) {
     if (!ab) return -1;
     int tmp = ab->active_slot;
     ab->active_slot = ab->inactive_slot;
@@ -386,7 +386,7 @@ int arix_ab_force_swap(ArixABPartition* ab) {
     return 0;
 }
 
-int arix_manifest_hash(const char* manifest_path, uint8_t* hash_out, size_t hash_len) {
+int SNEPPX_manifest_hash(const char* manifest_path, uint8_t* hash_out, size_t hash_len) {
     if (!manifest_path || !hash_out || hash_len < 4) return -1;
     FILE* f = fopen(manifest_path, "rb");
     if (!f) return -1;
@@ -401,7 +401,7 @@ int arix_manifest_hash(const char* manifest_path, uint8_t* hash_out, size_t hash
 
 /* ---- New S7 extension functions ---- */
 
-int arix_tuf_snapshot(uint8_t* snapshot_out, size_t* snapshot_len) {
+int SNEPPX_tuf_snapshot(uint8_t* snapshot_out, size_t* snapshot_len) {
     if (!snapshot_out || !snapshot_len || *snapshot_len < 64) return -1;
     memset(snapshot_out, 0, 64);
     uint32_t ts = (uint32_t)time(NULL);
@@ -414,7 +414,7 @@ int arix_tuf_snapshot(uint8_t* snapshot_out, size_t* snapshot_len) {
     return 0;
 }
 
-int arix_tuf_timestamp(uint8_t* timestamp_out, size_t* timestamp_len) {
+int SNEPPX_tuf_timestamp(uint8_t* timestamp_out, size_t* timestamp_len) {
     if (!timestamp_out || !timestamp_len || *timestamp_len < 32) return -1;
     memset(timestamp_out, 0, 32);
     uint32_t ts = (uint32_t)time(NULL);
@@ -426,7 +426,7 @@ int arix_tuf_timestamp(uint8_t* timestamp_out, size_t* timestamp_len) {
     return 0;
 }
 
-int arix_tuf_verify_snapshot(ArixTUFMetadata* tuf, const uint8_t* snapshot, size_t snapshot_len) {
+int SNEPPX_tuf_verify_snapshot(SNEPPXTUFMetadata* tuf, const uint8_t* snapshot, size_t snapshot_len) {
     if (!tuf || !snapshot) return -1;
     (void)snapshot_len;
     uint32_t h = 0;
@@ -435,7 +435,7 @@ int arix_tuf_verify_snapshot(ArixTUFMetadata* tuf, const uint8_t* snapshot, size
     return (h == expected) ? 0 : -1;
 }
 
-int arix_tuf_verify_timestamp(ArixTUFMetadata* tuf, const uint8_t* timestamp, size_t timestamp_len) {
+int SNEPPX_tuf_verify_timestamp(SNEPPXTUFMetadata* tuf, const uint8_t* timestamp, size_t timestamp_len) {
     if (!tuf || !timestamp) return -1;
     (void)timestamp_len;
     uint32_t h = 0;
@@ -444,7 +444,7 @@ int arix_tuf_verify_timestamp(ArixTUFMetadata* tuf, const uint8_t* timestamp, si
     return (h == expected) ? 0 : -1;
 }
 
-int arix_tuf_get_keys_loaded(ArixTUFMetadata* tuf) {
+int SNEPPX_tuf_get_keys_loaded(SNEPPXTUFMetadata* tuf) {
     if (!tuf) return 0;
     int count = 0;
     for (int i = 0; i < 32; i++) {
@@ -455,7 +455,7 @@ int arix_tuf_get_keys_loaded(ArixTUFMetadata* tuf) {
     return count > 0 ? 4 : 0;
 }
 
-int arix_bsdiff_create_patch_file(const char* old_path, const char* new_path, const char* patch_path) {
+int SNEPPX_bsdiff_create_patch_file(const char* old_path, const char* new_path, const char* patch_path) {
     if (!old_path || !new_path || !patch_path) return -1;
     FILE* f_old = fopen(old_path, "rb");
     if (!f_old) return -1;
@@ -475,7 +475,7 @@ int arix_bsdiff_create_patch_file(const char* old_path, const char* new_path, co
     uint8_t* patch_buf = (uint8_t*)malloc(patch_cap);
     if (!patch_buf) { free(old_buf); free(new_buf); return -1; }
     size_t patch_sz = patch_cap;
-    int ret = arix_bsdiff(old_buf, (size_t)old_sz, new_buf, (size_t)new_sz, patch_buf, &patch_sz);
+    int ret = SNEPPX_bsdiff(old_buf, (size_t)old_sz, new_buf, (size_t)new_sz, patch_buf, &patch_sz);
     if (ret == 0) {
         FILE* f_patch = fopen(patch_path, "wb");
         if (f_patch) { fwrite(patch_buf, 1, patch_sz, f_patch); fclose(f_patch); }
@@ -485,11 +485,11 @@ int arix_bsdiff_create_patch_file(const char* old_path, const char* new_path, co
     return ret;
 }
 
-int arix_bsdiff_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
-    return arix_bspatch_apply_patch(old_path, patch_path, new_path);
+int SNEPPX_bsdiff_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
+    return SNEPPX_bspatch_apply_patch(old_path, patch_path, new_path);
 }
 
-int arix_bspatch_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
+int SNEPPX_bspatch_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
     if (!old_path || !patch_path || !new_path) return -1;
     FILE* f_old = fopen(old_path, "rb");
     if (!f_old) return -1;
@@ -509,7 +509,7 @@ int arix_bspatch_apply_patch(const char* old_path, const char* patch_path, const
     uint8_t* new_buf = (uint8_t*)malloc(new_cap);
     if (!new_buf) { free(old_buf); free(patch_buf); return -1; }
     size_t new_sz = new_cap;
-    int ret = arix_bspatch(old_buf, (size_t)old_sz, patch_buf, (size_t)patch_sz, new_buf, &new_sz);
+    int ret = SNEPPX_bspatch(old_buf, (size_t)old_sz, patch_buf, (size_t)patch_sz, new_buf, &new_sz);
     if (ret == 0) {
         FILE* f_new = fopen(new_path, "wb");
         if (f_new) { fwrite(new_buf, 1, new_sz, f_new); fclose(f_new); }
@@ -519,20 +519,20 @@ int arix_bspatch_apply_patch(const char* old_path, const char* patch_path, const
     return ret;
 }
 
-int arix_ab_partition_get_active(ArixABPartition* ab) {
-    return arix_ab_partition_get_active_slot(ab);
+int SNEPPX_ab_partition_get_active(SNEPPXABPartition* ab) {
+    return SNEPPX_ab_partition_get_active_slot(ab);
 }
 
-int arix_ab_partition_get_inactive(ArixABPartition* ab) {
-    return arix_ab_partition_get_inactive_slot(ab);
+int SNEPPX_ab_partition_get_inactive(SNEPPXABPartition* ab) {
+    return SNEPPX_ab_partition_get_inactive_slot(ab);
 }
 
-int arix_ab_set_bootloader_slot(int slot) {
+int SNEPPX_ab_set_bootloader_slot(int slot) {
     (void)slot;
     return 0;
 }
 
-int arix_manifest_create(const char* path, const char** files, int file_count, uint8_t* manifest_out, size_t* manifest_len) {
+int SNEPPX_manifest_create(const char* path, const char** files, int file_count, uint8_t* manifest_out, size_t* manifest_len) {
     if (!path || !files || !manifest_out || !manifest_len) return -1;
     (void)path;
     size_t pos = 0;
@@ -552,7 +552,7 @@ int arix_manifest_create(const char* path, const char** files, int file_count, u
     return 0;
 }
 
-int arix_manifest_verify_all(const char* path, const uint8_t* public_key, size_t key_len) {
+int SNEPPX_manifest_verify_all(const char* path, const uint8_t* public_key, size_t key_len) {
     if (!path || !public_key) return -1;
     (void)path;
     (void)key_len;
@@ -561,24 +561,24 @@ int arix_manifest_verify_all(const char* path, const uint8_t* public_key, size_t
     return (check != 0) ? 0 : -1;
 }
 
-int arix_tpm_get_random(uint8_t* bytes, int count) {
+int SNEPPX_tpm_get_random(uint8_t* bytes, int count) {
     if (!bytes || count <= 0) return -1;
     for (int i = 0; i < count; i++) bytes[i] = (uint8_t)(rand() % 256);
     return 0;
 }
 
-int arix_canary_rollout_set_percentage(ArixCanaryRollout* cr, int percent) {
+int SNEPPX_canary_rollout_set_percentage(SNEPPXCanaryRollout* cr, int percent) {
     if (!cr || percent < 0 || percent > 100) return -1;
     cr->canary_nodes = (cr->total_nodes * percent) / 100;
     if (cr->canary_nodes == 0 && percent > 0) cr->canary_nodes = 1;
     return 0;
 }
 
-int arix_canary_rollout_is_promoted(ArixCanaryRollout* cr) {
+int SNEPPX_canary_rollout_is_promoted(SNEPPXCanaryRollout* cr) {
     return cr ? cr->promoted : 0;
 }
 
-int arix_offline_bundle_sign(ArixOfflineBundle* bundle, const uint8_t* signing_key, size_t key_len) {
+int SNEPPX_offline_bundle_sign(SNEPPXOfflineBundle* bundle, const uint8_t* signing_key, size_t key_len) {
     if (!bundle || !signing_key) return -1;
     bundle->signed_offline = 1;
     uint32_t h = 0;
@@ -587,26 +587,26 @@ int arix_offline_bundle_sign(ArixOfflineBundle* bundle, const uint8_t* signing_k
     return 0;
 }
 
-int arix_offline_bundle_get_hash(ArixOfflineBundle* bundle, uint8_t* hash_out) {
+int SNEPPX_offline_bundle_get_hash(SNEPPXOfflineBundle* bundle, uint8_t* hash_out) {
     if (!bundle || !hash_out) return -1;
     memcpy(hash_out, bundle->bundle_hash, 32);
     return 0;
 }
 
-int arix_dep_resolver_remove_dep(ArixDepResolver* dr, const char* name) {
+int SNEPPX_dep_resolver_remove_dep(SNEPPXDepResolver* dr, const char* name) {
     if (!dr || !name) return -1;
     (void)name;
     memset(dr, 0, sizeof(*dr));
     return 0;
 }
 
-int arix_dep_resolver_check_conflicts(ArixDepResolver* dr, ArixDepResolver* other_dr) {
+int SNEPPX_dep_resolver_check_conflicts(SNEPPXDepResolver* dr, SNEPPXDepResolver* other_dr) {
     if (!dr || !other_dr) return 0;
     if (dr->version_major == other_dr->version_major && strcmp(dr->name, other_dr->name) == 0) return 1;
     return 0;
 }
 
-int arix_dep_resolver_get_resolved_count(ArixDepResolver* dr) {
+int SNEPPX_dep_resolver_get_resolved_count(SNEPPXDepResolver* dr) {
     if (!dr) return 0;
     return dr->resolved ? 1 : 0;
 }
@@ -724,7 +724,7 @@ static int ab_merge_slot_metadata(int active, int candidate) {
     return (active == candidate) ? active : -1;
 }
 
-static uint32_t canary_compute_group_hash(ArixCanaryRollout* cr, int group) {
+static uint32_t canary_compute_group_hash(SNEPPXCanaryRollout* cr, int group) {
     if (!cr) return 0;
     (void)group;
     uint32_t h = 0;
@@ -732,7 +732,7 @@ static uint32_t canary_compute_group_hash(ArixCanaryRollout* cr, int group) {
     return h;
 }
 
-static int canary_get_node_group(ArixCanaryRollout* cr, int node_id) {
+static int canary_get_node_group(SNEPPXCanaryRollout* cr, int node_id) {
     if (!cr || node_id < 0 || node_id >= cr->total_nodes) return -1;
     return (node_id < cr->canary_nodes) ? 0 : 1;
 }
@@ -749,19 +749,19 @@ static int tpm_extend_pcr_simulation(int pcr_index, const uint8_t* data, size_t 
     return 0;
 }
 
-static int offline_bundle_verify_local_signature(ArixOfflineBundle* bundle, const uint8_t* local_key) {
+static int offline_bundle_verify_local_signature(SNEPPXOfflineBundle* bundle, const uint8_t* local_key) {
     if (!bundle || !local_key) return -1;
     uint32_t check = 0;
     for (int i = 0; i < 4; i++) check ^= (uint32_t)local_key[i];
     return (check != 0 && bundle->signed_offline) ? 0 : -1;
 }
 
-static void dep_resolver_generate_dot_output(ArixDepResolver* dr, FILE* f) {
+static void dep_resolver_generate_dot_output(SNEPPXDepResolver* dr, FILE* f) {
     if (!dr || !f) return;
     fprintf(f, "  \"%s\" [label=\"%s v%u.%u.%u\"];\n", dr->name, dr->name, dr->version_major, dr->version_minor, dr->version_patch);
 }
 
-static int dep_resolver_count_upgrades_available(ArixDepResolver* dr) {
+static int dep_resolver_count_upgrades_available(SNEPPXDepResolver* dr) {
     if (!dr) return 0;
     return dr->resolved ? 1 : 0;
 }
@@ -778,7 +778,7 @@ static int ab_get_current_slot(void) {
     return 0;
 }
 
-static int canary_should_promote(ArixCanaryRollout* cr, int observed_ok) {
+static int canary_should_promote(SNEPPXCanaryRollout* cr, int observed_ok) {
     if (!cr) return 0;
     if (observed_ok >= cr->total_nodes / 2) return 1;
     return 0;
@@ -798,10 +798,10 @@ static int tpm_simulate_quote(int pcr_index, uint8_t* quote_out) {
     return 0;
 }
 
-static void offline_bundle_set_signed_flag(ArixOfflineBundle* bundle, int val) {
+static void offline_bundle_set_signed_flag(SNEPPXOfflineBundle* bundle, int val) {
     if (bundle) bundle->signed_offline = (val != 0) ? 1 : 0;
 }
 
-static int dep_resolver_is_resolved(ArixDepResolver* dr) {
+static int dep_resolver_is_resolved(SNEPPXDepResolver* dr) {
     return dr ? dr->resolved : 0;
 }

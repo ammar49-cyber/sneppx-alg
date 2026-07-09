@@ -15,43 +15,43 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_hss_ser_stack(void) {
-    ArixHSSConfig hss_cfg = arix_hss_config_default();
+    SNEPPXHSSConfig hss_cfg = SNEPPX_hss_config_default();
     hss_cfg.state_dim = 16; hss_cfg.input_dim = 32; hss_cfg.output_dim = 32;
     hss_cfg.num_layers = 1; hss_cfg.use_hierarchical = 0;
 
-    ArixHSSModel* hss = arix_hss_model_create(&hss_cfg, 42);
+    SNEPPXHSSModel* hss = SNEPPX_hss_model_create(&hss_cfg, 42);
     ASSERT(hss != NULL, "hss model not null");
 
-    ArixSERConfig ser_cfg = arix_ser_config_default();
+    SNEPPXSERConfig ser_cfg = SNEPPX_ser_config_default();
     ser_cfg.num_experts = 4; ser_cfg.num_active = 2; ser_cfg.input_dim = 32;
     ser_cfg.expert_dim = 64; ser_cfg.output_dim = 32;
 
-    ArixSERModel* ser = arix_ser_model_create(&ser_cfg, 99, 1);
+    SNEPPXSERModel* ser = SNEPPX_ser_model_create(&ser_cfg, 99, 1);
     ASSERT(ser != NULL, "ser model not null");
 
     size_t shape_in[] = {4, 16, 32};
-    ArixTensor* input = arix_tensor_randn(shape_in, 3, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 3, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* hss_out = NULL;
-    int ret = arix_hss_forward(hss, input, &hss_out);
+    SNEPPXTensor* hss_out = NULL;
+    int ret = SNEPPX_hss_forward(hss, input, &hss_out);
     ASSERT(ret == 0, "hss forward ok");
     ASSERT(hss_out != NULL, "hss output not null");
     ASSERT(hss_out->shape[0] == 4 && hss_out->shape[1] == 16 && hss_out->shape[2] == 32, "hss output shape");
 
     size_t merged = 4 * 16;
-    ArixTensor flat_input;
+    SNEPPXTensor flat_input;
     size_t flat_shape[] = {merged, 32};
     flat_input.data = hss_out->data;
     flat_input.shape = flat_shape;
     flat_input.ndim = 2;
     flat_input.size = merged * 32;
     flat_input.item_size = sizeof(float);
-    flat_input.dtype = ARIX_FLOAT32;
+    flat_input.dtype = SNEPPX_FLOAT32;
     flat_input.strides = NULL;
 
-    ArixTensor* ser_out = NULL;
-    arix_ser_forward(ser->layers[0], &flat_input, &ser_out);
+    SNEPPXTensor* ser_out = NULL;
+    SNEPPX_ser_forward(ser->layers[0], &flat_input, &ser_out);
     ASSERT(ser_out != NULL, "ser output not null");
     ASSERT(ser_out->shape[0] == merged, "ser output tokens");
     ASSERT(ser_out->shape[1] == 32, "ser output dim");
@@ -63,11 +63,11 @@ static void test_hss_ser_stack(void) {
     }
     ASSERT(ok, "all finite in ser output");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(hss_out);
-    arix_tensor_destroy(ser_out);
-    arix_hss_model_destroy(hss);
-    arix_ser_model_destroy(ser);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(hss_out);
+    SNEPPX_tensor_destroy(ser_out);
+    SNEPPX_hss_model_destroy(hss);
+    SNEPPX_ser_model_destroy(ser);
 }
 
 int main(void) {

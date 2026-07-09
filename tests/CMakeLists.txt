@@ -63,7 +63,7 @@ foreach(test_src ${SECURITY_CPP_TEST_SRCS})
     add_neural_cpp_test(${test_src} "neural_security_cpp;neural_security_c;neural_core_kernel;neural_architecture_layer")
 endforeach()
 
-if(ARIX_BUILD_PYTHON)
+if(SNEPPX_BUILD_PYTHON)
     file(GLOB PYTHON_TEST_SRCS ../tests/python/*.py)
     foreach(test_src ${PYTHON_TEST_SRCS})
         get_filename_component(test_name ${test_src} NAME_WE)

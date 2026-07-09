@@ -1,5 +1,5 @@
-#ifndef ARIX_ATTENTION_H
-#define ARIX_ATTENTION_H
+#ifndef SNEPPX_ATTENTION_H
+#define SNEPPX_ATTENTION_H
 
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
@@ -12,49 +12,49 @@ typedef struct {
     int use_causal_mask;
     int use_rope;
     float rope_base;
-} ArixAttentionConfig;
+} SNEPPXAttentionConfig;
 
 typedef struct {
-    ArixAttentionConfig config;
-    ArixTensor* w_q; ArixTensor* b_q;
-    ArixTensor* w_k; ArixTensor* b_k;
-    ArixTensor* w_v; ArixTensor* b_v;
-    ArixTensor* w_o; ArixTensor* b_o;
-} ArixAttentionWeights;
+    SNEPPXAttentionConfig config;
+    SNEPPXTensor* w_q; SNEPPXTensor* b_q;
+    SNEPPXTensor* w_k; SNEPPXTensor* b_k;
+    SNEPPXTensor* w_v; SNEPPXTensor* b_v;
+    SNEPPXTensor* w_o; SNEPPXTensor* b_o;
+} SNEPPXAttentionWeights;
 
 typedef struct {
-    ArixTensor* k_cache;
-    ArixTensor* v_cache;
+    SNEPPXTensor* k_cache;
+    SNEPPXTensor* v_cache;
     size_t seq_len;
-} ArixKVCache;
+} SNEPPXKVCache;
 
-ArixAttentionConfig arix_attn_config_default(void);
-ArixAttentionWeights* arix_attn_weights_create(ArixAttentionConfig cfg, unsigned int seed);
-void arix_attn_weights_destroy(ArixAttentionWeights* w);
-size_t arix_attn_num_params(const ArixAttentionWeights* w);
-int arix_attn_get_params(const ArixAttentionWeights* w, ArixTensor** out, size_t max);
+SNEPPXAttentionConfig SNEPPX_attn_config_default(void);
+SNEPPXAttentionWeights* SNEPPX_attn_weights_create(SNEPPXAttentionConfig cfg, unsigned int seed);
+void SNEPPX_attn_weights_destroy(SNEPPXAttentionWeights* w);
+size_t SNEPPX_attn_num_params(const SNEPPXAttentionWeights* w);
+int SNEPPX_attn_get_params(const SNEPPXAttentionWeights* w, SNEPPXTensor** out, size_t max);
 
-ArixTensor* arix_attn_forward(const ArixAttentionWeights* w, const ArixTensor* x,
-                               ArixTensor* cos_t, ArixTensor* sin_t);
-ArixTensor* arix_attn_forward_cached(const ArixAttentionWeights* w, const ArixTensor* x,
-                                       ArixKVCache* cache, ArixTensor* cos_t, ArixTensor* sin_t);
+SNEPPXTensor* SNEPPX_attn_forward(const SNEPPXAttentionWeights* w, const SNEPPXTensor* x,
+                               SNEPPXTensor* cos_t, SNEPPXTensor* sin_t);
+SNEPPXTensor* SNEPPX_attn_forward_cached(const SNEPPXAttentionWeights* w, const SNEPPXTensor* x,
+                                       SNEPPXKVCache* cache, SNEPPXTensor* cos_t, SNEPPXTensor* sin_t);
 
-ArixKVCache* arix_kv_cache_create(size_t max_batch, size_t max_seq, size_t num_heads, size_t head_dim);
-void arix_kv_cache_destroy(ArixKVCache* cache);
-void arix_kv_cache_clear(ArixKVCache* cache);
+SNEPPXKVCache* SNEPPX_kv_cache_create(size_t max_batch, size_t max_seq, size_t num_heads, size_t head_dim);
+void SNEPPX_kv_cache_destroy(SNEPPXKVCache* cache);
+void SNEPPX_kv_cache_clear(SNEPPXKVCache* cache);
 
-ArixTensor* arix_rope_precompute(size_t seq_len, size_t head_dim, float base);
-void arix_rope_apply(ArixTensor* q, ArixTensor* k, const ArixTensor* cos, const ArixTensor* sin,
+SNEPPXTensor* SNEPPX_rope_precompute(size_t seq_len, size_t head_dim, float base);
+void SNEPPX_rope_apply(SNEPPXTensor* q, SNEPPXTensor* k, const SNEPPXTensor* cos, const SNEPPXTensor* sin,
                      size_t offset);
-ArixTensor* arix_tensor_rope(const ArixTensor* x, const ArixTensor* cos_table);
+SNEPPXTensor* SNEPPX_tensor_rope(const SNEPPXTensor* x, const SNEPPXTensor* cos_table);
 
-ArixTensor* arix_batched_matmul(const ArixTensor* a, const ArixTensor* b,
+SNEPPXTensor* SNEPPX_batched_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b,
                                  int transpose_b, int transpose_a);
 
-int arix_attn_build_train_graph(ArixAttentionWeights* w, ArixTape* tape,
-                                 ArixVariable* input_var,
-                                 ArixVariable** weight_vars, size_t num_weights,
-                                 ArixVariable** output_var,
-                                 ArixTensor* cos, ArixTensor* sin);
+int SNEPPX_attn_build_train_graph(SNEPPXAttentionWeights* w, SNEPPXTape* tape,
+                                 SNEPPXVariable* input_var,
+                                 SNEPPXVariable** weight_vars, size_t num_weights,
+                                 SNEPPXVariable** output_var,
+                                 SNEPPXTensor* cos, SNEPPXTensor* sin);
 
 #endif

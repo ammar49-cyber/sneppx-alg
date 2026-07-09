@@ -1,5 +1,5 @@
 /*
- * ARIX Command-Line Interface — SKELETON
+ * SNEPPX Command-Line Interface — SKELETON
  * VERSION: v0.5
  *
  * PURPOSE: Main CLI entry point for training, evaluation, export, and
@@ -12,7 +12,7 @@
  *   benchmark — run performance benchmarks
  *   inspect — print system info (devices, memory, version)
  *
- * Usage: arix <command> [options]
+ * Usage: SNEPPX <command> [options]
  */
 
 #include <stdio.h>
@@ -23,7 +23,7 @@ typedef struct {
     const char* name;
     int (*handler)(int argc, char** argv);
     const char* description;
-} ArixCommand;
+} SNEPPXCommand;
 
 static int cmd_train(int argc, char** argv) {
     (void)argc; (void)argv;
@@ -55,7 +55,7 @@ static int cmd_inspect(int argc, char** argv) {
     return 0;
 }
 
-static const ArixCommand commands[] = {
+static const SNEPPXCommand commands[] = {
     {"train", cmd_train, "Train a model from a config file"},
     {"eval", cmd_eval, "Evaluate a checkpoint on a dataset"},
     {"export", cmd_export, "Export model to ONNX / native format"},
@@ -66,7 +66,7 @@ static const ArixCommand commands[] = {
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: arix <command> [options]\n\nCommands:\n");
+        fprintf(stderr, "Usage: SNEPPX <command> [options]\n\nCommands:\n");
         for (int i = 0; commands[i].name; i++)
             fprintf(stderr, "  %-12s %s\n", commands[i].name, commands[i].description);
         return 1;

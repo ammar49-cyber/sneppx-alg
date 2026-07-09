@@ -1,8 +1,8 @@
-# ARIX-Algo Architecture
+# SNEPPX-Algo Architecture
 
 ## Overview
 
-ARIX-Algo implements a composite AI algorithm with cryptographic integrity. The system processes inputs through five sequential algorithm components, each wrapped in four security layers.
+SNEPPX-Algo implements a composite AI algorithm with cryptographic integrity. The system processes inputs through five sequential algorithm components, each wrapped in four security layers.
 
 ```
                      ┌──────────────────────────────────────┐
@@ -73,12 +73,12 @@ typedef struct {
     float dt_min;         // Minimum step size (default: 0.001)
     float dt_max;         // Maximum step size (default: 0.1)
     int32_t seed;         // Random seed for init
-} ArixHSSConfig;
+} SNEPPXHSSConfig;
 
-ArixHSSConfig arix_hss_config_default(void);
-ArixHSSModel* arix_hss_model_create(ArixHSSConfig* config, int32_t seed);
-void arix_hss_forward(ArixHSSModel* model, ArixTensor* input, ArixTensor** output);
-void arix_hss_model_destroy(ArixHSSModel* model);
+SNEPPXHSSConfig SNEPPX_hss_config_default(void);
+SNEPPXHSSModel* SNEPPX_hss_model_create(SNEPPXHSSConfig* config, int32_t seed);
+void SNEPPX_hss_forward(SNEPPXHSSModel* model, SNEPPXTensor* input, SNEPPXTensor** output);
+void SNEPPX_hss_model_destroy(SNEPPXHSSModel* model);
 ```
 
 ### SER — Sparse Expert Routing
@@ -123,13 +123,13 @@ typedef struct {
     int32_t num_experts;     // Total number of experts (default: 8)
     int32_t top_k;           // Number of active experts per token (default: 2)
     int32_t seed;            // Random seed for expert init
-} ArixSERConfig;
+} SNEPPXSERConfig;
 
-ArixSERConfig arix_ser_config_default(void);
-ArixSERModel* arix_ser_model_create(ArixSERConfig* config, int32_t seed);
-void arix_ser_forward(ArixSERModel* model, ArixTensor* input, ArixTensor** output);
-void arix_ser_compute_load_balance_loss(ArixSERModel* model, float* loss);
-void arix_ser_model_destroy(ArixSERModel* model);
+SNEPPXSERConfig SNEPPX_ser_config_default(void);
+SNEPPXSERModel* SNEPPX_ser_model_create(SNEPPXSERConfig* config, int32_t seed);
+void SNEPPX_ser_forward(SNEPPXSERModel* model, SNEPPXTensor* input, SNEPPXTensor** output);
+void SNEPPX_ser_compute_load_balance_loss(SNEPPXSERModel* model, float* loss);
+void SNEPPX_ser_model_destroy(SNEPPXSERModel* model);
 ```
 
 ### ARC — Adversarial Robustness Core
@@ -185,17 +185,17 @@ typedef struct {
     float sim_threshold;      // Cosine similarity threshold (default: 0.5)
     float temporal_beta;      // Temporal smoothing coefficient (default: 0.9)
     int32_t seed;             // Random seed
-} ArixARCConfig;
+} SNEPPXARCConfig;
 
-ArixARCConfig arix_arc_config_default(void);
-ArixARCModel* arix_arc_model_create(ArixARCConfig* config);
-void arix_arc_forward(ArixARCModel* model, ArixTensor* input,
-                      ArixTensor** output, ArixTensor** anomaly_scores);
-void arix_arc_attack_fgsm(ArixARCModel* model, ArixTensor* input,
-                          ArixTensor* gradient, float epsilon);
-void arix_arc_attack_pgd(ArixARCModel* model, ArixTensor* input,
-                         ArixTensor* gradient, float epsilon, int32_t steps);
-void arix_arc_model_destroy(ArixARCModel* model);
+SNEPPXARCConfig SNEPPX_arc_config_default(void);
+SNEPPXARCModel* SNEPPX_arc_model_create(SNEPPXARCConfig* config);
+void SNEPPX_arc_forward(SNEPPXARCModel* model, SNEPPXTensor* input,
+                      SNEPPXTensor** output, SNEPPXTensor** anomaly_scores);
+void SNEPPX_arc_attack_fgsm(SNEPPXARCModel* model, SNEPPXTensor* input,
+                          SNEPPXTensor* gradient, float epsilon);
+void SNEPPX_arc_attack_pgd(SNEPPXARCModel* model, SNEPPXTensor* input,
+                         SNEPPXTensor* gradient, float epsilon, int32_t steps);
+void SNEPPX_arc_model_destroy(SNEPPXARCModel* model);
 ```
 
 ### NPE — Neural Program Executor
@@ -208,7 +208,7 @@ NPE is a 16-register virtual machine with 14 opcodes for executing neural networ
 #### Virtual Machine
 
 ```
-Registers: R0-R15, each holds an ArixTensor*
+Registers: R0-R15, each holds an SNEPPXTensor*
 Program Counter: PC
 Halt Flag: H
 
@@ -250,14 +250,14 @@ The verifier checks:
 typedef struct {
     int32_t num_registers;    // Number of registers (default: 16)
     int32_t max_program_size; // Maximum program length (default: 1024)
-} ArixNPEConfig;
+} SNEPPXNPEConfig;
 
-ArixNPEConfig arix_npe_config_default(void);
-ArixNPEModel* arix_npe_model_create(ArixNPEConfig* config);
-int32_t arix_npe_load_program(ArixNPEModel* model, uint8_t* program, int32_t size);
-void arix_npe_execute(ArixNPEModel* model, ArixTensor** outputs, int32_t num_outputs);
-int32_t arix_npe_verify(ArixNPEModel* model);
-void arix_npe_model_destroy(ArixNPEModel* model);
+SNEPPXNPEConfig SNEPPX_npe_config_default(void);
+SNEPPXNPEModel* SNEPPX_npe_model_create(SNEPPXNPEConfig* config);
+int32_t SNEPPX_npe_load_program(SNEPPXNPEModel* model, uint8_t* program, int32_t size);
+void SNEPPX_npe_execute(SNEPPXNPEModel* model, SNEPPXTensor** outputs, int32_t num_outputs);
+int32_t SNEPPX_npe_verify(SNEPPXNPEModel* model);
+void SNEPPX_npe_model_destroy(SNEPPXNPEModel* model);
 ```
 
 ### FM — Federated Memory
@@ -297,14 +297,14 @@ typedef struct {
     float lr;                  // Learning rate for memory writes
     float diff_privacy_noise;  // Differential privacy noise scale
     float compression_ratio;   // Gradient compression ratio (default: 0.01)
-} ArixFMConfig;
+} SNEPPXFMConfig;
 
-ArixFMConfig arix_fm_config_default(void);
-ArixFMModel* arix_fm_model_create(ArixFMConfig* config, int32_t node_id, int32_t seed);
-void arix_fm_write(ArixFMModel* model, ArixTensor* key, ArixTensor* value);
-void arix_fm_read(ArixFMModel* model, ArixTensor* query, ArixTensor** output);
-void arix_fm_sync(ArixFMModel* model, ArixTensor* global_bank, int32_t* trust_scores, int32_t num_nodes);
-void arix_fm_model_destroy(ArixFMModel* model);
+SNEPPXFMConfig SNEPPX_fm_config_default(void);
+SNEPPXFMModel* SNEPPX_fm_model_create(SNEPPXFMConfig* config, int32_t node_id, int32_t seed);
+void SNEPPX_fm_write(SNEPPXFMModel* model, SNEPPXTensor* key, SNEPPXTensor* value);
+void SNEPPX_fm_read(SNEPPXFMModel* model, SNEPPXTensor* query, SNEPPXTensor** output);
+void SNEPPX_fm_sync(SNEPPXFMModel* model, SNEPPXTensor* global_bank, int32_t* trust_scores, int32_t num_nodes);
+void SNEPPX_fm_model_destroy(SNEPPXFMModel* model);
 ```
 
 ## Security Layers
@@ -312,7 +312,7 @@ void arix_fm_model_destroy(ArixFMModel* model);
 ### S0 — Cryptographic Core
 
 **Status: ✅ Complete**
-**Files**: `src/security/c/arix_s0_*.h/.c`
+**Files**: `src/security/c/SNEPPX_s0_*.h/.c`
 
 Production-grade cryptographic primitives:
 
@@ -329,7 +329,7 @@ Production-grade cryptographic primitives:
 ### S1 — Secure Memory
 
 **Status: ✅ Complete**
-**Files**: `src/security/c/arix_s1_*.h/.c`
+**Files**: `src/security/c/SNEPPX_s1_*.h/.c`
 
 | Feature | Description |
 |---------|-------------|
@@ -343,7 +343,7 @@ Production-grade cryptographic primitives:
 ### S2 — Obfuscation Engine
 
 **Status: ⚠️ Partial**
-**Files**: `src/security/cpp/arix_s2_*.h/.cpp`
+**Files**: `src/security/cpp/SNEPPX_s2_*.h/.cpp`
 
 | Feature | Status |
 |---------|--------|
@@ -355,7 +355,7 @@ Production-grade cryptographic primitives:
 ### S3 — Behavioral Monitor
 
 **Status: ⚠️ Partial**
-**Files**: `src/security/cpp/arix_s3_*.h/.cpp`
+**Files**: `src/security/cpp/SNEPPX_s3_*.h/.cpp`
 
 | Feature | Status |
 |---------|--------|
@@ -373,12 +373,12 @@ Multi-dimensional array with row-major layout.
 
 ```c
 typedef enum {
-    ARIX_BOOL,      // sizeof(int8_t)
-    ARIX_INT32,     // sizeof(int32_t)
-    ARIX_INT64,     // sizeof(int64_t)
-    ARIX_FLOAT32,   // sizeof(float) — default
-    ARIX_FLOAT64    // sizeof(double)
-} ArixDType;
+    SNEPPX_BOOL,      // sizeof(int8_t)
+    SNEPPX_INT32,     // sizeof(int32_t)
+    SNEPPX_INT64,     // sizeof(int64_t)
+    SNEPPX_FLOAT32,   // sizeof(float) — default
+    SNEPPX_FLOAT64    // sizeof(double)
+} SNEPPXDType;
 ```
 
 **Supported ops (50+):**
@@ -407,7 +407,7 @@ Single-threaded fallback. Interface supports work queue and tasks. Real parallel
 ## Data Flow
 
 ```
-Input (ArixTensor)
+Input (SNEPPXTensor)
     │
     ▼
 ┌─────────────────────┐
@@ -446,7 +446,7 @@ Input (ArixTensor)
 └─────────┬───────────┘
           │
           ▼
-      Output (ArixTensor)
+      Output (SNEPPXTensor)
 ```
 
 ## Training Flow

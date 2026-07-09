@@ -3,15 +3,15 @@
 
 static volatile uint64_t dummy_accumulator = 0;
 
-void arix_power_balance_start(void) {
+void SNEPPX_power_balance_start(void) {
     dummy_accumulator = 0;
 }
 
-void arix_power_balance_end(void) {
+void SNEPPX_power_balance_end(void) {
     dummy_accumulator = 0;
 }
 
-void arix_power_dummy_op(void) {
+void SNEPPX_power_dummy_op(void) {
     uint64_t x = 0xDEADBEEFCAFEBABEULL;
     uint64_t y = 0x0123456789ABCDEFULL;
     for (int i = 0; i < 16; i++) {

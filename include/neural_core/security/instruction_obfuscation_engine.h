@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ARIX_OBF_INST_H
-#define ARIX_OBF_INST_H
+#ifndef SNEPPX_OBF_INST_H
+#define SNEPPX_OBF_INST_H
 
 #include "control_flow_obfuscation.h"
 #include <random>
@@ -8,53 +8,53 @@
 #include <string>
 #include <unordered_map>
 
-namespace arix {
+namespace SNEPPX {
 
-class ArixObfSubst {
+class SNEPPXObfSubst {
 public:
-    ArixObfSubst();
+    SNEPPXObfSubst();
     void set_seed(uint64_t seed);
-    void substitute_add(ArixObfBlock& block);
-    void substitute_logic(ArixObfBlock& block);
-    void substitute_compare(ArixObfBlock& block);
-    void substitute_all(ArixObfBlock& block);
-    void substitute_all_blocks(ArixObfCFG& cfg);
-    ArixObfInstruction make_lea_add(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_neg_sub_add(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_mul_shift_add(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_nand_and(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_nand_or(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_nand_xor(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> make_sub_cmp(const ArixObfInstruction& inst);
-    void insert_junk(ArixObfBlock& block);
-    void insert_junk_extended(ArixObfBlock& block);
-    void rename_registers_block(ArixObfBlock& block, int& next_temp);
-    void rename_registers_cfg(ArixObfCFG& cfg);
+    void substitute_add(SNEPPXObfBlock& block);
+    void substitute_logic(SNEPPXObfBlock& block);
+    void substitute_compare(SNEPPXObfBlock& block);
+    void substitute_all(SNEPPXObfBlock& block);
+    void substitute_all_blocks(SNEPPXObfCFG& cfg);
+    SNEPPXObfInstruction make_lea_add(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_neg_sub_add(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_mul_shift_add(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_nand_and(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_nand_or(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_nand_xor(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> make_sub_cmp(const SNEPPXObfInstruction& inst);
+    void insert_junk(SNEPPXObfBlock& block);
+    void insert_junk_extended(SNEPPXObfBlock& block);
+    void rename_registers_block(SNEPPXObfBlock& block, int& next_temp);
+    void rename_registers_cfg(SNEPPXObfCFG& cfg);
 
 private:
     std::mt19937_64 rng;
     bool choose_substitution();
     int rand_int(int min, int max);
 
-    ArixObfInstruction substitute_add_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_sub_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_mul_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_div_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_and_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_or_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_xor_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_not_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_neg_inst(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_shl_inst(const ArixObfInstruction& inst);
+    SNEPPXObfInstruction substitute_add_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_sub_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_mul_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_div_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_and_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_or_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_xor_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_not_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_neg_inst(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_shl_inst(const SNEPPXObfInstruction& inst);
 
-    std::vector<ArixObfInstruction> substitute_add_lea_scaled(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_sub_neg_adc(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_mul_karatsuba(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_and_nand_variant(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_or_nand_variant(const ArixObfInstruction& inst);
-    std::vector<ArixObfInstruction> substitute_xor_nand_variant(const ArixObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_add_lea_scaled(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_sub_neg_adc(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_mul_karatsuba(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_and_nand_variant(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_or_nand_variant(const SNEPPXObfInstruction& inst);
+    std::vector<SNEPPXObfInstruction> substitute_xor_nand_variant(const SNEPPXObfInstruction& inst);
 };
 
-} // namespace arix
+} // namespace SNEPPX
 
-#endif // ARIX_OBF_INST_H
+#endif // SNEPPX_OBF_INST_H

@@ -2,7 +2,7 @@
 
 ## Status: ⚠️ Partial (v0.1.0)
 
-Python bindings are built via Pybind11 (71 KB `bindings.cpp`) when `ARIX_BUILD_PYTHON=ON`.
+Python bindings are built via Pybind11 (71 KB `bindings.cpp`) when `SNEPPX_BUILD_PYTHON=ON`.
 Ready for forward-pass usage; backward/training depends on autodiff implementation.
 
 ## Installation
@@ -13,14 +13,14 @@ pip install -e src/python
 
 Build with Python bindings:
 ```bash
-cmake -B build -DARIX_BUILD_PYTHON=ON
+cmake -B build -DSNEPPX_BUILD_PYTHON=ON
 cmake --build build
 ```
 
 ## Quick Start
 
 ```python
-import arix_algo as ax
+import SneppX_ALG as ax
 
 # Create a tensor
 t = ax.Tensor.randn((4, 8, 16), dtype=ax.float32)
@@ -49,4 +49,4 @@ python -m venv .venv
 pip install -e src/python
 ```
 
-The `.pyd` extension module is copied automatically by CMake when `ARIX_BUILD_PYTHON=ON`.
+The `.pyd` extension module is copied automatically by CMake when `SNEPPX_BUILD_PYTHON=ON`.

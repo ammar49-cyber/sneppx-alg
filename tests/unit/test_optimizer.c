@@ -31,84 +31,84 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_optimizer_config_default(void) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default(ARIX_ADAM);
-    ASSERT(cfg.type == ARIX_ADAM, "adam default type");
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAM);
+    ASSERT(cfg.type == SNEPPX_ADAM, "adam default type");
     ASSERT(cfg.learning_rate > 0, "learning rate > 0");
 }
 
 static void test_sgd_create_step(void) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default(ARIX_SGD);
-    ArixOptimizer* opt = arix_optimizer_create(&cfg);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_SGD);
+    SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "sgd optimizer created");
 
     size_t shape[] = {4, 4};
-    ArixTensor* params = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* grads = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* params = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* grads = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     float* gd = (float*)grads->data;
     for (size_t i = 0; i < grads->size; i++) gd[i] = 0.1f;
 
-    arix_optimizer_step(opt, &params, &grads, 1);
+    SNEPPX_optimizer_step(opt, &params, &grads, 1);
     float* pd = (float*)params->data;
     for (size_t i = 0; i < params->size; i++) {
         ASSERT(pd[i] < 1.0f, "parameter decreased after SGD step");
     }
 
-    arix_tensor_destroy(grads);
-    arix_tensor_destroy(params);
-    arix_optimizer_destroy(opt);
+    SNEPPX_tensor_destroy(grads);
+    SNEPPX_tensor_destroy(params);
+    SNEPPX_optimizer_destroy(opt);
 }
 
 static void test_adam_create_step(void) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default(ARIX_ADAM);
-    ArixOptimizer* opt = arix_optimizer_create(&cfg);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAM);
+    SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "adam optimizer created");
 
     size_t shape[] = {2, 2};
-    ArixTensor* params = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* grads = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* params = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* grads = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     float* gd = (float*)grads->data;
     for (size_t i = 0; i < grads->size; i++) gd[i] = 0.05f;
 
-    arix_optimizer_step(opt, &params, &grads, 1);
+    SNEPPX_optimizer_step(opt, &params, &grads, 1);
     float* pd = (float*)params->data;
     for (size_t i = 0; i < params->size; i++) {
         ASSERT(pd[i] <= 1.0f, "parameter updated after Adam step");
     }
 
-    arix_tensor_destroy(grads);
-    arix_tensor_destroy(params);
-    arix_optimizer_destroy(opt);
+    SNEPPX_tensor_destroy(grads);
+    SNEPPX_tensor_destroy(params);
+    SNEPPX_optimizer_destroy(opt);
 }
 
 static void test_adamw_create_step(void) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default(ARIX_ADAMW);
-    ArixOptimizer* opt = arix_optimizer_create(&cfg);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAMW);
+    SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "adamw optimizer created");
 
     size_t shape[] = {3, 3};
-    ArixTensor* params = arix_tensor_ones(shape, 2, ARIX_FLOAT32);
-    ArixTensor* grads = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* params = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* grads = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     float* gd = (float*)grads->data;
     for (size_t i = 0; i < grads->size; i++) gd[i] = 0.1f;
 
-    arix_optimizer_step(opt, &params, &grads, 1);
+    SNEPPX_optimizer_step(opt, &params, &grads, 1);
 
-    arix_tensor_destroy(grads);
-    arix_tensor_destroy(params);
-    arix_optimizer_destroy(opt);
+    SNEPPX_tensor_destroy(grads);
+    SNEPPX_tensor_destroy(params);
+    SNEPPX_optimizer_destroy(opt);
 }
 
 static void test_lr_scheduler_step(void) {
-    ArixOptimizerConfig cfg = arix_optimizer_config_default(ARIX_SGD);
-    ArixOptimizer* opt = arix_optimizer_create(&cfg);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_SGD);
+    SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
 
-    ArixLRScheduler* sched = arix_lr_scheduler_create(ARIX_STEP, &cfg.learning_rate, 0.1f, 10);
+    SNEPPXLRScheduler* sched = SNEPPX_lr_scheduler_create(SNEPPX_STEP, &cfg.learning_rate, 0.1f, 10);
     ASSERT(sched != NULL, "lr scheduler created");
 
-    arix_lr_scheduler_step(sched, 0.0f);
+    SNEPPX_lr_scheduler_step(sched, 0.0f);
 
-    arix_lr_scheduler_destroy(sched);
-    arix_optimizer_destroy(opt);
+    SNEPPX_lr_scheduler_destroy(sched);
+    SNEPPX_optimizer_destroy(opt);
 }
 
 int main(void) {

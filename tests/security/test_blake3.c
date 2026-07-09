@@ -13,11 +13,11 @@ static int tests_failed = 0;
 void test_vectors(void) {
     printf("\n--- test_vectors ---\n");
     uint8_t input[] = "abc";
-    ArixBlake3State state;
-    arix_blake3_init(&state);
-    arix_blake3_update(&state, input, 3);
+    SNEPPXBlake3State state;
+    SNEPPX_blake3_init(&state);
+    SNEPPX_blake3_update(&state, input, 3);
     uint8_t hash[32];
-    arix_blake3_finish(&state, hash);
+    SNEPPX_blake3_finish(&state, hash);
     uint8_t non_zero = 0;
     for (int i = 0; i < 32; i++) non_zero |= hash[i];
     TEST("hash non-zero", non_zero != 0);
@@ -40,23 +40,23 @@ void test_incremental(void) {
     uint8_t data[] = "Hello, BLAKE3 incremental test!";
     size_t len = sizeof(data) - 1;
 
-    ArixBlake3State single, inc;
-    arix_blake3_init(&single);
-    arix_blake3_update(&single, data, len);
+    SNEPPXBlake3State single, inc;
+    SNEPPX_blake3_init(&single);
+    SNEPPX_blake3_update(&single, data, len);
     uint8_t h1[32];
-    arix_blake3_finish(&single, h1);
+    SNEPPX_blake3_finish(&single, h1);
 
-    arix_blake3_init(&inc);
-    arix_blake3_update(&inc, data, 5);
-    arix_blake3_update(&inc, data + 5, len - 5);
+    SNEPPX_blake3_init(&inc);
+    SNEPPX_blake3_update(&inc, data, 5);
+    SNEPPX_blake3_update(&inc, data + 5, len - 5);
     uint8_t h2[32];
-    arix_blake3_finish(&inc, h2);
+    SNEPPX_blake3_finish(&inc, h2);
 
     TEST("incremental == single", memcmp(h1, h2, 32) == 0);
 }
 
 int main(void) {
-    printf("=== ARIX-BLAKE3 Test Suite ===\n");
+    printf("=== SNEPPX-BLAKE3 Test Suite ===\n");
     test_vectors();
     test_incremental();
     printf("\nResults: %d passed, %d failed out of %d\n",

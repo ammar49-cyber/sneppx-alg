@@ -49,10 +49,10 @@ fi
 # 4. Ed25519 signature
 SIGFILE="${PACKAGE}.sig"
 if [ -f "$SIGFILE" ]; then
-    if command -v arix-verify &>/dev/null; then
-        check "Ed25519 signature" sh -c "arix-verify \"$PACKAGE\" \"$SIGFILE\""
+    if command -v SNEPPX-verify &>/dev/null; then
+        check "Ed25519 signature" sh -c "SNEPPX-verify \"$PACKAGE\" \"$SIGFILE\""
     else
-        echo "  SKIP  Ed25519 signature (arix-verify not installed)"
+        echo "  SKIP  Ed25519 signature (SNEPPX-verify not installed)"
     fi
 else
     echo "  SKIP  Ed25519 signature (${BASENAME}.sig not found)"

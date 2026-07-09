@@ -1,8 +1,8 @@
 # Release-optimized build profile
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
-set(ARIX_BUILD_TESTS OFF CACHE BOOL "Build tests")
-set(ARIX_BUILD_BENCHMARKS ON CACHE BOOL "Build benchmarks")
-set(ARIX_USE_LTO ON CACHE BOOL "Enable LTO")
+set(SNEPPX_BUILD_TESTS OFF CACHE BOOL "Build tests")
+set(SNEPPX_BUILD_BENCHMARKS ON CACHE BOOL "Build benchmarks")
+set(SNEPPX_USE_LTO ON CACHE BOOL "Enable LTO")
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     set(CMAKE_C_FLAGS_RELEASE "-O3 -march=native -mtune=native -DNDEBUG -ffast-math -funroll-loops" CACHE STRING "")

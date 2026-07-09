@@ -2,16 +2,16 @@
 #include <sstream>
 #include <algorithm>
 
-namespace arix {
+namespace SNEPPX {
 
-ArixOpaqueEngine::ArixOpaqueEngine() : rng(std::random_device{}()), next_id(1) {}
+SNEPPXOpaqueEngine::SNEPPXOpaqueEngine() : rng(std::random_device{}()), next_id(1) {}
 
-void ArixOpaqueEngine::set_seed(uint64_t seed) {
+void SNEPPXOpaqueEngine::set_seed(uint64_t seed) {
     rng.seed(seed);
 }
 
-ArixOpaquePredicate ArixOpaqueEngine::generate_math_predicate() {
-    ArixOpaquePredicate pred;
+SNEPPXOpaquePredicate SNEPPXOpaqueEngine::generate_math_predicate() {
+    SNEPPXOpaquePredicate pred;
     pred.id = next_id++;
     pred.always_true = true;
 
@@ -27,43 +27,43 @@ ArixOpaquePredicate ArixOpaqueEngine::generate_math_predicate() {
     return pred;
 }
 
-ArixOpaquePredicate ArixOpaqueEngine::generate_pointer_predicate() {
-    ArixOpaquePredicate pred;
+SNEPPXOpaquePredicate SNEPPXOpaqueEngine::generate_pointer_predicate() {
+    SNEPPXOpaquePredicate pred;
     pred.id = next_id++;
     pred.always_true = true;
     pred.condition_expr = "(&local_var ^ &local_var) == 0";
     return pred;
 }
 
-ArixOpaquePredicate ArixOpaqueEngine::generate_loop_predicate() {
-    ArixOpaquePredicate pred;
+SNEPPXOpaquePredicate SNEPPXOpaqueEngine::generate_loop_predicate() {
+    SNEPPXOpaquePredicate pred;
     pred.id = next_id++;
     pred.always_true = true;
     pred.condition_expr = "complex_loop_always_returns_true()";
     return pred;
 }
 
-void ArixOpaqueEngine::insert_predicate(ArixObfBlock& block, bool desired_outcome, ArixOpaquePredicate& pred) {
-    ArixObfInstruction cond_inst;
-    cond_inst.type = ArixObfInstType::CMP;
+void SNEPPXOpaqueEngine::insert_predicate(SNEPPXObfBlock& block, bool desired_outcome, SNEPPXOpaquePredicate& pred) {
+    SNEPPXObfInstruction cond_inst;
+    cond_inst.type = SNEPPXObfInstType::CMP;
     cond_inst.result = "_opaque_" + std::to_string(pred.id);
     cond_inst.operand1 = pred.condition_expr;
     cond_inst.operand2 = desired_outcome ? "1" : "0";
 
-    ArixObfInstruction branch_inst;
-    branch_inst.type = desired_outcome ? ArixObfInstType::JZ : ArixObfInstType::JNZ;
+    SNEPPXObfInstruction branch_inst;
+    branch_inst.type = desired_outcome ? SNEPPXObfInstType::JZ : SNEPPXObfInstType::JNZ;
     branch_inst.operand1 = "_opaque_skip_" + std::to_string(pred.id);
 
     block.instructions.insert(block.instructions.begin(), branch_inst);
     block.instructions.insert(block.instructions.begin(), cond_inst);
 
-    ArixObfInstruction opaque_marker;
-    opaque_marker.type = ArixObfInstType::NOP;
+    SNEPPXObfInstruction opaque_marker;
+    opaque_marker.type = SNEPPXObfInstType::NOP;
     opaque_marker.operand1 = "_opaque_end_" + std::to_string(pred.id);
     block.instructions.push_back(opaque_marker);
 }
 
-void ArixOpaqueEngine::insert_predicates_to_cfg(ArixObfCFG& cfg) {
+void SNEPPXOpaqueEngine::insert_predicates_to_cfg(SNEPPXObfCFG& cfg) {
     for (auto& pair : cfg.blocks) {
         auto& block = pair.second;
         if (block->is_entry || block->is_exit) continue;
@@ -78,4 +78,4 @@ void ArixOpaqueEngine::insert_predicates_to_cfg(ArixObfCFG& cfg) {
     }
 }
 
-} // namespace arix
+} // namespace SNEPPX

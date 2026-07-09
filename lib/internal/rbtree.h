@@ -1,5 +1,5 @@
-#ifndef ARIX_RBTREE_H
-#define ARIX_RBTREE_H
+#ifndef SNEPPX_RBTREE_H
+#define SNEPPX_RBTREE_H
 /*
  * Red-Black Tree — v0.5 (generic library)
  *
@@ -24,39 +24,39 @@
 extern "C" {
 #endif
 
-typedef enum { ARIX_RBTREE_RED, ARIX_RBTREE_BLACK } ArixRBColor;
+typedef enum { SNEPPX_RBTREE_RED, SNEPPX_RBTREE_BLACK } SNEPPXRBColor;
 
-typedef struct ArixRBNode {
-    struct ArixRBNode* parent;
-    struct ArixRBNode* left;
-    struct ArixRBNode* right;
-    ArixRBColor        color;
+typedef struct SNEPPXRBNode {
+    struct SNEPPXRBNode* parent;
+    struct SNEPPXRBNode* left;
+    struct SNEPPXRBNode* right;
+    SNEPPXRBColor        color;
     uint64_t           key;
     void*              value;
-} ArixRBNode;
+} SNEPPXRBNode;
 
 typedef struct {
-    ArixRBNode* root;
+    SNEPPXRBNode* root;
     size_t      size;
     int         (*compare)(uint64_t a, uint64_t b);
-} ArixRBTree;
+} SNEPPXRBTree;
 
-ArixRBTree* arix_rbtree_create(void);
-void        arix_rbtree_destroy(ArixRBTree* tree);
+SNEPPXRBTree* SNEPPX_rbtree_create(void);
+void        SNEPPX_rbtree_destroy(SNEPPXRBTree* tree);
 
-int   arix_rbtree_insert(ArixRBTree* tree, uint64_t key, void* value);
-void* arix_rbtree_search(const ArixRBTree* tree, uint64_t key);
-int   arix_rbtree_delete(ArixRBTree* tree, uint64_t key);
+int   SNEPPX_rbtree_insert(SNEPPXRBTree* tree, uint64_t key, void* value);
+void* SNEPPX_rbtree_search(const SNEPPXRBTree* tree, uint64_t key);
+int   SNEPPX_rbtree_delete(SNEPPXRBTree* tree, uint64_t key);
 
-uint64_t arix_rbtree_min(const ArixRBTree* tree);
-uint64_t arix_rbtree_max(const ArixRBTree* tree);
-uint64_t arix_rbtree_successor(const ArixRBTree* tree, uint64_t key);
-uint64_t arix_rbtree_predecessor(const ArixRBTree* tree, uint64_t key);
+uint64_t SNEPPX_rbtree_min(const SNEPPXRBTree* tree);
+uint64_t SNEPPX_rbtree_max(const SNEPPXRBTree* tree);
+uint64_t SNEPPX_rbtree_successor(const SNEPPXRBTree* tree, uint64_t key);
+uint64_t SNEPPX_rbtree_predecessor(const SNEPPXRBTree* tree, uint64_t key);
 
-void arix_rbtree_foreach(const ArixRBTree* tree, void (*fn)(uint64_t key, void* value, void* ctx), void* ctx);
+void SNEPPX_rbtree_foreach(const SNEPPXRBTree* tree, void (*fn)(uint64_t key, void* value, void* ctx), void* ctx);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_RBTREE_H */
+#endif /* SNEPPX_RBTREE_H */

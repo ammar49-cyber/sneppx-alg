@@ -1,5 +1,5 @@
-#ifndef ARIX_OPTIMIZER_INTERNAL_H
-#define ARIX_OPTIMIZER_INTERNAL_H
+#ifndef SNEPPX_OPTIMIZER_INTERNAL_H
+#define SNEPPX_OPTIMIZER_INTERNAL_H
 /*
  * Optimizer Internal — v0.5
  *
@@ -32,43 +32,43 @@ typedef struct {
     float      eps;
     float      weight_decay;
     uint64_t   step;
-} ArixOptimizerState;
+} SNEPPXOptimizerState;
 
 typedef enum {
-    ARIX_SCHEDULE_CONSTANT,
-    ARIX_SCHEDULE_COSINE,
-    ARIX_SCHEDULE_LINEAR,
-    ARIX_SCHEDULE_STEP_DECAY,
-    ARIX_SCHEDULE_WARMUP_COSINE,
-} ArixLRSchedule;
+    SNEPPX_SCHEDULE_CONSTANT,
+    SNEPPX_SCHEDULE_COSINE,
+    SNEPPX_SCHEDULE_LINEAR,
+    SNEPPX_SCHEDULE_STEP_DECAY,
+    SNEPPX_SCHEDULE_WARMUP_COSINE,
+} SNEPPXLRSchedule;
 
 typedef struct {
-    ArixLRSchedule type;
+    SNEPPXLRSchedule type;
     float          base_lr;
     float          min_lr;
     size_t         warmup_steps;
     size_t         total_steps;
     size_t         step_count;
     float          current_lr;
-} ArixLRScheduler;
+} SNEPPXLRScheduler;
 
-int  arix_optimizer_state_init(ArixOptimizerState* state, size_t num_params, size_t param_size);
-void arix_optimizer_state_destroy(ArixOptimizerState* state);
+int  SNEPPX_optimizer_state_init(SNEPPXOptimizerState* state, size_t num_params, size_t param_size);
+void SNEPPX_optimizer_state_destroy(SNEPPXOptimizerState* state);
 
-int  arix_optimizer_sgd_step(ArixOptimizerState* state);
-int  arix_optimizer_adam_step(ArixOptimizerState* state);
-int  arix_optimizer_adamw_step(ArixOptimizerState* state);
-int  arix_optimizer_lamb_step(ArixOptimizerState* state);
+int  SNEPPX_optimizer_sgd_step(SNEPPXOptimizerState* state);
+int  SNEPPX_optimizer_adam_step(SNEPPXOptimizerState* state);
+int  SNEPPX_optimizer_adamw_step(SNEPPXOptimizerState* state);
+int  SNEPPX_optimizer_lamb_step(SNEPPXOptimizerState* state);
 
-int  arix_gradient_clip_norm(void** grads, size_t num_params, size_t param_size, float max_norm);
-int  arix_gradient_clip_value(void** grads, size_t num_params, size_t param_size, float min_val, float max_val);
+int  SNEPPX_gradient_clip_norm(void** grads, size_t num_params, size_t param_size, float max_norm);
+int  SNEPPX_gradient_clip_value(void** grads, size_t num_params, size_t param_size, float min_val, float max_val);
 
-int  arix_lr_scheduler_init(ArixLRScheduler* sched, ArixLRSchedule type);
-float arix_lr_scheduler_step(ArixLRScheduler* sched);
-void  arix_lr_scheduler_reset(ArixLRScheduler* sched);
+int  SNEPPX_lr_scheduler_init(SNEPPXLRScheduler* sched, SNEPPXLRSchedule type);
+float SNEPPX_lr_scheduler_step(SNEPPXLRScheduler* sched);
+void  SNEPPX_lr_scheduler_reset(SNEPPXLRScheduler* sched);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_OPTIMIZER_INTERNAL_H */
+#endif /* SNEPPX_OPTIMIZER_INTERNAL_H */

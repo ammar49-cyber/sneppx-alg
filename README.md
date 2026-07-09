@@ -1,7 +1,7 @@
-# ARIX-Algo
+# SneppX-ALG
 
 <p align="center">
-  <img src="docs/logo.jpeg" alt="ARIX-Algo Logo" width="30%" style="mix-blend-mode: screen; background: transparent;"/>
+  <img src="docs/logo.jpeg" alt="SneppX-ALG Logo" width="30%" style="mix-blend-mode: screen; background: transparent;"/>
 </p>
 
 > **Next-Generation AI Architecture** · Security built into the foundation.
@@ -23,7 +23,7 @@
 
 ## Table of Contents
 
-- [What Is ARIX-Algo?](#-what-is-arix-algo)
+- [What Is SneppX-ALG?](#-what-is-SneppX-ALG)
 - [Architecture](#-architecture)
 - [Security Architecture (S0–S9)](#-security-architecture-s0s9)
 - [What Works Now (algo0.7)](#-what-works-now-algo07)
@@ -39,13 +39,13 @@
 
 ---
 
-## What Is ARIX-Algo?
+## What Is SneppX-ALG?
 
-**ARIX-Algo** is a cognitive architecture for building secure artificial
+**SneppX-ALG** is a cognitive architecture for building secure artificial
 general intelligence. It is a layered system of differentiable modules —
 from computational substrate through neural program synthesis — with
 security embedded at every level. Unlike conventional AI systems that
-bolt on safety layers after the fact, ARIX-Algo weaves cryptographic
+bolt on safety layers after the fact, SneppX-ALG weaves cryptographic
 primitives, memory hardening, runtime monitoring, and formal verification
 directly into its foundation.
 
@@ -99,7 +99,7 @@ differentiable training graph. The system can learn end-to-end on CPU.
 
 All ten security phases are **fully implemented** in algo0.7 — 21,809 lines
 of real C code across 10 levels, compiled conditionally via per-level
-preprocessor definitions (`ARIX_S0` through `ARIX_S9`) and tested by 30+
+preprocessor definitions (`SNEPPX_S0` through `SNEPPX_S9`) and tested by 30+
 dedicated test files.
 
 ```
@@ -243,19 +243,19 @@ S14 cooperative AI, S15 recursive oversight — planned for versions 2.0–4.0.
 - CUDA Toolkit 12.0+ (for GPU acceleration, optional)
 
 ```bash
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arixalgo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SNEPPX_ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build .
 ctest --output-on-failure
 
 # Build with Python bindings
-cmake -B build_py -DARIX_BUILD_PYTHON=ON -Dpybind11_DIR=</path/to/pybind11>
-cmake --build build_py --target _arix_c --config Release
+cmake -B build_py -DSNEPPX_BUILD_PYTHON=ON -Dpybind11_DIR=</path/to/pybind11>
+cmake --build build_py --target _SNEPPX_c --config Release
 
 # Build and run PQ crypto benchmarks
-cmake -B build_bench -DARIX_BUILD_BENCHMARKS=ON -DARIX_BUILD_TESTS=OFF
+cmake -B build_bench -DSNEPPX_BUILD_BENCHMARKS=ON -DSNEPPX_BUILD_TESTS=OFF
 cmake --build build_bench --target bench_pq_crypto --config Release
 ./build_bench/tests/benchmark/Release/bench_pq_crypto
 ```
@@ -271,24 +271,24 @@ cmake --build build_bench --target bench_pq_crypto --config Release
 int main() {
     // Create a tensor
     size_t shape[] = {2, 4, 16};
-    ArixTensor* input = arix_tensor_randn(shape, 3, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape, 3, SNEPPX_FLOAT32);
 
     // Multi-head attention forward
-    ArixAttentionConfig cfg = arix_attn_config_default();
+    SNEPPXAttentionConfig cfg = SNEPPX_attn_config_default();
     cfg.d_model = 16; cfg.num_heads = 4; cfg.head_dim = 4;
-    ArixAttentionWeights* attn = arix_attn_weights_create(cfg, 42);
-    ArixTensor* cos_t = arix_rope_precompute(4, 4, 10000.0f);
-    ArixTensor* output = arix_attn_forward(attn, input, cos_t, cos_t);
+    SNEPPXAttentionWeights* attn = SNEPPX_attn_weights_create(cfg, 42);
+    SNEPPXTensor* cos_t = SNEPPX_rope_precompute(4, 4, 10000.0f);
+    SNEPPXTensor* output = SNEPPX_attn_forward(attn, input, cos_t, cos_t);
 
     printf("Output shape: ");
-    for (int i = 0; i < arix_tensor_ndim(output); i++)
-        printf("%zu ", arix_tensor_shape(output)[i]);
+    for (int i = 0; i < SNEPPX_tensor_ndim(output); i++)
+        printf("%zu ", SNEPPX_tensor_shape(output)[i]);
     printf("\n");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(cos_t);
-    arix_tensor_destroy(output);
-    arix_attn_weights_destroy(attn);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(cos_t);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_attn_weights_destroy(attn);
     return 0;
 }
 ```
@@ -297,7 +297,7 @@ int main() {
 
 ```python
 import numpy as np
-from arix_algo import _arix_c as ax
+from SneppX_ALG import _SNEPPX_c as ax
 
 # Create tensors
 t = ax._Tensor.randn(np.array([4, 8, 16]), ax.FLOAT32)
@@ -306,7 +306,7 @@ t = ax._Tensor.randn(np.array([4, 8, 16]), ax.FLOAT32)
 t2 = t.add(t)
 
 # Create a model
-m = ax.model_create(ax.ArixArchConfig())
+m = ax.model_create(ax.SNEPPXArchConfig())
 
 # Crypto
 h = ax.crypto.sha3_256(b"hello world")
@@ -365,7 +365,7 @@ sig = ax.crypto.ed25519_sign(sk, b"message")
 | [docs/api/python.md](docs/api/python.md) | Python API reference |
 | [docs/installation.md](docs/installation.md) | Platform-specific build guides |
 
-Full documentation is available at [arixsite.vercel.app](https://arixsite.vercel.app).
+Full documentation is available at [SNEPPXsite.vercel.app](https://SNEPPXsite.vercel.app).
 
 ---
 
@@ -375,7 +375,7 @@ We accept email patches. No pull requests. Technical merit above all.
 
 ```bash
 git format-patch -1 HEAD
-git send-email --to=algoarix@gmail.com 0001-your-patch.patch
+git send-email --to=algoSNEPPX@gmail.com 0001-your-patch.patch
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for coding style, GPG/Ed25519 signing,
@@ -388,24 +388,24 @@ and testing requirements.
 
 ## Governance
 
-**BDFL**: Ammar [ARIX]
+**BDFL**: Ammar [SNEPPX]
 
 | Purpose | Contact |
 |---------|---------|
-| Patches | algoarix@gmail.com |
-| Security | algoarix@gmail.com |
-| Conduct | algoarix@gmail.com |
+| Patches | algoSNEPPX@gmail.com |
+| Security | algoSNEPPX@gmail.com |
+| Conduct | algoSNEPPX@gmail.com |
 
 ---
 
 ## Links
 
 <p align="center">
-  <a href="https://arixsite.vercel.app"><b>Website</b></a> ·
-  <a href="https://github.com/ammar49-cyber/arixalgo"><b>GitHub</b></a> ·
-  <a href="https://x.com/Arixdrv"><b>Twitter / X</b></a> ·
-  <a href="https://www.instagram.com/algoarix/"><b>Instagram</b></a> ·
-  <a href="https://www.youtube.com/@ArixAlgo"><b>YouTube</b></a>
+  <a href="https://SNEPPXsite.vercel.app"><b>Website</b></a> ·
+  <a href="https://github.com/ammar49-cyber/SNEPPX_ALG"><b>GitHub</b></a> ·
+  <a href="https://x.com/SNEPPXdrv"><b>Twitter / X</b></a> ·
+  <a href="https://www.instagram.com/algoSNEPPX/"><b>Instagram</b></a> ·
+  <a href="https://www.youtube.com/@SNEPPX_ALG"><b>YouTube</b></a>
 </p>
 
 ---
@@ -413,10 +413,10 @@ and testing requirements.
 ## Citation
 
 ```bibtex
-@software{arix_algo_2026,
-  author = {Ammar [ARIX]},
-  title = {{ARIX-Algo}: Cognitive Architecture for Secure Artificial General Intelligence},
-  url = {https://github.com/ammar49-cyber/arixalgo},
+@software{SneppX_ALG_2026,
+  author = {Ammar [SNEPPX]},
+  title = {{SneppX-ALG}: Cognitive Architecture for Secure Artificial General Intelligence},
+  url = {https://github.com/ammar49-cyber/SNEPPX_ALG},
   year = {2026}
 }
 ```
@@ -424,9 +424,9 @@ and testing requirements.
 ---
 
 <p align="center">
-  <b>ARIX-Algo</b> — <i>Security in every instruction.</i>
+  <b>SneppX-ALG</b> — <i>Security in every instruction.</i>
 </p>
 
 <p align="center">
-  <a href="#arix-algo">Back to Top</a>
+  <a href="#SneppX-ALG">Back to Top</a>
 </p>

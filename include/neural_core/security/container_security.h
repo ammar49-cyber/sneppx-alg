@@ -1,5 +1,5 @@
-#ifndef ARIX_CONTAINER_SECURITY_H
-#define ARIX_CONTAINER_SECURITY_H
+#ifndef SNEPPX_CONTAINER_SECURITY_H
+#define SNEPPX_CONTAINER_SECURITY_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -54,16 +54,16 @@ typedef struct {
     int low_count;
 } container_stats_t;
 
-int arix_container_verify_image(const uint8_t *manifest, size_t manifest_len, const uint8_t *signature, size_t sig_len, const uint8_t *pubkey);
-int arix_container_parse_manifest(const uint8_t *manifest, size_t len, container_manifest_t *out);
-int arix_container_verify_layer(const uint8_t *layer_data, size_t layer_len, const char *expected_digest);
-int arix_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *version);
-int arix_sbom_add_component(sbom_doc_t *doc, const char *name, const char *version, const char *type, const char *supplier);
-int arix_sbom_validate(sbom_doc_t *doc);
-int arix_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len);
-int arix_container_scan_vulns(const char *image_name, const uint8_t *layer_data, size_t layer_len, vuln_result_t *results, int max_results);
-int arix_container_add_vuln(const char *cve_id, const char *package, const char *severity, double cvss);
-int arix_container_get_stats(container_stats_t *stats);
-int arix_container_init_vuln_db(void);
+int SNEPPX_container_verify_image(const uint8_t *manifest, size_t manifest_len, const uint8_t *signature, size_t sig_len, const uint8_t *pubkey);
+int SNEPPX_container_parse_manifest(const uint8_t *manifest, size_t len, container_manifest_t *out);
+int SNEPPX_container_verify_layer(const uint8_t *layer_data, size_t layer_len, const char *expected_digest);
+int SNEPPX_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *version);
+int SNEPPX_sbom_add_component(sbom_doc_t *doc, const char *name, const char *version, const char *type, const char *supplier);
+int SNEPPX_sbom_validate(sbom_doc_t *doc);
+int SNEPPX_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len);
+int SNEPPX_container_scan_vulns(const char *image_name, const uint8_t *layer_data, size_t layer_len, vuln_result_t *results, int max_results);
+int SNEPPX_container_add_vuln(const char *cve_id, const char *package, const char *severity, double cvss);
+int SNEPPX_container_get_stats(container_stats_t *stats);
+int SNEPPX_container_init_vuln_db(void);
 
 #endif

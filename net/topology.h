@@ -1,5 +1,5 @@
-#ifndef ARIX_NET_TOPOLOGY_H
-#define ARIX_NET_TOPOLOGY_H
+#ifndef SNEPPX_NET_TOPOLOGY_H
+#define SNEPPX_NET_TOPOLOGY_H
 /*
  * Network Topology Abstraction — v1.0 (distributed communication patterns)
  *
@@ -8,7 +8,7 @@
  * arbitrary graph (gossip) topologies.  Used by the distributed
  * training coordinator to choose communication schedules.
  *
- * DEPENDENCIES: arix_grpc_service.h, arix_socket_comm.h
+ * DEPENDENCIES: SNEPPX_grpc_service.h, SNEPPX_socket_comm.h
  * VERSION: v1.0
  */
 
@@ -20,10 +20,10 @@ extern "C" {
 #endif
 
 typedef enum {
-    ARIX_TOPOLOGY_RING,
-    ARIX_TOPOLOGY_TREE,
-    ARIX_TOPOLOGY_GRAPH,
-} ArixTopologyType;
+    SNEPPX_TOPOLOGY_RING,
+    SNEPPX_TOPOLOGY_TREE,
+    SNEPPX_TOPOLOGY_GRAPH,
+} SNEPPXTopologyType;
 
 typedef struct {
     int    rank;
@@ -34,32 +34,32 @@ typedef struct {
     int    num_children;
     char   host[256];
     int    data_port;
-} ArixTopologyNode;
+} SNEPPXTopologyNode;
 
 typedef struct {
-    ArixTopologyType  type;
+    SNEPPXTopologyType  type;
     int               world_size;
-    ArixTopologyNode* nodes;
-} ArixTopology;
+    SNEPPXTopologyNode* nodes;
+} SNEPPXTopology;
 
 /* ---------- Topology construction ---------- */
-ArixTopology* arix_topology_create_ring(int world_size);
-ArixTopology* arix_topology_create_tree(int world_size, int branching_factor);
-ArixTopology* arix_topology_create_graph(int world_size, const int* adjacency_matrix);
-void          arix_topology_destroy(ArixTopology* topo);
+SNEPPXTopology* SNEPPX_topology_create_ring(int world_size);
+SNEPPXTopology* SNEPPX_topology_create_tree(int world_size, int branching_factor);
+SNEPPXTopology* SNEPPX_topology_create_graph(int world_size, const int* adjacency_matrix);
+void          SNEPPX_topology_destroy(SNEPPXTopology* topo);
 
 /* ---------- Neighbor queries ---------- */
-int arix_topology_get_prev(const ArixTopology* topo, int rank);
-int arix_topology_get_next(const ArixTopology* topo, int rank);
-int arix_topology_get_parent(const ArixTopology* topo, int rank);
-int arix_topology_get_children(const ArixTopology* topo, int rank, int** children, int* count);
+int SNEPPX_topology_get_prev(const SNEPPXTopology* topo, int rank);
+int SNEPPX_topology_get_next(const SNEPPXTopology* topo, int rank);
+int SNEPPX_topology_get_parent(const SNEPPXTopology* topo, int rank);
+int SNEPPX_topology_get_children(const SNEPPXTopology* topo, int rank, int** children, int* count);
 
 /* ---------- Route calculation (v1.0) ---------- */
-int  arix_topology_compute_route(const ArixTopology* topo, int src, int dst, int** path, int* path_len);
-void arix_topology_free_route(int* path);
+int  SNEPPX_topology_compute_route(const SNEPPXTopology* topo, int src, int dst, int** path, int* path_len);
+void SNEPPX_topology_free_route(int* path);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_NET_TOPOLOGY_H */
+#endif /* SNEPPX_NET_TOPOLOGY_H */

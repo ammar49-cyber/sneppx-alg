@@ -4,22 +4,22 @@
 #include <math.h>
 #include <stdlib.h>
 
-void arix_ser_forward(ArixSERLayer* layer, const ArixTensor* input, ArixTensor** output) {
+void SNEPPX_ser_forward(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** output) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];
     size_t n_exp = layer->config.num_experts;
     size_t n_act = layer->config.num_active;
     size_t o_dim = layer->config.output_dim;
 
-    ArixTensor* gate_weights = NULL;
+    SNEPPXTensor* gate_weights = NULL;
     int* expert_indices = NULL;
-    arix_ser_route(layer, input, &gate_weights, &expert_indices);
+    SNEPPX_ser_route(layer, input, &gate_weights, &expert_indices);
     if (!gate_weights || !expert_indices) return;
 
     size_t shape_out[] = {num_tokens, o_dim};
-    *output = arix_tensor_zeros(shape_out, 2, ARIX_FLOAT32);
+    *output = SNEPPX_tensor_zeros(shape_out, 2, SNEPPX_FLOAT32);
     if (!*output) {
-        arix_tensor_destroy(gate_weights);
+        SNEPPX_tensor_destroy(gate_weights);
         free(expert_indices);
         return;
     }
@@ -69,25 +69,25 @@ void arix_ser_forward(ArixSERLayer* layer, const ArixTensor* input, ArixTensor**
 
         size_t shape_tok[] = {(size_t)count, i_dim};
         size_t shape_out_tok[] = {(size_t)count, o_dim};
-        ArixTensor in_tok;
+        SNEPPXTensor in_tok;
         in_tok.data = tok_buf;
         in_tok.shape = shape_tok;
         in_tok.ndim = 2;
         in_tok.size = (size_t)count * i_dim;
         in_tok.item_size = sizeof(float);
-        in_tok.dtype = ARIX_FLOAT32;
+        in_tok.dtype = SNEPPX_FLOAT32;
         in_tok.strides = NULL;
 
-        ArixTensor out_tok;
+        SNEPPXTensor out_tok;
         out_tok.data = out_buf;
         out_tok.shape = shape_out_tok;
         out_tok.ndim = 2;
         out_tok.size = (size_t)count * o_dim;
         out_tok.item_size = sizeof(float);
-        out_tok.dtype = ARIX_FLOAT32;
+        out_tok.dtype = SNEPPX_FLOAT32;
         out_tok.strides = NULL;
 
-        arix_ser_expert_forward(layer->experts[e], &in_tok, &out_tok);
+        SNEPPX_ser_expert_forward(layer->experts[e], &in_tok, &out_tok);
 
         for (int i = 0; i < count; i++) {
             size_t pos = (size_t)tok_positions[i];
@@ -113,6 +113,6 @@ void arix_ser_forward(ArixSERLayer* layer, const ArixTensor* input, ArixTensor**
         }
     }
 
-    arix_tensor_destroy(gate_weights);
+    SNEPPX_tensor_destroy(gate_weights);
     free(expert_indices);
 }

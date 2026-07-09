@@ -1,7 +1,7 @@
-#ifndef ARIX_INTERNAL_COMPRESS_H
-#define ARIX_INTERNAL_COMPRESS_H
+#ifndef SNEPPX_INTERNAL_COMPRESS_H
+#define SNEPPX_INTERNAL_COMPRESS_H
 /*
- * Memory Compression — v0.5 (internal to arix_memory)
+ * Memory Compression — v0.5 (internal to SNEPPX_memory)
  *
  * PURPOSE: Block-floating-point (BFP) and sparse compression of tensor
  * data to reduce memory bandwidth pressure.  Compression is transparent
@@ -23,14 +23,14 @@ extern "C" {
 #endif
 
 typedef enum {
-    ARIX_COMPRESS_NONE,
-    ARIX_COMPRESS_BFP4,      /* block floating-point, 4-bit mantissa */
-    ARIX_COMPRESS_BFP8,      /* block floating-point, 8-bit mantissa */
-    ARIX_COMPRESS_SPARSE,    /* sparse bitmap encoding */
-} ArixCompressionCodec;
+    SNEPPX_COMPRESS_NONE,
+    SNEPPX_COMPRESS_BFP4,      /* block floating-point, 4-bit mantissa */
+    SNEPPX_COMPRESS_BFP8,      /* block floating-point, 8-bit mantissa */
+    SNEPPX_COMPRESS_SPARSE,    /* sparse bitmap encoding */
+} SNEPPXCompressionCodec;
 
 typedef struct {
-    ArixCompressionCodec  codec;
+    SNEPPXCompressionCodec  codec;
     void*                 compressed_data;
     size_t                compressed_bytes;
     size_t                original_bytes;
@@ -38,35 +38,35 @@ typedef struct {
     int                   original_dtype;
     size_t                block_size;       /* for BFP */
     void*                 metadata;         /* codec-specific (shared exponents, bitmask) */
-} ArixCompressedBuffer;
+} SNEPPXCompressedBuffer;
 
 typedef struct {
-    ArixCompressionCodec codec;
+    SNEPPXCompressionCodec codec;
     int                  (*compress)(const void* src, size_t src_bytes, int dtype,
-                                     ArixCompressedBuffer* dst);
-    int                  (*decompress)(const ArixCompressedBuffer* src,
+                                     SNEPPXCompressedBuffer* dst);
+    int                  (*decompress)(const SNEPPXCompressedBuffer* src,
                                        void* dst, size_t dst_bytes);
-    void                 (*destroy)(ArixCompressedBuffer* buf);
+    void                 (*destroy)(SNEPPXCompressedBuffer* buf);
     const char*          name;
-} ArixCompressionCodecImpl;
+} SNEPPXCompressionCodecImpl;
 
 /* ---------- API ---------- */
-int arix_compress_init(void);
-int arix_compress_shutdown(void);
+int SNEPPX_compress_init(void);
+int SNEPPX_compress_shutdown(void);
 
-int arix_compress_register_codec(const ArixCompressionCodecImpl* codec);
-int arix_compress_unregister_codec(ArixCompressionCodec codec);
+int SNEPPX_compress_register_codec(const SNEPPXCompressionCodecImpl* codec);
+int SNEPPX_compress_unregister_codec(SNEPPXCompressionCodec codec);
 
-int arix_compress_apply(const void* src, size_t src_bytes, int dtype,
-                        ArixCompressionCodec codec, ArixCompressedBuffer* dst);
-int arix_compress_decompress(const ArixCompressedBuffer* src, void* dst, size_t dst_bytes);
-void arix_compress_buffer_destroy(ArixCompressedBuffer* buf);
+int SNEPPX_compress_apply(const void* src, size_t src_bytes, int dtype,
+                        SNEPPXCompressionCodec codec, SNEPPXCompressedBuffer* dst);
+int SNEPPX_compress_decompress(const SNEPPXCompressedBuffer* src, void* dst, size_t dst_bytes);
+void SNEPPX_compress_buffer_destroy(SNEPPXCompressedBuffer* buf);
 
 /* ---------- BFP helpers ---------- */
-int arix_compress_bfp_block_size(size_t element_bytes, size_t* block_size);
+int SNEPPX_compress_bfp_block_size(size_t element_bytes, size_t* block_size);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_INTERNAL_COMPRESS_H */
+#endif /* SNEPPX_INTERNAL_COMPRESS_H */

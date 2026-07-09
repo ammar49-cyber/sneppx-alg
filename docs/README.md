@@ -1,4 +1,4 @@
-# ARIX-Algo Documentation Index
+# SNEPPX-Algo Documentation Index
 
 | Document | Description | Updated |
 |----------|-------------|---------|

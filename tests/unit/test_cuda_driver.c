@@ -23,58 +23,58 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_register_driver(void) {
-    int ret = arix_cuda_register_driver();
+    int ret = SNEPPX_cuda_register_driver();
     ASSERT(ret == 0, "driver registration");
 }
 
 static void test_get_device_count(void) {
     int count = -1;
-    int ret = arix_cuda_get_device_count(&count);
+    int ret = SNEPPX_cuda_get_device_count(&count);
     ASSERT(ret == 0, "get device count returns 0");
     ASSERT(count >= 0, "device count is non-negative");
 }
 
 static void test_get_device_props(void) {
-    ArixCUDADeviceProps props;
+    SNEPPXCUDADeviceProps props;
     memset(&props, 0, sizeof(props));
-    int ret = arix_cuda_get_device_props(0, &props);
+    int ret = SNEPPX_cuda_get_device_props(0, &props);
     ASSERT(ret == 0, "get device props returns 0");
 }
 
 static void test_set_get_device(void) {
-    int ret = arix_cuda_set_device(0);
+    int ret = SNEPPX_cuda_set_device(0);
     ASSERT(ret == 0, "set device 0");
     int dev = -1;
-    ret = arix_cuda_get_device(&dev);
+    ret = SNEPPX_cuda_get_device(&dev);
     ASSERT(ret == 0, "get device");
 }
 
 static void test_context_create_destroy(void) {
-    ArixCUDAContext* ctx = arix_cuda_create_context(0);
+    SNEPPXCUDAContext* ctx = SNEPPX_cuda_create_context(0);
     /* May return NULL if CUDA not available - that's OK */
     if (ctx) {
         ASSERT(ctx->device_id == 0, "context device id");
-        int err = arix_cuda_context_error(ctx);
+        int err = SNEPPX_cuda_context_error(ctx);
         ASSERT(err == 0, "no context error");
-        arix_cuda_destroy_context(ctx);
+        SNEPPX_cuda_destroy_context(ctx);
     }
 }
 
 static void test_stream_create_destroy(void) {
-    ArixCUDAStream* stream = NULL;
-    int ret = arix_cuda_stream_create(&stream, 0);
+    SNEPPXCUDAStream* stream = NULL;
+    int ret = SNEPPX_cuda_stream_create(&stream, 0);
     ASSERT(ret == 0, "stream create");
     if (stream) {
-        arix_cuda_stream_destroy(stream);
+        SNEPPX_cuda_stream_destroy(stream);
     }
 }
 
 static void test_mem_alloc_free(void) {
     void* ptr = NULL;
-    int ret = arix_cuda_mem_alloc(&ptr, 1024);
+    int ret = SNEPPX_cuda_mem_alloc(&ptr, 1024);
     ASSERT(ret == 0, "mem alloc");
     if (ptr) {
-        ret = arix_cuda_mem_free(ptr);
+        ret = SNEPPX_cuda_mem_free(ptr);
         ASSERT(ret == 0, "mem free");
     }
 }
@@ -82,28 +82,28 @@ static void test_mem_alloc_free(void) {
 static void test_mem_htod_dtoh(void) {
     float host_src[] = {1.0f, 2.0f, 3.0f};
     void* dev = NULL;
-    arix_cuda_mem_alloc(&dev, sizeof(host_src));
+    SNEPPX_cuda_mem_alloc(&dev, sizeof(host_src));
     if (dev) {
-        int ret = arix_cuda_mem_htod(dev, host_src, sizeof(host_src));
+        int ret = SNEPPX_cuda_mem_htod(dev, host_src, sizeof(host_src));
         ASSERT(ret == 0, "htod");
         float host_dst[3] = {0};
-        ret = arix_cuda_mem_dtoh(host_dst, dev, sizeof(host_src));
+        ret = SNEPPX_cuda_mem_dtoh(host_dst, dev, sizeof(host_src));
         ASSERT(ret == 0, "dtoh");
-        arix_cuda_mem_free(dev);
+        SNEPPX_cuda_mem_free(dev);
     }
 }
 
 static void test_event_create_destroy(void) {
-    ArixCUDAEvent* event = NULL;
-    int ret = arix_cuda_event_create(&event);
+    SNEPPXCUDAEvent* event = NULL;
+    int ret = SNEPPX_cuda_event_create(&event);
     ASSERT(ret == 0, "event create");
     if (event) {
-        arix_cuda_event_destroy(event);
+        SNEPPX_cuda_event_destroy(event);
     }
 }
 
 static void test_error_string(void) {
-    const char* err = arix_cuda_error_string(0);
+    const char* err = SNEPPX_cuda_error_string(0);
     ASSERT(err != NULL, "error string non-null");
 }
 

@@ -1,5 +1,5 @@
-#ifndef ARIX_SOCKET_COMM_H
-#define ARIX_SOCKET_COMM_H
+#ifndef SNEPPX_SOCKET_COMM_H
+#define SNEPPX_SOCKET_COMM_H
 /*
  * Socket Communication — v1.0 (distributed training transport)
  *
@@ -19,13 +19,13 @@ extern "C" {
 #endif
 
 typedef enum {
-    ARIX_SOCKET_TCP,
-    ARIX_SOCKET_UNIX,
-} ArixSocketType;
+    SNEPPX_SOCKET_TCP,
+    SNEPPX_SOCKET_UNIX,
+} SNEPPXSocketType;
 
 typedef struct {
     int            fd;
-    ArixSocketType type;
+    SNEPPXSocketType type;
     int            port;
     char           hostname[256];
     size_t         send_buf_size;
@@ -35,37 +35,37 @@ typedef struct {
     uint64_t       bytes_sent;
     uint64_t       bytes_recv;
     int            timeout_ms;
-} ArixSocket;
+} SNEPPXSocket;
 
 /* ---------- Lifecycle ---------- */
-ArixSocket* arix_socket_create(ArixSocketType type);
-void        arix_socket_destroy(ArixSocket* sock);
+SNEPPXSocket* SNEPPX_socket_create(SNEPPXSocketType type);
+void        SNEPPX_socket_destroy(SNEPPXSocket* sock);
 
 /* ---------- Server ---------- */
-int arix_socket_bind(ArixSocket* sock, int port);
-int arix_socket_listen(ArixSocket* sock, int backlog);
-ArixSocket* arix_socket_accept(ArixSocket* server_sock);
+int SNEPPX_socket_bind(SNEPPXSocket* sock, int port);
+int SNEPPX_socket_listen(SNEPPXSocket* sock, int backlog);
+SNEPPXSocket* SNEPPX_socket_accept(SNEPPXSocket* server_sock);
 
 /* ---------- Client ---------- */
-int arix_socket_connect(ArixSocket* sock, const char* host, int port);
+int SNEPPX_socket_connect(SNEPPXSocket* sock, const char* host, int port);
 
 /* ---------- I/O ---------- */
-int  arix_socket_send(ArixSocket* sock, const void* data, size_t len);
-int  arix_socket_recv(ArixSocket* sock, void* buf, size_t len);
-int  arix_socket_send_message(ArixSocket* sock, const void* data, size_t len);
-int  arix_socket_recv_message(ArixSocket* sock, void** buf, size_t* len);
-void arix_socket_close(ArixSocket* sock);
+int  SNEPPX_socket_send(SNEPPXSocket* sock, const void* data, size_t len);
+int  SNEPPX_socket_recv(SNEPPXSocket* sock, void* buf, size_t len);
+int  SNEPPX_socket_send_message(SNEPPXSocket* sock, const void* data, size_t len);
+int  SNEPPX_socket_recv_message(SNEPPXSocket* sock, void** buf, size_t* len);
+void SNEPPX_socket_close(SNEPPXSocket* sock);
 
 /* ---------- Tensor helpers (v1.0) ---------- */
-int arix_socket_send_tensor(ArixSocket* sock, const void* tensor_handle);
-int arix_socket_recv_tensor(ArixSocket* sock, void** tensor_handle);
+int SNEPPX_socket_send_tensor(SNEPPXSocket* sock, const void* tensor_handle);
+int SNEPPX_socket_recv_tensor(SNEPPXSocket* sock, void** tensor_handle);
 
 /* ---------- Utility ---------- */
-int         arix_socket_set_timeout(ArixSocket* sock, int ms);
-const char* arix_socket_error_string(int err);
+int         SNEPPX_socket_set_timeout(SNEPPXSocket* sock, int ms);
+const char* SNEPPX_socket_error_string(int err);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARIX_SOCKET_COMM_H */
+#endif /* SNEPPX_SOCKET_COMM_H */

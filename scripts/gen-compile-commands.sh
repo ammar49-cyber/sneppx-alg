@@ -9,7 +9,7 @@ if [ ! -d "$BUILD_DIR" ]; then
 fi
 
 cd "$BUILD_DIR"
-cmake "$ROOT_DIR" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DARIX_BUILD_TESTS=ON -DARIX_BUILD_BENCHMARKS=ON
+cmake "$ROOT_DIR" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_BENCHMARKS=ON
 
 if [ -f "${BUILD_DIR}/compile_commands.json" ]; then
     cp "${BUILD_DIR}/compile_commands.json" "${ROOT_DIR}/compile_commands.json"

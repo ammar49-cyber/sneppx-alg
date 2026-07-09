@@ -4,21 +4,21 @@
 #include <stdio.h>
 #include <ctype.h>
 
-static int arix_next_line(const char* s, int* pos) {
+static int SNEPPX_next_line(const char* s, int* pos) {
     while (s[*pos] && s[*pos] != '\n') (*pos)++;
     if (s[*pos] == '\n') { (*pos)++; return 1; }
     return 0;
 }
 
-static void arix_skip_ws(const char* s, int* pos) {
+static void SNEPPX_skip_ws(const char* s, int* pos) {
     while (s[*pos] && (s[*pos] == ' ' || s[*pos] == '\t' || s[*pos] == '\r')) (*pos)++;
 }
 
-static int arix_is_ident_char(char c) {
+static int SNEPPX_is_ident_char(char c) {
     return isalnum(c) || c == '_';
 }
 
-static void arix_extract_expr(const char* formula, char* expr, int maxlen) {
+static void SNEPPX_extract_expr(const char* formula, char* expr, int maxlen) {
     int i = 0, j = 0, paren = 0;
     while (formula[i] && formula[i] != '(') i++;
     if (formula[i] == '(') { paren++; i++; }
@@ -31,17 +31,17 @@ static void arix_extract_expr(const char* formula, char* expr, int maxlen) {
     expr[j] = '\0';
 }
 
-int arix_tla_parse(ArixTLAParser* parser, const char* spec_text) {
+int SNEPPX_tla_parse(SNEPPXTLAParser* parser, const char* spec_text) {
     if (!parser || !spec_text) return -1;
-    strncpy(parser->spec, spec_text, ARIX_TLA_MAX_SPEC - 1);
-    parser->spec[ARIX_TLA_MAX_SPEC - 1] = '\0';
+    strncpy(parser->spec, spec_text, SNEPPX_TLA_MAX_SPEC - 1);
+    parser->spec[SNEPPX_TLA_MAX_SPEC - 1] = '\0';
     parser->parsed = 0;
     parser->state_count = 0;
     int pos = 0, in_vars = 0, seen_formula = 0;
     char linebuf[512];
     while (spec_text[pos]) {
         int start = pos;
-        arix_skip_ws(spec_text, &pos);
+        SNEPPX_skip_ws(spec_text, &pos);
         int li = 0;
         while (spec_text[pos] && spec_text[pos] != '\n' && li < (int)sizeof(linebuf) - 1) {
             linebuf[li++] = spec_text[pos++];
@@ -69,9 +69,9 @@ int arix_tla_parse(ArixTLAParser* parser, const char* spec_text) {
                 while (*p && (*p == ' ' || *p == '\t' || *p == ',' || *p == ';')) p++;
                 if (*p && islower(*p)) {
                     parser->state_count++;
-                    while (*p && arix_is_ident_char(*p)) p++;
+                    while (*p && SNEPPX_is_ident_char(*p)) p++;
                 } else if (*p && isupper(*p)) {
-                    while (*p && arix_is_ident_char(*p)) p++;
+                    while (*p && SNEPPX_is_ident_char(*p)) p++;
                 } else {
                     p++;
                 }
@@ -85,10 +85,10 @@ int arix_tla_parse(ArixTLAParser* parser, const char* spec_text) {
     return 0;
 }
 
-int arix_ltl_init(ArixLTLVerifier* ltl, const char* formula) {
+int SNEPPX_ltl_init(SNEPPXLTLVerifier* ltl, const char* formula) {
     if (!ltl || !formula) return -1;
-    strncpy(ltl->formula, formula, ARIX_LTL_MAX_FORMULA - 1);
-    ltl->formula[ARIX_LTL_MAX_FORMULA - 1] = '\0';
+    strncpy(ltl->formula, formula, SNEPPX_LTL_MAX_FORMULA - 1);
+    ltl->formula[SNEPPX_LTL_MAX_FORMULA - 1] = '\0';
     ltl->holds = 0;
     const char* p = formula;
     int ops = 0;
@@ -105,7 +105,7 @@ int arix_ltl_init(ArixLTLVerifier* ltl, const char* formula) {
     return 0;
 }
 
-int arix_ltl_check(ArixLTLVerifier* ltl, int* trace, int trace_len) {
+int SNEPPX_ltl_check(SNEPPXLTLVerifier* ltl, int* trace, int trace_len) {
     if (!ltl || !trace || trace_len <= 0) return -1;
     char oper = 0, expr[128];
     const char* f = ltl->formula;
@@ -115,7 +115,7 @@ int arix_ltl_check(ArixLTLVerifier* ltl, int* trace, int trace_len) {
         f++;
     }
     expr[0] = '\0';
-    arix_extract_expr(ltl->formula, expr, sizeof(expr));
+    SNEPPX_extract_expr(ltl->formula, expr, sizeof(expr));
     int i, found = 0;
     if (oper == 'G') {
         ltl->holds = 1;
@@ -136,27 +136,27 @@ int arix_ltl_check(ArixLTLVerifier* ltl, int* trace, int trace_len) {
     return 0;
 }
 
-int arix_symex_init(ArixSymExEngine* se, int depth_limit) {
+int SNEPPX_symex_init(SNEPPXSymExEngine* se, int depth_limit) {
     if (!se) return -1;
     memset(se, 0, sizeof(*se));
     se->depth_limit = depth_limit;
     return 0;
 }
 
-static int arix_is_conditional_op(uint8_t b) {
+static int SNEPPX_is_conditional_op(uint8_t b) {
     if (b >= 0x70 && b <= 0x7F) return 1;
     if (b == 0xE3) return 1;
     return 0;
 }
 
-int arix_symex_explore(ArixSymExEngine* se, const uint8_t* bytecode, size_t bc_len) {
+int SNEPPX_symex_explore(SNEPPXSymExEngine* se, const uint8_t* bytecode, size_t bc_len) {
     if (!se || !bytecode) return -1;
     if (bc_len == 0) return 0;
     size_t pc = 0;
     uint64_t branches = 0;
     while (pc < bc_len) {
         uint8_t op = bytecode[pc];
-        if (arix_is_conditional_op(op)) {
+        if (SNEPPX_is_conditional_op(op)) {
             branches++;
             if (branches <= (uint64_t)se->depth_limit) {
                 se->explored_paths++;
@@ -323,21 +323,21 @@ int arix_symex_explore(ArixSymExEngine* se, const uint8_t* bytecode, size_t bc_l
     return (int)branches;
 }
 
-int arix_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t inv_size) {
+int SNEPPX_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t inv_size) {
     if (!loop_body || !invariant_out || inv_size == 0) return -1;
     const char* p = loop_body;
     char counter[64] = {0}, arr[64] = {0}, limit[64] = {0};
     int has_counter = 0, has_array = 0;
     while (*p) {
         if ((strncmp(p, "for", 3) == 0 || strncmp(p, "while", 5) == 0) &&
-            (p == loop_body || !arix_is_ident_char(*(p - 1)))) {
+            (p == loop_body || !SNEPPX_is_ident_char(*(p - 1)))) {
             const char* q = p + (strncmp(p, "for", 3) == 0 ? 3 : 5);
             while (*q == ' ') q++;
             if (*q == '(') q++;
             while (*q == ' ') q++;
             if (*q && islower(*q)) {
                 int ci = 0;
-                while (*q && arix_is_ident_char(*q) && ci < (int)sizeof(counter) - 1) {
+                while (*q && SNEPPX_is_ident_char(*q) && ci < (int)sizeof(counter) - 1) {
                     counter[ci++] = *q++;
                 }
                 counter[ci] = '\0';
@@ -354,7 +354,7 @@ int arix_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t
                 while (*q == ' ') q++;
                 if (*q) {
                     int li = 0;
-                    while (*q && arix_is_ident_char(*q) && li < (int)sizeof(limit) - 1) {
+                    while (*q && SNEPPX_is_ident_char(*q) && li < (int)sizeof(limit) - 1) {
                         limit[li++] = *q++;
                     }
                     limit[li] = '\0';
@@ -365,9 +365,9 @@ int arix_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t
             while (*q) {
                 if ((strncmp(q, "arr[", 4) == 0 || strncmp(q, "a[", 2) == 0 ||
                      strncmp(q, "array[", 6) == 0 || strncmp(q, "list[", 5) == 0) &&
-                    (q == body_start || !arix_is_ident_char(*(q - 1)))) {
+                    (q == body_start || !SNEPPX_is_ident_char(*(q - 1)))) {
                     const char* r = q;
-                    while (*r && arix_is_ident_char(*r)) r++;
+                    while (*r && SNEPPX_is_ident_char(*r)) r++;
                     if (r - q < (int)sizeof(arr) - 1) {
                         strncpy(arr, q, r - q);
                         arr[r - q] = '\0';
@@ -397,13 +397,13 @@ int arix_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t
     return 0;
 }
 
-int arix_data_flow_init(ArixDataFlow* df) {
+int SNEPPX_data_flow_init(SNEPPXDataFlow* df) {
     if (!df) return -1;
     memset(df, 0, sizeof(*df));
     return 0;
 }
 
-int arix_data_flow_taint(ArixDataFlow* df, int var_id) {
+int SNEPPX_data_flow_taint(SNEPPXDataFlow* df, int var_id) {
     if (!df || df->taint_count >= 256) return -1;
     int i;
     for (i = 0; i < df->taint_count; i++) {
@@ -413,19 +413,19 @@ int arix_data_flow_taint(ArixDataFlow* df, int var_id) {
     return 0;
 }
 
-static int arix_cmp_int(const void* a, const void* b) {
+static int SNEPPX_cmp_int(const void* a, const void* b) {
     int ia = *(const int*)a, ib = *(const int*)b;
     if (ia < ib) return -1;
     if (ia > ib) return 1;
     return 0;
 }
 
-int arix_data_flow_propagate(ArixDataFlow* df) {
+int SNEPPX_data_flow_propagate(SNEPPXDataFlow* df) {
     if (!df) return -1;
     if (df->taint_count <= 1) return 0;
     int old[256], old_count = df->taint_count;
     memcpy(old, df->taint_marks, sizeof(int) * old_count);
-    qsort(old, old_count, sizeof(int), arix_cmp_int);
+    qsort(old, old_count, sizeof(int), SNEPPX_cmp_int);
     int new_set[512], new_count = 0;
     int i, j;
     for (i = 0; i < old_count; i++) {
@@ -453,20 +453,20 @@ int arix_data_flow_propagate(ArixDataFlow* df) {
     return propagated;
 }
 
-int arix_lean_export_proof(const char* theorem_name, const char* proof_body, const char* output_path) {
+int SNEPPX_lean_export_proof(const char* theorem_name, const char* proof_body, const char* output_path) {
     if (!theorem_name || !proof_body || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
     if (!f) return -1;
     fprintf(f, "import Mathlib\n");
     fprintf(f, "open Lean\n\n");
-    fprintf(f, "/- Automatically generated by ARIX_Algo S8 Extensions -/\n\n");
+    fprintf(f, "/- Automatically generated by SneppX_ALG S8 Extensions -/\n\n");
     fprintf(f, "theorem %s : True :=\n", theorem_name);
     fprintf(f, "by\n");
     fprintf(f, "  %s\n", proof_body);
     fclose(f);
     return 0;
 }
-int arix_tla_parse_file(const char* filepath) {
+int SNEPPX_tla_parse_file(const char* filepath) {
     if (!filepath) return -1;
     FILE* f = fopen(filepath, "r");
     if (!f) return -1;
@@ -475,18 +475,18 @@ int arix_tla_parse_file(const char* filepath) {
     if (!buf) { fclose(f); return -1; }
     fread(buf, 1, (size_t)sz, f); fclose(f);
     buf[sz] = '\0';
-    ArixTLAParser parser;
-    int ret = arix_tla_parse(&parser, buf);
+    SNEPPXTLAParser parser;
+    int ret = SNEPPX_tla_parse(&parser, buf);
     free(buf);
     return ret;
 }
 
-int arix_tla_get_state_count(ArixTLAParser* parser) {
+int SNEPPX_tla_get_state_count(SNEPPXTLAParser* parser) {
     if (!parser) return -1;
     return parser->state_count;
 }
 
-int arix_tla_get_error(ArixTLAParser* parser, char* buffer, size_t size) {
+int SNEPPX_tla_get_error(SNEPPXTLAParser* parser, char* buffer, size_t size) {
     if (!parser || !buffer || size == 0) return -1;
     if (!parser->parsed) {
         snprintf(buffer, size, "Parse error: spec not parsed");
@@ -496,51 +496,51 @@ int arix_tla_get_error(ArixTLAParser* parser, char* buffer, size_t size) {
     return 0;
 }
 
-int arix_ltl_negate(const char* formula, char* negated_out, size_t size) {
+int SNEPPX_ltl_negate(const char* formula, char* negated_out, size_t size) {
     if (!formula || !negated_out || size == 0) return -1;
     snprintf(negated_out, size, "!(%s)", formula);
     return 0;
 }
 
-int arix_ltl_to_string(ArixLTLVerifier* ltl, char* buffer, size_t size) {
+int SNEPPX_ltl_to_string(SNEPPXLTLVerifier* ltl, char* buffer, size_t size) {
     if (!ltl || !buffer || size == 0) return -1;
     snprintf(buffer, size, "%s", ltl->formula);
     return 0;
 }
 
-int arix_ltl_check_trace(int* trace, int trace_len, const char* formula, int* holds) {
+int SNEPPX_ltl_check_trace(int* trace, int trace_len, const char* formula, int* holds) {
     if (!trace || !formula || !holds) return -1;
-    ArixLTLVerifier ltl;
-    int ret = arix_ltl_init(&ltl, formula);
+    SNEPPXLTLVerifier ltl;
+    int ret = SNEPPX_ltl_init(&ltl, formula);
     if (ret != 0) return ret;
-    ret = arix_ltl_check(&ltl, trace, trace_len);
+    ret = SNEPPX_ltl_check(&ltl, trace, trace_len);
     if (ret == 0) *holds = ltl.holds;
     return ret;
 }
 
-int arix_symex_get_path_count(ArixSymExEngine* se) {
+int SNEPPX_symex_get_path_count(SNEPPXSymExEngine* se) {
     if (!se) return 0;
     return (int)se->explored_paths;
 }
 
-int arix_symex_set_depth_limit(ArixSymExEngine* se, int limit) {
+int SNEPPX_symex_set_depth_limit(SNEPPXSymExEngine* se, int limit) {
     if (!se || limit < 0) return -1;
     se->depth_limit = limit;
     return 0;
 }
 
-int arix_symex_reset(ArixSymExEngine* se) {
+int SNEPPX_symex_reset(SNEPPXSymExEngine* se) {
     if (!se) return -1;
     se->explored_paths = 0;
     return 0;
 }
 
-int arix_symex_get_coverage(ArixSymExEngine* se) {
+int SNEPPX_symex_get_coverage(SNEPPXSymExEngine* se) {
     (void)se;
     return 50;
 }
 
-int arix_loop_invariant_infer_from_source(const char* source_path, char* invariant_out, size_t inv_size) {
+int SNEPPX_loop_invariant_infer_from_source(const char* source_path, char* invariant_out, size_t inv_size) {
     if (!source_path || !invariant_out || inv_size == 0) return -1;
     FILE* f = fopen(source_path, "r");
     if (!f) return -1;
@@ -549,40 +549,40 @@ int arix_loop_invariant_infer_from_source(const char* source_path, char* invaria
     if (!buf) { fclose(f); return -1; }
     fread(buf, 1, (size_t)sz, f); fclose(f);
     buf[sz] = '\0';
-    int ret = arix_loop_invariant_infer(buf, invariant_out, inv_size);
+    int ret = SNEPPX_loop_invariant_infer(buf, invariant_out, inv_size);
     free(buf);
     return ret;
 }
 
-int arix_loop_invariant_verify(const char* loop, const char* invariant) {
+int SNEPPX_loop_invariant_verify(const char* loop, const char* invariant) {
     (void)loop;
     (void)invariant;
     return 1;
 }
 
-int arix_data_flow_get_taint_count(ArixDataFlow* df) {
+int SNEPPX_data_flow_get_taint_count(SNEPPXDataFlow* df) {
     if (!df) return 0;
     return df->taint_count;
 }
 
-int arix_data_flow_clear(ArixDataFlow* df) {
+int SNEPPX_data_flow_clear(SNEPPXDataFlow* df) {
     if (!df) return -1;
     memset(df->taint_marks, 0, sizeof(df->taint_marks));
     df->taint_count = 0;
     return 0;
 }
 
-int arix_data_flow_propagate_all(ArixDataFlow* df) {
+int SNEPPX_data_flow_propagate_all(SNEPPXDataFlow* df) {
     int total = 0, n;
     do {
-        n = arix_data_flow_propagate(df);
+        n = SNEPPX_data_flow_propagate(df);
         if (n < 0) return n;
         total += n;
     } while (n > 0);
     return total;
 }
 
-int arix_data_flow_export_dot(ArixDataFlow* df, const char* path) {
+int SNEPPX_data_flow_export_dot(SNEPPXDataFlow* df, const char* path) {
     if (!df || !path) return -1;
     FILE* f = fopen(path, "w");
     if (!f) return -1;
@@ -598,12 +598,12 @@ int arix_data_flow_export_dot(ArixDataFlow* df, const char* path) {
     return 0;
 }
 
-int arix_lean_export_all(const char** theorems, int count, const char* output_dir) {
+int SNEPPX_lean_export_all(const char** theorems, int count, const char* output_dir) {
     if (!theorems || !output_dir) return -1;
     for (int i = 0; i < count; i++) {
         char path[512];
         snprintf(path, sizeof(path), "%s/theorem_%d.lean", output_dir, i);
-        int ret = arix_lean_export_proof(theorems[i], "trivial", path);
+        int ret = SNEPPX_lean_export_proof(theorems[i], "trivial", path);
         if (ret != 0) return ret;
     }
     return 0;
@@ -679,7 +679,7 @@ static int invariant_extract_condition(const char* loop, char* cond, size_t size
     return 0;
 }
 
-static int data_flow_find_merge_points(ArixDataFlow* df, int* merge, int max) {
+static int data_flow_find_merge_points(SNEPPXDataFlow* df, int* merge, int max) {
     if (!df || !merge || max <= 0) return 0;
     int count = 0;
     for (int i = 1; i < df->taint_count && count < max; i++) {
@@ -692,7 +692,7 @@ static int data_flow_find_merge_points(ArixDataFlow* df, int* merge, int max) {
 
 static int lean_write_theorem_file(const char* path, const char* name, const char* proof) {
     if (!path || !name || !proof) return -1;
-    return arix_lean_export_proof(name, proof, path);
+    return SNEPPX_lean_export_proof(name, proof, path);
 }
 
 /* tla_eval_invariant_on_state and tla_generate_state_counterexample removed - type not available */
@@ -733,13 +733,13 @@ static int symex_is_conditional_branch(uint8_t op) {
     return (op == 0x74 || op == 0x75 || op == 0x7C || op == 0x7D || op == 0x7E || op == 0x7F) ? 1 : 0;
 }
 
-static int taint_mark_variable(ArixDataFlow* df, int var_id) {
+static int taint_mark_variable(SNEPPXDataFlow* df, int var_id) {
     if (!df || df->taint_count >= 64) return -1;
     df->taint_marks[df->taint_count++] = var_id;
     return 0;
 }
 
-static int taint_is_marked(ArixDataFlow* df, int var_id) {
+static int taint_is_marked(SNEPPXDataFlow* df, int var_id) {
     if (!df) return 0;
     for (int i = 0; i < df->taint_count; i++) {
         if (df->taint_marks[i] == var_id) return 1;
@@ -805,7 +805,7 @@ static int symex_estimate_paths(const uint8_t* bc, size_t len) {
     return 1 << (branches > 10 ? 10 : branches);
 }
 
-static int data_flow_find_merge_depth(ArixDataFlow* df, int var_id) {
+static int data_flow_find_merge_depth(SNEPPXDataFlow* df, int var_id) {
     if (!df) return 0;
     int depth = 0;
     for (int i = 0; i < df->taint_count; i++) {
@@ -814,7 +814,7 @@ static int data_flow_find_merge_depth(ArixDataFlow* df, int var_id) {
     return depth;
 }
 
-static int data_flow_export_json_node(FILE* f, ArixDataFlow* df, int i) {
+static int data_flow_export_json_node(FILE* f, SNEPPXDataFlow* df, int i) {
     if (!f || !df) return -1;
     return fprintf(f, "    {\"id\": %d, \"label\": \"Var %d\", \"tainted\": %s},\n",
                    df->taint_marks[i], df->taint_marks[i],

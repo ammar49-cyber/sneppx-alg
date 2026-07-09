@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ARIX-Algo: EditorConfig checker
+# SNEPPX-Algo: EditorConfig checker
 # Verifies all source files match .editorconfig rules
 set -euo pipefail
 

@@ -19,29 +19,29 @@ static unsigned clz64(uint64_t x) {
 #endif
 }
 
-void arix_bn_init(ArixBigNum* bn) { if (bn) memset(bn,0,sizeof(*bn)); }
+void SNEPPX_bn_init(SNEPPXBigNum* bn) { if (bn) memset(bn,0,sizeof(*bn)); }
 
-void arix_bn_zero(ArixBigNum* bn) {
+void SNEPPX_bn_zero(SNEPPXBigNum* bn) {
     if (!bn) return;
-    memset(bn->words,0,sizeof(ARIX_BN_WORD)*ARIX_BN_MAX_WORDS);
+    memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
     bn->used=0; bn->sign=0;
 }
 
-int arix_bn_set_word(ArixBigNum* bn, ARIX_BN_WORD val) {
+int SNEPPX_bn_set_word(SNEPPXBigNum* bn, SNEPPX_BN_WORD val) {
     if (!bn) return -1;
-    memset(bn->words,0,sizeof(ARIX_BN_WORD)*ARIX_BN_MAX_WORDS);
+    memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
     bn->words[0]=val; bn->used=1; bn->sign=0;
     return 0;
 }
 
-int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
+int SNEPPX_bn_set_array(SNEPPXBigNum* bn, const uint8_t* bytes, size_t len) {
     if (!bn||!bytes) return -1;
-    memset(bn->words,0,sizeof(ARIX_BN_WORD)*ARIX_BN_MAX_WORDS);
+    memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
     bn->used=0; bn->sign=0;
     int wi=0,bi=0;
     for (size_t i=len;i>0;i--) {
-        bn->words[wi]|=(ARIX_BN_WORD)bytes[i-1]<<(bi*8);
-        if (++bi==8) { bi=0; wi++; if (wi>=ARIX_BN_MAX_WORDS) break; }
+        bn->words[wi]|=(SNEPPX_BN_WORD)bytes[i-1]<<(bi*8);
+        if (++bi==8) { bi=0; wi++; if (wi>=SNEPPX_BN_MAX_WORDS) break; }
     }
     bn->used=wi+1;
     while (bn->used>0&&!bn->words[bn->used-1]) bn->used--;
@@ -52,9 +52,9 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
 #ifndef NO_UINT128
     typedef __uint128_t uint128_t;
 
-    int arix_bn_mul_word(ArixBigNum* r, ARIX_BN_WORD w) {
+    int SNEPPX_bn_mul_word(SNEPPXBigNum* r, SNEPPX_BN_WORD w) {
         if (!r) return -1;
-        if (w==0||(r->used==1&&r->words[0]==0)) { arix_bn_zero(r); return 0; }
+        if (w==0||(r->used==1&&r->words[0]==0)) { SNEPPX_bn_zero(r); return 0; }
         if (w==1) return 0;
         uint64_t carry=0;
         for (int i=0;i<r->used;i++) {
@@ -63,17 +63,17 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
             carry=(uint64_t)(prod>>64);
         }
         if (carry) {
-            if (r->used>=ARIX_BN_MAX_WORDS) return -1;
+            if (r->used>=SNEPPX_BN_MAX_WORDS) return -1;
             r->words[r->used++]=carry;
         }
         return 0;
     }
 
-    int arix_bn_mul(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
+    int SNEPPX_bn_mul(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
         if (!r||!a||!b) return -1;
-        if (arix_bn_is_zero(a)||arix_bn_is_zero(b)) { arix_bn_zero(r); return 0; }
-        if (a->used+b->used>ARIX_BN_MAX_WORDS) return -1;
-        ArixBigNum t; arix_bn_init(&t); t.used=a->used+b->used;
+        if (SNEPPX_bn_is_zero(a)||SNEPPX_bn_is_zero(b)) { SNEPPX_bn_zero(r); return 0; }
+        if (a->used+b->used>SNEPPX_BN_MAX_WORDS) return -1;
+        SNEPPXBigNum t; SNEPPX_bn_init(&t); t.used=a->used+b->used;
         for (int i=0;i<a->used;i++) {
             uint64_t carry=0;
             for (int j=0;j<b->used;j++) {
@@ -85,11 +85,11 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         }
         while (t.used>0&&!t.words[t.used-1]) t.used--;
         if (t.used==0) t.used=1;
-        arix_bn_copy(r,&t); r->sign=0;
+        SNEPPX_bn_copy(r,&t); r->sign=0;
         return 0;
     }
 
-    uint64_t arix_bn_div_word(ArixBigNum* r, uint64_t d) {
+    uint64_t SNEPPX_bn_div_word(SNEPPXBigNum* r, uint64_t d) {
         if (!r||d==0) return (uint64_t)-1;
         uint64_t rem=0;
         for (int i=r->used-1;i>=0;i--) {
@@ -102,7 +102,7 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         return rem;
     }
 
-    uint64_t arix_bn_mod_word(const ArixBigNum* a, uint64_t d) {
+    uint64_t SNEPPX_bn_mod_word(const SNEPPXBigNum* a, uint64_t d) {
         if (!a||d==0) return (uint64_t)-1;
         uint64_t rem=0;
         for (int i=a->used-1;i>=0;i--) {
@@ -111,21 +111,21 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         return rem;
     }
 
-    int arix_bn_div(ArixBigNum* q, ArixBigNum* rem, const ArixBigNum* a, const ArixBigNum* b) {
+    int SNEPPX_bn_div(SNEPPXBigNum* q, SNEPPXBigNum* rem, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
         if (!q||!rem||!a||!b) return -1;
-        if (arix_bn_is_zero(b)) return -1;
-        if (arix_bn_cmp(a,b)<0) { arix_bn_zero(q); arix_bn_copy(rem,a); return 0; }
+        if (SNEPPX_bn_is_zero(b)) return -1;
+        if (SNEPPX_bn_cmp(a,b)<0) { SNEPPX_bn_zero(q); SNEPPX_bn_copy(rem,a); return 0; }
         if (b->used==1) {
-            ArixBigNum tmp; arix_bn_init(&tmp); arix_bn_copy(&tmp,a);
-            uint64_t rv=arix_bn_div_word(&tmp,b->words[0]);
-            arix_bn_copy(q,&tmp); arix_bn_set_word(rem,rv);
+            SNEPPXBigNum tmp; SNEPPX_bn_init(&tmp); SNEPPX_bn_copy(&tmp,a);
+            uint64_t rv=SNEPPX_bn_div_word(&tmp,b->words[0]);
+            SNEPPX_bn_copy(q,&tmp); SNEPPX_bn_set_word(rem,rv);
             return 0;
         }
         int n=b->used, m=a->used-n;
-        if (m<0) { arix_bn_zero(q); arix_bn_copy(rem,a); return 0; }
+        if (m<0) { SNEPPX_bn_zero(q); SNEPPX_bn_copy(rem,a); return 0; }
         unsigned shift=clz64(b->words[n-1]);
-        ArixBigNum u,v; arix_bn_init(&u); arix_bn_init(&v);
-        arix_bn_copy(&v,b);
+        SNEPPXBigNum u,v; SNEPPX_bn_init(&u); SNEPPX_bn_init(&v);
+        SNEPPX_bn_copy(&v,b);
         if (shift) {
             uint64_t carry=0;
             for (int i=0;i<a->used;i++) {
@@ -140,9 +140,9 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
                 v.words[i]=(uint64_t)w; carry=(uint64_t)(w>>64);
             }
         } else {
-            arix_bn_copy(&u,a);
+            SNEPPX_bn_copy(&u,a);
         }
-        ArixBigNum qu; arix_bn_init(&qu); qu.used=m+1;
+        SNEPPXBigNum qu; SNEPPX_bn_init(&qu); qu.used=m+1;
         for (int j=m;j>=0;j--) {
             uint64_t ujn=(j+n<u.used)?u.words[j+n]:0;
             uint64_t ujn1=(j+n-1<u.used)?u.words[j+n-1]:0;
@@ -182,7 +182,7 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         }
         while (qu.used>0&&!qu.words[qu.used-1]) qu.used--;
         if (qu.used==0) qu.used=1;
-        arix_bn_copy(q,&qu); q->sign=0;
+        SNEPPX_bn_copy(q,&qu); q->sign=0;
         uint64_t carry=0;
         for (int i=u.used-1;i>=0;i--) {
             uint128_t w=((uint128_t)carry<<64)|u.words[i];
@@ -190,17 +190,17 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         }
         u.used=n; while (u.used>0&&!u.words[u.used-1]) u.used--;
         if (u.used==0) u.used=1;
-        arix_bn_copy(rem,&u); rem->sign=0;
+        SNEPPX_bn_copy(rem,&u); rem->sign=0;
         return 0;
     }
 #else
     /* NO_UINT128 stubs */
-    int arix_bn_mul_word(ArixBigNum* r, ARIX_BN_WORD w) {
+    int SNEPPX_bn_mul_word(SNEPPXBigNum* r, SNEPPX_BN_WORD w) {
         (void)w;
         if (!r) return -1;
         return 0;
     }
-    uint64_t arix_bn_div_word(ArixBigNum* r, uint64_t d) {
+    uint64_t SNEPPX_bn_div_word(SNEPPXBigNum* r, uint64_t d) {
         if (!r||d==0) return (uint64_t)-1;
         uint64_t rem=0;
         for (int i=r->used-1;i>=0;i--) {
@@ -211,39 +211,39 @@ int arix_bn_set_array(ArixBigNum* bn, const uint8_t* bytes, size_t len) {
         if (r->used==0) { r->used=1; r->words[0]=0; }
         return rem;
     }
-    uint64_t arix_bn_mod_word(const ArixBigNum* a, uint64_t d) {
+    uint64_t SNEPPX_bn_mod_word(const SNEPPXBigNum* a, uint64_t d) {
         if (!a||d==0) return (uint64_t)-1;
         uint64_t rem=0;
         for (int i=a->used-1;i>=0;i--) rem = a->words[i] % d;
         return rem;
     }
-    int arix_bn_mul(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
+    int SNEPPX_bn_mul(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
         if (!r||!a||!b) return -1;
-        if (arix_bn_is_zero(a)||arix_bn_is_zero(b)) { arix_bn_zero(r); return 0; }
-        ArixBigNum t; arix_bn_init(&t); t.used = a->used + b->used;
-        if (t.used > ARIX_BN_MAX_WORDS) return -1;
+        if (SNEPPX_bn_is_zero(a)||SNEPPX_bn_is_zero(b)) { SNEPPX_bn_zero(r); return 0; }
+        SNEPPXBigNum t; SNEPPX_bn_init(&t); t.used = a->used + b->used;
+        if (t.used > SNEPPX_BN_MAX_WORDS) return -1;
         for (int i = 0; i < a->used; i++)
             for (int j = 0; j < b->used; j++)
                 t.words[i+j] += a->words[i] * b->words[j];
         while (t.used>0&&!t.words[t.used-1]) t.used--;
         if (t.used==0) t.used=1;
-        arix_bn_copy(r,&t); r->sign=0;
+        SNEPPX_bn_copy(r,&t); r->sign=0;
         return 0;
     }
-    int arix_bn_div(ArixBigNum* q, ArixBigNum* rem, const ArixBigNum* a, const ArixBigNum* b) {
-        if (!q||!rem||!a||!b||arix_bn_is_zero(b)) return -1;
-        if (arix_bn_cmp(a,b)<0) { arix_bn_zero(q); arix_bn_copy(rem,a); return 0; }
-        ArixBigNum tmp; arix_bn_init(&tmp); arix_bn_copy(&tmp,a);
-        uint64_t rv=arix_bn_div_word(&tmp,b->words[0]);
-        arix_bn_copy(q,&tmp); arix_bn_set_word(rem,rv);
+    int SNEPPX_bn_div(SNEPPXBigNum* q, SNEPPXBigNum* rem, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
+        if (!q||!rem||!a||!b||SNEPPX_bn_is_zero(b)) return -1;
+        if (SNEPPX_bn_cmp(a,b)<0) { SNEPPX_bn_zero(q); SNEPPX_bn_copy(rem,a); return 0; }
+        SNEPPXBigNum tmp; SNEPPX_bn_init(&tmp); SNEPPX_bn_copy(&tmp,a);
+        uint64_t rv=SNEPPX_bn_div_word(&tmp,b->words[0]);
+        SNEPPX_bn_copy(q,&tmp); SNEPPX_bn_set_word(rem,rv);
         return 0;
     }
 #endif
 
-int arix_bn_from_hex(ArixBigNum* bn, const char* hex) {
+int SNEPPX_bn_from_hex(SNEPPXBigNum* bn, const char* hex) {
     if (!bn||!hex) return -1;
     size_t len=strlen(hex);
-    arix_bn_zero(bn); bn->used=1;
+    SNEPPX_bn_zero(bn); bn->used=1;
     for (size_t i=0;i<len;i++) {
         char c=hex[i];
         int v;
@@ -251,14 +251,14 @@ int arix_bn_from_hex(ArixBigNum* bn, const char* hex) {
         else if (c>='a'&&c<='f') v=10+c-'a';
         else if (c>='A'&&c<='F') v=10+c-'A';
         else return -1;
-        if (arix_bn_mul_word(bn,16)!=0) return -1;
+        if (SNEPPX_bn_mul_word(bn,16)!=0) return -1;
         uint64_t ov=bn->words[0];
         bn->words[0]+=v;
         if (bn->words[0]<ov) {
             int idx=1;
             while (idx<bn->used) { bn->words[idx]++; if (bn->words[idx]) break; idx++; }
             if (idx>=bn->used) {
-                if (bn->used>=ARIX_BN_MAX_WORDS) return -1;
+                if (bn->used>=SNEPPX_BN_MAX_WORDS) return -1;
                 bn->words[bn->used++]=1;
             }
         }
@@ -266,7 +266,7 @@ int arix_bn_from_hex(ArixBigNum* bn, const char* hex) {
     return 0;
 }
 
-void arix_bn_to_array(const ArixBigNum* bn, uint8_t* out, size_t* out_len) {
+void SNEPPX_bn_to_array(const SNEPPXBigNum* bn, uint8_t* out, size_t* out_len) {
     if (!bn||!out||!out_len) return;
     size_t pos=0;
     for (int i=bn->used-1;i>=0;i--) {
@@ -278,17 +278,17 @@ void arix_bn_to_array(const ArixBigNum* bn, uint8_t* out, size_t* out_len) {
     done: *out_len=pos;
 }
 
-int arix_bn_copy(ArixBigNum* dst, const ArixBigNum* src) {
+int SNEPPX_bn_copy(SNEPPXBigNum* dst, const SNEPPXBigNum* src) {
     if (!dst||!src) return -1;
-    memcpy(dst->words,src->words,sizeof(ARIX_BN_WORD)*ARIX_BN_MAX_WORDS);
+    memcpy(dst->words,src->words,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
     dst->used=src->used; dst->sign=src->sign;
     return 0;
 }
 
-int arix_bn_is_zero(const ArixBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==0; }
-int arix_bn_is_one(const ArixBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==1; }
+int SNEPPX_bn_is_zero(const SNEPPXBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==0; }
+int SNEPPX_bn_is_one(const SNEPPXBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==1; }
 
-int arix_bn_cmp(const ArixBigNum* a, const ArixBigNum* b) {
+int SNEPPX_bn_cmp(const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!a||!b) return -2;
     if (a->used>b->used) return 1;
     if (a->used<b->used) return -1;
@@ -299,7 +299,7 @@ int arix_bn_cmp(const ArixBigNum* a, const ArixBigNum* b) {
     return 0;
 }
 
-int arix_bn_cmp_word(const ArixBigNum* a, ARIX_BN_WORD b) {
+int SNEPPX_bn_cmp_word(const SNEPPXBigNum* a, SNEPPX_BN_WORD b) {
     if (!a) return -2;
     if (a->used>1) return 1;
     if (a->words[0]>b) return 1;
@@ -307,7 +307,7 @@ int arix_bn_cmp_word(const ArixBigNum* a, ARIX_BN_WORD b) {
     return 0;
 }
 
-int arix_bn_add(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
+int SNEPPX_bn_add(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
     int max=a->used>b->used?a->used:b->used;
     uint64_t carry=0;
@@ -322,7 +322,7 @@ int arix_bn_add(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
         carry=c;
     }
     if (carry) {
-        if (max>=ARIX_BN_MAX_WORDS) return -1;
+        if (max>=SNEPPX_BN_MAX_WORDS) return -1;
         r->words[max]=1;
         max++;
     }
@@ -330,12 +330,12 @@ int arix_bn_add(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
     return 0;
 }
 
-int arix_bn_sub(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
+int SNEPPX_bn_sub(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
-    int cmp=arix_bn_cmp(a,b);
-    if (cmp==0) { arix_bn_zero(r); return 0; }
-    const ArixBigNum* bg=(cmp>0)?a:b;
-    const ArixBigNum* sm=(cmp>0)?b:a;
+    int cmp=SNEPPX_bn_cmp(a,b);
+    if (cmp==0) { SNEPPX_bn_zero(r); return 0; }
+    const SNEPPXBigNum* bg=(cmp>0)?a:b;
+    const SNEPPXBigNum* sm=(cmp>0)?b:a;
     uint64_t borrow=0;
     for (int i=0;i<bg->used;i++) {
         uint64_t av=bg->words[i];
@@ -354,102 +354,102 @@ int arix_bn_sub(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
     return 0;
 }
 
-int arix_bn_mod(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* m) {
+int SNEPPX_bn_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m) {
     if (!r||!a||!m) return -1;
-    if (arix_bn_is_zero(m)) return -1;
-    ArixBigNum tmp; arix_bn_init(&tmp);
-    int ret=arix_bn_div(&tmp,r,a,m);
+    if (SNEPPX_bn_is_zero(m)) return -1;
+    SNEPPXBigNum tmp; SNEPPX_bn_init(&tmp);
+    int ret=SNEPPX_bn_div(&tmp,r,a,m);
     return ret;
 }
 
-int arix_bn_exp_mod(ArixBigNum* r, const ArixBigNum* base, const ArixBigNum* exp, const ArixBigNum* mod) {
-    if (!r||!base||!exp||!mod||arix_bn_is_zero(mod)) return -1;
-    ArixBigNum b,e,t; arix_bn_init(&b); arix_bn_init(&e); arix_bn_init(&t);
-    arix_bn_copy(&b,base); arix_bn_mod(&b,&b,mod);
-    if (arix_bn_is_zero(&b)) { arix_bn_zero(r); return 0; }
-    arix_bn_copy(&e,exp);
-    arix_bn_set_word(&t,1);
-    while (!arix_bn_is_zero(&e)) {
-        if (e.words[0]&1) { arix_bn_mul(&t,&t,&b); arix_bn_mod(&t,&t,mod); }
-        arix_bn_mul(&b,&b,&b); arix_bn_mod(&b,&b,mod);
-        arix_bn_div_word(&e,2);
+int SNEPPX_bn_exp_mod(SNEPPXBigNum* r, const SNEPPXBigNum* base, const SNEPPXBigNum* exp, const SNEPPXBigNum* mod) {
+    if (!r||!base||!exp||!mod||SNEPPX_bn_is_zero(mod)) return -1;
+    SNEPPXBigNum b,e,t; SNEPPX_bn_init(&b); SNEPPX_bn_init(&e); SNEPPX_bn_init(&t);
+    SNEPPX_bn_copy(&b,base); SNEPPX_bn_mod(&b,&b,mod);
+    if (SNEPPX_bn_is_zero(&b)) { SNEPPX_bn_zero(r); return 0; }
+    SNEPPX_bn_copy(&e,exp);
+    SNEPPX_bn_set_word(&t,1);
+    while (!SNEPPX_bn_is_zero(&e)) {
+        if (e.words[0]&1) { SNEPPX_bn_mul(&t,&t,&b); SNEPPX_bn_mod(&t,&t,mod); }
+        SNEPPX_bn_mul(&b,&b,&b); SNEPPX_bn_mod(&b,&b,mod);
+        SNEPPX_bn_div_word(&e,2);
     }
-    arix_bn_copy(r,&t); r->sign=0;
+    SNEPPX_bn_copy(r,&t); r->sign=0;
     return 0;
 }
 
-int arix_bn_gcd(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* b) {
+int SNEPPX_bn_gcd(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
-    ArixBigNum ta,tb,tr; arix_bn_init(&ta); arix_bn_init(&tb); arix_bn_init(&tr);
-    arix_bn_copy(&ta,a); arix_bn_copy(&tb,b);
-    while (!arix_bn_is_zero(&tb)) {
-        arix_bn_mod(&tr,&ta,&tb);
-        arix_bn_copy(&ta,&tb);
-        arix_bn_copy(&tb,&tr);
+    SNEPPXBigNum ta,tb,tr; SNEPPX_bn_init(&ta); SNEPPX_bn_init(&tb); SNEPPX_bn_init(&tr);
+    SNEPPX_bn_copy(&ta,a); SNEPPX_bn_copy(&tb,b);
+    while (!SNEPPX_bn_is_zero(&tb)) {
+        SNEPPX_bn_mod(&tr,&ta,&tb);
+        SNEPPX_bn_copy(&ta,&tb);
+        SNEPPX_bn_copy(&tb,&tr);
     }
-    arix_bn_copy(r,&ta); r->sign=0;
+    SNEPPX_bn_copy(r,&ta); r->sign=0;
     return 0;
 }
 
-int arix_bn_inv_mod(ArixBigNum* r, const ArixBigNum* a, const ArixBigNum* m) {
-    if (!r||!a||!m||arix_bn_is_zero(m)) return -1;
-    ArixBigNum r0,r1,s0,s1,q,tmp; arix_bn_init(&r0); arix_bn_init(&r1);
-    arix_bn_init(&s0); arix_bn_init(&s1); arix_bn_init(&q); arix_bn_init(&tmp);
-    arix_bn_copy(&r0,m); arix_bn_mod(&r1,a,m);
-    arix_bn_set_word(&s0,0); arix_bn_set_word(&s1,1);
-    while (!arix_bn_is_zero(&r1)) {
-        arix_bn_div(&q,&tmp,&r0,&r1);
-        arix_bn_copy(&r0,&r1); arix_bn_copy(&r1,&tmp);
-        arix_bn_mul(&tmp,&q,&s1);
-        if (arix_bn_cmp(&s0,&tmp)>=0) {
-            arix_bn_sub(&tmp,&s0,&tmp);
+int SNEPPX_bn_inv_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m) {
+    if (!r||!a||!m||SNEPPX_bn_is_zero(m)) return -1;
+    SNEPPXBigNum r0,r1,s0,s1,q,tmp; SNEPPX_bn_init(&r0); SNEPPX_bn_init(&r1);
+    SNEPPX_bn_init(&s0); SNEPPX_bn_init(&s1); SNEPPX_bn_init(&q); SNEPPX_bn_init(&tmp);
+    SNEPPX_bn_copy(&r0,m); SNEPPX_bn_mod(&r1,a,m);
+    SNEPPX_bn_set_word(&s0,0); SNEPPX_bn_set_word(&s1,1);
+    while (!SNEPPX_bn_is_zero(&r1)) {
+        SNEPPX_bn_div(&q,&tmp,&r0,&r1);
+        SNEPPX_bn_copy(&r0,&r1); SNEPPX_bn_copy(&r1,&tmp);
+        SNEPPX_bn_mul(&tmp,&q,&s1);
+        if (SNEPPX_bn_cmp(&s0,&tmp)>=0) {
+            SNEPPX_bn_sub(&tmp,&s0,&tmp);
         } else {
-            arix_bn_sub(&tmp,&tmp,&s0);
-            arix_bn_mod(&tmp,&tmp,m);
-            if (!arix_bn_is_zero(&tmp)) arix_bn_sub(&tmp,m,&tmp);
+            SNEPPX_bn_sub(&tmp,&tmp,&s0);
+            SNEPPX_bn_mod(&tmp,&tmp,m);
+            if (!SNEPPX_bn_is_zero(&tmp)) SNEPPX_bn_sub(&tmp,m,&tmp);
         }
-        arix_bn_copy(&s0,&s1); arix_bn_copy(&s1,&tmp);
+        SNEPPX_bn_copy(&s0,&s1); SNEPPX_bn_copy(&s1,&tmp);
     }
-    if (!arix_bn_is_one(&r0)) return -1;
-    arix_bn_mod(&s0,&s0,m);
-    if (arix_bn_is_zero(&s0)) return -1;
-    arix_bn_copy(r,&s0); r->sign=0;
+    if (!SNEPPX_bn_is_one(&r0)) return -1;
+    SNEPPX_bn_mod(&s0,&s0,m);
+    if (SNEPPX_bn_is_zero(&s0)) return -1;
+    SNEPPX_bn_copy(r,&s0); r->sign=0;
     return 0;
 }
 
-int arix_bn_is_prime(const ArixBigNum* bn) {
+int SNEPPX_bn_is_prime(const SNEPPXBigNum* bn) {
     if (!bn) return -1;
-    if (arix_bn_cmp_word(bn,2)<0) return 0;
-    if (bn->used==1&&bn->words[0]%2==0) return arix_bn_cmp_word(bn,2)==0;
-    ArixBigNum n,d,a,x,one,tmp; arix_bn_init(&n); arix_bn_init(&d);
-    arix_bn_init(&a); arix_bn_init(&x); arix_bn_init(&one); arix_bn_init(&tmp);
-    arix_bn_copy(&n,bn); arix_bn_set_word(&one,1);
-    arix_bn_sub(&d,&n,&one);
+    if (SNEPPX_bn_cmp_word(bn,2)<0) return 0;
+    if (bn->used==1&&bn->words[0]%2==0) return SNEPPX_bn_cmp_word(bn,2)==0;
+    SNEPPXBigNum n,d,a,x,one,tmp; SNEPPX_bn_init(&n); SNEPPX_bn_init(&d);
+    SNEPPX_bn_init(&a); SNEPPX_bn_init(&x); SNEPPX_bn_init(&one); SNEPPX_bn_init(&tmp);
+    SNEPPX_bn_copy(&n,bn); SNEPPX_bn_set_word(&one,1);
+    SNEPPX_bn_sub(&d,&n,&one);
     int s=0;
-    while (!arix_bn_is_zero(&d)&&!(d.words[0]&1)) {
-        arix_bn_div_word(&d,2); s++;
+    while (!SNEPPX_bn_is_zero(&d)&&!(d.words[0]&1)) {
+        SNEPPX_bn_div_word(&d,2); s++;
     }
-    static const ARIX_BN_WORD bases[]={2,3,5,7,11,13,17};
+    static const SNEPPX_BN_WORD bases[]={2,3,5,7,11,13,17};
     int nb=sizeof(bases)/sizeof(bases[0]);
     for (int i=0;i<nb;i++) {
-        if (arix_bn_cmp_word(&n,bases[i])<=0) continue;
-        arix_bn_set_word(&a,bases[i]);
-        arix_bn_exp_mod(&x,&a,&d,&n);
-        if (arix_bn_is_one(&x)) continue;
-        arix_bn_sub(&tmp,&n,&one);
-        if (arix_bn_cmp(&x,&tmp)==0) continue;
+        if (SNEPPX_bn_cmp_word(&n,bases[i])<=0) continue;
+        SNEPPX_bn_set_word(&a,bases[i]);
+        SNEPPX_bn_exp_mod(&x,&a,&d,&n);
+        if (SNEPPX_bn_is_one(&x)) continue;
+        SNEPPX_bn_sub(&tmp,&n,&one);
+        if (SNEPPX_bn_cmp(&x,&tmp)==0) continue;
         int composite=1;
         for (int r=1;r<s;r++) {
-            arix_bn_mul(&x,&x,&x); arix_bn_mod(&x,&x,&n);
-            if (arix_bn_is_one(&x)) { return 0; }
-            if (arix_bn_cmp(&x,&tmp)==0) { composite=0; break; }
+            SNEPPX_bn_mul(&x,&x,&x); SNEPPX_bn_mod(&x,&x,&n);
+            if (SNEPPX_bn_is_one(&x)) { return 0; }
+            if (SNEPPX_bn_cmp(&x,&tmp)==0) { composite=0; break; }
         }
         if (composite) return 0;
     }
     return 1;
 }
 
-void arix_bn_print(const ArixBigNum* bn) {
+void SNEPPX_bn_print(const SNEPPXBigNum* bn) {
     if (!bn) return;
     if (bn->sign) printf("-");
     printf("0x");

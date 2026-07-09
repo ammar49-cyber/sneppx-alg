@@ -23,80 +23,80 @@ static void run_test(const char* name, void (*test_fn)(void)) {
     tests_passed++;
 }
 
-static void event_callback(const ArixMonitorEvent* event) {
+static void event_callback(const SNEPPXMonitorEvent* event) {
     (void)event;
     g_event_count++;
 }
 
 static void test_init_shutdown(void) {
-    int ret = arix_monitor_init();
+    int ret = SNEPPX_monitor_init();
     ASSERT(ret == 0, "monitor init");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_shutdown();
 }
 
 static void test_start_stop(void) {
-    arix_monitor_init();
-    int ret = arix_monitor_start(100);
+    SNEPPX_monitor_init();
+    int ret = SNEPPX_monitor_start(100);
     ASSERT(ret == 0, "monitor start");
-    ret = arix_monitor_stop();
+    ret = SNEPPX_monitor_stop();
     ASSERT(ret == 0, "monitor stop");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_shutdown();
 }
 
 static void test_region_registration(void) {
-    arix_monitor_init();
+    SNEPPX_monitor_init();
     int data[] = {1, 2, 3, 4, 5};
-    int ret = arix_monitor_register_region("test_data", data, sizeof(data));
+    int ret = SNEPPX_monitor_register_region("test_data", data, sizeof(data));
     ASSERT(ret == 0, "region registered");
 
-    ret = arix_monitor_verify_region("test_data");
+    ret = SNEPPX_monitor_verify_region("test_data");
     ASSERT(ret == 0, "region verified unchanged");
 
-    ret = arix_monitor_unregister_region("test_data");
+    ret = SNEPPX_monitor_unregister_region("test_data");
     ASSERT(ret == 0, "region unregistered");
 
-    ret = arix_monitor_verify_region("test_data");
+    ret = SNEPPX_monitor_verify_region("test_data");
     ASSERT(ret == -1, "unregistered region returns -1");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_shutdown();
 }
 
 static void test_verify_all(void) {
-    arix_monitor_init();
+    SNEPPX_monitor_init();
     int data[] = {10, 20, 30};
-    arix_monitor_register_region("verify_data", data, sizeof(data));
-    int violations = arix_monitor_verify_all();
+    SNEPPX_monitor_register_region("verify_data", data, sizeof(data));
+    int violations = SNEPPX_monitor_verify_all();
     ASSERT(violations == 0, "verify all returns 0 violations");
-    arix_monitor_unregister_region("verify_data");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_unregister_region("verify_data");
+    SNEPPX_monitor_shutdown();
 }
 
 static void test_canary(void) {
-    arix_monitor_init();
-    int ok = arix_monitor_check_canary();
+    SNEPPX_monitor_init();
+    int ok = SNEPPX_monitor_check_canary();
     ASSERT(ok != 0, "canary check passes initially");
-    arix_monitor_refresh_canary();
-    ok = arix_monitor_check_canary();
+    SNEPPX_monitor_refresh_canary();
+    ok = SNEPPX_monitor_check_canary();
     ASSERT(ok != 0, "canary check passes after refresh");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_shutdown();
 }
 
 static void test_callback(void) {
-    arix_monitor_init();
-    arix_monitor_set_callback(event_callback);
+    SNEPPX_monitor_init();
+    SNEPPX_monitor_set_callback(event_callback);
     g_event_count = 0;
 
     /* Register a small region and modify it to trigger an event */
     char data[] = "original data";
-    arix_monitor_register_region("callback_data", data, sizeof(data));
+    SNEPPX_monitor_register_region("callback_data", data, sizeof(data));
 
     /* Modify the data */
     data[0] = 'X';
 
-    int violations = arix_monitor_verify_all();
+    int violations = SNEPPX_monitor_verify_all();
     ASSERT(violations > 0, "violations detected after modification");
     ASSERT(g_event_count > 0, "callback fired");
-    arix_monitor_unregister_region("callback_data");
-    arix_monitor_shutdown();
+    SNEPPX_monitor_unregister_region("callback_data");
+    SNEPPX_monitor_shutdown();
 }
 
 int main(void) {

@@ -1,15 +1,15 @@
 #pragma once
-#ifndef ARIX_OBF_VM_H
-#define ARIX_OBF_VM_H
+#ifndef SNEPPX_OBF_VM_H
+#define SNEPPX_OBF_VM_H
 
 #include "control_flow_obfuscation.h"
 #include <cstdint>
 #include <vector>
 #include <array>
 
-namespace arix {
+namespace SNEPPX {
 
-enum class ArixObfBytecode : uint8_t {
+enum class SNEPPXObfBytecode : uint8_t {
     NOP    = 0x00,
     ADD    = 0x01,
     SUB    = 0x02,
@@ -40,7 +40,7 @@ enum class ArixObfBytecode : uint8_t {
     HALT   = 0xFF
 };
 
-struct ArixObfVMState {
+struct SNEPPXObfVMState {
     std::array<uint64_t, 256> regs;
     std::array<double, 8> fregs;
     std::vector<uint64_t> stack;
@@ -49,31 +49,31 @@ struct ArixObfVMState {
     bool running;
     uint64_t flags;
 
-    ArixObfVMState() : ip(0), running(true), flags(0) {
+    SNEPPXObfVMState() : ip(0), running(true), flags(0) {
         regs.fill(0);
         fregs.fill(0.0);
         mem.resize(65536, 0);
     }
 };
 
-using ArixObfHandlerFunc = void(*)(ArixObfVMState& state, uint8_t op1, uint8_t op2);
+using SNEPPXObfHandlerFunc = void(*)(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
 
-struct ArixObfHandler {
-    ArixObfHandlerFunc func;
+struct SNEPPXObfHandler {
+    SNEPPXObfHandlerFunc func;
     bool initialized;
 };
 
-class ArixObfVM {
+class SNEPPXObfVM {
 public:
-    ArixObfVM();
-    ~ArixObfVM();
+    SNEPPXObfVM();
+    ~SNEPPXObfVM();
 
-    void add_handler(ArixObfBytecode opcode, ArixObfHandler handler);
-    void compile_to_bytecode(ArixObfCFG& cfg);
+    void add_handler(SNEPPXObfBytecode opcode, SNEPPXObfHandler handler);
+    void compile_to_bytecode(SNEPPXObfCFG& cfg);
     bool vm_execute(const uint8_t* bytecode, size_t len);
     bool load_bytecode(const std::vector<uint8_t>& bc);
 
-    ArixObfVMState& state() { return vm_state; }
+    SNEPPXObfVMState& state() { return vm_state; }
     const std::vector<uint8_t>& bytecode() const { return bytecode_; }
 
     void encrypt_handler_table();
@@ -85,16 +85,16 @@ public:
     bool decrypt_bytecode();
     void reset_state();
     size_t instruction_count(const uint8_t* bytecode, size_t len);
-    bool snapshot_state(ArixObfVMState& out) const;
-    bool restore_state(const ArixObfVMState& in);
+    bool snapshot_state(SNEPPXObfVMState& out) const;
+    bool restore_state(const SNEPPXObfVMState& in);
 
     void set_opcode_xor_key(uint8_t key) { for (auto& k : opcode_xor_key_) k = key; }
     void set_opcode_xor_key_byte(size_t idx, uint8_t key) { if (idx < opcode_xor_key_.size()) opcode_xor_key_[idx] = key; }
 
 private:
-    ArixObfVMState vm_state;
+    SNEPPXObfVMState vm_state;
     std::vector<uint8_t> bytecode_;
-    std::array<ArixObfHandler, 48> handlers;
+    std::array<SNEPPXObfHandler, 48> handlers;
     std::array<uint8_t, 8> handler_xor_key;
     std::array<uint8_t, 32> opcode_xor_key_;
     std::array<uint8_t, 48> handler_indirection;
@@ -105,49 +105,49 @@ private:
     void dispatch(uint8_t opcode, uint8_t op1, uint8_t op2);
     uint8_t resolve_opcode(uint8_t raw_opcode, size_t ip);
 
-    static void handler_nop(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_add(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_sub(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_mul(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_div(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_load(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_store(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_push(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_pop(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jmp(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_call(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_ret(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_cmp(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jz(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jnz(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_xor_op(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_fadd(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_fsub(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_fmul(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_fdiv(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_mread(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_mwrite(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_enter(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_leave(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_swap(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_and(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_or(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_inc(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_dec(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_not(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_rotl(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_rotr(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_load64(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jle(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jg(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_jge(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_mov_reg(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_xchg(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_test(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_pushf(ArixObfVMState& state, uint8_t op1, uint8_t op2);
-    static void handler_popf(ArixObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_nop(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_add(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_sub(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_mul(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_div(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_load(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_store(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_push(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_pop(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jmp(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_call(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_ret(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_cmp(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jz(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jnz(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_xor_op(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_fadd(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_fsub(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_fmul(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_fdiv(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_mread(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_mwrite(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_enter(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_leave(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_swap(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_and(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_or(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_inc(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_dec(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_not(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_rotl(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_rotr(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_load64(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jle(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_jge(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_mov_reg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_xchg(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_test(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_pushf(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
+    static void handler_popf(SNEPPXObfVMState& state, uint8_t op1, uint8_t op2);
 };
 
-} // namespace arix
+} // namespace SNEPPX
 
-#endif // ARIX_OBF_VM_H
+#endif // SNEPPX_OBF_VM_H

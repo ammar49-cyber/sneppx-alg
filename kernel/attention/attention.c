@@ -20,8 +20,8 @@ static float kaiming_init(unsigned int* seed, size_t fan) {
 
 /* ========== Config ========== */
 
-ArixAttentionConfig arix_attn_config_default(void) {
-    ArixAttentionConfig cfg;
+SNEPPXAttentionConfig SNEPPX_attn_config_default(void) {
+    SNEPPXAttentionConfig cfg;
     cfg.num_heads = 8;
     cfg.head_dim = 64;
     cfg.d_model = 512;
@@ -34,24 +34,24 @@ ArixAttentionConfig arix_attn_config_default(void) {
 
 /* ========== Weights ========== */
 
-ArixAttentionWeights* arix_attn_weights_create(ArixAttentionConfig cfg, unsigned int seed) {
-    ArixAttentionWeights* w = arix_malloc(sizeof(ArixAttentionWeights), 64);
+SNEPPXAttentionWeights* SNEPPX_attn_weights_create(SNEPPXAttentionConfig cfg, unsigned int seed) {
+    SNEPPXAttentionWeights* w = SNEPPX_malloc(sizeof(SNEPPXAttentionWeights), 64);
     if (!w) return NULL;
     w->config = cfg;
     size_t d = cfg.d_model, dk = cfg.num_heads * cfg.head_dim;
     size_t shape2[] = {d, dk}, shape1[] = {dk};
 
-    w->w_q = arix_tensor_create(shape2, 2, ARIX_FLOAT32);
-    w->b_q = arix_tensor_zeros(shape1, 1, ARIX_FLOAT32);
-    w->w_k = arix_tensor_create(shape2, 2, ARIX_FLOAT32);
-    w->b_k = arix_tensor_zeros(shape1, 1, ARIX_FLOAT32);
-    w->w_v = arix_tensor_create(shape2, 2, ARIX_FLOAT32);
-    w->b_v = arix_tensor_zeros(shape1, 1, ARIX_FLOAT32);
+    w->w_q = SNEPPX_tensor_create(shape2, 2, SNEPPX_FLOAT32);
+    w->b_q = SNEPPX_tensor_zeros(shape1, 1, SNEPPX_FLOAT32);
+    w->w_k = SNEPPX_tensor_create(shape2, 2, SNEPPX_FLOAT32);
+    w->b_k = SNEPPX_tensor_zeros(shape1, 1, SNEPPX_FLOAT32);
+    w->w_v = SNEPPX_tensor_create(shape2, 2, SNEPPX_FLOAT32);
+    w->b_v = SNEPPX_tensor_zeros(shape1, 1, SNEPPX_FLOAT32);
     size_t shape2o[] = {dk, d};
-    w->w_o = arix_tensor_create(shape2o, 2, ARIX_FLOAT32);
-    w->b_o = arix_tensor_zeros(shape1, 1, ARIX_FLOAT32);
+    w->w_o = SNEPPX_tensor_create(shape2o, 2, SNEPPX_FLOAT32);
+    w->b_o = SNEPPX_tensor_zeros(shape1, 1, SNEPPX_FLOAT32);
 
-    ArixTensor* weights[] = {w->w_q, w->w_k, w->w_v, w->w_o};
+    SNEPPXTensor* weights[] = {w->w_q, w->w_k, w->w_v, w->w_o};
     for (int wi = 0; wi < 4; wi++) {
         float* dptr = (float*)weights[wi]->data;
         size_t n = weights[wi]->size;
@@ -61,34 +61,34 @@ ArixAttentionWeights* arix_attn_weights_create(ArixAttentionConfig cfg, unsigned
     return w;
 }
 
-void arix_attn_weights_destroy(ArixAttentionWeights* w) {
+void SNEPPX_attn_weights_destroy(SNEPPXAttentionWeights* w) {
     if (!w) return;
-    arix_tensor_destroy(w->w_q); arix_tensor_destroy(w->b_q);
-    arix_tensor_destroy(w->w_k); arix_tensor_destroy(w->b_k);
-    arix_tensor_destroy(w->w_v); arix_tensor_destroy(w->b_v);
-    arix_tensor_destroy(w->w_o); arix_tensor_destroy(w->b_o);
-    arix_free(w, sizeof(ArixAttentionWeights));
+    SNEPPX_tensor_destroy(w->w_q); SNEPPX_tensor_destroy(w->b_q);
+    SNEPPX_tensor_destroy(w->w_k); SNEPPX_tensor_destroy(w->b_k);
+    SNEPPX_tensor_destroy(w->w_v); SNEPPX_tensor_destroy(w->b_v);
+    SNEPPX_tensor_destroy(w->w_o); SNEPPX_tensor_destroy(w->b_o);
+    SNEPPX_free(w, sizeof(SNEPPXAttentionWeights));
 }
 
-size_t arix_attn_num_params(const ArixAttentionWeights* w) {
+size_t SNEPPX_attn_num_params(const SNEPPXAttentionWeights* w) {
     size_t n = 0;
-    ArixTensor* ts[] = {w->w_q, w->b_q, w->w_k, w->b_k, w->w_v, w->b_v, w->w_o, w->b_o};
+    SNEPPXTensor* ts[] = {w->w_q, w->b_q, w->w_k, w->b_k, w->w_v, w->b_v, w->w_o, w->b_o};
     for (int i = 0; i < 8; i++) n += ts[i]->size;
     return n;
 }
 
-int arix_attn_get_params(const ArixAttentionWeights* w, ArixTensor** out, size_t max) {
+int SNEPPX_attn_get_params(const SNEPPXAttentionWeights* w, SNEPPXTensor** out, size_t max) {
     if (!w || !out || max < 8) return -1;
-    ArixTensor* ts[] = {w->w_q, w->b_q, w->w_k, w->b_k, w->w_v, w->b_v, w->w_o, w->b_o};
+    SNEPPXTensor* ts[] = {w->w_q, w->b_q, w->w_k, w->b_k, w->w_v, w->b_v, w->w_o, w->b_o};
     for (int i = 0; i < 8; i++) out[i] = ts[i];
     return 8;
 }
 
 /* ========== RoPE ========== */
 
-ArixTensor* arix_rope_precompute(size_t seq_len, size_t head_dim, float base) {
+SNEPPXTensor* SNEPPX_rope_precompute(size_t seq_len, size_t head_dim, float base) {
     size_t shape[] = {seq_len, head_dim};
-    ArixTensor* t = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* t = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     if (!t) return NULL;
     float* d = (float*)t->data;
     for (size_t pos = 0; pos < seq_len; pos++) {
@@ -101,7 +101,7 @@ ArixTensor* arix_rope_precompute(size_t seq_len, size_t head_dim, float base) {
     return t;
 }
 
-void arix_rope_apply(ArixTensor* q, ArixTensor* k, const ArixTensor* cos, const ArixTensor* sin,
+void SNEPPX_rope_apply(SNEPPXTensor* q, SNEPPXTensor* k, const SNEPPXTensor* cos, const SNEPPXTensor* sin,
                      size_t offset) {
     if (!q || !k || !cos || !sin) return;
     size_t d = q->shape[q->ndim - 1];
@@ -129,12 +129,12 @@ void arix_rope_apply(ArixTensor* q, ArixTensor* k, const ArixTensor* cos, const 
 /* Correct RoPE rotation using original values only (no in-place contamination).
    x shape [..., d], cos_table shape [S, d]. First d/2 entries of each row: cos, second d/2: sin.
    Returns new tensor same shape as x. */
-ArixTensor* arix_tensor_rope(const ArixTensor* x, const ArixTensor* cos_table) {
+SNEPPXTensor* SNEPPX_tensor_rope(const SNEPPXTensor* x, const SNEPPXTensor* cos_table) {
     if (!x || !cos_table) return NULL;
     size_t d = x->shape[x->ndim - 1];
     size_t half = d / 2;
     size_t total = x->size;
-    ArixTensor* out = arix_tensor_copy(x);
+    SNEPPXTensor* out = SNEPPX_tensor_copy(x);
     if (!out) return NULL;
     float* xd = (float*)x->data;
     float* od = (float*)out->data;
@@ -160,7 +160,7 @@ ArixTensor* arix_tensor_rope(const ArixTensor* x, const ArixTensor* cos_table) {
 
 /* ========== Batched Matmul ========== */
 
-ArixTensor* arix_batched_matmul(const ArixTensor* a, const ArixTensor* b,
+SNEPPXTensor* SNEPPX_batched_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b,
                                  int transpose_b, int transpose_a) {
     (void)transpose_a;
     if (!a || !b || a->ndim != 4 || b->ndim != 4) return NULL;
@@ -178,7 +178,7 @@ ArixTensor* arix_batched_matmul(const ArixTensor* a, const ArixTensor* b,
         S2 = b->shape[3];
     }
     size_t out_shape[] = {B, H, S, S2};
-    ArixTensor* out = arix_tensor_zeros(out_shape, 4, ARIX_FLOAT32);
+    SNEPPXTensor* out = SNEPPX_tensor_zeros(out_shape, 4, SNEPPX_FLOAT32);
     if (!out) return NULL;
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
@@ -219,9 +219,9 @@ ArixTensor* arix_batched_matmul(const ArixTensor* a, const ArixTensor* b,
 
 /* ========== Causal Mask ========== */
 
-static ArixTensor* causal_mask(size_t S) {
+static SNEPPXTensor* causal_mask(size_t S) {
     size_t shape[] = {S, S};
-    ArixTensor* m = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* m = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     if (!m) return NULL;
     float* d = (float*)m->data;
     for (size_t i = 0; i < S; i++) {
@@ -233,13 +233,13 @@ static ArixTensor* causal_mask(size_t S) {
 
 /* ========== 3D Matmul Helper ========== */
 
-static ArixTensor* matmul_3d(const ArixTensor* a, const ArixTensor* b) {
+static SNEPPXTensor* matmul_3d(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b) return NULL;
     /* a: [B, S, D], b: [D, Dk] → result: [B, S, Dk] */
     size_t B = a->shape[0], S = a->shape[1], D = a->shape[2];
     size_t Dk = b->shape[1];
     size_t result_shape[] = {B, S, Dk};
-    ArixTensor* result = arix_tensor_zeros(result_shape, 3, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(result_shape, 3, SNEPPX_FLOAT32);
     if (!result) return NULL;
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
@@ -259,35 +259,35 @@ static ArixTensor* matmul_3d(const ArixTensor* a, const ArixTensor* b) {
 
 /* ========== Attention Forward ========== */
 
-ArixTensor* arix_attn_forward(const ArixAttentionWeights* w, const ArixTensor* x,
-                               ArixTensor* cos_t, ArixTensor* sin_t) {
+SNEPPXTensor* SNEPPX_attn_forward(const SNEPPXAttentionWeights* w, const SNEPPXTensor* x,
+                               SNEPPXTensor* cos_t, SNEPPXTensor* sin_t) {
     if (!w || !x) return NULL;
     size_t B = x->shape[0], S = x->shape[1], D = w->config.d_model;
     size_t H = w->config.num_heads, hd = w->config.head_dim;
 
     /* Q, K, V projections: [B, S, D] → [B, S, H*hd] */
-    ArixTensor* q = matmul_3d(x, w->w_q);
-    ArixTensor* k = matmul_3d(x, w->w_k);
-    ArixTensor* v = matmul_3d(x, w->w_v);
+    SNEPPXTensor* q = matmul_3d(x, w->w_q);
+    SNEPPXTensor* k = matmul_3d(x, w->w_k);
+    SNEPPXTensor* v = matmul_3d(x, w->w_v);
     if (!q || !k || !v) {
-        arix_tensor_destroy(q); arix_tensor_destroy(k); arix_tensor_destroy(v);
+        SNEPPX_tensor_destroy(q); SNEPPX_tensor_destroy(k); SNEPPX_tensor_destroy(v);
         return NULL;
     }
 
     /* Reshape to [B, H, S, hd] */
     size_t qkv_shape[] = {B, H, S, hd};
-    ArixTensor* q_r = arix_tensor_reshape(q, qkv_shape, 4);
-    ArixTensor* k_r = arix_tensor_reshape(k, qkv_shape, 4);
-    ArixTensor* v_r = arix_tensor_reshape(v, qkv_shape, 4);
-    arix_tensor_destroy(q); arix_tensor_destroy(k); arix_tensor_destroy(v);
+    SNEPPXTensor* q_r = SNEPPX_tensor_reshape(q, qkv_shape, 4);
+    SNEPPXTensor* k_r = SNEPPX_tensor_reshape(k, qkv_shape, 4);
+    SNEPPXTensor* v_r = SNEPPX_tensor_reshape(v, qkv_shape, 4);
+    SNEPPX_tensor_destroy(q); SNEPPX_tensor_destroy(k); SNEPPX_tensor_destroy(v);
 
     /* RoPE */
     if (w->config.use_rope && cos_t && sin_t)
-        arix_rope_apply(q_r, k_r, cos_t, sin_t, 0);
+        SNEPPX_rope_apply(q_r, k_r, cos_t, sin_t, 0);
 
     /* Attention scores: Q @ K^T, [B, H, S, S] */
-    ArixTensor* scores = arix_batched_matmul(q_r, k_r, 1, 0);
-    if (!scores) { arix_tensor_destroy(q_r); arix_tensor_destroy(k_r); arix_tensor_destroy(v_r); return NULL; }
+    SNEPPXTensor* scores = SNEPPX_batched_matmul(q_r, k_r, 1, 0);
+    if (!scores) { SNEPPX_tensor_destroy(q_r); SNEPPX_tensor_destroy(k_r); SNEPPX_tensor_destroy(v_r); return NULL; }
 
     /* Scale */
     float scale = 1.0f / sqrtf((float)hd);
@@ -296,7 +296,7 @@ ArixTensor* arix_attn_forward(const ArixAttentionWeights* w, const ArixTensor* x
 
     /* Causal mask */
     if (w->config.use_causal_mask && S > 1) {
-        ArixTensor* mask = causal_mask(S);
+        SNEPPXTensor* mask = causal_mask(S);
         if (mask) {
             float* md = (float*)mask->data;
             for (size_t b = 0; b < B; b++)
@@ -304,7 +304,7 @@ ArixTensor* arix_attn_forward(const ArixAttentionWeights* w, const ArixTensor* x
                     for (size_t i = 0; i < S; i++)
                         for (size_t j = 0; j < S; j++)
                             sd[((b * H + h) * S + i) * S + j] += md[i * S + j];
-            arix_tensor_destroy(mask);
+            SNEPPX_tensor_destroy(mask);
         }
     }
 
@@ -323,51 +323,51 @@ ArixTensor* arix_attn_forward(const ArixAttentionWeights* w, const ArixTensor* x
     }
 
     /* Apply to V: scores @ V, [B, H, S, hd] */
-    ArixTensor* out = arix_batched_matmul(scores, v_r, 0, 0);
-    arix_tensor_destroy(scores);
-    if (!out) { arix_tensor_destroy(q_r); arix_tensor_destroy(k_r); arix_tensor_destroy(v_r); return NULL; }
+    SNEPPXTensor* out = SNEPPX_batched_matmul(scores, v_r, 0, 0);
+    SNEPPX_tensor_destroy(scores);
+    if (!out) { SNEPPX_tensor_destroy(q_r); SNEPPX_tensor_destroy(k_r); SNEPPX_tensor_destroy(v_r); return NULL; }
 
     /* Reshape back to [B, S, D] */
     size_t out_sh[] = {B, S, D};
-    ArixTensor* out_r = arix_tensor_reshape(out, out_sh, 3);
-    arix_tensor_destroy(out);
+    SNEPPXTensor* out_r = SNEPPX_tensor_reshape(out, out_sh, 3);
+    SNEPPX_tensor_destroy(out);
 
     /* Output projection: [B, S, D] → [B, S, D] */
-    ArixTensor* result = matmul_3d(out_r, w->w_o);
-    arix_tensor_destroy(out_r);
-    arix_tensor_destroy(q_r); arix_tensor_destroy(k_r); arix_tensor_destroy(v_r);
+    SNEPPXTensor* result = matmul_3d(out_r, w->w_o);
+    SNEPPX_tensor_destroy(out_r);
+    SNEPPX_tensor_destroy(q_r); SNEPPX_tensor_destroy(k_r); SNEPPX_tensor_destroy(v_r);
     return result;
 }
 
 /* ========== KV Cache ========== */
 
-ArixKVCache* arix_kv_cache_create(size_t max_batch, size_t max_seq, size_t num_heads, size_t head_dim) {
-    ArixKVCache* c = arix_malloc(sizeof(ArixKVCache), 64);
+SNEPPXKVCache* SNEPPX_kv_cache_create(size_t max_batch, size_t max_seq, size_t num_heads, size_t head_dim) {
+    SNEPPXKVCache* c = SNEPPX_malloc(sizeof(SNEPPXKVCache), 64);
     if (!c) return NULL;
     size_t shape[] = {max_batch, num_heads, max_seq, head_dim};
-    c->k_cache = arix_tensor_zeros(shape, 4, ARIX_FLOAT32);
-    c->v_cache = arix_tensor_zeros(shape, 4, ARIX_FLOAT32);
+    c->k_cache = SNEPPX_tensor_zeros(shape, 4, SNEPPX_FLOAT32);
+    c->v_cache = SNEPPX_tensor_zeros(shape, 4, SNEPPX_FLOAT32);
     c->seq_len = 0;
     if (!c->k_cache || !c->v_cache) {
-        arix_tensor_destroy(c->k_cache); arix_tensor_destroy(c->v_cache);
-        arix_free(c, sizeof(ArixKVCache)); return NULL;
+        SNEPPX_tensor_destroy(c->k_cache); SNEPPX_tensor_destroy(c->v_cache);
+        SNEPPX_free(c, sizeof(SNEPPXKVCache)); return NULL;
     }
     return c;
 }
 
-void arix_kv_cache_destroy(ArixKVCache* c) {
+void SNEPPX_kv_cache_destroy(SNEPPXKVCache* c) {
     if (!c) return;
-    arix_tensor_destroy(c->k_cache);
-    arix_tensor_destroy(c->v_cache);
-    arix_free(c, sizeof(ArixKVCache));
+    SNEPPX_tensor_destroy(c->k_cache);
+    SNEPPX_tensor_destroy(c->v_cache);
+    SNEPPX_free(c, sizeof(SNEPPXKVCache));
 }
 
-void arix_kv_cache_clear(ArixKVCache* c) {
+void SNEPPX_kv_cache_clear(SNEPPXKVCache* c) {
     if (c) c->seq_len = 0;
 }
 
-ArixTensor* arix_attn_forward_cached(const ArixAttentionWeights* w, const ArixTensor* x,
-                                      ArixKVCache* cache, ArixTensor* cos, ArixTensor* sin) {
+SNEPPXTensor* SNEPPX_attn_forward_cached(const SNEPPXAttentionWeights* w, const SNEPPXTensor* x,
+                                      SNEPPXKVCache* cache, SNEPPXTensor* cos, SNEPPXTensor* sin) {
     if (!w || !x || !cache) return NULL;
     size_t B = x->shape[0], S = x->shape[1], D = w->config.d_model;
     size_t H = w->config.num_heads, hd = w->config.head_dim;
@@ -375,18 +375,18 @@ ArixTensor* arix_attn_forward_cached(const ArixAttentionWeights* w, const ArixTe
     size_t total_seq = offset + S;
 
     /* Q, K, V */
-    ArixTensor* q = arix_tensor_matmul(x, w->w_q);
-    ArixTensor* k = arix_tensor_matmul(x, w->w_k);
-    ArixTensor* v = arix_tensor_matmul(x, w->w_v);
+    SNEPPXTensor* q = SNEPPX_tensor_matmul(x, w->w_q);
+    SNEPPXTensor* k = SNEPPX_tensor_matmul(x, w->w_k);
+    SNEPPXTensor* v = SNEPPX_tensor_matmul(x, w->w_v);
 
     size_t qkv_shape[] = {B, H, S, hd};
-    ArixTensor* q_r = arix_tensor_reshape(q, qkv_shape, 4);
-    ArixTensor* k_r = arix_tensor_reshape(k, qkv_shape, 4);
-    ArixTensor* v_r = arix_tensor_reshape(v, qkv_shape, 4);
-    arix_tensor_destroy(q); arix_tensor_destroy(k); arix_tensor_destroy(v);
+    SNEPPXTensor* q_r = SNEPPX_tensor_reshape(q, qkv_shape, 4);
+    SNEPPXTensor* k_r = SNEPPX_tensor_reshape(k, qkv_shape, 4);
+    SNEPPXTensor* v_r = SNEPPX_tensor_reshape(v, qkv_shape, 4);
+    SNEPPX_tensor_destroy(q); SNEPPX_tensor_destroy(k); SNEPPX_tensor_destroy(v);
 
     if (w->config.use_rope && cos && sin)
-        arix_rope_apply(q_r, k_r, cos, sin, offset);
+        SNEPPX_rope_apply(q_r, k_r, cos, sin, offset);
 
     /* Append to cache */
     float* kd = (float*)k_r->data;
@@ -406,18 +406,18 @@ ArixTensor* arix_attn_forward_cached(const ArixAttentionWeights* w, const ArixTe
             }
         }
     }
-    arix_tensor_destroy(k_r); arix_tensor_destroy(v_r);
+    SNEPPX_tensor_destroy(k_r); SNEPPX_tensor_destroy(v_r);
     cache->seq_len = total_seq;
 
     /* Use full K,V from cache */
     size_t full_kv_shape[] = {B, H, total_seq, hd};
-    ArixTensor* k_full = arix_tensor_as_strided(cache->k_cache, 0, full_kv_shape, 4,
+    SNEPPXTensor* k_full = SNEPPX_tensor_as_strided(cache->k_cache, 0, full_kv_shape, 4,
                                                  cache->k_cache->strides);
-    ArixTensor* v_full = arix_tensor_as_strided(cache->v_cache, 0, full_kv_shape, 4,
+    SNEPPXTensor* v_full = SNEPPX_tensor_as_strided(cache->v_cache, 0, full_kv_shape, 4,
                                                  cache->v_cache->strides);
 
     /* Attention scores */
-    ArixTensor* scores = arix_batched_matmul(q_r, k_full, 1, 0);
+    SNEPPXTensor* scores = SNEPPX_batched_matmul(q_r, k_full, 1, 0);
     float scale = 1.0f / sqrtf((float)hd);
     float* sd = (float*)scores->data;
     for (size_t i = 0; i < scores->size; i++) sd[i] *= scale;
@@ -451,32 +451,32 @@ ArixTensor* arix_attn_forward_cached(const ArixAttentionWeights* w, const ArixTe
     }
 
     /* Apply to V */
-    ArixTensor* attn_out = arix_batched_matmul(scores, v_full, 0, 0);
-    arix_tensor_destroy(scores);
-    arix_tensor_destroy(k_full); arix_tensor_destroy(v_full);
+    SNEPPXTensor* attn_out = SNEPPX_batched_matmul(scores, v_full, 0, 0);
+    SNEPPX_tensor_destroy(scores);
+    SNEPPX_tensor_destroy(k_full); SNEPPX_tensor_destroy(v_full);
 
     size_t out_shape[] = {B, S, D};
-    ArixTensor* out_r = arix_tensor_reshape(attn_out, out_shape, 3);
-    arix_tensor_destroy(attn_out);
+    SNEPPXTensor* out_r = SNEPPX_tensor_reshape(attn_out, out_shape, 3);
+    SNEPPX_tensor_destroy(attn_out);
 
-    ArixTensor* result = arix_tensor_matmul(out_r, w->w_o);
-    arix_tensor_destroy(out_r);
-    arix_tensor_destroy(q_r);
+    SNEPPXTensor* result = SNEPPX_tensor_matmul(out_r, w->w_o);
+    SNEPPX_tensor_destroy(out_r);
+    SNEPPX_tensor_destroy(q_r);
     return result;
 }
 
 /* ========== Autodiff Training Graph ========== */
 
-int arix_attn_build_train_graph(ArixAttentionWeights* w, ArixTape* tape,
-                                 ArixVariable* input_var,
-                                 ArixVariable** weight_vars, size_t num_weights,
-                                 ArixVariable** output_var,
-                                 ArixTensor* cos, ArixTensor* sin) {
+int SNEPPX_attn_build_train_graph(SNEPPXAttentionWeights* w, SNEPPXTape* tape,
+                                 SNEPPXVariable* input_var,
+                                 SNEPPXVariable** weight_vars, size_t num_weights,
+                                 SNEPPXVariable** output_var,
+                                 SNEPPXTensor* cos, SNEPPXTensor* sin) {
     if (!w || !tape || !input_var || !weight_vars || !output_var || num_weights < 8) return -1;
-    ArixVariable* wq_v = weight_vars[0]; ArixVariable* bq_v = weight_vars[1];
-    ArixVariable* wk_v = weight_vars[2]; ArixVariable* bk_v = weight_vars[3];
-    ArixVariable* wv_v = weight_vars[4]; ArixVariable* bv_v = weight_vars[5];
-    ArixVariable* wo_v = weight_vars[6]; ArixVariable* bo_v = weight_vars[7];
+    SNEPPXVariable* wq_v = weight_vars[0]; SNEPPXVariable* bq_v = weight_vars[1];
+    SNEPPXVariable* wk_v = weight_vars[2]; SNEPPXVariable* bk_v = weight_vars[3];
+    SNEPPXVariable* wv_v = weight_vars[4]; SNEPPXVariable* bv_v = weight_vars[5];
+    SNEPPXVariable* wo_v = weight_vars[6]; SNEPPXVariable* bo_v = weight_vars[7];
     (void)bq_v; (void)bk_v; (void)bv_v; (void)bo_v;
 
     size_t D = w->config.d_model, H = w->config.num_heads, hd = w->config.head_dim;
@@ -485,53 +485,53 @@ int arix_attn_build_train_graph(ArixAttentionWeights* w, ArixTape* tape,
 
     /* Flatten input: [B, S, D] -> [B*S, D] */
     size_t flat_sh[] = {B * S, D};
-    ArixVariable* x_flat = arix_reshape(tape, input_var, flat_sh, 2);
+    SNEPPXVariable* x_flat = SNEPPX_reshape(tape, input_var, flat_sh, 2);
 
     /* Q, K, V projections: [B*S, D] @ [D, dk] -> [B*S, dk] (all 2D matmuls) */
-    ArixVariable* q_flat = arix_matmul(tape, x_flat, wq_v);
-    ArixVariable* k_flat = arix_matmul(tape, x_flat, wk_v);
-    ArixVariable* v_flat = arix_matmul(tape, x_flat, wv_v);
+    SNEPPXVariable* q_flat = SNEPPX_matmul(tape, x_flat, wq_v);
+    SNEPPXVariable* k_flat = SNEPPX_matmul(tape, x_flat, wk_v);
+    SNEPPXVariable* v_flat = SNEPPX_matmul(tape, x_flat, wv_v);
 
     /* Single-head: Q, K are [B*S, dk]; K^T = [dk, B*S]; scores = Q @ K^T = [B*S, B*S] */
     size_t k_t_sh[] = {dk, B * S};
-    ArixVariable* k_t = arix_reshape(tape, k_flat, k_t_sh, 2);
-    ArixVariable* scores = arix_matmul(tape, q_flat, k_t);
+    SNEPPXVariable* k_t = SNEPPX_reshape(tape, k_flat, k_t_sh, 2);
+    SNEPPXVariable* scores = SNEPPX_matmul(tape, q_flat, k_t);
 
     /* Scale by 1/sqrt(dk) */
     float scale = 1.0f / sqrtf((float)dk);
     size_t one_s[] = {1};
-    ArixTensor* scale_t = arix_tensor_ones(one_s, 1, ARIX_FLOAT32);
+    SNEPPXTensor* scale_t = SNEPPX_tensor_ones(one_s, 1, SNEPPX_FLOAT32);
     if (!scale_t) return -1;
     ((float*)scale_t->data)[0] = scale;
-    ArixVariable* scale_v = arix_variable_create(scale_t, 0);
-    arix_tape_record(tape, scale_v);
-    scores = arix_mul(tape, scores, scale_v);
+    SNEPPXVariable* scale_v = SNEPPX_variable_create(scale_t, 0);
+    SNEPPX_tape_record(tape, scale_v);
+    scores = SNEPPX_mul(tape, scores, scale_v);
 
     /* Causal mask */
     if (w->config.use_causal_mask && S > 1) {
         size_t mask_sh[] = {B * S, B * S};
-        ArixTensor* mask_t = arix_tensor_create(mask_sh, 2, ARIX_FLOAT32);
+        SNEPPXTensor* mask_t = SNEPPX_tensor_create(mask_sh, 2, SNEPPX_FLOAT32);
         if (!mask_t) return -1;
         float* md = (float*)mask_t->data;
         for (size_t i = 0; i < B * S; i++)
             for (size_t j = 0; j < B * S; j++)
                 md[i * (B * S) + j] = (j <= i) ? 0.0f : -1e9f;
-        ArixVariable* mask_v = arix_variable_create(mask_t, 0);
-        arix_tape_record(tape, mask_v);
-        scores = arix_add(tape, scores, mask_v);
+        SNEPPXVariable* mask_v = SNEPPX_variable_create(mask_t, 0);
+        SNEPPX_tape_record(tape, mask_v);
+        scores = SNEPPX_add(tape, scores, mask_v);
     }
 
     /* Softmax over last dim */
-    ArixVariable* attn = arix_softmax(tape, scores, 1);
+    SNEPPXVariable* attn = SNEPPX_softmax(tape, scores, 1);
 
     /* attn @ V: [B*S, B*S] @ [B*S, dk] -> [B*S, dk] */
-    ArixVariable* ctx = arix_matmul(tape, attn, v_flat);
+    SNEPPXVariable* ctx = SNEPPX_matmul(tape, attn, v_flat);
 
     /* Output projection: [B*S, dk] @ [dk, D] -> [B*S, D] */
-    ArixVariable* out_flat = arix_matmul(tape, ctx, wo_v);
+    SNEPPXVariable* out_flat = SNEPPX_matmul(tape, ctx, wo_v);
 
     /* Reshape back to [B, S, D] */
     size_t out_sh[] = {B, S, D};
-    *output_var = arix_reshape(tape, out_flat, out_sh, 3);
+    *output_var = SNEPPX_reshape(tape, out_flat, out_sh, 3);
     return 0;
 }

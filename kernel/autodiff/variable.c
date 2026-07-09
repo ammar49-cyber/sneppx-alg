@@ -2,10 +2,10 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 
-ArixVariable* arix_variable_create(ArixTensor* data, int requires_grad) {
-    ArixVariable* var = (ArixVariable*)arix_malloc(sizeof(ArixVariable), 64);
+SNEPPXVariable* SNEPPX_variable_create(SNEPPXTensor* data, int requires_grad) {
+    SNEPPXVariable* var = (SNEPPXVariable*)SNEPPX_malloc(sizeof(SNEPPXVariable), 64);
     if (!var) return NULL;
-    memset(var, 0, sizeof(ArixVariable));
+    memset(var, 0, sizeof(SNEPPXVariable));
     var->data = data;
     var->requires_grad = requires_grad;
     var->grad = NULL;
@@ -21,55 +21,55 @@ ArixVariable* arix_variable_create(ArixTensor* data, int requires_grad) {
     return var;
 }
 
-void arix_variable_destroy(ArixVariable* var) {
+void SNEPPX_variable_destroy(SNEPPXVariable* var) {
     if (!var) return;
-    if (var->data) arix_tensor_destroy(var->data);
-    if (var->grad) arix_tensor_destroy(var->grad);
+    if (var->data) SNEPPX_tensor_destroy(var->data);
+    if (var->grad) SNEPPX_tensor_destroy(var->grad);
     if (var->backward_ctx && var->free_ctx) var->free_ctx(var->backward_ctx);
-    if (var->parents) arix_free(var->parents, var->num_parents * sizeof(ArixVariable*));
-    arix_free(var, sizeof(ArixVariable));
+    if (var->parents) SNEPPX_free(var->parents, var->num_parents * sizeof(SNEPPXVariable*));
+    SNEPPX_free(var, sizeof(SNEPPXVariable));
 }
 
-void arix_variable_set_requires_grad(ArixVariable* var, int requires_grad) {
+void SNEPPX_variable_set_requires_grad(SNEPPXVariable* var, int requires_grad) {
     if (!var) return;
     var->requires_grad = requires_grad;
 }
 
-ArixVariable* arix_variable_detach(ArixVariable* var) {
+SNEPPXVariable* SNEPPX_variable_detach(SNEPPXVariable* var) {
     if (!var || !var->data) return NULL;
-    ArixVariable* out = arix_variable_create(
-        arix_tensor_create(var->data->shape, var->data->ndim, ARIX_FLOAT32), 0);
+    SNEPPXVariable* out = SNEPPX_variable_create(
+        SNEPPX_tensor_create(var->data->shape, var->data->ndim, SNEPPX_FLOAT32), 0);
     if (out && out->data) {
         memcpy(out->data->data, var->data->data, var->data->size * sizeof(float));
     }
     return out;
 }
 
-ArixVariable* arix_variable_copy(ArixVariable* var) {
+SNEPPXVariable* SNEPPX_variable_copy(SNEPPXVariable* var) {
     if (!var || !var->data) return NULL;
-    ArixVariable* out = arix_variable_create(
-        arix_tensor_create(var->data->shape, var->data->ndim, ARIX_FLOAT32), var->requires_grad);
+    SNEPPXVariable* out = SNEPPX_variable_create(
+        SNEPPX_tensor_create(var->data->shape, var->data->ndim, SNEPPX_FLOAT32), var->requires_grad);
     if (out && out->data) {
         memcpy(out->data->data, var->data->data, var->data->size * sizeof(float));
         if (var->grad) {
-            out->grad = arix_tensor_create(var->grad->shape, var->grad->ndim, ARIX_FLOAT32);
+            out->grad = SNEPPX_tensor_create(var->grad->shape, var->grad->ndim, SNEPPX_FLOAT32);
             if (out->grad) memcpy(out->grad->data, var->grad->data, var->grad->size * sizeof(float));
         }
     }
     return out;
 }
 
-void arix_variable_zero_grad(ArixVariable* var) {
+void SNEPPX_variable_zero_grad(SNEPPXVariable* var) {
     if (!var) return;
-    if (var->grad) { arix_tensor_destroy(var->grad); var->grad = NULL; }
+    if (var->grad) { SNEPPX_tensor_destroy(var->grad); var->grad = NULL; }
 }
 
-float arix_variable_item(ArixVariable* var) {
+float SNEPPX_variable_item(SNEPPXVariable* var) {
     if (!var || !var->data || var->data->size == 0) return 0.0f;
     return ((float*)var->data->data)[0];
 }
 
-size_t arix_variable_numel(ArixVariable* var) {
+size_t SNEPPX_variable_numel(SNEPPXVariable* var) {
     if (!var || !var->data) return 0;
     return var->data->size;
 }

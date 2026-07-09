@@ -20,42 +20,42 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_route_shapes(void) {
-    ArixSERConfig cfg = arix_ser_config_default();
+    SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4; cfg.num_active = 2; cfg.input_dim = 16; cfg.expert_dim = 32; cfg.output_dim = 16;
-    ArixSERLayer* layer = arix_ser_layer_create(&cfg, 42);
+    SNEPPXSERLayer* layer = SNEPPX_ser_layer_create(&cfg, 42);
     ASSERT(layer != NULL, "layer not null");
 
     size_t shape_in[] = {8, 16};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* gw = NULL;
+    SNEPPXTensor* gw = NULL;
     int* ei = NULL;
-    arix_ser_route(layer, input, &gw, &ei);
+    SNEPPX_ser_route(layer, input, &gw, &ei);
     ASSERT(gw != NULL, "gate_weights not null");
     ASSERT(ei != NULL, "expert_indices not null");
     ASSERT(gw->shape[0] == 8, "gw tokens == 8");
     ASSERT(gw->shape[1] == 2, "gw active == 2");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(gw);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(gw);
     free(ei);
-    arix_ser_layer_destroy(layer);
+    SNEPPX_ser_layer_destroy(layer);
 }
 
 static void test_route_topk(void) {
-    ArixSERConfig cfg = arix_ser_config_default();
+    SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4; cfg.num_active = 2; cfg.input_dim = 16; cfg.expert_dim = 32; cfg.output_dim = 16;
-    ArixSERLayer* layer = arix_ser_layer_create(&cfg, 42);
+    SNEPPXSERLayer* layer = SNEPPX_ser_layer_create(&cfg, 42);
     ASSERT(layer != NULL, "layer not null");
 
     size_t shape_in[] = {8, 16};
-    ArixTensor* input = arix_tensor_randn(shape_in, 2, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_randn(shape_in, 2, SNEPPX_FLOAT32);
     ASSERT(input != NULL, "input not null");
 
-    ArixTensor* gw = NULL;
+    SNEPPXTensor* gw = NULL;
     int* ei = NULL;
-    arix_ser_route(layer, input, &gw, &ei);
+    SNEPPX_ser_route(layer, input, &gw, &ei);
     ASSERT(gw != NULL, "gw not null");
 
     float* gw_data = (float*)gw->data;
@@ -73,10 +73,10 @@ static void test_route_topk(void) {
     ASSERT(in_range, "all indices in [0,3]");
     ASSERT(sum_ok, "gate weights sum to ~1");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(gw);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(gw);
     free(ei);
-    arix_ser_layer_destroy(layer);
+    SNEPPX_ser_layer_destroy(layer);
 }
 
 int main(void) {

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ARIX_AUDIT_HMAC_KEY_LEN 32
+#define SNEPPX_AUDIT_HMAC_KEY_LEN 32
 
 static uint32_t audit_crc32(const void* data, size_t len) {
     const unsigned char* buf = (const unsigned char*)data;
@@ -16,7 +16,7 @@ static uint32_t audit_crc32(const void* data, size_t len) {
     return ~crc;
 }
 
-int arix_audit_init(ArixAuditLogger* audit, const char* log_path) {
+int SNEPPX_audit_init(SNEPPXAuditLogger* audit, const char* log_path) {
     if (!audit) return -1;
     memset(audit, 0, sizeof(*audit));
     audit->enabled = 1;
@@ -25,35 +25,35 @@ int arix_audit_init(ArixAuditLogger* audit, const char* log_path) {
     return 0;
 }
 
-void arix_audit_shutdown(ArixAuditLogger* audit) {
+void SNEPPX_audit_shutdown(SNEPPXAuditLogger* audit) {
     if (audit) {
         if (audit->log_file_path) {
-            arix_audit_export(audit, audit->log_file_path);
+            SNEPPX_audit_export(audit, audit->log_file_path);
         }
         memset(audit, 0, sizeof(*audit));
     }
 }
 
-int arix_audit_log(ArixAuditLogger* audit, int event_type,
+int SNEPPX_audit_log(SNEPPXAuditLogger* audit, int event_type,
                      const char* description, uint64_t related_address) {
     if (!audit || !audit->enabled || !description) return -1;
-    if (audit->entry_count >= ARIX_AUDIT_MAX_ENTRIES) return -1;
-    ArixAuditEntry* e = &audit->entries[audit->entry_count++];
+    if (audit->entry_count >= SNEPPX_AUDIT_MAX_ENTRIES) return -1;
+    SNEPPXAuditEntry* e = &audit->entries[audit->entry_count++];
     e->timestamp = (uint64_t)time(NULL);
     e->event_type = event_type;
-    strncpy(e->description, description, ARIX_AUDIT_DESC_LEN - 1);
+    strncpy(e->description, description, SNEPPX_AUDIT_DESC_LEN - 1);
     e->related_address = related_address;
-    e->crc = audit_crc32(e, offsetof(ArixAuditEntry, crc));
+    e->crc = audit_crc32(e, offsetof(SNEPPXAuditEntry, crc));
     audit->chain_crc = audit_crc32(&audit->chain_crc, sizeof(audit->chain_crc)) ^ e->crc;
     return 0;
 }
 
-int arix_audit_export(ArixAuditLogger* audit, const char* output_path) {
+int SNEPPX_audit_export(SNEPPXAuditLogger* audit, const char* output_path) {
     if (!audit || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
     if (!f) return -1;
     for (int i = 0; i < audit->entry_count; i++) {
-        ArixAuditEntry* e = &audit->entries[i];
+        SNEPPXAuditEntry* e = &audit->entries[i];
         fprintf(f, "%llu|%d|%s|%llu|%08x\n",
                 (unsigned long long)e->timestamp, e->event_type,
                 e->description, (unsigned long long)e->related_address, e->crc);
@@ -63,19 +63,19 @@ int arix_audit_export(ArixAuditLogger* audit, const char* output_path) {
     return 0;
 }
 
-int arix_audit_verify_chain(ArixAuditLogger* audit) {
+int SNEPPX_audit_verify_chain(SNEPPXAuditLogger* audit) {
     if (!audit) return 0;
     uint32_t expected_chain = 0;
     for (int i = 0; i < audit->entry_count; i++) {
-        uint32_t entry_crc = audit_crc32(&audit->entries[i], offsetof(ArixAuditEntry, crc));
+        uint32_t entry_crc = audit_crc32(&audit->entries[i], offsetof(SNEPPXAuditEntry, crc));
         if (entry_crc != audit->entries[i].crc) return 0;
         expected_chain = audit_crc32(&expected_chain, sizeof(expected_chain)) ^ entry_crc;
     }
     return (expected_chain == audit->chain_crc) ? 1 : 0;
 }
 
-int arix_audit_search(ArixAuditLogger* audit, int event_type,
-                        ArixAuditEntry* results, int max_results) {
+int SNEPPX_audit_search(SNEPPXAuditLogger* audit, int event_type,
+                        SNEPPXAuditEntry* results, int max_results) {
     if (!audit || !results || max_results <= 0) return 0;
     int found = 0;
     for (int i = 0; i < audit->entry_count && found < max_results; i++) {
@@ -85,17 +85,17 @@ int arix_audit_search(ArixAuditLogger* audit, int event_type,
     return found;
 }
 
-int arix_audit_get_entry_count(ArixAuditLogger* audit) {
+int SNEPPX_audit_get_entry_count(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
     return audit->entry_count;
 }
 
-uint32_t arix_audit_get_chain_crc(ArixAuditLogger* audit) {
+uint32_t SNEPPX_audit_get_chain_crc(SNEPPXAuditLogger* audit) {
     if (!audit) return 0;
     return audit->chain_crc;
 }
 
-int arix_audit_purge(ArixAuditLogger* audit, uint64_t before_timestamp) {
+int SNEPPX_audit_purge(SNEPPXAuditLogger* audit, uint64_t before_timestamp) {
     if (!audit) return -1;
     int kept = 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -110,56 +110,56 @@ int arix_audit_purge(ArixAuditLogger* audit, uint64_t before_timestamp) {
     return 0;
 }
 
-int arix_audit_sign_entry(ArixAuditLogger* audit, int index, const uint8_t* key) {
+int SNEPPX_audit_sign_entry(SNEPPXAuditLogger* audit, int index, const uint8_t* key) {
     if (!audit || !key) return -1;
     if (index < 0 || index >= audit->entry_count) return -1;
-    ArixAuditEntry* e = &audit->entries[index];
+    SNEPPXAuditEntry* e = &audit->entries[index];
     uint32_t sig = 0;
-    for (size_t i = 0; i < ARIX_AUDIT_HMAC_KEY_LEN; i++)
+    for (size_t i = 0; i < SNEPPX_AUDIT_HMAC_KEY_LEN; i++)
         sig ^= ((uint32_t)key[i] << ((i % 4) * 8));
     sig ^= e->crc;
     e->crc = sig;
     return 0;
 }
 
-int arix_audit_log_formatted(ArixAuditLogger* audit, int event_type, const char* fmt, ...) {
+int SNEPPX_audit_log_formatted(SNEPPXAuditLogger* audit, int event_type, const char* fmt, ...) {
     if (!audit || !fmt) return -1;
     char buf[512];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
-    return arix_audit_log(audit, event_type, buf, 0);
+    return SNEPPX_audit_log(audit, event_type, buf, 0);
 }
 
-int arix_audit_get_entry(ArixAuditLogger* audit, int index, ArixAuditEntry* entry_out) {
+int SNEPPX_audit_get_entry(SNEPPXAuditLogger* audit, int index, SNEPPXAuditEntry* entry_out) {
     if (!audit || !entry_out) return -1;
     if (index < 0 || index >= audit->entry_count) return -1;
     *entry_out = audit->entries[index];
     return 0;
 }
 
-int arix_audit_clear(ArixAuditLogger* audit) {
+int SNEPPX_audit_clear(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
-    memset(audit->entries, 0, sizeof(ArixAuditEntry) * audit->entry_count);
+    memset(audit->entries, 0, sizeof(SNEPPXAuditEntry) * audit->entry_count);
     audit->entry_count = 0;
     audit->chain_crc = 0;
     return 0;
 }
 
-int arix_audit_get_stats(ArixAuditLogger* audit, int* count, int* chain_verified) {
+int SNEPPX_audit_get_stats(SNEPPXAuditLogger* audit, int* count, int* chain_verified) {
     if (!audit || !count || !chain_verified) return -1;
     *count = audit->entry_count;
-    *chain_verified = arix_audit_verify_chain(audit);
+    *chain_verified = SNEPPX_audit_verify_chain(audit);
     return 0;
 }
 
-int arix_audit_set_log_level(int level) {
+int SNEPPX_audit_set_log_level(int level) {
     (void)level;
     return 0;
 }
 
-int arix_audit_export_xml(const char* path) {
+int SNEPPX_audit_export_xml(const char* path) {
     if (!path) return -1;
     FILE* f = fopen(path, "w");
     if (!f) return -1;
@@ -171,7 +171,7 @@ int arix_audit_export_xml(const char* path) {
     return 0;
 }
 
-int arix_audit_verify_entry(int index) {
+int SNEPPX_audit_verify_entry(int index) {
     (void)index;
     return 1;
 }
@@ -194,7 +194,7 @@ static const char* audit_event_type_name(int type) {
     }
 }
 
-static int audit_format_entry(char* buf, size_t size, const ArixAuditEntry* e) {
+static int audit_format_entry(char* buf, size_t size, const SNEPPXAuditEntry* e) {
     if (!buf || size == 0 || !e) return -1;
     return snprintf(buf, size, "[%llu] %s: %s (addr=0x%llx crc=0x%08x)",
                     (unsigned long long)e->timestamp,
@@ -204,7 +204,7 @@ static int audit_format_entry(char* buf, size_t size, const ArixAuditEntry* e) {
                     e->crc);
 }
 
-static int audit_append_to_file(ArixAuditLogger* audit, const char* path) {
+static int audit_append_to_file(SNEPPXAuditLogger* audit, const char* path) {
     if (!audit || !path) return -1;
     FILE* f = fopen(path, "a");
     if (!f) return -1;
@@ -220,18 +220,18 @@ static int audit_append_to_file(ArixAuditLogger* audit, const char* path) {
     return 0;
 }
 
-static int audit_copy_entry(ArixAuditEntry* dst, const ArixAuditEntry* src) {
+static int audit_copy_entry(SNEPPXAuditEntry* dst, const SNEPPXAuditEntry* src) {
     if (!dst || !src) return -1;
-    memcpy(dst, src, sizeof(ArixAuditEntry));
+    memcpy(dst, src, sizeof(SNEPPXAuditEntry));
     return 0;
 }
 
-static uint32_t audit_compute_entry_crc(const ArixAuditEntry* e) {
+static uint32_t audit_compute_entry_crc(const SNEPPXAuditEntry* e) {
     if (!e) return 0;
-    return audit_crc32(e, offsetof(ArixAuditEntry, crc));
+    return audit_crc32(e, offsetof(SNEPPXAuditEntry, crc));
 }
 
-static int audit_rebuild_chain(ArixAuditLogger* audit) {
+static int audit_rebuild_chain(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
     audit->chain_crc = 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -242,7 +242,7 @@ static int audit_rebuild_chain(ArixAuditLogger* audit) {
     return 0;
 }
 
-static int audit_validate_entry_timestamp(ArixAuditEntry* e) {
+static int audit_validate_entry_timestamp(SNEPPXAuditEntry* e) {
     if (!e) return 0;
     uint64_t now = (uint64_t)time(NULL);
     if (e->timestamp > now + 10) return 0;
@@ -250,7 +250,7 @@ static int audit_validate_entry_timestamp(ArixAuditEntry* e) {
     return 1;
 }
 
-static int audit_find_entry_by_address(ArixAuditLogger* audit, uint64_t addr) {
+static int audit_find_entry_by_address(SNEPPXAuditLogger* audit, uint64_t addr) {
     if (!audit) return -1;
     for (int i = 0; i < audit->entry_count; i++) {
         if (audit->entries[i].related_address == addr) return i;
@@ -258,9 +258,9 @@ static int audit_find_entry_by_address(ArixAuditLogger* audit, uint64_t addr) {
     return -1;
 }
 
-static int audit_merge_loggers(ArixAuditLogger* dst, const ArixAuditLogger* src) {
+static int audit_merge_loggers(SNEPPXAuditLogger* dst, const SNEPPXAuditLogger* src) {
     if (!dst || !src) return -1;
-    int space = ARIX_AUDIT_MAX_ENTRIES - dst->entry_count;
+    int space = SNEPPX_AUDIT_MAX_ENTRIES - dst->entry_count;
     int to_copy = (src->entry_count < space) ? src->entry_count : space;
     for (int i = 0; i < to_copy; i++) {
         dst->entries[dst->entry_count++] = src->entries[i];
@@ -268,7 +268,7 @@ static int audit_merge_loggers(ArixAuditLogger* dst, const ArixAuditLogger* src)
     return to_copy;
 }
 
-static int audit_count_by_type(ArixAuditLogger* audit, int event_type) {
+static int audit_count_by_type(SNEPPXAuditLogger* audit, int event_type) {
     if (!audit) return 0;
     int count = 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -277,7 +277,7 @@ static int audit_count_by_type(ArixAuditLogger* audit, int event_type) {
     return count;
 }
 
-static int audit_has_chain_violation(ArixAuditLogger* audit) {
+static int audit_has_chain_violation(SNEPPXAuditLogger* audit) {
     if (!audit || audit->entry_count == 0) return 0;
     uint32_t expected = 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -288,7 +288,7 @@ static int audit_has_chain_violation(ArixAuditLogger* audit) {
     return (audit->chain_crc != expected) ? 1 : 0;
 }
 
-static int audit_verify_chain_integrity(ArixAuditLogger* audit) {
+static int audit_verify_chain_integrity(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
     if (audit->entry_count == 0) return 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -298,7 +298,7 @@ static int audit_verify_chain_integrity(ArixAuditLogger* audit) {
     return 0;
 }
 
-static int audit_prune_old_entries(ArixAuditLogger* audit, uint64_t before_timestamp) {
+static int audit_prune_old_entries(SNEPPXAuditLogger* audit, uint64_t before_timestamp) {
     if (!audit) return 0;
     int kept = 0;
     for (int i = 0; i < audit->entry_count; i++) {
@@ -312,27 +312,27 @@ static int audit_prune_old_entries(ArixAuditLogger* audit, uint64_t before_times
     return pruned;
 }
 
-static int audit_get_latest_entry(ArixAuditLogger* audit, ArixAuditEntry* out) {
+static int audit_get_latest_entry(SNEPPXAuditLogger* audit, SNEPPXAuditEntry* out) {
     if (!audit || !out || audit->entry_count == 0) return -1;
     *out = audit->entries[audit->entry_count - 1];
     return 0;
 }
 
-static int audit_get_earliest_entry(ArixAuditLogger* audit, ArixAuditEntry* out) {
+static int audit_get_earliest_entry(SNEPPXAuditLogger* audit, SNEPPXAuditEntry* out) {
     if (!audit || !out || audit->entry_count == 0) return -1;
     *out = audit->entries[0];
     return 0;
 }
 
-static uint64_t audit_get_total_entries_count(ArixAuditLogger* audit) {
+static uint64_t audit_get_total_entries_count(SNEPPXAuditLogger* audit) {
     return audit ? (uint64_t)audit->entry_count : 0;
 }
 
-static int audit_is_full(ArixAuditLogger* audit) {
-    return audit ? (audit->entry_count >= ARIX_AUDIT_MAX_ENTRIES) : 1;
+static int audit_is_full(SNEPPXAuditLogger* audit) {
+    return audit ? (audit->entry_count >= SNEPPX_AUDIT_MAX_ENTRIES) : 1;
 }
 
-static int audit_get_entry_at(ArixAuditLogger* audit, int index, ArixAuditEntry* out) {
+static int audit_get_entry_at(SNEPPXAuditLogger* audit, int index, SNEPPXAuditEntry* out) {
     if (!audit || !out || index < 0 || index >= audit->entry_count) return -1;
     *out = audit->entries[index];
     return 0;

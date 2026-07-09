@@ -11,12 +11,12 @@ static void run_test(const char* name, void (*fn)(void)) {
 }
 
 static void test_controller_create(void) {
-    ArixFMConfig cfg = arix_fm_config_default();
+    SNEPPXFMConfig cfg = SNEPPX_fm_config_default();
     cfg.num_nodes = 4;
     cfg.memory_dim = 8;
     cfg.memory_capacity = 16;
 
-    ArixFMController* ctrl = arix_fm_controller_create(&cfg);
+    SNEPPXFMController* ctrl = SNEPPX_fm_controller_create(&cfg);
     ASSERT(ctrl != NULL, "ctrl not null");
     ASSERT(ctrl->nodes != NULL, "nodes not null");
     ASSERT(ctrl->config.num_nodes == 4, "4 nodes");
@@ -27,24 +27,24 @@ static void test_controller_create(void) {
     }
     ASSERT(ctrl->sync_state.global_memory != NULL, "global memory");
     ASSERT(ctrl->sync_state.sync_round == 0, "sync round 0");
-    arix_fm_controller_destroy(ctrl);
+    SNEPPX_fm_controller_destroy(ctrl);
 }
 
 static void test_controller_forward(void) {
-    ArixFMConfig cfg = arix_fm_config_default();
+    SNEPPXFMConfig cfg = SNEPPX_fm_config_default();
     cfg.num_nodes = 2;
     cfg.memory_dim = 16;
     cfg.memory_capacity = 8;
     cfg.sync_interval = 1000;
 
-    ArixFMController* ctrl = arix_fm_controller_create(&cfg);
+    SNEPPXFMController* ctrl = SNEPPX_fm_controller_create(&cfg);
     ASSERT(ctrl != NULL, "ctrl");
 
     size_t sh[] = {8, 16};
-    ArixTensor* input = arix_tensor_zeros(sh, 2, ARIX_FLOAT32);
-    ArixTensor* output = NULL;
+    SNEPPXTensor* input = SNEPPX_tensor_zeros(sh, 2, SNEPPX_FLOAT32);
+    SNEPPXTensor* output = NULL;
 
-    int r = arix_fm_forward(ctrl, 0, input, &output);
+    int r = SNEPPX_fm_forward(ctrl, 0, input, &output);
     ASSERT(r == 0, "forward ok");
     ASSERT(output != NULL, "output not null");
     ASSERT(output->shape[0] == 8, "output rows 8");
@@ -59,9 +59,9 @@ static void test_controller_forward(void) {
     ASSERT(!has_nan, "no nan");
     ASSERT(!has_inf, "no inf");
 
-    arix_tensor_destroy(input);
-    arix_tensor_destroy(output);
-    arix_fm_controller_destroy(ctrl);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_tensor_destroy(output);
+    SNEPPX_fm_controller_destroy(ctrl);
 }
 
 int main(void) {

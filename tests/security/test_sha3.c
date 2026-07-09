@@ -20,11 +20,11 @@ void test_vectors_256(void) {
         0x85,0x5f,0x08,0x6e,0x3e,0x9d,0x52,0x5b,
         0x46,0xbf,0xe2,0x45,0x11,0x43,0x15,0x32
     };
-    ArixSHA3State state;
-    arix_sha3_256_init(&state);
-    arix_sha3_update(&state, input, 3);
+    SNEPPXSHA3State state;
+    SNEPPX_sha3_256_init(&state);
+    SNEPPX_sha3_update(&state, input, 3);
     uint8_t hash[32];
-    arix_sha3_finish(&state, hash);
+    SNEPPX_sha3_finish(&state, hash);
     int match256 = memcmp(hash, expected, 32) == 0;
     if (!match256) { printf("  Got: "); for (int i = 0; i < 32; i++) printf("%02x", hash[i]); printf("\n  Exp: "); for (int i = 0; i < 32; i++) printf("%02x", expected[i]); printf("\n"); }
     TEST("SHA3-256('abc')", match256);
@@ -43,11 +43,11 @@ void test_vectors_512(void) {
         0x57,0x34,0x0b,0x4c,0xf4,0x08,0xd5,0xa5,
         0x65,0x92,0xf8,0x27,0x4e,0xec,0x53,0xf0
     };
-    ArixSHA3State state;
-    arix_sha3_512_init(&state);
-    arix_sha3_update(&state, input, 3);
+    SNEPPXSHA3State state;
+    SNEPPX_sha3_512_init(&state);
+    SNEPPX_sha3_update(&state, input, 3);
     uint8_t hash[64];
-    arix_sha3_finish(&state, hash);
+    SNEPPX_sha3_finish(&state, hash);
     int match512 = memcmp(hash, expected, 64) == 0;
     if (!match512) { printf("  Got: "); for (int i = 0; i < 64; i++) printf("%02x", hash[i]); printf("\n  Exp: "); for (int i = 0; i < 64; i++) printf("%02x", expected[i]); printf("\n"); }
     TEST("SHA3-512('abc')", match512);
@@ -56,9 +56,9 @@ void test_vectors_512(void) {
 void test_empty_message(void) {
     printf("\n--- test_empty_message ---\n");
     uint8_t hash[32];
-    ArixSHA3State state;
-    arix_sha3_256_init(&state);
-    arix_sha3_finish(&state, hash);
+    SNEPPXSHA3State state;
+    SNEPPX_sha3_256_init(&state);
+    SNEPPX_sha3_finish(&state, hash);
     uint8_t non_zero = 0;
     for (int i = 0; i < 32; i++) non_zero |= hash[i];
     TEST("empty hash non-zero", non_zero != 0);
@@ -70,11 +70,11 @@ void test_large_message(void) {
     uint8_t* data = (uint8_t*)malloc(len);
     if (!data) { printf("SKIP: large_message (malloc failed)\n"); return; }
     memset(data, 0, len);
-    ArixSHA3State state;
-    arix_sha3_256_init(&state);
-    arix_sha3_update(&state, data, len);
+    SNEPPXSHA3State state;
+    SNEPPX_sha3_256_init(&state);
+    SNEPPX_sha3_update(&state, data, len);
     uint8_t hash[32];
-    arix_sha3_finish(&state, hash);
+    SNEPPX_sha3_finish(&state, hash);
     uint8_t non_zero = 0;
     for (int i = 0; i < 32; i++) non_zero |= hash[i];
     TEST("1MB hash non-zero", non_zero != 0);
@@ -82,7 +82,7 @@ void test_large_message(void) {
 }
 
 int main(void) {
-    printf("=== ARIX-SHA3 Test Suite ===\n");
+    printf("=== SNEPPX-SHA3 Test Suite ===\n");
     test_vectors_256();
     test_vectors_512();
     test_empty_message();

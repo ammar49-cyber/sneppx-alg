@@ -16,7 +16,7 @@ static float laplace_noise(float epsilon) {
     return -epsilon * (u > 0 ? 1.0f : -1.0f) * logf(1.0f - 2.0f * fabsf(u) + 1e-10f);
 }
 
-void arix_fm_add_privacy_noise(ArixTensor* data, float epsilon) {
+void SNEPPX_fm_add_privacy_noise(SNEPPXTensor* data, float epsilon) {
     if (!data || epsilon <= 0.0f) return;
     float* d = (float*)data->data;
     for (size_t i = 0; i < data->size; i++) {
@@ -37,15 +37,15 @@ static int cmp_mag(const void* a, const void* b) {
     return 0;
 }
 
-ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio) {
+SNEPPXTensor* SNEPPX_fm_compress_gradients(const SNEPPXTensor* gradients, float ratio) {
     if (!gradients || ratio <= 0.0f) return NULL;
     if (ratio >= 1.0f) {
-        ArixTensor* copy = arix_tensor_create(gradients->shape, gradients->ndim, ARIX_FLOAT32);
+        SNEPPXTensor* copy = SNEPPX_tensor_create(gradients->shape, gradients->ndim, SNEPPX_FLOAT32);
         if (copy) memcpy((float*)copy->data, (float*)gradients->data, gradients->size * sizeof(float));
         return copy;
     }
 
-    ArixTensor* result = arix_tensor_create(gradients->shape, gradients->ndim, ARIX_FLOAT32);
+    SNEPPXTensor* result = SNEPPX_tensor_create(gradients->shape, gradients->ndim, SNEPPX_FLOAT32);
     if (!result) return NULL;
     memcpy((float*)result->data, (float*)gradients->data, gradients->size * sizeof(float));
 
@@ -55,7 +55,7 @@ ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio)
     if (keep > total) keep = total;
 
     MagEntry* entries = (MagEntry*)malloc(total * sizeof(MagEntry));
-    if (!entries) { arix_tensor_destroy(result); return NULL; }
+    if (!entries) { SNEPPX_tensor_destroy(result); return NULL; }
 
     float* src = (float*)gradients->data;
     for (size_t i = 0; i < total; i++) {
@@ -67,7 +67,7 @@ ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio)
 
     float* dst = (float*)result->data;
     int* keep_mask = (int*)calloc(total, sizeof(int));
-    if (!keep_mask) { free(entries); arix_tensor_destroy(result); return NULL; }
+    if (!keep_mask) { free(entries); SNEPPX_tensor_destroy(result); return NULL; }
 
     for (size_t i = 0; i < keep; i++) {
         keep_mask[entries[i].idx] = 1;
@@ -82,7 +82,7 @@ ArixTensor* arix_fm_compress_gradients(const ArixTensor* gradients, float ratio)
     return result;
 }
 
-static void average_two_banks(ArixFMMemoryBank* a, ArixFMMemoryBank* b, float alpha) {
+static void average_two_banks(SNEPPXFMMemoryBank* a, SNEPPXFMMemoryBank* b, float alpha) {
     size_t dim = a->keys->shape[1];
     size_t min_entries = a->num_entries < b->num_entries ? a->num_entries : b->num_entries;
     if (min_entries == 0) return;
@@ -104,7 +104,7 @@ static void average_two_banks(ArixFMMemoryBank* a, ArixFMMemoryBank* b, float al
     }
 }
 
-int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
+int SNEPPX_fm_sync_all_reduce(SNEPPXFMController* ctrl) {
     if (!ctrl || ctrl->config.num_nodes == 0) return 1;
     size_t dim = ctrl->config.memory_dim;
     size_t cap = ctrl->config.memory_capacity;
@@ -118,7 +118,7 @@ int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
 
         for (size_t n = 0; n < n_nodes; n++) {
             if (!ctrl->nodes[n]->is_online) continue;
-            ArixFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
+            SNEPPXFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
             if (slot >= bank->num_entries) continue;
             float w = ctrl->nodes[n]->trust_score;
             total_weight += w;
@@ -135,7 +135,7 @@ int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
         float variance = 0.0f;
         for (size_t n = 0; n < n_nodes; n++) {
             if (!ctrl->nodes[n]->is_online) continue;
-            ArixFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
+            SNEPPXFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
             if (slot >= bank->num_entries) continue;
             float* vd = (float*)bank->values->data + slot * dim;
             for (size_t j = 0; j < dim; j++) {
@@ -151,7 +151,7 @@ int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
 
         for (size_t n = 0; n < n_nodes; n++) {
             if (!ctrl->nodes[n]->is_online) continue;
-            ArixFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
+            SNEPPXFMMemoryBank* bank = ctrl->nodes[n]->memory_bank;
             float* kd = (float*)bank->keys->data + slot * dim;
             float* vd = (float*)bank->values->data + slot * dim;
             for (size_t j = 0; j < dim; j++) {
@@ -161,7 +161,7 @@ int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
         }
     }
 
-    arix_fm_add_privacy_noise(ctrl->sync_state.global_memory, ctrl->config.privacy_epsilon);
+    SNEPPX_fm_add_privacy_noise(ctrl->sync_state.global_memory, ctrl->config.privacy_epsilon);
     ctrl->sync_state.sync_round++;
 
     for (size_t n = 0; n < n_nodes; n++) {
@@ -175,7 +175,7 @@ int arix_fm_sync_all_reduce(ArixFMController* ctrl) {
     return 0;
 }
 
-int arix_fm_sync_gossip(ArixFMController* ctrl, size_t num_pairs) {
+int SNEPPX_fm_sync_gossip(SNEPPXFMController* ctrl, size_t num_pairs) {
     if (!ctrl || ctrl->config.num_nodes < 2) return 1;
     size_t n_nodes = ctrl->config.num_nodes;
 
@@ -194,7 +194,7 @@ int arix_fm_sync_gossip(ArixFMController* ctrl, size_t num_pairs) {
     return 0;
 }
 
-int arix_fm_sync_topology(ArixFMController* ctrl) {
+int SNEPPX_fm_sync_topology(SNEPPXFMController* ctrl) {
     if (!ctrl || ctrl->config.num_nodes < 2) return 1;
     size_t n_nodes = ctrl->config.num_nodes;
 
@@ -212,17 +212,17 @@ int arix_fm_sync_topology(ArixFMController* ctrl) {
 
 // ── Error-compensated gradient compression (EF-SGD) ──────────────────────────
 
-ArixFMErrorFeedback* arix_fm_error_feedback_create(size_t dim, float ratio) {
+SNEPPXFMErrorFeedback* SNEPPX_fm_error_feedback_create(size_t dim, float ratio) {
     if (dim == 0 || ratio <= 0.0f) return NULL;
-    ArixFMErrorFeedback* ef = (ArixFMErrorFeedback*)arix_malloc(sizeof(ArixFMErrorFeedback), 64);
+    SNEPPXFMErrorFeedback* ef = (SNEPPXFMErrorFeedback*)SNEPPX_malloc(sizeof(SNEPPXFMErrorFeedback), 64);
     if (!ef) return NULL;
-    memset(ef, 0, sizeof(ArixFMErrorFeedback));
+    memset(ef, 0, sizeof(SNEPPXFMErrorFeedback));
 
     size_t shape[] = {dim};
-    ef->error_buffer = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
-    ef->compressed_grad = arix_tensor_zeros(shape, 1, ARIX_FLOAT32);
+    ef->error_buffer = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
+    ef->compressed_grad = SNEPPX_tensor_zeros(shape, 1, SNEPPX_FLOAT32);
     if (!ef->error_buffer || !ef->compressed_grad) {
-        arix_fm_error_feedback_destroy(ef);
+        SNEPPX_fm_error_feedback_destroy(ef);
         return NULL;
     }
     ef->compression_ratio = ratio;
@@ -230,42 +230,42 @@ ArixFMErrorFeedback* arix_fm_error_feedback_create(size_t dim, float ratio) {
     return ef;
 }
 
-void arix_fm_error_feedback_destroy(ArixFMErrorFeedback* ef) {
+void SNEPPX_fm_error_feedback_destroy(SNEPPXFMErrorFeedback* ef) {
     if (!ef) return;
-    if (ef->error_buffer) arix_tensor_destroy(ef->error_buffer);
-    if (ef->compressed_grad) arix_tensor_destroy(ef->compressed_grad);
-    arix_free(ef, sizeof(ArixFMErrorFeedback));
+    if (ef->error_buffer) SNEPPX_tensor_destroy(ef->error_buffer);
+    if (ef->compressed_grad) SNEPPX_tensor_destroy(ef->compressed_grad);
+    SNEPPX_free(ef, sizeof(SNEPPXFMErrorFeedback));
 }
 
-ArixTensor* arix_fm_compress_with_error(ArixFMErrorFeedback* ef, const ArixTensor* gradient) {
+SNEPPXTensor* SNEPPX_fm_compress_with_error(SNEPPXFMErrorFeedback* ef, const SNEPPXTensor* gradient) {
     if (!ef || !gradient) return NULL;
 
-    ArixTensor* g_eff = arix_tensor_add(gradient, ef->error_buffer);
+    SNEPPXTensor* g_eff = SNEPPX_tensor_add(gradient, ef->error_buffer);
     if (!g_eff) return NULL;
 
-    ArixTensor* g_comp = arix_fm_compress_gradients(g_eff, ef->compression_ratio);
-    arix_tensor_destroy(g_eff);
+    SNEPPXTensor* g_comp = SNEPPX_fm_compress_gradients(g_eff, ef->compression_ratio);
+    SNEPPX_tensor_destroy(g_eff);
     if (!g_comp) return NULL;
 
-    ArixTensor* diff = arix_tensor_sub(gradient, g_comp);
+    SNEPPXTensor* diff = SNEPPX_tensor_sub(gradient, g_comp);
     if (diff) {
-        ArixTensor* new_error = arix_tensor_add(ef->error_buffer, diff);
+        SNEPPXTensor* new_error = SNEPPX_tensor_add(ef->error_buffer, diff);
         if (new_error) {
-            arix_tensor_destroy(ef->error_buffer);
+            SNEPPX_tensor_destroy(ef->error_buffer);
             ef->error_buffer = new_error;
         }
-        arix_tensor_destroy(diff);
+        SNEPPX_tensor_destroy(diff);
     }
 
-    if (ef->compressed_grad) arix_tensor_destroy(ef->compressed_grad);
-    ef->compressed_grad = arix_tensor_copy(g_comp);
+    if (ef->compressed_grad) SNEPPX_tensor_destroy(ef->compressed_grad);
+    ef->compressed_grad = SNEPPX_tensor_copy(g_comp);
 
     return g_comp;
 }
 
 // ── Exponential moving average for catastrophic forgetting protection ────────
 
-void arix_fm_ewm_update(ArixFMMemoryBank* bank, float alpha) {
+void SNEPPX_fm_ewm_update(SNEPPXFMMemoryBank* bank, float alpha) {
     if (!bank || bank->num_entries == 0 || alpha < 0.0f || alpha > 1.0f) return;
     size_t dim = bank->keys->shape[1];
     size_t n = bank->num_entries;
@@ -285,7 +285,7 @@ void arix_fm_ewm_update(ArixFMMemoryBank* bank, float alpha) {
 
 // ── Adaptive sync frequency ──────────────────────────────────────────────────
 
-float arix_fm_compute_change_rate(ArixFMMemoryBank* bank, const ArixTensor* new_values) {
+float SNEPPX_fm_compute_change_rate(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* new_values) {
     if (!bank || !new_values || bank->num_entries == 0) return 0.0f;
     size_t dim = bank->keys->shape[1];
     float* vals = (float*)bank->values->data;
@@ -304,7 +304,7 @@ float arix_fm_compute_change_rate(ArixFMMemoryBank* bank, const ArixTensor* new_
     return sqrtf(total_diff / (float)(n * dim) + 1e-10f);
 }
 
-size_t arix_fm_adaptive_sync_interval(ArixFMController* ctrl, float base_interval) {
+size_t SNEPPX_fm_adaptive_sync_interval(SNEPPXFMController* ctrl, float base_interval) {
     if (!ctrl || base_interval < 1.0f) base_interval = 1.0f;
     float total_contrib = 0.0f;
     float contrib_sq = 0.0f;
@@ -333,24 +333,24 @@ size_t arix_fm_adaptive_sync_interval(ArixFMController* ctrl, float base_interva
 
 // ── Gradient send / receive ──────────────────────────────────────────────────
 
-int arix_fm_send_gradients(ArixFMController* ctrl, size_t node_id, const ArixTensor* gradients) {
+int SNEPPX_fm_send_gradients(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* gradients) {
     if (!ctrl || !gradients || node_id >= ctrl->config.num_nodes) return 1;
-    ArixFMNode* node = ctrl->nodes[node_id];
+    SNEPPXFMNode* node = ctrl->nodes[node_id];
     if (!node->is_online) return 1;
 
     if (!node->gradient_accumulator) {
-        node->gradient_accumulator = arix_tensor_copy(gradients);
+        node->gradient_accumulator = SNEPPX_tensor_copy(gradients);
         return node->gradient_accumulator ? 0 : 1;
     }
 
-    ArixTensor* updated = arix_tensor_add(node->gradient_accumulator, gradients);
+    SNEPPXTensor* updated = SNEPPX_tensor_add(node->gradient_accumulator, gradients);
     if (!updated) return 1;
-    arix_tensor_destroy(node->gradient_accumulator);
+    SNEPPX_tensor_destroy(node->gradient_accumulator);
     node->gradient_accumulator = updated;
     return 0;
 }
 
-int arix_fm_receive_gradients(ArixFMController* ctrl, size_t node_id, ArixTensor* aggregated) {
+int SNEPPX_fm_receive_gradients(SNEPPXFMController* ctrl, size_t node_id, SNEPPXTensor* aggregated) {
     if (!ctrl || !aggregated || node_id >= ctrl->config.num_nodes) return 1;
 
     memset((float*)aggregated->data, 0, aggregated->size * sizeof(float));
@@ -358,7 +358,7 @@ int arix_fm_receive_gradients(ArixFMController* ctrl, size_t node_id, ArixTensor
     for (size_t i = 0; i < ctrl->config.num_nodes; i++) {
         if (!ctrl->nodes[i]->is_online) continue;
         if (i == node_id) continue;
-        ArixFMNode* node = ctrl->nodes[i];
+        SNEPPXFMNode* node = ctrl->nodes[i];
         if (!node->gradient_accumulator) continue;
 
         float* grad_data = (float*)node->gradient_accumulator->data;

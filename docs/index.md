@@ -1,18 +1,18 @@
-# ARIX-Algo Documentation
+# SneppX-ALG Documentation
 
 ## Overview
 
-ARIX-Algo is a composable 5-component AI algorithm pipeline wrapped in 4 security layers. This is the first open-source AI algorithm with cryptographic integrity built into its foundation.
+SneppX-ALG is a composable 5-component AI algorithm pipeline wrapped in 4 security layers. This is the first open-source AI algorithm with cryptographic integrity built into its foundation.
 
 ## Quickstart
 
 ### Build from source
 
 ```bash
-git clone https://github.com/ammar49-cyber/arixalgo.git
-cd arix-algo
+git clone https://github.com/ammar49-cyber/SNEPPX_ALG.git
+cd SneppX-ALG
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DARIX_BUILD_TESTS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build . -j$(nproc)
 ctest --output-on-failure
 ```
@@ -31,7 +31,7 @@ ctest --output-on-failure
 ### Run benchmarks
 
 ```bash
-cmake .. -DARIX_BUILD_BENCHMARKS=ON
+cmake .. -DSNEPPX_BUILD_BENCHMARKS=ON
 cmake --build . -j$(nproc)
 ./tests/benchmark/bench_tensor
 ./tests/benchmark/bench_autodiff
@@ -123,7 +123,7 @@ Per-node memory banks with euclidean similarity search and LRU eviction. Support
 ## Directory Structure
 
 ```
-ARIX_Algo/
+SneppX_ALG/
 ├── CMakeLists.txt
 ├── CMakePresets.json
 ├── src/

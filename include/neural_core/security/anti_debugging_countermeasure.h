@@ -1,14 +1,14 @@
 #pragma once
-#ifndef ARIX_OBF_ANTI_H
-#define ARIX_OBF_ANTI_H
+#ifndef SNEPPX_OBF_ANTI_H
+#define SNEPPX_OBF_ANTI_H
 
 #include <cstdint>
 #include <string>
 #include <functional>
 
-namespace arix {
+namespace SNEPPX {
 
-enum class ArixAntiDebugAction {
+enum class SNEPPXAntiDebugAction {
     CRASH,
     FAKE_DATA,
     DELAY,
@@ -16,13 +16,13 @@ enum class ArixAntiDebugAction {
     WIPE_AND_EXIT
 };
 
-class ArixAntiDebug {
+class SNEPPXAntiDebug {
 public:
-    ArixAntiDebug();
-    ~ArixAntiDebug();
+    SNEPPXAntiDebug();
+    ~SNEPPXAntiDebug();
 
-    void set_action(ArixAntiDebugAction action);
-    ArixAntiDebugAction get_action() const;
+    void set_action(SNEPPXAntiDebugAction action);
+    SNEPPXAntiDebugAction get_action() const;
 
     bool detect_ptrace();
     bool detect_debugger_present();
@@ -36,7 +36,7 @@ public:
     bool is_debugger_attached() const { return debugger_detected; }
 
 private:
-    ArixAntiDebugAction action;
+    SNEPPXAntiDebugAction action;
     bool debugger_detected;
 
     uint64_t read_timestamp();
@@ -44,6 +44,6 @@ private:
     void wipe_sensitive_data();
 };
 
-} // namespace arix
+} // namespace SNEPPX
 
-#endif // ARIX_OBF_ANTI_H
+#endif // SNEPPX_OBF_ANTI_H

@@ -1,5 +1,5 @@
-#ifndef ARIX_RLHF_SAFETY_H
-#define ARIX_RLHF_SAFETY_H
+#ifndef SNEPPX_RLHF_SAFETY_H
+#define SNEPPX_RLHF_SAFETY_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -55,17 +55,17 @@ typedef struct {
     rlhf_config_t config;
 } rlhf_stats_t;
 
-int arix_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_type, double threshold);
-int arix_rlhf_remove_policy(int policy_id);
-int arix_rlhf_score(const char *input, const char *output, rlhf_score_t *score);
-int arix_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int max_violations);
-int arix_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score);
-int arix_rlhf_generate_critique(const char *output, char *critique, size_t critique_len);
-int arix_rlhf_correct_output(const char *output, char *corrected, size_t corrected_len);
-int arix_rlhf_update_config(const rlhf_config_t *config);
-int arix_rlhf_get_config(rlhf_config_t *config);
-int arix_rlhf_get_stats(rlhf_stats_t *stats);
-int arix_rlhf_reset(void);
-int arix_rlhf_add_default_policies(void);
+int SNEPPX_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_type, double threshold);
+int SNEPPX_rlhf_remove_policy(int policy_id);
+int SNEPPX_rlhf_score(const char *input, const char *output, rlhf_score_t *score);
+int SNEPPX_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int max_violations);
+int SNEPPX_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score);
+int SNEPPX_rlhf_generate_critique(const char *output, char *critique, size_t critique_len);
+int SNEPPX_rlhf_correct_output(const char *output, char *corrected, size_t corrected_len);
+int SNEPPX_rlhf_update_config(const rlhf_config_t *config);
+int SNEPPX_rlhf_get_config(rlhf_config_t *config);
+int SNEPPX_rlhf_get_stats(rlhf_stats_t *stats);
+int SNEPPX_rlhf_reset(void);
+int SNEPPX_rlhf_add_default_policies(void);
 
 #endif

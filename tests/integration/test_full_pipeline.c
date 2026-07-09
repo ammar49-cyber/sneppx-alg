@@ -29,13 +29,13 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_arch_config_default(void) {
-    ArixArchConfig cfg = arix_arch_config_default();
+    SNEPPXArchConfig cfg = SNEPPX_arch_config_default();
     ASSERT(cfg.input_dim == 512, "default input dim");
     ASSERT(cfg.output_dim == 512, "default output dim");
 }
 
 static void test_model_create(void) {
-    ArixArchConfig cfg = arix_arch_config_default();
+    SNEPPXArchConfig cfg = SNEPPX_arch_config_default();
     cfg.input_dim = 16;
     cfg.output_dim = 16;
     cfg.hss_config.state_dim = 8;
@@ -47,17 +47,17 @@ static void test_model_create(void) {
     cfg.ser_config.expert_dim = 32;
     cfg.ser_config.output_dim = 16;
 
-    ArixModel* model = arix_model_create(&cfg, 42);
+    SNEPPXModel* model = SNEPPX_model_create(&cfg, 42);
     ASSERT(model != NULL, "model created");
 
-    size_t n = arix_model_get_params(model, NULL, 0);
+    size_t n = SNEPPX_model_get_params(model, NULL, 0);
     ASSERT(n > 0, "model has parameters");
 
-    arix_model_destroy(model);
+    SNEPPX_model_destroy(model);
 }
 
 static void test_hss_ser_arc_stack(void) {
-    ArixHSSConfig hss_cfg = arix_hss_config_default();
+    SNEPPXHSSConfig hss_cfg = SNEPPX_hss_config_default();
     hss_cfg.state_dim = 4;
     hss_cfg.input_dim = 8;
     hss_cfg.output_dim = 8;
@@ -66,38 +66,38 @@ static void test_hss_ser_arc_stack(void) {
     hss_cfg.use_hierarchical = 0;
     hss_cfg.use_parallel_scan = 1;
 
-    ArixHSSModel* hss = arix_hss_model_create(&hss_cfg, 42);
+    SNEPPXHSSModel* hss = SNEPPX_hss_model_create(&hss_cfg, 42);
     ASSERT(hss != NULL, "hss model created");
 
-    ArixSERConfig ser_cfg = arix_ser_config_default();
+    SNEPPXSERConfig ser_cfg = SNEPPX_ser_config_default();
     ser_cfg.num_experts = 4;
     ser_cfg.num_active = 2;
     ser_cfg.input_dim = 8;
     ser_cfg.expert_dim = 16;
     ser_cfg.output_dim = 8;
 
-    ArixSERModel* ser = arix_ser_model_create(&ser_cfg, 42, 1);
+    SNEPPXSERModel* ser = SNEPPX_ser_model_create(&ser_cfg, 42, 1);
     ASSERT(ser != NULL, "ser model created");
 
-    ArixARCConfig arc_cfg = arix_arc_config_default();
-    ArixARCLayer* arc = arix_arc_layer_create(&arc_cfg, 8, 8, 42);
+    SNEPPXARCConfig arc_cfg = SNEPPX_arc_config_default();
+    SNEPPXARCLayer* arc = SNEPPX_arc_layer_create(&arc_cfg, 8, 8, 42);
     ASSERT(arc != NULL, "arc layer created");
 
     size_t shape_in[] = {1, hss_cfg.seq_len, hss_cfg.input_dim};
-    ArixTensor* input = arix_tensor_create(shape_in, 3, ARIX_FLOAT32);
+    SNEPPXTensor* input = SNEPPX_tensor_create(shape_in, 3, SNEPPX_FLOAT32);
     float* d = (float*)input->data;
     for (size_t i = 0; i < input->size; i++) d[i] = sinf((float)i * 0.5f);
 
-    ArixTensor* hss_out = NULL;
-    int ret = arix_hss_forward(hss, input, &hss_out);
+    SNEPPXTensor* hss_out = NULL;
+    int ret = SNEPPX_hss_forward(hss, input, &hss_out);
     ASSERT(ret == 0, "hss forward ok");
     ASSERT(hss_out != NULL, "hss output");
 
-    arix_tensor_destroy(hss_out);
-    arix_tensor_destroy(input);
-    arix_arc_layer_destroy(arc);
-    arix_ser_model_destroy(ser);
-    arix_hss_model_destroy(hss);
+    SNEPPX_tensor_destroy(hss_out);
+    SNEPPX_tensor_destroy(input);
+    SNEPPX_arc_layer_destroy(arc);
+    SNEPPX_ser_model_destroy(ser);
+    SNEPPX_hss_model_destroy(hss);
 }
 
 int main(void) {

@@ -23,33 +23,33 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 
 static void test_strutil_trim(void) {
     char input[] = "  hello world  ";
-    arix_strutil_trim(input);
+    SNEPPX_strutil_trim(input);
     ASSERT(strcmp(input, "hello world") == 0, "trim spaces");
 }
 
 static void test_strutil_split(void) {
     const char* input = "a,b,c,d";
-    ArixStrArray* arr = arix_strutil_split(input, ',');
+    SNEPPXStrArray* arr = SNEPPX_strutil_split(input, ',');
     ASSERT(arr != NULL, "split created");
     ASSERT(arr->count == 4, "4 parts");
     ASSERT(strcmp(arr->items[0], "a") == 0, "first part a");
     ASSERT(strcmp(arr->items[3], "d") == 0, "last part d");
-    arix_strutil_array_free(arr);
+    SNEPPX_strutil_array_free(arr);
 }
 
 static void test_strutil_join(void) {
     const char* parts[] = {"x", "y", "z"};
-    char* joined = arix_strutil_join(parts, 3, "-");
+    char* joined = SNEPPX_strutil_join(parts, 3, "-");
     ASSERT(joined != NULL, "joined string");
     ASSERT(strcmp(joined, "x-y-z") == 0, "x-y-z");
     free(joined);
 }
 
 static void test_strutil_starts_ends(void) {
-    ASSERT(arix_strutil_starts_with("hello world", "hello"), "starts_with true");
-    ASSERT(!arix_strutil_starts_with("hello world", "world"), "starts_with false");
-    ASSERT(arix_strutil_ends_with("hello world", "world"), "ends_with true");
-    ASSERT(!arix_strutil_ends_with("hello world", "hello"), "ends_with false");
+    ASSERT(SNEPPX_strutil_starts_with("hello world", "hello"), "starts_with true");
+    ASSERT(!SNEPPX_strutil_starts_with("hello world", "world"), "starts_with false");
+    ASSERT(SNEPPX_strutil_ends_with("hello world", "world"), "ends_with true");
+    ASSERT(!SNEPPX_strutil_ends_with("hello world", "hello"), "ends_with false");
 }
 
 int main(void) {

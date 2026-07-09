@@ -6,7 +6,7 @@ from .model import Model
 
 class TrainConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.ArixTrainConfig()
+        self._c = _neural_engine_bridge.SNEPPXTrainConfig()
         self._c.default()
 
     @property

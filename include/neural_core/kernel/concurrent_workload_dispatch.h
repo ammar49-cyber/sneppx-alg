@@ -1,5 +1,5 @@
-#ifndef ARIX_THREAD_H
-#define ARIX_THREAD_H
+#ifndef SNEPPX_THREAD_H
+#define SNEPPX_THREAD_H
 
 #include <stddef.h>
 
@@ -14,65 +14,65 @@ extern "C" {
 typedef struct {
     void (*func)(void* arg);
     void* arg;
-} ArixTask;
+} SNEPPXTask;
 
 /* ============================================================
  * Future  –  synchronise on a single task
  * ============================================================ */
 
-typedef struct ArixFuture ArixFuture;
+typedef struct SNEPPXFuture SNEPPXFuture;
 
-ArixFuture* arix_future_create(void);
-void        arix_future_destroy(ArixFuture* fut);
-void        arix_future_wait(ArixFuture* fut);
-int         arix_future_is_ready(ArixFuture* fut);
-void        arix_future_set_result(ArixFuture* fut, void* result);
-void*       arix_future_get_result(ArixFuture* fut);
+SNEPPXFuture* SNEPPX_future_create(void);
+void        SNEPPX_future_destroy(SNEPPXFuture* fut);
+void        SNEPPX_future_wait(SNEPPXFuture* fut);
+int         SNEPPX_future_is_ready(SNEPPXFuture* fut);
+void        SNEPPX_future_set_result(SNEPPXFuture* fut, void* result);
+void*       SNEPPX_future_get_result(SNEPPXFuture* fut);
 
 /* ============================================================
  * Thread Pool  –  work-stealing, N workers
  * ============================================================ */
 
-typedef struct ArixThreadPool ArixThreadPool;
+typedef struct SNEPPXThreadPool SNEPPXThreadPool;
 
-ArixThreadPool* arix_threadpool_create(size_t num_threads);
-void            arix_threadpool_destroy(ArixThreadPool* pool);
+SNEPPXThreadPool* SNEPPX_threadpool_create(size_t num_threads);
+void            SNEPPX_threadpool_destroy(SNEPPXThreadPool* pool);
 
 /* Submit a task (copied).  Returns 0 on success. */
-int arix_threadpool_submit(ArixThreadPool* pool, ArixTask task);
+int SNEPPX_threadpool_submit(SNEPPXThreadPool* pool, SNEPPXTask task);
 
 /* Submit a task with a future to track completion. */
-int arix_threadpool_submit_future(ArixThreadPool* pool, ArixTask task, ArixFuture* fut);
+int SNEPPX_threadpool_submit_future(SNEPPXThreadPool* pool, SNEPPXTask task, SNEPPXFuture* fut);
 
 /* Wait until all submitted tasks complete. */
-void arix_threadpool_wait(ArixThreadPool* pool);
+void SNEPPX_threadpool_wait(SNEPPXThreadPool* pool);
 
 /* Default number of threads (hardware concurrency, min 2). */
-size_t arix_threadpool_default_count(void);
+size_t SNEPPX_threadpool_default_count(void);
 
 /* ============================================================
  * Parallel For / Reduce
  * ============================================================ */
 
 /* Callback for parallel_for – processes chunk [start, end). */
-typedef void (*ArixRangeFunc)(size_t start, size_t end, void* arg);
+typedef void (*SNEPPXRangeFunc)(size_t start, size_t end, void* arg);
 
-void arix_parallel_for(ArixThreadPool* pool,
+void SNEPPX_parallel_for(SNEPPXThreadPool* pool,
                        size_t start, size_t end,
-                       ArixRangeFunc func, void* arg);
+                       SNEPPXRangeFunc func, void* arg);
 
 /* Reduce callback – processes chunk [start, end) into result. */
-typedef void (*ArixReduceFunc)(size_t start, size_t end,
+typedef void (*SNEPPXReduceFunc)(size_t start, size_t end,
                                void* arg, void* result);
 
 /* Combine callback – merges src into dst. */
-typedef void (*ArixCombineFunc)(void* dst, const void* src);
+typedef void (*SNEPPXCombineFunc)(void* dst, const void* src);
 
-void arix_parallel_reduce(ArixThreadPool* pool,
+void SNEPPX_parallel_reduce(SNEPPXThreadPool* pool,
                           size_t start, size_t end,
                           void* init, size_t elem_size,
-                          ArixReduceFunc reduce_func,
-                          ArixCombineFunc combine_func,
+                          SNEPPXReduceFunc reduce_func,
+                          SNEPPXCombineFunc combine_func,
                           void* result,
                           void* user_arg);
 
@@ -80,4 +80,4 @@ void arix_parallel_reduce(ArixThreadPool* pool,
 }
 #endif
 
-#endif /* ARIX_THREAD_H */
+#endif /* SNEPPX_THREAD_H */

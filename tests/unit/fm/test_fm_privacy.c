@@ -23,41 +23,41 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_fm_config_default(void) {
-    ArixFMConfig cfg = arix_fm_config_default();
+    SNEPPXFMConfig cfg = SNEPPX_fm_config_default();
     ASSERT(cfg.num_nodes == 4, "default 4 nodes");
-    ASSERT(cfg.sync_method == ARIX_SYNC_ALL_REDUCE, "default all-reduce sync");
+    ASSERT(cfg.sync_method == SNEPPX_SYNC_ALL_REDUCE, "default all-reduce sync");
     ASSERT(cfg.privacy_epsilon > 0, "privacy epsilon > 0");
 }
 
 static void test_fm_controller_create_destroy(void) {
-    ArixFMConfig cfg = arix_fm_config_default();
+    SNEPPXFMConfig cfg = SNEPPX_fm_config_default();
     cfg.memory_dim = 16;
     cfg.memory_capacity = 32;
-    ArixFMController* ctrl = arix_fm_controller_create(&cfg);
+    SNEPPXFMController* ctrl = SNEPPX_fm_controller_create(&cfg);
     ASSERT(ctrl != NULL, "controller created");
     ASSERT(ctrl->config.num_nodes == 4, "controller has 4 nodes");
-    arix_fm_controller_destroy(ctrl);
+    SNEPPX_fm_controller_destroy(ctrl);
 }
 
 static void test_fm_add_privacy_noise(void) {
     size_t shape[] = {2, 4};
-    ArixTensor* data = arix_tensor_zeros(shape, 2, ARIX_FLOAT32);
-    arix_fm_add_privacy_noise(data, 1.0f);
+    SNEPPXTensor* data = SNEPPX_tensor_zeros(shape, 2, SNEPPX_FLOAT32);
+    SNEPPX_fm_add_privacy_noise(data, 1.0f);
     float* d = (float*)data->data;
     float sum = 0.0f;
     for (size_t i = 0; i < 8; i++) sum += d[i];
     /* With epsilon=1.0, noise is added so data likely changed */
     ASSERT(d[0] != 0.0f || d[1] != 0.0f || d[2] != 0.0f || d[3] != 0.0f, "privacy noise added");
-    arix_tensor_destroy(data);
+    SNEPPX_tensor_destroy(data);
 }
 
 static void test_fm_compress_gradients(void) {
     size_t shape[] = {4, 4};
-    ArixTensor* grads = arix_tensor_create(shape, 2, ARIX_FLOAT32);
+    SNEPPXTensor* grads = SNEPPX_tensor_create(shape, 2, SNEPPX_FLOAT32);
     float* d = (float*)grads->data;
     for (size_t i = 0; i < 16; i++) d[i] = (float)(i % 4) * 0.5f;
 
-    ArixTensor* compressed = arix_fm_compress_gradients(grads, 0.5f);
+    SNEPPXTensor* compressed = SNEPPX_fm_compress_gradients(grads, 0.5f);
     ASSERT(compressed != NULL, "compressed gradients created");
 
     float* cd = (float*)compressed->data;
@@ -65,8 +65,8 @@ static void test_fm_compress_gradients(void) {
     for (size_t i = 0; i < 16; i++) if (cd[i] != 0.0f) nonzero++;
     ASSERT(nonzero > 0 && nonzero <= 8, "compression reduced nonzeros");
 
-    arix_tensor_destroy(compressed);
-    arix_tensor_destroy(grads);
+    SNEPPX_tensor_destroy(compressed);
+    SNEPPX_tensor_destroy(grads);
 }
 
 int main(void) {

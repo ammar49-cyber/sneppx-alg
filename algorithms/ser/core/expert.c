@@ -3,14 +3,14 @@
 #include <string.h>
 #include <math.h>
 
-ArixSERConfig arix_ser_config_default(void) {
-    ArixSERConfig cfg;
+SNEPPXSERConfig SNEPPX_ser_config_default(void) {
+    SNEPPXSERConfig cfg;
     cfg.num_experts = 8;
     cfg.num_active = 2;
     cfg.input_dim = 512;
     cfg.expert_dim = 2048;
     cfg.output_dim = 512;
-    cfg.top_k_method = ARIX_TOPK_GREEDY;
+    cfg.top_k_method = SNEPPX_TOPK_GREEDY;
     cfg.load_balance_coef = 0.01f;
     cfg.dropout_rate = 0.0f;
     return cfg;
@@ -35,10 +35,10 @@ static void fill_randn(float* data, size_t n, unsigned long* state, float scale)
     }
 }
 
-ArixExpert* arix_expert_create(const ArixSERConfig* config, unsigned int seed, ArixActivation activation) {
-    ArixExpert* expert = (ArixExpert*)arix_malloc(sizeof(ArixExpert), 64);
+SNEPPXExpert* SNEPPX_expert_create(const SNEPPXSERConfig* config, unsigned int seed, SNEPPXActivation activation) {
+    SNEPPXExpert* expert = (SNEPPXExpert*)SNEPPX_malloc(sizeof(SNEPPXExpert), 64);
     if (!expert) return NULL;
-    memset(expert, 0, sizeof(ArixExpert));
+    memset(expert, 0, sizeof(SNEPPXExpert));
 
     unsigned long state = seed;
     size_t i_dim = config->input_dim;
@@ -50,10 +50,10 @@ ArixExpert* arix_expert_create(const ArixSERConfig* config, unsigned int seed, A
     size_t shape_e1[] = {e_dim};
     size_t shape_o1[] = {o_dim};
 
-    expert->w1 = arix_tensor_create(shape_ei, 2, ARIX_FLOAT32);
-    expert->w2 = arix_tensor_create(shape_oe, 2, ARIX_FLOAT32);
-    expert->b1 = arix_tensor_zeros(shape_e1, 1, ARIX_FLOAT32);
-    expert->b2 = arix_tensor_zeros(shape_o1, 1, ARIX_FLOAT32);
+    expert->w1 = SNEPPX_tensor_create(shape_ei, 2, SNEPPX_FLOAT32);
+    expert->w2 = SNEPPX_tensor_create(shape_oe, 2, SNEPPX_FLOAT32);
+    expert->b1 = SNEPPX_tensor_zeros(shape_e1, 1, SNEPPX_FLOAT32);
+    expert->b2 = SNEPPX_tensor_zeros(shape_o1, 1, SNEPPX_FLOAT32);
     expert->activation = activation;
 
     if (expert->w1 && expert->w2 && expert->b1 && expert->b2) {
@@ -66,11 +66,11 @@ ArixExpert* arix_expert_create(const ArixSERConfig* config, unsigned int seed, A
     return expert;
 }
 
-void arix_expert_destroy(ArixExpert* expert) {
+void SNEPPX_expert_destroy(SNEPPXExpert* expert) {
     if (!expert) return;
-    if (expert->w1) arix_tensor_destroy(expert->w1);
-    if (expert->w2) arix_tensor_destroy(expert->w2);
-    if (expert->b1) arix_tensor_destroy(expert->b1);
-    if (expert->b2) arix_tensor_destroy(expert->b2);
-    arix_free(expert, sizeof(ArixExpert));
+    if (expert->w1) SNEPPX_tensor_destroy(expert->w1);
+    if (expert->w2) SNEPPX_tensor_destroy(expert->w2);
+    if (expert->b1) SNEPPX_tensor_destroy(expert->b1);
+    if (expert->b2) SNEPPX_tensor_destroy(expert->b2);
+    SNEPPX_free(expert, sizeof(SNEPPXExpert));
 }

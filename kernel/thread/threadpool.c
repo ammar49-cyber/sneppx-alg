@@ -7,16 +7,16 @@
 #include <windows.h>
 #include <intrin.h>
 #pragma intrinsic(_InterlockedExchangeAdd)
-typedef HANDLE            arix_thread_t;
-typedef CRITICAL_SECTION  arix_mutex_t;
-typedef CONDITION_VARIABLE arix_cond_t;
+typedef HANDLE            SNEPPX_thread_t;
+typedef CRITICAL_SECTION  SNEPPX_mutex_t;
+typedef CONDITION_VARIABLE SNEPPX_cond_t;
 #else
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
-typedef pthread_mutex_t arix_mutex_t;
-typedef pthread_cond_t  arix_cond_t;
-typedef pthread_t       arix_thread_t;
+typedef pthread_mutex_t SNEPPX_mutex_t;
+typedef pthread_cond_t  SNEPPX_cond_t;
+typedef pthread_t       SNEPPX_thread_t;
 #endif
 
 /* ==================================================================
@@ -25,44 +25,44 @@ typedef pthread_t       arix_thread_t;
 
 #ifdef _WIN32
 
-typedef CRITICAL_SECTION  arix_mutex_t;
-typedef CONDITION_VARIABLE arix_cond_t;
-typedef HANDLE            arix_thread_t;
+typedef CRITICAL_SECTION  SNEPPX_mutex_t;
+typedef CONDITION_VARIABLE SNEPPX_cond_t;
+typedef HANDLE            SNEPPX_thread_t;
 
-#define arix_mutex_init(m)     (InitializeCriticalSection(m), 0)
-#define arix_mutex_destroy(m)  DeleteCriticalSection(m)
-#define arix_mutex_lock(m)     EnterCriticalSection(m)
-#define arix_mutex_unlock(m)   LeaveCriticalSection(m)
+#define SNEPPX_mutex_init(m)     (InitializeCriticalSection(m), 0)
+#define SNEPPX_mutex_destroy(m)  DeleteCriticalSection(m)
+#define SNEPPX_mutex_lock(m)     EnterCriticalSection(m)
+#define SNEPPX_mutex_unlock(m)   LeaveCriticalSection(m)
 
-#define arix_cond_init(c)      (InitializeConditionVariable(c), 0)
-#define arix_cond_destroy(c)   ((void)(c))
-#define arix_cond_wait(c, m)   (SleepConditionVariableCS((c), (m), INFINITE) ? 0 : -1)
-#define arix_cond_signal(c)    (WakeConditionVariable(c), 0)
-#define arix_cond_broadcast(c) (WakeAllConditionVariable(c), 0)
+#define SNEPPX_cond_init(c)      (InitializeConditionVariable(c), 0)
+#define SNEPPX_cond_destroy(c)   ((void)(c))
+#define SNEPPX_cond_wait(c, m)   (SleepConditionVariableCS((c), (m), INFINITE) ? 0 : -1)
+#define SNEPPX_cond_signal(c)    (WakeConditionVariable(c), 0)
+#define SNEPPX_cond_broadcast(c) (WakeAllConditionVariable(c), 0)
 
-#define arix_thread_create(t, func, arg) \
+#define SNEPPX_thread_create(t, func, arg) \
     (*(HANDLE*)(t) = CreateThread(NULL, 0, (func), (arg), 0, NULL), (*(HANDLE*)(t) ? 0 : -1))
-#define arix_thread_join(t)    (WaitForSingleObject((HANDLE)(t), INFINITE), CloseHandle((HANDLE)(t)), 0)
+#define SNEPPX_thread_join(t)    (WaitForSingleObject((HANDLE)(t), INFINITE), CloseHandle((HANDLE)(t)), 0)
 
 #else /* POSIX */
 
-typedef pthread_mutex_t arix_mutex_t;
-typedef pthread_cond_t  arix_cond_t;
-typedef pthread_t       arix_thread_t;
+typedef pthread_mutex_t SNEPPX_mutex_t;
+typedef pthread_cond_t  SNEPPX_cond_t;
+typedef pthread_t       SNEPPX_thread_t;
 
-#define arix_mutex_init(m)     pthread_mutex_init((m), NULL)
-#define arix_mutex_destroy(m)  pthread_mutex_destroy(m)
-#define arix_mutex_lock(m)     pthread_mutex_lock(m)
-#define arix_mutex_unlock(m)   pthread_mutex_unlock(m)
+#define SNEPPX_mutex_init(m)     pthread_mutex_init((m), NULL)
+#define SNEPPX_mutex_destroy(m)  pthread_mutex_destroy(m)
+#define SNEPPX_mutex_lock(m)     pthread_mutex_lock(m)
+#define SNEPPX_mutex_unlock(m)   pthread_mutex_unlock(m)
 
-#define arix_cond_init(c)      pthread_cond_init((c), NULL)
-#define arix_cond_destroy(c)   pthread_cond_destroy(c)
-#define arix_cond_wait(c, m)   pthread_cond_wait((c), (m))
-#define arix_cond_signal(c)    pthread_cond_signal(c)
-#define arix_cond_broadcast(c) pthread_cond_broadcast(c)
+#define SNEPPX_cond_init(c)      pthread_cond_init((c), NULL)
+#define SNEPPX_cond_destroy(c)   pthread_cond_destroy(c)
+#define SNEPPX_cond_wait(c, m)   pthread_cond_wait((c), (m))
+#define SNEPPX_cond_signal(c)    pthread_cond_signal(c)
+#define SNEPPX_cond_broadcast(c) pthread_cond_broadcast(c)
 
-#define arix_thread_create(t, func, arg) pthread_create((pthread_t*)(t), NULL, (func), (arg))
-#define arix_thread_join(t)    pthread_join((pthread_t)(t), NULL)
+#define SNEPPX_thread_create(t, func, arg) pthread_create((pthread_t*)(t), NULL, (func), (arg))
+#define SNEPPX_thread_join(t)    pthread_join((pthread_t)(t), NULL)
 
 #endif
 
@@ -71,82 +71,82 @@ typedef pthread_t       arix_thread_t;
  * ================================================================== */
 
 typedef struct WorkNode {
-    ArixTask           task;
+    SNEPPXTask           task;
     struct WorkNode*   next;
 } WorkNode;
 
 typedef struct {
     WorkNode*          head;   /* front (stolen from)  */
     WorkNode*          tail;   /* back  (owner pushes) */
-    arix_mutex_t       lock;
+    SNEPPX_mutex_t       lock;
 } WorkDeque;
 
 static void deque_init(WorkDeque* q) {
     q->head = q->tail = NULL;
-    arix_mutex_init(&q->lock);
+    SNEPPX_mutex_init(&q->lock);
 }
 
 static void deque_destroy(WorkDeque* q) {
     /* Drain remaining */
-    arix_mutex_lock(&q->lock);
+    SNEPPX_mutex_lock(&q->lock);
     WorkNode* n = q->head;
     while (n) { WorkNode* next = n->next; free(n); n = next; }
     q->head = q->tail = NULL;
-    arix_mutex_unlock(&q->lock);
-    arix_mutex_destroy(&q->lock);
+    SNEPPX_mutex_unlock(&q->lock);
+    SNEPPX_mutex_destroy(&q->lock);
 }
 
 /* Owner pushes to the back (LIFO for locality). */
-static int deque_push(WorkDeque* q, ArixTask task) {
+static int deque_push(WorkDeque* q, SNEPPXTask task) {
     WorkNode* n = (WorkNode*)malloc(sizeof(WorkNode));
     if (!n) return -1;
     n->task = task;
     n->next = NULL;
-    arix_mutex_lock(&q->lock);
+    SNEPPX_mutex_lock(&q->lock);
     if (q->tail) {
         q->tail->next = n;
         q->tail = n;
     } else {
         q->head = q->tail = n;
     }
-    arix_mutex_unlock(&q->lock);
+    SNEPPX_mutex_unlock(&q->lock);
     return 0;
 }
 
 /* Owner pops from the back.  Returns 0 on success, -1 if empty. */
-static int deque_pop(WorkDeque* q, ArixTask* out) {
-    arix_mutex_lock(&q->lock);
+static int deque_pop(WorkDeque* q, SNEPPXTask* out) {
+    SNEPPX_mutex_lock(&q->lock);
     WorkNode* prev = NULL;
     WorkNode* cur  = q->head;
     while (cur && cur != q->tail) { prev = cur; cur = cur->next; }
-    if (!cur) { arix_mutex_unlock(&q->lock); return -1; }
+    if (!cur) { SNEPPX_mutex_unlock(&q->lock); return -1; }
     *out = cur->task;
     if (prev) prev->next = NULL; else q->head = NULL;
     q->tail = prev;
     free(cur);
-    arix_mutex_unlock(&q->lock);
+    SNEPPX_mutex_unlock(&q->lock);
     return 0;
 }
 
 /* Steal from the front.  Returns 0 on success, -1 if empty. */
-static int deque_steal(WorkDeque* q, ArixTask* out) {
-    arix_mutex_lock(&q->lock);
+static int deque_steal(WorkDeque* q, SNEPPXTask* out) {
+    SNEPPX_mutex_lock(&q->lock);
     WorkNode* n = q->head;
-    if (!n) { arix_mutex_unlock(&q->lock); return -1; }
+    if (!n) { SNEPPX_mutex_unlock(&q->lock); return -1; }
     *out = n->task;
     q->head = n->next;
     if (!q->head) q->tail = NULL;
     free(n);
-    arix_mutex_unlock(&q->lock);
+    SNEPPX_mutex_unlock(&q->lock);
     return 0;
 }
 
 /* Number of tasks currently in the deque. */
 static int deque_count(WorkDeque* q) {
-    arix_mutex_lock(&q->lock);
+    SNEPPX_mutex_lock(&q->lock);
     int cnt = 0;
     for (WorkNode* n = q->head; n; n = n->next) cnt++;
-    arix_mutex_unlock(&q->lock);
+    SNEPPX_mutex_unlock(&q->lock);
     return cnt;
 }
 
@@ -154,51 +154,51 @@ static int deque_count(WorkDeque* q) {
  *  Future
  * ================================================================== */
 
-struct ArixFuture {
+struct SNEPPXFuture {
     volatile int  ready;
     void*         result;
-    arix_mutex_t  lock;
-    arix_cond_t   cond;
+    SNEPPX_mutex_t  lock;
+    SNEPPX_cond_t   cond;
 };
 
-ArixFuture* arix_future_create(void) {
-    ArixFuture* fut = (ArixFuture*)malloc(sizeof(ArixFuture));
+SNEPPXFuture* SNEPPX_future_create(void) {
+    SNEPPXFuture* fut = (SNEPPXFuture*)malloc(sizeof(SNEPPXFuture));
     if (!fut) return NULL;
     fut->ready  = 0;
     fut->result = NULL;
-    arix_mutex_init(&fut->lock);
-    arix_cond_init(&fut->cond);
+    SNEPPX_mutex_init(&fut->lock);
+    SNEPPX_cond_init(&fut->cond);
     return fut;
 }
 
-void arix_future_destroy(ArixFuture* fut) {
+void SNEPPX_future_destroy(SNEPPXFuture* fut) {
     if (!fut) return;
-    arix_cond_destroy(&fut->cond);
-    arix_mutex_destroy(&fut->lock);
+    SNEPPX_cond_destroy(&fut->cond);
+    SNEPPX_mutex_destroy(&fut->lock);
     free(fut);
 }
 
-void arix_future_set_result(ArixFuture* fut, void* result) {
-    arix_mutex_lock(&fut->lock);
+void SNEPPX_future_set_result(SNEPPXFuture* fut, void* result) {
+    SNEPPX_mutex_lock(&fut->lock);
     fut->result  = result;
     fut->ready   = 1;
-    arix_mutex_unlock(&fut->lock);
-    arix_cond_broadcast(&fut->cond);
+    SNEPPX_mutex_unlock(&fut->lock);
+    SNEPPX_cond_broadcast(&fut->cond);
 }
 
-void arix_future_wait(ArixFuture* fut) {
-    arix_mutex_lock(&fut->lock);
+void SNEPPX_future_wait(SNEPPXFuture* fut) {
+    SNEPPX_mutex_lock(&fut->lock);
     while (!fut->ready)
-        arix_cond_wait(&fut->cond, &fut->lock);
-    arix_mutex_unlock(&fut->lock);
+        SNEPPX_cond_wait(&fut->cond, &fut->lock);
+    SNEPPX_mutex_unlock(&fut->lock);
 }
 
-int arix_future_is_ready(ArixFuture* fut) {
+int SNEPPX_future_is_ready(SNEPPXFuture* fut) {
     return fut->ready;
 }
 
-void* arix_future_get_result(ArixFuture* fut) {
-    arix_future_wait(fut);
+void* SNEPPX_future_get_result(SNEPPXFuture* fut) {
+    SNEPPX_future_wait(fut);
     return fut->result;
 }
 
@@ -208,22 +208,22 @@ void* arix_future_get_result(ArixFuture* fut) {
  *  struct defined with native types to avoid MSVC C typedef scoping
  * ================================================================== */
 
-struct ArixThreadPool {
+struct SNEPPXThreadPool {
     size_t              num_threads;
     volatile int        shutdown;
     uintptr_t*          threads;       /* [num_threads] — cast to native type */
     WorkDeque*          queues;        /* [num_threads]  */
-    arix_mutex_t        global_lock;
-    arix_cond_t         global_cond;
+    SNEPPX_mutex_t        global_lock;
+    SNEPPX_cond_t         global_cond;
     volatile int        active_tasks;  /* live + queued  */
     volatile int        waiting_count; /* sleepers       */
 };
 
 /* Helper define for allocating thread handles (native type per platform) */
 #ifdef _WIN32
-#define ARIX_THREAD_SIZE  sizeof(HANDLE)
+#define SNEPPX_THREAD_SIZE  sizeof(HANDLE)
 #else
-#define ARIX_THREAD_SIZE  sizeof(pthread_t)
+#define SNEPPX_THREAD_SIZE  sizeof(pthread_t)
 #endif
 
 /* Thread ID used for round-robin task distribution, stored in TLS */
@@ -234,7 +234,7 @@ static __thread int g_thread_id = -1;
 #endif
 
 static void set_thread_id(int id) { g_thread_id = id; }
-int  arix_thread_id(void)         { return g_thread_id; }
+int  SNEPPX_thread_id(void)         { return g_thread_id; }
 
 /* Worker thread entry point */
 #ifdef _WIN32
@@ -243,12 +243,12 @@ static DWORD WINAPI worker_entry(LPVOID arg)
 static void* worker_entry(void* arg)
 #endif
 {
-    ArixThreadPool* pool = (ArixThreadPool*)((void**)arg)[0];
+    SNEPPXThreadPool* pool = (SNEPPXThreadPool*)((void**)arg)[0];
     int             tid  = (int)(intptr_t)((void**)arg)[1];
     set_thread_id(tid);
     free(arg);
 
-    ArixTask task;
+    SNEPPXTask task;
     while (!pool->shutdown) {
         int got = 0;
 
@@ -268,28 +268,28 @@ static void* worker_entry(void* arg)
 
         if (got) {
             task.func(task.arg);
-            arix_mutex_lock(&pool->global_lock);
+            SNEPPX_mutex_lock(&pool->global_lock);
             pool->active_tasks--;
-            arix_mutex_unlock(&pool->global_lock);
+            SNEPPX_mutex_unlock(&pool->global_lock);
             continue;
         }
 
         /* 3. No work — sleep until signaled (predicate check avoids lost wakeup) */
-        arix_mutex_lock(&pool->global_lock);
+        SNEPPX_mutex_lock(&pool->global_lock);
         pool->waiting_count++;
         while (!pool->shutdown && pool->active_tasks == 0) {
-            arix_cond_wait(&pool->global_cond, &pool->global_lock);
+            SNEPPX_cond_wait(&pool->global_cond, &pool->global_lock);
         }
         pool->waiting_count--;
-        arix_mutex_unlock(&pool->global_lock);
+        SNEPPX_mutex_unlock(&pool->global_lock);
     }
     return 0;
 }
 
-ArixThreadPool* arix_threadpool_create(size_t num_threads) {
-    if (num_threads == 0) num_threads = arix_threadpool_default_count();
+SNEPPXThreadPool* SNEPPX_threadpool_create(size_t num_threads) {
+    if (num_threads == 0) num_threads = SNEPPX_threadpool_default_count();
 
-    ArixThreadPool* pool = (ArixThreadPool*)malloc(sizeof(ArixThreadPool));
+    SNEPPXThreadPool* pool = (SNEPPXThreadPool*)malloc(sizeof(SNEPPXThreadPool));
     if (!pool) return NULL;
 
     pool->num_threads   = num_threads;
@@ -304,8 +304,8 @@ ArixThreadPool* arix_threadpool_create(size_t num_threads) {
         return NULL;
     }
 
-    arix_mutex_init(&pool->global_lock);
-    arix_cond_init(&pool->global_cond);
+    SNEPPX_mutex_init(&pool->global_lock);
+    SNEPPX_cond_init(&pool->global_cond);
 
     for (size_t i = 0; i < num_threads; i++)
         deque_init(&pool->queues[i]);
@@ -317,7 +317,7 @@ ArixThreadPool* arix_threadpool_create(size_t num_threads) {
         if (!args) goto fail;
         args[0] = (void*)pool;
         args[1] = (void*)(intptr_t)i;
-        if (arix_thread_create(&pool->threads[i], worker_entry, args) != 0) {
+        if (SNEPPX_thread_create(&pool->threads[i], worker_entry, args) != 0) {
             free(args);
             goto fail;
         }
@@ -328,28 +328,28 @@ ArixThreadPool* arix_threadpool_create(size_t num_threads) {
 fail:
     for (size_t j = 0; j < num_threads; j++) {
         if (j < i) {
-            arix_thread_join(pool->threads[j]);
+            SNEPPX_thread_join(pool->threads[j]);
             deque_destroy(&pool->queues[j]);
         } else {
             deque_destroy(&pool->queues[j]);
         }
     }
-    arix_cond_destroy(&pool->global_cond);
-    arix_mutex_destroy(&pool->global_lock);
+    SNEPPX_cond_destroy(&pool->global_cond);
+    SNEPPX_mutex_destroy(&pool->global_lock);
     free(pool->threads); free(pool->queues); free(pool);
     return NULL;
 }
 
-void arix_threadpool_destroy(ArixThreadPool* pool) {
+void SNEPPX_threadpool_destroy(SNEPPXThreadPool* pool) {
     if (!pool) return;
     pool->shutdown = 1;
-    arix_cond_broadcast(&pool->global_cond);
+    SNEPPX_cond_broadcast(&pool->global_cond);
     for (size_t i = 0; i < pool->num_threads; i++) {
-        arix_thread_join(pool->threads[i]);
+        SNEPPX_thread_join(pool->threads[i]);
         deque_destroy(&pool->queues[i]);
     }
-    arix_cond_destroy(&pool->global_cond);
-    arix_mutex_destroy(&pool->global_lock);
+    SNEPPX_cond_destroy(&pool->global_cond);
+    SNEPPX_mutex_destroy(&pool->global_lock);
     free(pool->threads);
     free(pool->queues);
     free(pool);
@@ -358,7 +358,7 @@ void arix_threadpool_destroy(ArixThreadPool* pool) {
 /* Submit a task to a thread's queue (round-robin via atomic index or random). */
 static volatile long g_rr_counter = 0;
 
-int arix_threadpool_submit(ArixThreadPool* pool, ArixTask task) {
+int SNEPPX_threadpool_submit(SNEPPXThreadPool* pool, SNEPPXTask task) {
     size_t idx;
     if (g_thread_id >= 0) {
         idx = (size_t)g_thread_id;   /* own queue  */
@@ -374,40 +374,40 @@ int arix_threadpool_submit(ArixThreadPool* pool, ArixTask task) {
     int ret = deque_push(&pool->queues[idx], task);
     if (ret != 0) return ret;
 
-    arix_mutex_lock(&pool->global_lock);
+    SNEPPX_mutex_lock(&pool->global_lock);
     pool->active_tasks++;
     /* Wake one sleeper */
     if (pool->waiting_count > 0)
-        arix_cond_signal(&pool->global_cond);
-    arix_mutex_unlock(&pool->global_lock);
+        SNEPPX_cond_signal(&pool->global_cond);
+    SNEPPX_mutex_unlock(&pool->global_lock);
     return 0;
 }
 
 typedef struct {
-    ArixTask    inner;
-    ArixFuture* future;
+    SNEPPXTask    inner;
+    SNEPPXFuture* future;
 } FutureWrapper;
 
 static void future_wrapper_func(void* arg) {
     FutureWrapper* fw = (FutureWrapper*)arg;
     fw->inner.func(fw->inner.arg);
-    arix_future_set_result(fw->future, NULL);
+    SNEPPX_future_set_result(fw->future, NULL);
     free(fw);
 }
 
-int arix_threadpool_submit_future(ArixThreadPool* pool, ArixTask task, ArixFuture* fut) {
-    if (!fut) return arix_threadpool_submit(pool, task);
+int SNEPPX_threadpool_submit_future(SNEPPXThreadPool* pool, SNEPPXTask task, SNEPPXFuture* fut) {
+    if (!fut) return SNEPPX_threadpool_submit(pool, task);
     FutureWrapper* fw = (FutureWrapper*)malloc(sizeof(FutureWrapper));
     if (!fw) return -1;
     fw->inner  = task;
     fw->future = fut;
-    ArixTask wrapper;
+    SNEPPXTask wrapper;
     wrapper.func = future_wrapper_func;
     wrapper.arg  = fw;
-    return arix_threadpool_submit(pool, wrapper);
+    return SNEPPX_threadpool_submit(pool, wrapper);
 }
 
-void arix_threadpool_wait(ArixThreadPool* pool) {
+void SNEPPX_threadpool_wait(SNEPPXThreadPool* pool) {
     /* Busy-wait until all tasks are done.  Workers are guaranteed to wake
      * for every submitted task because the predicate-based cond_wait loop
      * cannot lose signals. */
@@ -428,7 +428,7 @@ void arix_threadpool_wait(ArixThreadPool* pool) {
     }
 }
 
-size_t arix_threadpool_default_count(void) {
+size_t SNEPPX_threadpool_default_count(void) {
 #ifdef _WIN32
     SYSTEM_INFO info;
     GetSystemInfo(&info);
@@ -445,7 +445,7 @@ size_t arix_threadpool_default_count(void) {
  * ================================================================== */
 
 typedef struct {
-    ArixRangeFunc func;
+    SNEPPXRangeFunc func;
     void*         arg;
     size_t        start;
     size_t        end;
@@ -458,9 +458,9 @@ static void for_task_func(void* arg) {
     free(fta);
 }
 
-void arix_parallel_for(ArixThreadPool* pool,
+void SNEPPX_parallel_for(SNEPPXThreadPool* pool,
                        size_t start, size_t end,
-                       ArixRangeFunc func, void* arg) {
+                       SNEPPXRangeFunc func, void* arg) {
     size_t range   = end - start;
     size_t nthreads = pool->num_threads;
     if (range == 0) return;
@@ -483,16 +483,16 @@ void arix_parallel_for(ArixThreadPool* pool,
         fta->end   = e;
         fta->chunk = chunk_size;
 
-        ArixTask task;
+        SNEPPXTask task;
         task.func = for_task_func;
         task.arg  = fta;
-        if (arix_threadpool_submit(pool, task) == 0)
+        if (SNEPPX_threadpool_submit(pool, task) == 0)
             num_tasks++;
         else
             func(s, e, arg);
     }
 
-    arix_threadpool_wait(pool);
+    SNEPPX_threadpool_wait(pool);
 }
 
 /* ==================================================================
@@ -500,8 +500,8 @@ void arix_parallel_for(ArixThreadPool* pool,
  * ================================================================== */
 
 typedef struct {
-    ArixReduceFunc  reduce_func;
-    ArixCombineFunc combine_func;
+    SNEPPXReduceFunc  reduce_func;
+    SNEPPXCombineFunc combine_func;
     void*           arg;
     size_t          start;
     size_t          end;
@@ -516,11 +516,11 @@ static void reduce_task_func(void* arg) {
     free(rta);
 }
 
-void arix_parallel_reduce(ArixThreadPool* pool,
+void SNEPPX_parallel_reduce(SNEPPXThreadPool* pool,
                           size_t start, size_t end,
                           void* init, size_t elem_size,
-                          ArixReduceFunc reduce_func,
-                          ArixCombineFunc combine_func,
+                          SNEPPXReduceFunc reduce_func,
+                          SNEPPXCombineFunc combine_func,
                           void* result,
                           void* user_arg) {
     size_t range    = end - start;
@@ -560,14 +560,14 @@ void arix_parallel_reduce(ArixThreadPool* pool,
         rta->result       = partials + chunks_submitted * elem_size;
         rta->elem_size    = elem_size;
 
-        ArixTask task;
+        SNEPPXTask task;
         task.func = reduce_task_func;
         task.arg  = rta;
-        arix_threadpool_submit(pool, task);
+        SNEPPX_threadpool_submit(pool, task);
         chunks_submitted++;
     }
 
-    arix_threadpool_wait(pool);
+    SNEPPX_threadpool_wait(pool);
 
     /* Combine partials */
     if (chunks_submitted > 0) {

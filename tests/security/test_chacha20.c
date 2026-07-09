@@ -30,10 +30,10 @@ void test_vectors(void) {
         0xb5,0x12,0x9c,0xd1,0xde,0x16,0x4e,0xb9,0xcb,0xd0,0x83,0xe8,0xa2,0x50,0x3c,0x4e
     };
 
-    ArixChaCha20State state;
-    arix_chacha20_init(&state, key, nonce, 1);
+    SNEPPXChaCha20State state;
+    SNEPPX_chacha20_init(&state, key, nonce, 1);
     uint8_t output[64];
-    arix_chacha20_block(&state, output);
+    SNEPPX_chacha20_block(&state, output);
     int match = memcmp(output, expected, 64) == 0;
     if (!match) {
         printf("  Got:      "); for (int i = 0; i < 32; i++) printf("%02x", output[i]); printf("\n");
@@ -47,14 +47,14 @@ void test_counter_overflow(void) {
     uint8_t key[32], nonce[12];
     memset(key, 0x42, 32); memset(nonce, 0, 12);
 
-    ArixChaCha20State s1, s2;
-    arix_chacha20_init(&s1, key, nonce, 0xFFFFFFFF);
-    arix_chacha20_init(&s2, key, nonce, 0xFFFFFFFF);
+    SNEPPXChaCha20State s1, s2;
+    SNEPPX_chacha20_init(&s1, key, nonce, 0xFFFFFFFF);
+    SNEPPX_chacha20_init(&s2, key, nonce, 0xFFFFFFFF);
 
     uint8_t b1[64], b2[64];
-    arix_chacha20_block(&s1, b1);
-    arix_chacha20_block(&s2, b2);
-    arix_chacha20_block(&s2, b2);
+    SNEPPX_chacha20_block(&s1, b1);
+    SNEPPX_chacha20_block(&s2, b2);
+    SNEPPX_chacha20_block(&s2, b2);
 
     TEST("counter wraps from 0xFFFFFFFF", s1.state[12] == 0);
     TEST("two counter increments differ", memcmp(b1, b2, 64) != 0);
@@ -65,18 +65,18 @@ void test_keystream_distinct(void) {
     uint8_t key[32], nonce[12];
     memset(key, 0x42, 32); memset(nonce, 0, 12);
 
-    ArixChaCha20State s1, s2;
-    arix_chacha20_init(&s1, key, nonce, 0);
-    arix_chacha20_init(&s2, key, nonce, 1);
+    SNEPPXChaCha20State s1, s2;
+    SNEPPX_chacha20_init(&s1, key, nonce, 0);
+    SNEPPX_chacha20_init(&s2, key, nonce, 1);
 
     uint8_t b1[64], b2[64];
-    arix_chacha20_block(&s1, b1);
-    arix_chacha20_block(&s2, b2);
+    SNEPPX_chacha20_block(&s1, b1);
+    SNEPPX_chacha20_block(&s2, b2);
     TEST("different counter = different keystream", memcmp(b1, b2, 64) != 0);
 }
 
 int main(void) {
-    printf("=== ARIX-ChaCha20 Test Suite ===\n");
+    printf("=== SNEPPX-ChaCha20 Test Suite ===\n");
     test_vectors();
     test_counter_overflow();
     test_keystream_distinct();

@@ -181,7 +181,7 @@ static void poly_getnoise(int16_t r[256], const uint8_t *seed, uint8_t nonce) {
     uint8_t ctx[33];
     memcpy(ctx, seed, 32);
     ctx[32] = nonce;
-    arix_random_bytes(buf, sizeof(buf));
+    SNEPPX_random_bytes(buf, sizeof(buf));
     for (int i = 0; i < 256; i++) r[i] = (buf[2 * i] | ((uint16_t)buf[2 * i + 1] << 8)) & 0x1fff;
     for (int i = 0; i < 256; i++) if (r[i] >= KYBER_Q) r[i] = 0;
 }
@@ -189,7 +189,7 @@ static void poly_getnoise(int16_t r[256], const uint8_t *seed, uint8_t nonce) {
 static void cpa_pke_keygen(uint8_t pk[KYBER_PUBLICKEYBYTES], uint8_t sk[KYBER_SECRETKEYBYTES]) {
     kyber_init_ntt();
     uint8_t seed[32];
-    arix_random_bytes(seed, 32);
+    SNEPPX_random_bytes(seed, 32);
     int16_t a[KYBER_K * KYBER_K * 256], s[KYBER_K * 256], e[KYBER_K * 256];
     for (int i = 0; i < KYBER_K; i++) {
         poly_getnoise(s + i * 256, seed, i);
@@ -208,17 +208,17 @@ static void cpa_pke_keygen(uint8_t pk[KYBER_PUBLICKEYBYTES], uint8_t sk[KYBER_SE
     memcpy(sk + 32, pk, KYBER_PUBLICKEYBYTES);
 }
 
-int arix_kyber_keygen(uint8_t *pk, uint8_t *sk, int variant) {
+int SNEPPX_kyber_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     cpa_pke_keygen(pk, sk);
     return 0;
 }
 
-int arix_kyber_encaps(uint8_t *ct, uint8_t *ss, const uint8_t *pk, int variant) {
+int SNEPPX_kyber_encaps(uint8_t *ct, uint8_t *ss, const uint8_t *pk, int variant) {
     if (!ct || !ss || !pk) return -1;
     uint8_t coin[32], m[32];
-    arix_random_bytes(coin, 32);
-    arix_random_bytes(m, 32);
+    SNEPPX_random_bytes(coin, 32);
+    SNEPPX_random_bytes(m, 32);
     int16_t mp[256];
     poly_frommsg(mp, m);
     int16_t sp[KYBER_K * 256], ep[KYBER_K * 256], epp[256];
@@ -254,7 +254,7 @@ int arix_kyber_encaps(uint8_t *ct, uint8_t *ss, const uint8_t *pk, int variant) 
     return 0;
 }
 
-int arix_kyber_decaps(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, int variant) {
+int SNEPPX_kyber_decaps(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, int variant) {
     if (!ss || !ct || !sk) return -1;
     uint8_t pk[KYBER_PUBLICKEYBYTES];
     memcpy(pk, sk + 32, KYBER_PUBLICKEYBYTES);
