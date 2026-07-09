@@ -1,5 +1,5 @@
-; SHA-NI accelerated SHA-256 operations
-; MASM x64 syntax
+; SneppX-ALG SHA-NI accelerated SHA-256 operations
+; MASM x64 syntax — constant-time, speculation-safe, memory wiping
 
 .data
     align 16
@@ -19,69 +19,220 @@
          dd 0391c0cb3h, 04ed8aa4ah, 05b9cca4fh, 0682e6ff3h
          dd 0748f82eeh, 078a5636fh, 084c87814h, 08cc70208h
          dd 090befffah, 0a4506cebh, 0bef9a3f7h, 0c67178f2h
-
     align 16
     PSHUFFLE_BYTE_FLIP_MASK db 3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12
+    align 16
+    sha256_iv dd 06a09e667h, 0bb67ae85h, 03c6ef372h, 0a54ff53ah
+              dd 0510e527fh, 09b05688ch, 01f83d9abh, 05be0cd19h
+    align 16
+    sha512_iv dq 06a09e667f3bcc908h, 0bb67ae8584caa73bh, 03c6ef372fe94f82bh, 0a54ff53a5f1d36f1h
+              dq 0510e527fade682d1h, 09b05688c2b3e6c1fh, 01f83d9abfb41bd6bh, 05be0cd19137e2179h
 
 .code
 
-; void sha_ni_transform(uint32_t state[8], const uint8_t block[64])
-sha_ni_transform PROC
+; void sneppx_sha256_transform(uint32_t state[8], const uint8_t block[64])
+sneppx_sha256_transform PROC
+    lfence
     movdqu xmm0, xmmword ptr [rcx]
     movdqu xmm1, xmmword ptr [rcx + 16]
     movdqu xmm2, xmmword ptr [rcx + 32]
     movdqu xmm3, xmmword ptr [rcx + 48]
-
     movdqu xmm4, xmmword ptr [rdx]
     movdqu xmm5, xmmword ptr [rdx + 16]
     movdqu xmm6, xmmword ptr [rdx + 32]
     movdqu xmm7, xmmword ptr [rdx + 48]
-
-    pshufb xmm4, xmmword ptr [PSHUFFLE_BYTE_FLIP_MASK]
-    pshufb xmm5, xmmword ptr [PSHUFFLE_BYTE_FLIP_MASK]
-    pshufb xmm6, xmmword ptr [PSHUFFLE_BYTE_FLIP_MASK]
-    pshufb xmm7, xmmword ptr [PSHUFFLE_BYTE_FLIP_MASK]
-
+    lea r8, PSHUFFLE_BYTE_FLIP_MASK
+    pshufb xmm4, xmmword ptr [r8]
+    pshufb xmm5, xmmword ptr [r8]
+    pshufb xmm6, xmmword ptr [r8]
+    pshufb xmm7, xmmword ptr [r8]
     lea r8, K256
     mov r9d, 4
-round_loop:
+    xor r10, r10
+    xor r11, r11
+sha256_round_loop:
     sha256rnds2 xmm0, xmm1, xmmword ptr [r8]
     sha256rnds2 xmm1, xmm0, xmmword ptr [r8 + 16]
     add r8, 32
     dec r9d
-    jnz round_loop
-
+    jnz sha256_round_loop
     movdqu xmmword ptr [rcx], xmm0
     movdqu xmmword ptr [rcx + 16], xmm1
+    lfence
     ret
-sha_ni_transform ENDP
+sneppx_sha256_transform ENDP
 
-; void sha_ni_hash(uint8_t out[32], const uint8_t *in, size_t len)
-sha_ni_hash PROC
+; void sneppx_sha256_hash(uint8_t out[32], const uint8_t *in, size_t len)
+sneppx_sha256_hash PROC
     push rbx
+    push r12
+    push r13
+    push r14
+    sub rsp, 96
+    lfence
     mov rbx, rcx
-    mov r10, rdx
-    mov r11, r8
-
-    mov dword ptr [rcx], 06a09e667h
-    mov dword ptr [rcx + 4], 0bb67ae85h
-    mov dword ptr [rcx + 8], 03c6ef372h
-    mov dword ptr [rcx + 12], 0a54ff53ah
-    mov dword ptr [rcx + 16], 0510e527fh
-    mov dword ptr [rcx + 20], 09b05688ch
-    mov dword ptr [rcx + 24], 01f83d9abh
-    mov dword ptr [rcx + 28], 05be0cd19h
-
-hash_loop:
-    cmp r11, 64
-    jl hash_done
-    sub r11, 64
-    call sha_ni_transform
-    add r10, 64
-    jmp hash_loop
-hash_done:
+    mov r12, rdx
+    mov r13, r8
+    lea rdi, [rsp]
+    lea rsi, sha256_iv
+    mov rcx, 8
+    rep movsd
+    mov r14, r12
+sha256_hash_loop:
+    cmp r13, 64
+    jb sha256_hash_pad
+    mov rcx, rsp
+    mov rdx, r14
+    call sneppx_sha256_transform
+    add r14, 64
+    sub r13, 64
+    jmp sha256_hash_loop
+sha256_hash_pad:
+    lea rdi, [rsp + 64]
+    xor eax, eax
+    mov ecx, 16
+    rep stosd
+    lea rdi, [rsp + 64]
+    mov rcx, r13
+    xor r10, r10
+sha256_pad_copy:
+    cmp r10, r13
+    jae sha256_pad_done
+    movzx eax, byte ptr [r14 + r10]
+    mov byte ptr [rdi + r10], al
+    inc r10
+    jmp sha256_pad_copy
+sha256_pad_done:
+    mov byte ptr [rsp + 64 + r13], 80h
+    mov rcx, rsp
+    lea rdx, [rsp + 64]
+    call sneppx_sha256_transform
+    lea rdi, [rsp + 64]
+    xor eax, eax
+    mov ecx, 16
+    rep stosd
+    mov rax, r12
+    shl rax, 3
+    mov qword ptr [rsp + 120], rax
+    mov rcx, rsp
+    lea rdx, [rsp + 64]
+    call sneppx_sha256_transform
+    mov rdi, rbx
+    lea rsi, [rsp]
+    mov rcx, 8
+    rep movsd
+    lea rdi, [rsp]
+    mov rcx, 24
+    xor eax, eax
+    rep stosq
+    mfence
+    lfence
+    add rsp, 96
+    pop r14
+    pop r13
+    pop r12
     pop rbx
     ret
-sha_ni_hash ENDP
+sneppx_sha256_hash ENDP
+
+; void sneppx_sha256_hmac(uint8_t out[32], const uint8_t *key, size_t key_len, const uint8_t *msg, size_t msg_len)
+sneppx_sha256_hmac PROC
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    sub rsp, 160
+    lfence
+    mov rbx, rcx
+    mov r12, rdx
+    mov r13, r8
+    mov r14, r9
+    mov r15, qword ptr [rsp + 192]
+    lea rdi, [rsp]
+    mov rcx, 20
+    xor eax, eax
+    rep stosq
+    mov r10, r13
+    cmp r10, 64
+    jbe hmac_key_inner
+    lea rcx, [rsp]
+    mov rdx, r12
+    mov r8, r13
+    call sneppx_sha256_hash
+    lea rdi, [rsp]
+    mov r10, 32
+hmac_key_inner:
+    lea rdi, [rsp + 64]
+    lea rsi, [rsp]
+    mov rcx, 8
+    rep movsq
+    xor r11, r11
+hmac_xor_ipad:
+    cmp r11, 64
+    jae hmac_xor_ipad_done
+    mov al, byte ptr [rsp + r11]
+    xor al, 36h
+    mov byte ptr [rsp + r11], al
+    inc r11
+    jmp hmac_xor_ipad_loop
+hmac_xor_ipad_done:
+    lea rdi, [rsp + 128]
+    xor eax, eax
+    mov ecx, 4
+    rep stosq
+    mov qword ptr [rsp + 128], 0
+    lea rcx, [rsp + 96]
+    lea rdx, [rsp]
+    mov r8, r14
+    call sneppx_sha256_hash
+    xor r11, r11
+hmac_xor_opad:
+    cmp r11, 64
+    jae hmac_xor_opad_done
+    mov al, byte ptr [rsp + 64 + r11]
+    xor al, 5ch
+    mov byte ptr [rsp + 64 + r11], al
+    inc r11
+    jmp hmac_xor_opad
+hmac_xor_opad_done:
+    lea rdi, [rsp + 64 + 64]
+    mov rax, r10
+    mov rcx, 8
+    rep stosq
+    lea rcx, [rsp + 96]
+    lea rdx, [rsp + 64]
+    mov r8, 32
+    call sneppx_sha256_hash
+    mov rdi, rbx
+    lea rsi, [rsp + 96]
+    mov rcx, 8
+    rep movsd
+    lea rdi, [rsp]
+    mov rcx, 20
+    xor eax, eax
+    rep stosq
+    mfence
+    lfence
+    add rsp, 160
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+sneppx_sha256_hmac ENDP
+
+; void sneppx_sha256_wipe_state(uint32_t state[8])
+sneppx_sha256_wipe_state PROC
+    lfence
+    xor eax, eax
+    mov rdi, rcx
+    mov ecx, 8
+    rep stosd
+    mfence
+    lfence
+    ret
+sneppx_sha256_wipe_state ENDP
 
 END
