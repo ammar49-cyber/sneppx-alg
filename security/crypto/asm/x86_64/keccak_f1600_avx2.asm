@@ -80,7 +80,8 @@ theta_mix_loop:
     jae theta_mix_done
     mov rax, r11
     xor rdx, rdx
-    div rsi
+    mov ecx, 5
+    div rcx
     mov r12d, edx
     mov r14, qword ptr [r10 + r11*8]
     mov r15, qword ptr [rsp + 40 + r12*8]
@@ -126,6 +127,7 @@ keccak_rho_pi:
     mov rax, qword ptr [r12 + r15*8]
     test r11d, r11d
     jz keccak_rho_skip
+    mov ecx, r11d
     rol rax, cl
 keccak_rho_skip:
     mov r10d, dword ptr [keccak_pil + r15*4]

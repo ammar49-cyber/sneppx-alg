@@ -153,6 +153,7 @@ ghash_finalize:
 sneppx_aes_gcm_ghash ENDP
 
 ; void sneppx_aes_ctr_encrypt(uint8_t *out, const uint8_t *in, size_t len, const uint8_t rk[240], int rounds, uint8_t iv[16])
+; Windows x64: rcx=out, rdx=in, r8=len, r9=rk, [rsp+40]=rounds, [rsp+48]=iv
 sneppx_aes_ctr_encrypt PROC
     push rbx
     push r12
@@ -164,34 +165,33 @@ sneppx_aes_ctr_encrypt PROC
     mov r12, rdx
     mov r13, r8
     mov r14, r9
-    mov r15, qword ptr [rsp + 56]
+    mov r10d, dword ptr [rsp + 72]
+    mov r15, qword ptr [rsp + 80]
     movdqu xmm4, xmmword ptr [r15]
+    sub r10d, 1
 ctr_enc_loop:
     sub r13, 16
     jl ctr_enc_done
     movdqa xmm0, xmm4
-    movdqu xmm1, xmmword ptr [r12]
     movdqu xmm5, xmmword ptr [r14]
     pxor xmm0, xmm5
-    mov r10, r14
-    mov r11, 1
-    xor r8, r8
+    xor r11, r11
+    mov r8d, r10d
 ctr_enc_rounds:
-    lea r8, [r8 + 16]
-    movdqu xmm1, xmmword ptr [r10 + r8]
+    movdqu xmm1, xmmword ptr [r14 + r11 + 16]
     aesenc xmm0, xmm1
-    inc r11
-    cmp r11, r14
-    jl ctr_enc_rounds
-    lea r8, [r8 + 16]
-    movdqu xmm1, xmmword ptr [r10 + r8]
+    add r11, 16
+    dec r8d
+    jnz ctr_enc_rounds
+    movdqu xmm1, xmmword ptr [r14 + r11 + 16]
     aesenclast xmm0, xmm1
+    movdqu xmm1, xmmword ptr [r12]
+    pxor xmm0, xmm1
     movdqu xmmword ptr [rbx], xmm0
     add rbx, 16
     add r12, 16
     movdqa xmm6, xmm4
     pshufb xmm6, xmmword ptr [byte_swap_mask]
-    movdqa xmm7, xmm6
     paddq xmm6, xmmword ptr [inc_mask]
     pshufb xmm6, xmmword ptr [byte_swap_mask]
     movdqa xmm4, xmm6
@@ -206,102 +206,54 @@ ctr_enc_done:
     ret
 sneppx_aes_ctr_encrypt ENDP
 
-; void sneppx_aes_gcm_encrypt(uint8_t *out, const uint8_t *in, size_t len, const uint8_t *key, size_t key_len, const uint8_t *iv, size_t iv_len, const uint8_t *aad, size_t aad_len, uint8_t *tag, size_t tag_len)
-sneppx_aes_gcm_encrypt PROC
+; void sneppx_aes_gcm_init(uint8_t h[16], uint8_t rk[240], const uint8_t *key, size_t key_len)
+sneppx_aes_gcm_init PROC
     push rbx
-    push r12
-    push r13
-    push r14
-    push r15
-    push rsi
-    push rdi
-    sub rsp, 320
     lfence
-    mov rbx, rcx
-    mov r12, rdx
-    mov r13, r8
-    lea rdi, [rsp]
-    mov rcx, 40
-    xor eax, eax
-    rep stosq
-    lea rdi, [rsp + 240]
-    mov r10, qword ptr [rsp + 80]
-    mov r11, qword ptr [rsp + 88]
-    cmp r11, 32
-    je gcm_key_256
-    jmp gcm_key_done
-gcm_key_256:
-    lea rcx, [rsp]
-    mov rdx, r10
+    mov r10, rcx
+    mov r11, rdx
+    mov rbx, r9
+    lea rcx, [r11]
+    mov rdx, rbx
     call sneppx_aes_expand_key
-gcm_key_done:
-    lea rdi, [rsp + 240]
-    mov rcx, 10
-    xor eax, eax
-    rep stosq
-    mov r10, qword ptr [rsp + 96]
-    mov r11, qword ptr [rsp + 104]
-    mov rdi, rsp
-    add rdi, 16
-    mov rcx, 14
-    xor eax, eax
-    rep stosq
-    lea r14, [rsp]
-    movdqu xmm4, xmmword ptr [r10]
-    movdqa xmmword ptr [rsp + 16], xmm4
-    mov r15, qword ptr [rsp + 112]
-    mov rsi, qword ptr [rsp + 120]
-    call sneppx_aes_gcm_ghash
-    mov r10, qword ptr [rsp + 128]
-    mov r11, qword ptr [rsp + 136]
-    movdqu xmm5, xmmword ptr [rsp]
-    movdqu xmmword ptr [r10], xmm5
-    lea rdi, [rsp]
-    mov rcx, 40
-    xor eax, eax
-    rep stosq
-    lea rdi, [rsp + 240]
-    mov rcx, 10
-    xor eax, eax
-    rep stosq
+    lea rcx, [rsp - 16]
+    sub rsp, 16
+    movdqu xmmword ptr [rsp], xmm0
+    pxor xmm0, xmm0
+    mov rdx, r10
+    movdqa xmmword ptr [rdx], xmm0
+    lea r8, [rsp]
+    xor r9, r9
+    xor rax, rax
+    xor r11, r11
     lfence
-    add rsp, 320
-    pop rdi
-    pop rsi
-    pop r15
-    pop r14
-    pop r13
-    pop r12
+    add rsp, 16
     pop rbx
     ret
-sneppx_aes_gcm_encrypt ENDP
+sneppx_aes_gcm_init ENDP
 
 ; void sneppx_aes_cmac(const uint8_t *key, size_t key_len, const uint8_t *in, size_t in_len, uint8_t *mac, size_t mac_len)
+; Windows x64: rcx=key, rdx=key_len, r8=in, r9=in_len, [rsp+40]=mac, [rsp+48]=mac_len
 sneppx_aes_cmac PROC
     push rbx
     push r12
     push r13
     sub rsp, 64
     lfence
-    mov r10, rdx
-    mov r11, r8
-    mov r12, r9
-    mov r13, qword ptr [rsp + 80]
+    mov r10, r8
+    mov r11, r9
+    mov r12, rdx
+    mov r13, qword ptr [rsp + 104]
     movdqa xmm0, xmmword ptr [zero_block]
-    movdqa xmmword ptr [rsp], xmm0
-    xor r8, r8
     xor r9, r9
 cmac_block_loop:
-    cmp r9, r12
+    cmp r9, r11
     jae cmac_done
     movdqu xmm1, xmmword ptr [r10 + r9]
     pxor xmm0, xmm1
-    movdqa xmmword ptr [rsp], xmm0
     add r9, 16
     jmp cmac_block_loop
 cmac_done:
-    mov r10, qword ptr [rsp + 88]
-    mov r11, qword ptr [rsp + 96]
     movdqu xmmword ptr [r13], xmm0
     lea rdi, [rsp]
     mov rcx, 8

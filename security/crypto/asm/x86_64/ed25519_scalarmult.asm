@@ -104,7 +104,7 @@ fe_mul_done:
     mov rax, qword ptr [rsp + 32]
     mov rbx, qword ptr [rsp + 40]
     mov rdx, qword ptr [rsp + 48]
-    mov rsi, qword_ptr [rsp + 56]
+    mov rsi, qword ptr [rsp + 56]
     mov r13, rax
     mov r14, rbx
     mov r15, rdx
@@ -309,7 +309,7 @@ smult_loop:
     lea rdi, [rsp]
     lea rsi, [rsp]
     lea rdx, [rsp + 480]
-    call snepx_ed25519_point_double
+    call sneppx_ed25519_point_double
     mov rax, r13
     shr rax, 3
     movzx r14d, byte ptr [r12 + rax]
@@ -321,7 +321,7 @@ smult_loop:
     lea rdi, [rsp + 480]
     lea rsi, [rsp]
     lea rdx, [rsp + 320]
-    call snepx_ed25519_point_add
+    call sneppx_ed25519_point_add
     xor r15d, r15d
 smult_select_loop:
     cmp r15d, 40

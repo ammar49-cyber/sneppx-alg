@@ -33,46 +33,83 @@ sneppx_chacha20_init_state PROC
 sneppx_chacha20_init_state ENDP
 
 ; void sneppx_chacha20_block(uint8_t keystream[64], const uint32_t state[16])
+; Single ChaCha20 block using SSE2 — processes state as 4x4 matrix of 32-bit words
+; State: xmm0=row0(constants), xmm1=row1(key[0..3]), xmm2=row2(key[4..7]), xmm3=row3(counter+nonce)
+; Save xmm4-xmm7 (original state copies for final addition) on stack
 sneppx_chacha20_block PROC
-    push rbx
-    push r12
+    sub rsp, 64
     lfence
     mov r10, rdx
-    vmovdqu ymm0, ymmword ptr [r10]
-    vmovdqu ymm1, ymmword ptr [r10 + 32]
-    vmovdqa ymm8, ymm0
-    vmovdqa ymm9, ymm1
-    mov r12d, 10
-chacha_block_rounds:
-    vpaddd ymm0, ymm0, ymm1
-    vpxor ymm3, ymm3, ymm0
-    vpshufb ymm3, ymm3, ymmword ptr [permute_mask]
-    vpaddd ymm2, ymm2, ymm3
-    vpxor ymm1, ymm1, ymm2
-    vpslld ymm4, ymm1, 12
-    vpsrld ymm1, ymm1, 20
-    vpor ymm1, ymm4, ymm1
-    vpaddd ymm0, ymm0, ymm1
-    vpxor ymm3, ymm3, ymm0
-    vpshufb ymm3, ymm3, ymmword ptr [permute_mask + 16]
-    vpaddd ymm2, ymm2, ymm3
-    vpxor ymm1, ymm1, ymm2
-    vpslld ymm4, ymm1, 7
-    vpsrld ymm1, ymm1, 25
-    vpor ymm1, ymm4, ymm1
-    vpshufd ymm1, ymm1, 0b00111001
-    vpshufd ymm2, ymm2, 0b01001110
-    vpshufd ymm3, ymm3, 0b10010011
-    dec r12d
-    jnz chacha_block_rounds
-    vpaddd ymm0, ymm0, ymm8
-    vpaddd ymm1, ymm1, ymm9
-    vmovdqu ymmword ptr [rcx], ymm0
-    vmovdqu ymmword ptr [rcx + 32], ymm1
+    mov r11, rcx
+    vmovdqu xmm0, xmmword ptr [r10]
+    vmovdqu xmm1, xmmword ptr [r10 + 16]
+    vmovdqu xmm2, xmmword ptr [r10 + 32]
+    vmovdqu xmm3, xmmword ptr [r10 + 48]
+    vmovdqa xmmword ptr [rsp], xmm0
+    vmovdqa xmmword ptr [rsp + 16], xmm1
+    vmovdqa xmmword ptr [rsp + 32], xmm2
+    vmovdqa xmmword ptr [rsp + 48], xmm3
+    mov r10d, 10
+chacha_round:
+    vpaddd xmm0, xmm0, xmm1
+    vpxor xmm3, xmm3, xmm0
+    vpsrld xmm4, xmm3, 16
+    vpslld xmm3, xmm3, 16
+    vpor xmm3, xmm3, xmm4
+    vpaddd xmm2, xmm2, xmm3
+    vpxor xmm1, xmm1, xmm2
+    vpslld xmm4, xmm1, 12
+    vpsrld xmm1, xmm1, 20
+    vpor xmm1, xmm1, xmm4
+    vpaddd xmm0, xmm0, xmm1
+    vpxor xmm3, xmm3, xmm0
+    vpsrld xmm4, xmm3, 24
+    vpslld xmm3, xmm3, 8
+    vpor xmm3, xmm3, xmm4
+    vpaddd xmm2, xmm2, xmm3
+    vpxor xmm1, xmm1, xmm2
+    vpslld xmm4, xmm1, 7
+    vpsrld xmm1, xmm1, 25
+    vpor xmm1, xmm1, xmm4
+    vpshufd xmm1, xmm1, 0x39
+    vpshufd xmm2, xmm2, 0x4E
+    vpshufd xmm3, xmm3, 0x93
+    vpaddd xmm0, xmm0, xmm1
+    vpxor xmm3, xmm3, xmm0
+    vpsrld xmm4, xmm3, 16
+    vpslld xmm3, xmm3, 16
+    vpor xmm3, xmm3, xmm4
+    vpaddd xmm2, xmm2, xmm3
+    vpxor xmm1, xmm1, xmm2
+    vpslld xmm4, xmm1, 12
+    vpsrld xmm1, xmm1, 20
+    vpor xmm1, xmm1, xmm4
+    vpaddd xmm0, xmm0, xmm1
+    vpxor xmm3, xmm3, xmm0
+    vpsrld xmm4, xmm3, 24
+    vpslld xmm3, xmm3, 8
+    vpor xmm3, xmm3, xmm4
+    vpaddd xmm2, xmm2, xmm3
+    vpxor xmm1, xmm1, xmm2
+    vpslld xmm4, xmm1, 7
+    vpsrld xmm1, xmm1, 25
+    vpor xmm1, xmm1, xmm4
+    vpshufd xmm1, xmm1, 0x93
+    vpshufd xmm2, xmm2, 0x4E
+    vpshufd xmm3, xmm3, 0x39
+    dec r10d
+    jnz chacha_round
+    vpaddd xmm0, xmm0, xmmword ptr [rsp]
+    vpaddd xmm1, xmm1, xmmword ptr [rsp + 16]
+    vpaddd xmm2, xmm2, xmmword ptr [rsp + 32]
+    vpaddd xmm3, xmm3, xmmword ptr [rsp + 48]
+    vmovdqu xmmword ptr [r11], xmm0
+    vmovdqu xmmword ptr [r11 + 16], xmm1
+    vmovdqu xmmword ptr [r11 + 32], xmm2
+    vmovdqu xmmword ptr [r11 + 48], xmm3
     vzeroupper
+    add rsp, 64
     lfence
-    pop r12
-    pop rbx
     ret
 sneppx_chacha20_block ENDP
 

@@ -21,8 +21,6 @@
 sneppx_ct_compare_u64 PROC
     lfence
     xor rax, rax
-    xor rcx, rcx
-    xor r8, r8
     cmp rcx, rdx
     sete al
     neg rax
@@ -75,9 +73,9 @@ sneppx_ct_conditional_swap ENDP
 ; Returns a if condition == ~0, b if condition == 0 — constant-time
 sneppx_ct_select_u64 PROC
     lfence
-    mov rax, rdx
+    mov rax, r8
     test rcx, rcx
-    cmovnz rax, r8
+    cmovnz rax, rdx
     lfence
     ret
 sneppx_ct_select_u64 ENDP

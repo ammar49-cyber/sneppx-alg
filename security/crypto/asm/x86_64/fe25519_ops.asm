@@ -28,33 +28,33 @@ sneppx_fe25519_add PROC
     mov r10, rcx
     mov r11, rdx
     mov r12, r8
-    xor r13, r13
-fe25519_add_loop:
-    cmp r13, 4
-    jae fe25519_add_reduce
-    mov rax, qword ptr [r11 + r13*8]
-    mov rbx, qword ptr [r12 + r13*8]
-    add rax, rbx
-    mov qword ptr [r10 + r13*8], rax
-    inc r13
-    jmp fe25519_add_loop
-fe25519_add_reduce:
-    mov rax, qword ptr [r10]
-    mov rbx, qword ptr [r10 + 8]
-    mov rcx, qword ptr [r10 + 16]
-    mov rdx, qword ptr [r10 + 24]
-    mov r14, rax
-    and r14, 1
-    mov r14b, 19
-    mul r14b
-    add rax, r14
-    adc rbx, 0
-    adc rcx, 0
-    adc rdx, 0
+    mov rax, qword ptr [r11]
+    add rax, qword ptr [r12]
     mov qword ptr [r10], rax
-    mov qword ptr [r10 + 8], rbx
-    mov qword ptr [r10 + 16], rcx
-    mov qword ptr [r10 + 24], rdx
+    mov rax, qword ptr [r11 + 8]
+    adc rax, qword ptr [r12 + 8]
+    mov qword ptr [r10 + 8], rax
+    mov rax, qword ptr [r11 + 16]
+    adc rax, qword ptr [r12 + 16]
+    mov qword ptr [r10 + 16], rax
+    mov rax, qword ptr [r11 + 24]
+    adc rax, qword ptr [r12 + 24]
+    mov qword ptr [r10 + 24], rax
+    mov r13d, 3
+fe25519_add_reduce:
+    setc al
+    movzx rax, al
+    mov rdx, qword ptr [r10 + 24]
+    shr rdx, 63
+    or rax, rdx
+    neg rax
+    and eax, 19
+    add qword ptr [r10], rax
+    adc qword ptr [r10 + 8], 0
+    adc qword ptr [r10 + 16], 0
+    adc qword ptr [r10 + 24], 0
+    dec r13d
+    jnz fe25519_add_reduce
     lfence
     pop r14
     pop r13
@@ -74,28 +74,30 @@ sneppx_fe25519_sub PROC
     mov r10, rcx
     mov r11, rdx
     mov r12, r8
-    xor r13, r13
-fe25519_sub_loop:
-    cmp r13, 4
-    jae fe25519_sub_done
-    mov rax, qword ptr [r11 + r13*8]
-    mov rbx, qword ptr [r12 + r13*8]
-    sub rax, rbx
-    mov qword ptr [r10 + r13*8], rax
-    inc r13
-    jmp fe25519_sub_loop
-fe25519_sub_done:
-    mov r14, 0
-    mov rax, qword ptr [r10]
-    mov rbx, qword ptr [r10 + 8]
-    mov rcx, qword ptr [r10 + 16]
-    mov rdx, qword ptr [r10 + 24]
-    mov r14, rax
-    sar r14, 63
-    and r14d, 19
-    mov rax, qword ptr [r10]
-    add rax, r14
+    mov rax, qword ptr [r11]
+    sub rax, qword ptr [r12]
     mov qword ptr [r10], rax
+    mov rax, qword ptr [r11 + 8]
+    sbb rax, qword ptr [r12 + 8]
+    mov qword ptr [r10 + 8], rax
+    mov rax, qword ptr [r11 + 16]
+    sbb rax, qword ptr [r12 + 16]
+    mov qword ptr [r10 + 16], rax
+    mov rax, qword ptr [r11 + 24]
+    sbb rax, qword ptr [r12 + 24]
+    mov qword ptr [r10 + 24], rax
+    mov r13d, 3
+fe25519_sub_reduce:
+    setc al
+    movzx rax, al
+    neg rax
+    and eax, 19
+    add qword ptr [r10], rax
+    adc qword ptr [r10 + 8], 0
+    adc qword ptr [r10 + 16], 0
+    adc qword ptr [r10 + 24], 0
+    dec r13d
+    jnz fe25519_sub_reduce
     lfence
     pop r14
     pop r13
@@ -106,88 +108,166 @@ sneppx_fe25519_sub ENDP
 
 ; void sneppx_fe25519_mul(uint64_t *result, const uint64_t *a, const uint64_t *b)
 ; result = a * b mod 2^255 - 19
+; Unrolled schoolbook multiplication, reduction via 2^256 = 38 mod (2^255-19)
 sneppx_fe25519_mul PROC
     push rbx
+    push rbp
     push r12
     push r13
     push r14
     push r15
-    sub rsp, 128
+    sub rsp, 80
     lfence
+    mov r9, rcx
+    mov r10, rdx
+    mov r11, r8
     lea rdi, [rsp]
-    mov rax, rcx
-    mov rcx, 16
     xor eax, eax
+    mov ecx, 10
     rep stosq
-    mov r10, rcx
-    mov r11, rdx
-    mov r12, r8
-    xor r13, r13
-fe25519_mul_outer:
-    cmp r13, 4
-    jae fe25519_mul_reduce
-    xor r14, r14
-fe25519_mul_inner:
-    cmp r14, 4
-    jae fe25519_mul_next
-    mov rax, qword ptr [r11 + r13*8]
-    mul qword ptr [r12 + r14*8]
-    mov rbx, r13
-    add rbx, r14
-    add qword ptr [rsp + rbx*8], rax
-    adc qword ptr [rsp + rbx*8 + 8], rdx
-    inc r14
-    jmp fe25519_mul_inner
-fe25519_mul_next:
-    inc r13
-    jmp fe25519_mul_outer
-fe25519_mul_reduce:
+; Product[0] = a0*b0
+    mov rax, qword ptr [r10]
+    mul qword ptr [r11]
+    mov qword ptr [rsp], rax
+    mov qword ptr [rsp + 8], rdx
+; Product[1] = a0*b1 + a1*b0 + carry
+    mov rax, qword ptr [r10]
+    mul qword ptr [r11 + 8]
+    add qword ptr [rsp + 8], rax
+    adc qword ptr [rsp + 16], rdx
+    adc qword ptr [rsp + 24], 0
+    mov rax, qword ptr [r10 + 8]
+    mul qword ptr [r11]
+    add qword ptr [rsp + 8], rax
+    adc qword ptr [rsp + 16], rdx
+    adc qword ptr [rsp + 24], 0
+; Product[2] = a0*b2 + a1*b1 + a2*b0 + carry
+    mov rax, qword ptr [r10]
+    mul qword ptr [r11 + 16]
+    add qword ptr [rsp + 16], rax
+    adc qword ptr [rsp + 24], rdx
+    adc qword ptr [rsp + 32], 0
+    mov rax, qword ptr [r10 + 8]
+    mul qword ptr [r11 + 8]
+    add qword ptr [rsp + 16], rax
+    adc qword ptr [rsp + 24], rdx
+    adc qword ptr [rsp + 32], 0
+    mov rax, qword ptr [r10 + 16]
+    mul qword ptr [r11]
+    add qword ptr [rsp + 16], rax
+    adc qword ptr [rsp + 24], rdx
+    adc qword ptr [rsp + 32], 0
+; Product[3] = a0*b3 + a1*b2 + a2*b1 + a3*b0 + carry
+    mov rax, qword ptr [r10]
+    mul qword ptr [r11 + 24]
+    add qword ptr [rsp + 24], rax
+    adc qword ptr [rsp + 32], rdx
+    adc qword ptr [rsp + 40], 0
+    mov rax, qword ptr [r10 + 8]
+    mul qword ptr [r11 + 16]
+    add qword ptr [rsp + 24], rax
+    adc qword ptr [rsp + 32], rdx
+    adc qword ptr [rsp + 40], 0
+    mov rax, qword ptr [r10 + 16]
+    mul qword ptr [r11 + 8]
+    add qword ptr [rsp + 24], rax
+    adc qword ptr [rsp + 32], rdx
+    adc qword ptr [rsp + 40], 0
+    mov rax, qword ptr [r10 + 24]
+    mul qword ptr [r11]
+    add qword ptr [rsp + 24], rax
+    adc qword ptr [rsp + 32], rdx
+    adc qword ptr [rsp + 40], 0
+; Product[4] = a1*b3 + a2*b2 + a3*b1 + carry
+    mov rax, qword ptr [r10 + 8]
+    mul qword ptr [r11 + 24]
+    add qword ptr [rsp + 32], rax
+    adc qword ptr [rsp + 40], rdx
+    adc qword ptr [rsp + 48], 0
+    mov rax, qword ptr [r10 + 16]
+    mul qword ptr [r11 + 16]
+    add qword ptr [rsp + 32], rax
+    adc qword ptr [rsp + 40], rdx
+    adc qword ptr [rsp + 48], 0
+    mov rax, qword ptr [r10 + 24]
+    mul qword ptr [r11 + 8]
+    add qword ptr [rsp + 32], rax
+    adc qword ptr [rsp + 40], rdx
+    adc qword ptr [rsp + 48], 0
+; Product[5] = a2*b3 + a3*b2 + carry
+    mov rax, qword ptr [r10 + 16]
+    mul qword ptr [r11 + 24]
+    add qword ptr [rsp + 40], rax
+    adc qword ptr [rsp + 48], rdx
+    adc qword ptr [rsp + 56], 0
+    mov rax, qword ptr [r10 + 24]
+    mul qword ptr [r11 + 16]
+    add qword ptr [rsp + 40], rax
+    adc qword ptr [rsp + 48], rdx
+    adc qword ptr [rsp + 56], 0
+; Product[6] = a3*b3 + carry
+    mov rax, qword ptr [r10 + 24]
+    mul qword ptr [r11 + 24]
+    add qword ptr [rsp + 48], rax
+    adc qword ptr [rsp + 56], rdx
+    adc qword ptr [rsp + 64], 0
+; Reduction: add high limbs (4-7) * 38 to low limbs (0-3)
+    mov ecx, 38
     mov rax, qword ptr [rsp + 32]
-    mov rbx, qword ptr [rsp + 40]
-    mov rcx, qword ptr [rsp + 48]
-    mov rdx, qword ptr [rsp + 56]
-    mov r13, rax
-    mov r14, rbx
-    mov r15, rcx
-    shl r13, 1
-    shl r14, 1
-    shl r15, 1
-    shr rax, 63
-    shr rbx, 63
-    shr rcx, 63
-    shl rdx, 1
-    shr rdx, 63
-    mov r8, rax
-    mov r9, rbx
-    mov r10, rcx
-    mov r11, rdx
-    and r8, 19
-    and r9, 19
-    and r10, 19
-    and r11, 19
+    mul rcx
+    add qword ptr [rsp], rax
+    adc qword ptr [rsp + 8], rdx
+    adc qword ptr [rsp + 16], 0
+    adc qword ptr [rsp + 24], 0
+    mov rax, qword ptr [rsp + 40]
+    mul rcx
+    add qword ptr [rsp + 8], rax
+    adc qword ptr [rsp + 16], rdx
+    adc qword ptr [rsp + 24], 0
+    mov rax, qword ptr [rsp + 48]
+    mul rcx
+    add qword ptr [rsp + 16], rax
+    adc qword ptr [rsp + 24], rdx
+    adc qword ptr [rsp + 32], 0
+    mov rax, qword ptr [rsp + 56]
+    mul rcx
+    add qword ptr [rsp + 24], rax
+    adc qword ptr [rsp + 32], rdx
+    adc qword ptr [rsp + 40], 0
+; Final reduction step: carry from last adc goes into limb 4, multiply by 19
+    mov r12, 3
+fe25519_mul_final_reduce:
+    mov rax, qword ptr [rsp + 32]
+    and eax, 19
+    add qword ptr [rsp], rax
+    adc qword ptr [rsp + 8], 0
+    adc qword ptr [rsp + 16], 0
+    adc qword ptr [rsp + 24], 0
+    setc al
+    movzx rax, al
+    mov qword ptr [rsp + 32], rax
+    dec r12
+    jnz fe25519_mul_final_reduce
     mov rax, qword ptr [rsp]
-    mov rbx, qword ptr [rsp + 8]
+    mov rdx, qword ptr [rsp + 8]
     mov rcx, qword ptr [rsp + 16]
-    mov rdx, qword ptr [rsp + 24]
-    add rax, r8
-    adc rbx, r9
-    adc rcx, r10
-    adc rdx, r11
-    mov qword ptr [r12], rax
-    mov qword ptr [r12 + 8], rbx
-    mov qword ptr [r12 + 16], rcx
-    mov qword ptr [r12 + 24], rdx
+    mov r8, qword ptr [rsp + 24]
+    mov qword ptr [r9], rax
+    mov qword ptr [r9 + 8], rdx
+    mov qword ptr [r9 + 16], rcx
+    mov qword ptr [r9 + 24], r8
     lea rdi, [rsp]
-    mov rcx, 16
     xor eax, eax
+    mov ecx, 10
     rep stosq
     mfence
     lfence
-    add rsp, 128
+    add rsp, 80
     pop r15
     pop r14
     pop r13
     pop r12
+    pop rbp
     pop rbx
     ret
 sneppx_fe25519_mul ENDP

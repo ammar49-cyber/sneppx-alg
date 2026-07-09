@@ -135,86 +135,184 @@ sha256_pad_done:
     ret
 sneppx_sha256_hash ENDP
 
-; void sneppx_sha256_hmac(uint8_t out[32], const uint8_t *key, size_t key_len, const uint8_t *msg, size_t msg_len)
+; void sneppx_sha256_hmac(uint8_t out[32], const uint8_t *key, size_t key_len,
+;                         const uint8_t *msg, size_t msg_len)
+; Windows x64: rcx=out, rdx=key, r8=key_len, r9=msg, [entry_rsp+40]=msg_len
+;
+; Entry RSP = E, after 5 pushes + sub 256: current RSP = E - 296
+; 5th param (msg_len) at E + 40 = current RSP + 336
+;
+; Stack layout (256 bytes):
+;   [rsp+0..31]:   running SHA-256 state
+;   [rsp+32..95]:  block buffer (64 bytes)
+;   [rsp+96..127]: inner hash output (32 bytes)
+;   [rsp+128..191]: ipad_key (64 bytes)
+;   [rsp+192..255]: opad_key (64 bytes)
+;
+; Strategy: use sneppx_sha256_transform to incrementally hash
+;   inner = SHA-256(ipad_key(64) || message(msg_len))
+;   outer = SHA-256(opad_key(64) || inner(32))
 sneppx_sha256_hmac PROC
     push rbx
     push r12
     push r13
     push r14
     push r15
-    sub rsp, 160
+    sub rsp, 256
     lfence
+; Save parameters
     mov rbx, rcx
     mov r12, rdx
     mov r13, r8
     mov r14, r9
-    mov r15, qword ptr [rsp + 192]
+    mov r15, qword ptr [rsp + 336]
+; Zero workspace: [rsp+0..255] = 32 qwords
     lea rdi, [rsp]
-    mov rcx, 20
+    mov ecx, 32
     xor eax, eax
     rep stosq
+; Step 1: Process key → [rsp+128..191] (64 bytes, zero-padded if < 64)
     mov r10, r13
+    test r10, r10
+    jnz hmac_key_nonzero
+    mov r10, 64
+hmac_key_nonzero:
     cmp r10, 64
-    jbe hmac_key_inner
-    lea rcx, [rsp]
+    jbe hmac_key_short
+    lea rcx, [rsp + 128]
     mov rdx, r12
     mov r8, r13
     call sneppx_sha256_hash
-    lea rdi, [rsp]
     mov r10, 32
-hmac_key_inner:
-    lea rdi, [rsp + 64]
-    lea rsi, [rsp]
-    mov rcx, 8
+    jmp hmac_copy_key_to_192
+hmac_key_short:
+    lea rdi, [rsp + 128]
+    mov rsi, r12
+    mov rcx, r13
+    rep movsb
+    mov r10, r13
+hmac_copy_key_to_192:
+    lea rdi, [rsp + 192]
+    lea rsi, [rsp + 128]
+    mov ecx, 8
     rep movsq
-    xor r11, r11
+; XOR [rsp+128] with 0x36 → ipad_key
+    xor r11d, r11d
 hmac_xor_ipad:
     cmp r11, 64
-    jae hmac_xor_ipad_done
-    mov al, byte ptr [rsp + r11]
+    jae hmac_inner_init
+    mov al, byte ptr [rsp + 128 + r11]
     xor al, 36h
-    mov byte ptr [rsp + r11], al
+    mov byte ptr [rsp + 128 + r11], al
     inc r11
-    jmp hmac_xor_ipad_loop
-hmac_xor_ipad_done:
-    lea rdi, [rsp + 128]
+    jmp hmac_xor_ipad
+; Step 2: Inner hash SHA-256(ipad_key || message)
+hmac_inner_init:
+    lea rsi, sha256_iv
+    lea rdi, [rsp]
+    mov ecx, 8
+    rep movsd
+    lea rcx, [rsp]
+    lea rdx, [rsp + 128]
+    call sneppx_sha256_transform
+    xor r10d, r10d
+    mov r11, r15
+hmac_inner_msg_loop:
+    cmp r11, 64
+    jb hmac_inner_pad
+    lea rcx, [rsp]
+    mov rdx, r14
+    add rdx, r10
+    call sneppx_sha256_transform
+    add r10, 64
+    sub r11, 64
+    jmp hmac_inner_msg_loop
+hmac_inner_pad:
+    lea rdi, [rsp + 32]
+    mov rsi, r14
+    add rsi, r10
+    mov rcx, r11
+    rep movsb
+    mov byte ptr [rsp + 32 + r11], 80h
+    mov rax, r15
+    add rax, 64
+    shl rax, 3
+    bswap rax
+    mov ecx, r11d
+    add ecx, 9
+    cmp ecx, 64
+    ja hmac_inner_extra
+    mov qword ptr [rsp + 88], rax
+    lea rcx, [rsp]
+    lea rdx, [rsp + 32]
+    call sneppx_sha256_transform
+    jmp hmac_inner_save
+hmac_inner_extra:
+    lea rcx, [rsp]
+    lea rdx, [rsp + 32]
+    call sneppx_sha256_transform
+    lea rdi, [rsp + 32]
+    mov ecx, 8
     xor eax, eax
-    mov ecx, 4
     rep stosq
-    mov qword ptr [rsp + 128], 0
-    lea rcx, [rsp + 96]
-    lea rdx, [rsp]
-    mov r8, r14
-    call sneppx_sha256_hash
-    xor r11, r11
+    mov byte ptr [rsp + 32], 80h
+    mov qword ptr [rsp + 88], rax
+    lea rcx, [rsp]
+    lea rdx, [rsp + 32]
+    call sneppx_sha256_transform
+hmac_inner_save:
+    lea rdi, [rsp + 96]
+    lea rsi, [rsp]
+    mov ecx, 8
+    rep movsd
+; Step 3: Outer hash SHA-256(opad_key || inner_hash)
+; Initialize state from IV
+    lea rsi, sha256_iv
+    lea rdi, [rsp]
+    mov ecx, 8
+    rep movsd
+; XOR [rsp+192] with 0x5c → opad_key
+    xor r11d, r11d
 hmac_xor_opad:
     cmp r11, 64
-    jae hmac_xor_opad_done
-    mov al, byte ptr [rsp + 64 + r11]
+    jae hmac_opad_transform
+    mov al, byte ptr [rsp + 192 + r11]
     xor al, 5ch
-    mov byte ptr [rsp + 64 + r11], al
+    mov byte ptr [rsp + 192 + r11], al
     inc r11
     jmp hmac_xor_opad
-hmac_xor_opad_done:
-    lea rdi, [rsp + 64 + 64]
-    mov rax, r10
-    mov rcx, 8
-    rep stosq
-    lea rcx, [rsp + 96]
-    lea rdx, [rsp + 64]
-    mov r8, 32
-    call sneppx_sha256_hash
-    mov rdi, rbx
+hmac_opad_transform:
+    lea rcx, [rsp]
+    lea rdx, [rsp + 192]
+    call sneppx_sha256_transform
+; Copy inner_hash(32 bytes) from [rsp+96] to block buffer, pad, transform
+; Block: inner_hash(32) + 0x80 + zeros(23) + big-endian bit count(8)
+; Total = 64 bytes (32+1+23+8), always fits in one block
+    lea rdi, [rsp + 32]
     lea rsi, [rsp + 96]
-    mov rcx, 8
+    mov ecx, 8
     rep movsd
+    mov byte ptr [rsp + 64], 80h
+    mov rax, 96
+    shl rax, 3
+    bswap rax
+    mov qword ptr [rsp + 88], rax
+    lea rcx, [rsp]
+    lea rdx, [rsp + 32]
+    call sneppx_sha256_transform
+; Copy state (outer hash) to output
+    mov rdi, rbx
+    lea rsi, [rsp]
+    mov ecx, 8
+    rep movsd
+; Wipe sensitive data
     lea rdi, [rsp]
-    mov rcx, 20
+    mov ecx, 32
     xor eax, eax
     rep stosq
     mfence
     lfence
-    add rsp, 160
+    add rsp, 256
     pop r15
     pop r14
     pop r13
