@@ -26,11 +26,11 @@ sneppx_poly1305_mul PROC
     movdqa xmm7, xmm0
     movdqa xmm2, xmm5
     pmuludq xmm0, xmm2
-    pshufd xmm3, xmm0, 0b01001110
+    pshufd xmm3, xmm0, 04Eh
     pmuludq xmm3, xmm2
-    pshufd xmm4, xmm1, 0b01001110
+    pshufd xmm4, xmm1, 04Eh
     pmuludq xmm4, xmm2
-    pshufd xmm2, xmm4, 0b01001110
+    pshufd xmm2, xmm4, 04Eh
     pmuludq xmm2, xmm5
     paddq xmm0, xmm4
     paddq xmm3, xmm2
@@ -106,7 +106,10 @@ poly_partial_copy:
     cmp r14, r15
     jae poly_partial_pad
     movzx eax, byte ptr [r12 + r14]
-    pinsrb xmm1, eax, r14d
+    mov byte ptr [rsp + 64], al
+    movd xmm0, dword ptr [rsp + 64]
+    pinsrd xmm1, eax, 0
+    por xmm1, xmm0
     inc r14
     jmp poly_partial_copy
 poly_partial_pad:

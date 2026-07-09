@@ -6,7 +6,7 @@
 .data
     align 16
     mont_zero dq 0000000000000000h, 0000000000000000h
-    align 32
+    align 16
     mont_wipe dq 0, 0, 0, 0
 
 .code

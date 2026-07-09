@@ -2,15 +2,15 @@
 ; MASM x64 syntax — constant-time, speculation-safe, cache-resistant
 
 .data
-    align 32
+    align 16
     sigma db 101,120,100,51, 104,110,50,53, 51,100,50,56, 55,53,50,48
-    align 32
+    align 16
     permute_mask db 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
-    align 32
+    align 16
     permute_mask_2 db 0,1,2,3,6,7,4,5,10,11,8,9,14,15,12,13,16,17,18,19,22,23,20,21,26,27,24,25,30,31,28,29
-    align 32
+    align 16
     permute_mask_3 db 2,3,0,1,4,5,6,7,8,9,10,11,12,13,14,15,18,19,16,17,20,21,22,23,24,25,26,27,28,29,30,31
-    align 32
+    align 16
     chacha_ct_mask dq 0FFFFFFFFFFFFFFFFh, 0FFFFFFFFFFFFFFFFh, 0FFFFFFFFFFFFFFFFh, 0FFFFFFFFFFFFFFFFh
 
 .code
@@ -71,9 +71,9 @@ chacha_round:
     vpslld xmm4, xmm1, 7
     vpsrld xmm1, xmm1, 25
     vpor xmm1, xmm1, xmm4
-    vpshufd xmm1, xmm1, 0x39
-    vpshufd xmm2, xmm2, 0x4E
-    vpshufd xmm3, xmm3, 0x93
+    vpshufd xmm1, xmm1, 039h
+    vpshufd xmm2, xmm2, 04Eh
+    vpshufd xmm3, xmm3, 093h
     vpaddd xmm0, xmm0, xmm1
     vpxor xmm3, xmm3, xmm0
     vpsrld xmm4, xmm3, 16
@@ -94,9 +94,9 @@ chacha_round:
     vpslld xmm4, xmm1, 7
     vpsrld xmm1, xmm1, 25
     vpor xmm1, xmm1, xmm4
-    vpshufd xmm1, xmm1, 0x93
-    vpshufd xmm2, xmm2, 0x4E
-    vpshufd xmm3, xmm3, 0x39
+    vpshufd xmm1, xmm1, 093h
+    vpshufd xmm2, xmm2, 04Eh
+    vpshufd xmm3, xmm3, 039h
     dec r10d
     jnz chacha_round
     vpaddd xmm0, xmm0, xmmword ptr [rsp]

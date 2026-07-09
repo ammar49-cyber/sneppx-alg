@@ -10,9 +10,9 @@
     fe25519_m2 dq 0FFFFFFFFFFFFFFFFh, 07FFFFFFFFFFFFFFFh
     align 16
     fe25519_mu dq 0000000000000013h, 0000000000000000h
-    align 32
+    align 16
     fe25519_0 dq 0, 0, 0, 0, 0, 0, 0, 0
-    align 32
+    align 16
     fe25519_1 dq 1, 0, 0, 0, 0, 0, 0, 0
 
 .code

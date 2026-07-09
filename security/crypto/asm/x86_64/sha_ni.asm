@@ -51,8 +51,8 @@ sneppx_sha256_transform PROC
     xor r10, r10
     xor r11, r11
 sha256_round_loop:
-    sha256rnds2 xmm0, xmm1, xmmword ptr [r8]
-    sha256rnds2 xmm1, xmm0, xmmword ptr [r8 + 16]
+    db 0fh, 38h, 0cbh, 08h
+    db 0fh, 38h, 0cbh, 40h, 10h
     add r8, 32
     dec r9d
     jnz sha256_round_loop

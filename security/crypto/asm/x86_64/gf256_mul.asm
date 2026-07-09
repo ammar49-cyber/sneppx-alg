@@ -33,8 +33,8 @@ sneppx_gf256_mul PROC
     pinsrb xmm0, eax, 0
     pxor xmm1, xmm1
     pinsrb xmm1, ebx, 0
-    pclmulqdq xmm2, xmm0, xmm1, 0
-    pextrb eax, xmm2, 0
+    pclmulqdq xmm0, xmm1, 0
+    pextrb eax, xmm0, 0
     pextrb ecx, xmm2, 1
     shl ecx, 8
     or eax, ecx
@@ -125,7 +125,7 @@ gf256s_mul_loop:
 gf256s_skip:
     shr cl, 1
     shl al, 1
-    test al, 256
+    test ah, 1
     jz gf256s_no_reduce
     xor al, 27
 gf256s_no_reduce:

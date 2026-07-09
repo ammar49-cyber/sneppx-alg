@@ -3,7 +3,7 @@
 ; 24 rounds of the Keccak permutation on 1600-bit state
 
 .data
-    align 32
+    align 16
     keccak_round_constants dq 0000000000000001h, 0000000000008082h
                            dq 080000000000808Ah, 0800000800080000h
                            dq 000000000000808Bh, 0000000080000001h
@@ -16,10 +16,10 @@
                            dq 0800000800000001h, 0800000080008081h
                            dq 0800000000008080h, 0000000080000001h
                            dq 0800000800008008h, 0000000000000083h
-    align 32
+    align 16
     keccak_rho_offsets db 0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14
-    align 32
-    keccak_pil pi_d dq 10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1, 0
+    align 16
+    keccak_pil dq 10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1, 0
 
 .code
 
@@ -212,7 +212,9 @@ keccak_absorb_loop:
 keccak_absorb_xor:
     cmp rbx, r13
     jae keccak_absorb_permute
-    movzx eax, byte ptr [r11 + r14 + rbx]
+    mov rax, r14
+    add rax, rbx
+    movzx eax, byte ptr [r11 + rax]
     xor byte ptr [r10 + rbx], al
     inc rbx
     jmp keccak_absorb_xor
@@ -249,8 +251,10 @@ keccak_squeeze_loop:
 keccak_squeeze_copy:
     cmp rbx, r13
     jae keccak_squeeze_next
-    mov al, byte ptr [r10 + rbx]
-    mov byte ptr [r11 + r14 + rbx], al
+    movzx ecx, byte ptr [r10 + rbx]
+    mov rax, r14
+    add rax, rbx
+    mov byte ptr [r11 + rax], cl
     inc rbx
     jmp keccak_squeeze_copy
 keccak_squeeze_next:

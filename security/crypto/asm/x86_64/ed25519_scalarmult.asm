@@ -15,9 +15,9 @@
     ed25519_prime_m1 dq 0FFFFFFFFFFFFFFEDh, 0FFFFFFFFFFFFFFFFh, 0FFFFFFFFFFFFFFFFh, 07FFFFFFFFFFFFFFFh
     align 16
     ed25519_mu dq 0000000000000005h, 0000000000000000h, 0000000000000000h, 0000000000000000h
-    align 32
+    align 16
     ed25519_1 dq 1, 0, 0, 0, 0, 0, 0, 0
-    align 32
+    align 16
     ed25519_0 dq 0, 0, 0, 0, 0, 0, 0, 0
 
 .code
