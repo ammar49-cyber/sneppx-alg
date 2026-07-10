@@ -1,5 +1,8 @@
 import sys, os, json, tempfile
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../bindings/python'))
+if '__file__' in globals():
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../bindings/python'))
+else:
+    sys.path.insert(0, os.path.join(os.getcwd(), 'tests/python/../../bindings/python'))
 
 from SneppX_ALG.interface_bindings.model_zoo import (
     ModelFamily, LlamaConfig, MistralConfig, Qwen2Config, DeepSeekV2Config,
