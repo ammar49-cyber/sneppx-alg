@@ -263,3 +263,268 @@ __global__ void activation_bwd_kernel(
             float tanh_val = tanhf(tanh_arg);
             float sech2 = 1.0f - tanh_val * tanh_val;
             float dtanh = kBeta * (1.0f + 3.0f * kKappa * x * x);
+            float dgelu = 0.5f * (1.0f + tanh_val) + x * 0.5f * sech2 * dtanh;
+            dx = grad * dgelu;
+            break;
+        }
+        case SNEPPX_ACT_SILU:
+            // SiLU grad: dy = dx * sigmoid(x) * (1 + x * (1 - sigmoid(x)))
+            float sig = 1.0f / (1.0f + expf(-x));
+            dx = grad * sig * (1.0f + x * (1.0f - sig));
+            break;
+        case SNEPPX_ACT_TANH:
+            dx = grad * (1.0f - y * y);
+            break;
+        case SNEPPX_ACT_SIGMOID:
+            dx = grad * y * (1.0f - y);
+            break;
+        case SNEPPX_ACT_NONE:
+            dx = grad;
+            break;
+    }
+    
+    d_input[idx] = __float2half_rn(dx);
+}
+
+SNEPPX_CudaError sneppx_cuda_activation_bwd(
+    SNEPPX_CudaStream_t stream,
+    half* d_input,
+    const half* d_output,
+    const half* input,
+    const half* output,
+    SNEPPX_ActivationType act,
+    int numel
+) {
+    if (!d_input || !d_output || !input) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    int block = 256;
+    int grid = (numel + block - 1) / block;
+    
+    activation_bwd_kernel<<<grid, block, 0, stream>>>(
+        d_input, d_output, input, output, act, numel
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// LayerNorm Backward
+// ============================================================================
+
+__global__ void layernorm_bwd_kernel(
+    half* d_input,
+    half* d_gamma,
+    half* d_beta,
+    const half* d_output,
+    const half* input,
+    const half* gamma,
+    const half* mu,
+    const half* rsigma,
+    int rows, int cols,
+    float epsilon
+) {
+    int row = blockIdx.x;
+    int tid = threadIdx.x;
+    
+    extern __shared__ float smem[];
+    float* dgamma_partial = smem;
+    float* dbeta_partial = &smem[cols];
+    
+    // Per-row statistics
+    float r_var = __half2float(rsigma[row]);
+    float m = __half2float(mu[row]);
+    
+    float dgamma_local = 0.0f;
+    float dbeta_local = 0.0f;
+    
+    // First pass: compute dgamma, dbeta
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float dx_norm = __half2float(d_output[row * cols + c]);
+        float x = __half2float(input[row * cols + c]);
+        float g = gamma ? __half2float(gamma[c]) : 1.0f;
+        float x_hat = (x - m) * r_var;
+        
+        dgamma_local += dx_norm * x_hat;
+        dbeta_local += dx_norm;
+    }
+    
+    // Warp reduce
+    dgamma_local = sneppx_warp_reduce_sum(dgamma_local);
+    dbeta_local = sneppx_warp_reduce_sum(dbeta_local);
+    
+    if (tid == 0) {
+        dgamma_partial[blockIdx.x % cols] = dgamma_local;
+        dbeta_partial[blockIdx.x % cols] = dbeta_local;
+    }
+    __syncthreads();
+    
+    // Second pass: compute d_input
+    // Reduce dgamma, dbeta across rows
+    float dg_sum = 0.0f, db_sum = 0.0f;
+    for (int i = tid; i < cols; i += blockDim.x) {
+        dg_sum += dgamma_partial[i];
+        db_sum += dbeta_partial[i];
+    }
+    dg_sum = sneppx_warp_reduce_sum(dg_sum);
+    db_sum = sneppx_warp_reduce_sum(db_sum);
+    
+    // Compute d_input
+    float inv_N = 1.0f / cols;
+    float r_var_val = r_var;
+    float dgamma_total = dg_sum;
+    float dbeta_total = db_sum;
+    
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float dx_norm = __half2float(d_output[row * cols + c]);
+        float x = __half2float(input[row * cols + c]);
+        float g = gamma ? __half2float(gamma[c]) : 1.0f;
+        float x_hat = (x - m) * r_var_val;
+        
+        float dx = r_var_val * (dx_norm * g 
+                  - (dbeta_total + x_hat * dgamma_total) * inv_N);
+        
+        d_input[row * cols + c] = __float2half_rn(dx);
+    }
+    
+    // Accumulate d_gamma, d_beta
+    if (d_gamma) d_gamma[tid] = __float2half_rn(dgamma_local);
+    if (d_beta) d_beta[tid] = __float2half_rn(dbeta_local);
+}
+
+SNEPPX_CudaError sneppx_cuda_layernorm_bwd(
+    SNEPPX_CudaStream_t stream,
+    half* d_input,
+    half* d_gamma,
+    half* d_beta,
+    const half* d_output,
+    const half* input,
+    const half* gamma,
+    const half* mu,
+    const half* rsigma,
+    int rows, int cols,
+    float epsilon
+) {
+    if (!d_input || !d_output || !input || !mu || !rsigma) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int block = min(cols, 256);
+    size_t smem_size = 2 * cols * sizeof(float);
+    
+    layernorm_bwd_kernel<<<rows, block, smem_size, stream>>>(
+        d_input, d_gamma, d_beta, d_output, input, gamma, mu, rsigma,
+        rows, cols, epsilon
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// RMSNorm Backward
+// ============================================================================
+
+__global__ void rmsnorm_bwd_kernel(
+    half* d_input,
+    half* d_weight,
+    const half* d_output,
+    const half* input,
+    const half* weight,
+    const half* rms,
+    int rows, int cols,
+    float epsilon
+) {
+    int row = blockIdx.x;
+    int tid = threadIdx.x;
+    
+    float rms_val = __half2float(rms[row]);
+    float inv_rms = __fdividef(1.0f, rms_val);
+    float inv_N = __fdividef(1.0f, cols);
+    
+    // Accumulate dot product for d_weight
+    float dw_local = 0.0f;
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float dx = __half2float(d_output[row * cols + c]);
+        float x = __half2float(input[row * cols + c]);
+        float x_norm = x * inv_rms;
+        dw_local += dx * x_norm;
+    }
+    dw_local = sneppx_warp_reduce_sum(dw_local);
+    
+    if (tid == 0 && d_weight) {
+        d_weight[row] = __float2half_rn(dw_local);
+    }
+    
+    // Compute d_input
+    float w = weight ? __half2float(weight[0]) : 1.0f;
+    float dw = dw_local;
+    
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float dx = __half2float(d_output[row * cols + c]);
+        float x = __half2float(input[row * cols + c]);
+        float x_norm = x * inv_rms;
+        
+        float di = inv_rms * (dx * w - x_norm * (dw * inv_N * w));
+        d_input[row * cols + c] = __float2half_rn(di);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_rmsnorm_bwd(
+    SNEPPX_CudaStream_t stream,
+    half* d_input,
+    half* d_weight,
+    const half* d_output,
+    const half* input,
+    const half* weight,
+    const half* rms,
+    int rows, int cols,
+    float epsilon
+) {
+    if (!d_input || !d_output || !input || !rms) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int block = min(cols, 256);
+    
+    rmsnorm_bwd_kernel<<<rows, block, 0, stream>>>(
+        d_input, d_weight, d_output, input, weight, rms,
+        rows, cols, epsilon
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Softmax Backward
+// ============================================================================
+
+__global__ void softmax_bwd_kernel(
+    half* d_input,
+    const half* d_output,
+    const half* output,
+    int rows, int cols
+) {
+    int row = blockIdx.x;
+    int tid = threadIdx.x;
+    
+    // Compute dot product: sum(d_output * output) for this row
+    float dot = 0.0f;
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float do_val = __half2float(d_output[row * cols + c]);
+        float o_val = __half2float(output[row * cols + c]);
+        dot += do_val * o_val;
+    }
+    dot = sneppx_warp_reduce_sum(dot);
+    
+    // Compute d_input = output * (d_output - dot)
+    for (int c = tid; c < cols; c += blockDim.x) {
+        float do_val = __half2float(d_output[row * cols + c]);
+        float o_val = __half2float(output[row * cols + c]);
+        float di = o_val * (do_val - dot);
+        d_input[row * cols + c] = __float2half_rn(di);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_softmax_bwd(
