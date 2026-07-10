@@ -1,5 +1,7 @@
 from .. import _neural_engine_bridge
 
+__version__ = "0.9.0"
+
 from .tensor import (
     Tensor,
     Dtype,
