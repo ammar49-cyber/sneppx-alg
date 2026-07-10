@@ -33,7 +33,7 @@ void sneppx_aes_cmac(const uint8_t key[32], const uint8_t *in, size_t in_len, ui
 void sneppx_aes_wipe_key(uint32_t rk[60]);
 
 // Poly1305
-void sneppx_poly1305_mul(uint64_t h[3], const uint64_t r[3], const uint64_t s[3]);
+
 void sneppx_poly1305_mac(uint8_t mac[16], const uint8_t *msg, size_t msg_len, const uint8_t key[32]);
 int sneppx_poly1305_verify(const uint8_t mac1[16], const uint8_t mac2[16]);
 void sneppx_poly1305_wipe_key(uint32_t key[8]);
@@ -96,7 +96,7 @@ void sneppx_ct_swap_bytes(uint8_t *a, uint8_t *b, size_t len);
 uint64_t sneppx_ct_negate_u64(uint64_t val);
 void sneppx_ct_cswap_4x64(uint64_t *a, uint64_t *b, int condition);
 void sneppx_ct_cswap_8x64(uint64_t *a, uint64_t *b, int condition);
-uint64_t sneppx_ct_cmask_u64(int condition);
+void sneppx_ct_cmask_u64(uint64_t *buf, uint64_t mask, size_t len);
 uint64_t sneppx_ct_abs_u64(uint64_t val);
 uint8_t sneppx_ct_mask_u8(uint8_t condition);
 uint64_t sneppx_ct_mask_u64(uint64_t condition);
@@ -106,23 +106,23 @@ uint64_t sneppx_sc_select_u64(uint64_t condition, uint64_t a, uint64_t b);
 int sneppx_sc_equal_u64(uint64_t a, uint64_t b);
 void sneppx_sc_cond_swap_u64(uint64_t *a, uint64_t *b, uint64_t condition);
 uint64_t sneppx_sc_cond_neg_u64(uint64_t val, uint64_t condition);
-void sneppx_sc_cond_copy_u64(uint64_t *dst, const uint64_t *src, uint64_t condition);
+void sneppx_sc_cond_copy_u64(uint64_t *dst, const uint64_t *src, uint64_t condition, size_t len);
 int sneppx_sc_memcmp_ct(const uint8_t *a, const uint8_t *b, size_t len);
-uint64_t sneppx_sc_mask_load_u64(uint64_t condition);
+uint64_t sneppx_sc_mask_load_u64(const uint64_t *ptr);
 void sneppx_sc_secure_zero(uint8_t *dst, size_t len);
 int sneppx_sc_ct_is_zero(const uint8_t *a, size_t len);
 int sneppx_sc_ct_is_equal_or(uint64_t a, uint64_t b, uint64_t c);
 
 // Cache-constant lookups
-uint8_t sneppx_cache_const_lookup(const uint8_t *table, size_t idx);
-uint32_t sneppx_cache_const_lookup32(const uint32_t *table, size_t idx);
-uint8_t sneppx_cache_const_sbox(const uint8_t *sbox, uint8_t idx);
-uint32_t sneppx_cache_const_te0_lookup(const uint32_t *te0, uint8_t idx);
+uint8_t sneppx_cache_const_lookup(const uint8_t *table, size_t table_size, size_t idx);
+uint32_t sneppx_cache_const_lookup32(const uint32_t *table, size_t table_size, size_t idx);
+void sneppx_cache_const_sbox(uint8_t out[16], const uint8_t in[16], const uint8_t sbox[256]);
+uint32_t sneppx_cache_const_te0_lookup(const uint32_t *te0, size_t idx);
 
 // Secure wipe
 void sneppx_secure_wipe(void *ptr, size_t len);
 void sneppx_secure_wipe_register_state(void);
-void sneppx_secure_wipe_page(void *page, size_t len);
+void sneppx_secure_wipe_page(void *page);
 void sneppx_secure_wipe_xmm(void);
 
 #ifdef __cplusplus
