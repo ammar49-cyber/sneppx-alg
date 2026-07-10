@@ -364,3 +364,187 @@ SNEPPX_CudaError sneppx_event_pool_create(
         cudaError_t err = cudaEventCreateWithFlags(&p->events[i], event_flags);
         if (err != cudaSuccess) break;
         p->event_available[i] = 1;
+        p->num_events++;
+    }
+    
+    *pool = p;
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_event_pool_destroy(SNEPPX_EventPool* pool) {
+    if (!pool) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    for (int i = 0; i < pool->num_events; i++) {
+        cudaEventDestroy(pool->events[i]);
+    }
+    
+    free(pool->events);
+    free(pool->event_available);
+    free(pool);
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_event_pool_acquire(
+    SNEPPX_EventPool* pool,
+    cudaEvent_t* event
+) {
+    if (!pool || !event) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    for (int i = 0; i < pool->num_events; i++) {
+        if (pool->event_available[i]) {
+            pool->event_available[i] = 0;
+            *event = pool->events[i];
+            return SNEPPX_CUDA_SUCCESS;
+        }
+    }
+    
+    cudaError_t err = cudaEventCreate(event);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+SNEPPX_CudaError sneppx_event_pool_release(
+    SNEPPX_EventPool* pool,
+    cudaEvent_t event
+) {
+    if (!pool || !event) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    for (int i = 0; i < pool->num_events; i++) {
+        if (pool->events[i] == event) {
+            pool->event_available[i] = 1;
+            return SNEPPX_CUDA_SUCCESS;
+        }
+    }
+    
+    cudaEventDestroy(event);
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+// ============================================================================
+// Pinned Memory
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_alloc_pinned(void** ptr, size_t size) {
+    if (!ptr) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaError_t err = cudaHostAlloc(ptr, size, cudaHostAllocDefault);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_OUT_OF_MEMORY;
+}
+
+SNEPPX_CudaError sneppx_cuda_free_pinned(void* ptr) {
+    if (!ptr) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaError_t err = cudaFreeHost(ptr);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Unified Memory
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_alloc_managed(void** ptr, size_t size, unsigned int flags) {
+    if (!ptr) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaError_t err = cudaMallocManaged(ptr, size, flags);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_OUT_OF_MEMORY;
+}
+
+SNEPPX_CudaError sneppx_cuda_mem_prefetch(
+    void* ptr, size_t size, int device_id, SNEPPX_CudaStream_t stream
+) {
+    if (!ptr) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaError_t err = cudaMemPrefetchAsync(ptr, size, device_id, stream);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Memory Statistics
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_get_memory_stats(SNEPPX_MemoryStats* stats) {
+    if (!stats) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    size_t free_byte, total_byte;
+    cudaError_t err = cudaMemGetInfo(&free_byte, &total_byte);
+    if (err != cudaSuccess) return SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+    
+    stats->total_global = total_byte;
+    stats->free_global = free_byte;
+    stats->used_global = total_byte - free_byte;
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+// ============================================================================
+// Kernel Auto Block Size
+// ============================================================================
+
+int sneppx_kernel_auto_block_size(int numel, int max_block_size) {
+    if (numel <= 0) return 32;
+    
+    // Heuristic: scale block size based on problem size
+    if (numel >= 1024 * 1024) return 256;
+    if (numel >= 256 * 256) return 128;
+    if (numel >= 64 * 64) return 64;
+    return 32;
+}
+
+// ============================================================================
+// Async 2D Memcpy
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_memcpy_2d_async(
+    SNEPPX_CudaStream_t stream,
+    void* dst, size_t dpitch,
+    const void* src, size_t spitch,
+    size_t width, size_t height,
+    cudaMemcpyKind kind
+) {
+    cudaError_t err = cudaMemcpy2DAsync(dst, dpitch, src, spitch, width, height, kind, stream);
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Batched Async Memcpy
+// ============================================================================
+
+__global__ void batched_memcpy_kernel(
+    SNEPPX_MemcpyBatchEntry* entries,
+    int num_entries
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int entry_idx = idx;
+    
+    if (entry_idx < num_entries) {
+        auto& entry = entries[entry_idx];
+        // On-device memcpy (for device-to-device entries)
+        for (size_t i = 0; i < entry.size; i += sizeof(uint4)) {
+            size_t remaining = min(entry.size - i, sizeof(uint4));
+            if (remaining == sizeof(uint4)) {
+                uint4 val = *(const uint4*)((const char*)entry.src + i);
+                *(uint4*)((char*)entry.dst + i) = val;
+            }
+        }
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_memcpy_batched_async(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_MemcpyBatchEntry* entries,
+    int num_entries
+) {
+    if (!entries || num_entries <= 0) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    // Use host-side loop for simplicity (could be optimized with on-device list)
+    for (int i = 0; i < num_entries; i++) {
+        const auto& e = entries[i];
+        if (e.kind == cudaMemcpyDeviceToDevice) {
+            cudaMemcpyAsync(e.dst, e.src, e.size, cudaMemcpyDeviceToDevice, stream);
+        } else {
+            cudaMemcpyAsync(e.dst, e.src, e.size, e.kind, stream);
+        }
+    }
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
