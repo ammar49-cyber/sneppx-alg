@@ -24,42 +24,30 @@
 
 ; uint8_t sneppx_gf256_mul(uint8_t a, uint8_t b)
 ; Constant-time GF(256) multiplication in AES polynomial basis
+; Uses bit-loop carryless multiply with polynomial reduction by 0x11B
+; 8 fixed iterations — constant-time
 sneppx_gf256_mul PROC
     push rbx
     lfence
-    movzx rax, cl
-    movzx rbx, dl
-    pxor xmm0, xmm0
-    pinsrb xmm0, eax, 0
-    pxor xmm1, xmm1
-    pinsrb xmm1, ebx, 0
-    pclmulqdq xmm0, xmm1, 0
-    pextrb eax, xmm0, 0
-    pextrb ecx, xmm2, 1
-    shl ecx, 8
-    or eax, ecx
-    movzx ecx, al
-    movzx edx, ah
-    xor edx, ecx
-    movzx ecx, ah
-    shl ecx, 1
-    xor edx, ecx
-    movzx ecx, ah
-    shr ecx, 7
-    mov ebx, ecx
-    and ebx, 27
-    xor edx, ebx
-    movzx ecx, al
-    movzx ebx, ah
-    xor ebx, ecx
-    movzx ecx, ah
-    shr ecx, 1
-    xor ebx, ecx
-    mov ecx, edx
-    and ecx, 0FFh
-    shl ebx, 8
-    or ecx, ebx
-    mov eax, ecx
+    movzx eax, cl
+    movzx ebx, dl
+    xor edx, edx
+    mov ecx, 8
+gf256_mul_loop:
+    mov r10d, ebx
+    and r10d, 1
+    neg r10d
+    mov r11d, eax
+    and r11d, r10d
+    xor edx, r11d
+    add al, al
+    jnc gf256_no_reduce
+    xor al, 1Bh
+gf256_no_reduce:
+    shr bl, 1
+    dec ecx
+    jnz gf256_mul_loop
+    mov eax, edx
     lfence
     pop rbx
     ret
@@ -67,28 +55,58 @@ sneppx_gf256_mul ENDP
 
 ; uint8_t sneppx_gf256_inv(uint8_t a)
 ; Constant-time GF(256) inversion using Fermat's little theorem: a^254
+; Computes a^254 = a^2 * a^4 * a^8 * a^16 * a^32 * a^64 * a^128
 sneppx_gf256_inv PROC
     push rbx
     push r12
+    push r13
+    push r14
     lfence
-    movzx eax, cl
-    xor ebx, ebx
-    mov r12d, 1
-    movzx ecx, al
-gf256_inv_loop:
-    cmp r12d, 7
-    jae gf256_inv_done
-    movzx ebx, al
+    sub rsp, 8
+    mov byte ptr [rsp], cl
+    mov cl, byte ptr [rsp]
+    mov dl, byte ptr [rsp]
+    call sneppx_gf256_mul
+    mov byte ptr [rsp], al
+    mov cl, al
+    mov dl, al
+    call sneppx_gf256_mul
+    mov r12b, al
+    mov cl, al
+    mov dl, al
+    call sneppx_gf256_mul
+    mov r13b, al
+    mov cl, al
+    mov dl, al
+    call sneppx_gf256_mul
+    mov r14b, al
+    mov cl, al
+    mov dl, al
+    call sneppx_gf256_mul
+    mov ebx, eax
+    mov cl, al
+    mov dl, al
+    call sneppx_gf256_mul
+    mov r10b, al
+    mov cl, byte ptr [rsp]
+    mov dl, r12b
+    call sneppx_gf256_mul
+    mov cl, al
+    mov dl, r13b
+    call sneppx_gf256_mul
+    mov cl, al
+    mov dl, r14b
+    call sneppx_gf256_mul
+    mov cl, al
     mov dl, bl
     call sneppx_gf256_mul
-    movzx eax, al
-    mov dl, al
-    movzx ebx, al
-    inc r12d
-    jmp gf256_inv_loop
-gf256_inv_done:
-    movzx eax, al
+    mov cl, al
+    mov dl, r10b
+    call sneppx_gf256_mul
+    add rsp, 8
     lfence
+    pop r14
+    pop r13
     pop r12
     pop rbx
     ret

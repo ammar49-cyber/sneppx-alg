@@ -178,7 +178,7 @@ sneppx_sc_ct_is_equal_or PROC
     lfence
     xor     rax, rax
     xor     r9, r9
-    test    r9, r8
+    test    r8, r8
     jz      scieo_done
 scieo_loop:
     mov     r10, qword ptr [rcx + r9*8]

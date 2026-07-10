@@ -17,17 +17,18 @@ sneppx_cache_const_lookup PROC
     push rbx
     push r12
     push r13
+    push r14
     lfence
-    xor rax, rax
-    xor r9, r9
-    xor r10, r10
-    xor r11, r11
-    xor r12, r12
-    xor r13, r13
+    xor eax, eax
+    xor r9d, r9d
+    xor r10d, r10d
+    xor r11d, r11d
+    xor r12d, r12d
+    xor r13d, r13d
+    xor r14d, r14d
     mov r10, rcx
     mov r11, rdx
     mov r12, r8
-    xor r9d, r9d
 ccl_loop:
     cmp r9, r11
     jae ccl_done
@@ -43,6 +44,7 @@ ccl_loop:
 ccl_done:
     movzx eax, r14b
     lfence
+    pop r14
     pop r13
     pop r12
     pop rbx

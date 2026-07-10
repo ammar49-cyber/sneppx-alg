@@ -38,26 +38,24 @@ sneppx_barrett_reduce_u16 PROC
     ret
 sneppx_barrett_reduce_u16 ENDP
 
-; uint32_t sneppx_barrett_reduce_u32(uint64_t a, uint32_t mod, uint32_t barrett_mu)
+; uint32_t sneppx_barrett_reduce_u32(uint64_t a, uint32_t mod, uint64_t barrett_mu)
 ; Barrett reduction for 32-bit moduli
-; barrett_mu = (1 << 32) / mod
+; barrett_mu = (1 << 64) / mod
 sneppx_barrett_reduce_u32 PROC
     push rbx
     lfence
+    mov r10, rcx
+    mov r11d, edx
     mov rax, rcx
-    mov ecx, edx
-    mov r8d, r8d
-    mov r10d, eax
-    mov r11d, ecx
-    imul r10, r8
-    shr r10, 32
-    imul r10, r11
-    sub rax, r10
-    mov edx, r11d
-    sub eax, edx
+    mul r8
+    mov rax, rdx
+    mul r11
+    sub r10, rax
+    mov eax, r10d
+    sub eax, r11d
     shr eax, 31
-    and edx, eax
-    add eax, edx
+    and r11d, eax
+    add eax, r11d
     lfence
     pop rbx
     ret

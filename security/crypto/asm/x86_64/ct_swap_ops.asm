@@ -61,13 +61,8 @@ sneppx_ct_swap_bytes ENDP
 sneppx_ct_negate_u64 PROC
     lfence
     mov rax, rcx
-    mov r9, rcx
-    xor r9, rdx
-    sub r9, rdx
-    xor rax, r9
-    and rax, rdx
-    xor r9, rax
-    mov rax, r9
+    xor rax, rdx
+    sub rax, rdx
     lfence
     ret
 sneppx_ct_negate_u64 ENDP
