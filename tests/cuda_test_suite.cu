@@ -170,3 +170,175 @@ void test_elementwise() {
     cudaStreamSynchronize(stream);
     cudaMemcpy(h_c, c, N * sizeof(half), cudaMemcpyDeviceToHost);
     
+    for (int i = 0; i < N; i++) {
+        float expected = (float)i + (float)(N - i);
+        float actual = __half2float(h_c[i]);
+        ASSERT(fabsf(expected - actual) < 0.01f, "element-wise add mismatch");
+    }
+    
+    cudaFreeAsync(a, stream); cudaFreeAsync(b, stream); cudaFreeAsync(c, stream);
+    cudaStreamDestroy(stream);
+    PASS();
+}
+
+// ============================================================================
+// LayerNorm Test
+// ============================================================================
+
+void test_layernorm() {
+    TEST("layer normalization");
+    
+    const int ROWS = 4, COLS = 256;
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    
+    half *input, *output, *gamma, *beta, *mu, *rsigma;
+    cudaMallocAsync(&input, ROWS * COLS * sizeof(half), stream);
+    cudaMallocAsync(&output, ROWS * COLS * sizeof(half), stream);
+    cudaMallocAsync(&gamma, COLS * sizeof(half), stream);
+    cudaMallocAsync(&beta, COLS * sizeof(half), stream);
+    cudaMallocAsync(&mu, ROWS * sizeof(half), stream);
+    cudaMallocAsync(&rsigma, ROWS * sizeof(half), stream);
+    
+    // Initialize with known values
+    half h_input[ROWS * COLS];
+    for (int i = 0; i < ROWS * COLS; i++) h_input[i] = __float2half_rn((float)(i % COLS));
+    cudaMemcpyAsync(input, h_input, ROWS * COLS * sizeof(half), cudaMemcpyHostToDevice, stream);
+    
+    sneppx_cuda_layernorm_fwd(stream, input, output, gamma, beta, mu, rsigma, ROWS, COLS, 1e-5f);
+    cudaStreamSynchronize(stream);
+    
+    half h_output[ROWS * COLS];
+    cudaMemcpy(h_output, output, ROWS * COLS * sizeof(half), cudaMemcpyDeviceToHost);
+    
+    // Check that each row has mean ~0, variance ~1
+    for (int r = 0; r < ROWS; r++) {
+        float mean = 0.0f, var = 0.0f;
+        for (int c = 0; c < COLS; c++) {
+            float v = __half2float(h_output[r * COLS + c]);
+            mean += v;
+            var += v * v;
+        }
+        mean /= COLS;
+        var = var / COLS - mean * mean;
+        
+        ASSERT(fabsf(mean) < 0.1f, "layernorm mean != 0");
+        ASSERT(fabsf(var - 1.0f) < 0.1f, "layernorm variance != 1");
+    }
+    
+    cudaFreeAsync(input, stream); cudaFreeAsync(output, stream);
+    cudaFreeAsync(gamma, stream); cudaFreeAsync(beta, stream);
+    cudaFreeAsync(mu, stream); cudaFreeAsync(rsigma, stream);
+    cudaStreamDestroy(stream);
+    PASS();
+}
+
+// ============================================================================
+// Softmax Test
+// ============================================================================
+
+void test_softmax() {
+    TEST("softmax");
+    
+    const int ROWS = 4, COLS = 8;
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    
+    half *input, *output;
+    cudaMallocAsync(&input, ROWS * COLS * sizeof(half), stream);
+    cudaMallocAsync(&output, ROWS * COLS * sizeof(half), stream);
+    
+    half h_input[ROWS * COLS];
+    for (int i = 0; i < ROWS * COLS; i++) {
+        h_input[i] = __float2half_rn((float)(rand() % 10));
+    }
+    cudaMemcpyAsync(input, h_input, ROWS * COLS * sizeof(half), cudaMemcpyHostToDevice, stream);
+    
+    sneppx_cuda_softmax_fwd(stream, output, input, ROWS, COLS);
+    cudaStreamSynchronize(stream);
+    
+    half h_output[ROWS * COLS];
+    cudaMemcpy(h_output, output, ROWS * COLS * sizeof(half), cudaMemcpyDeviceToHost);
+    
+    for (int r = 0; r < ROWS; r++) {
+        float sum = 0.0f;
+        for (int c = 0; c < COLS; c++) {
+            sum += __half2float(h_output[r * COLS + c]);
+        }
+        ASSERT(fabsf(sum - 1.0f) < 0.01f, "softmax sum != 1");
+    }
+    
+    cudaFreeAsync(input, stream); cudaFreeAsync(output, stream);
+    cudaStreamDestroy(stream);
+    PASS();
+}
+
+// ============================================================================
+// AdamW Optimizer Test
+// ============================================================================
+
+void test_adamw() {
+    TEST("AdamW optimizer step");
+    
+    const int N = 256;
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    
+    half *params, *grads;
+    float *exp_avg, *exp_avg_sq;
+    cudaMallocAsync(&params, N * sizeof(half), stream);
+    cudaMallocAsync(&grads, N * sizeof(half), stream);
+    cudaMallocAsync(&exp_avg, N * sizeof(float), stream);
+    cudaMallocAsync(&exp_avg_sq, N * sizeof(float), stream);
+    
+    half h_params[N];
+    half h_grads[N];
+    for (int i = 0; i < N; i++) {
+        h_params[i] = __float2half_rn(1.0f);
+        h_grads[i] = __float2half_rn(0.1f);
+    }
+    cudaMemcpyAsync(params, h_params, N * sizeof(half), cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(grads, h_grads, N * sizeof(half), cudaMemcpyHostToDevice, stream);
+    cudaMemsetAsync(exp_avg, 0, N * sizeof(float), stream);
+    cudaMemsetAsync(exp_avg_sq, 0, N * sizeof(float), stream);
+    
+    sneppx_cuda_adamw_step(stream, params, grads, exp_avg, exp_avg_sq,
+                           1, 0.001f, 0.9f, 0.999f, 1e-8f, 0.01f, N);
+    
+    cudaStreamSynchronize(stream);
+    cudaMemcpy(h_params, params, N * sizeof(half), cudaMemcpyDeviceToHost);
+    
+    // Params should have decreased slightly
+    ASSERT(__half2float(h_params[0]) < 1.0f, "params should decrease after step");
+    
+    cudaFreeAsync(params, stream); cudaFreeAsync(grads, stream);
+    cudaFreeAsync(exp_avg, stream); cudaFreeAsync(exp_avg_sq, stream);
+    cudaStreamDestroy(stream);
+    PASS();
+}
+
+// ============================================================================
+// RNG Test
+// ============================================================================
+
+void test_rng() {
+    TEST("random number generation");
+    
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    
+    SNEPPX_CudaRNG* rng;
+    sneppx_cuda_rng_create(&rng, 256, 42, stream);
+    
+    const int N = 10000;
+    float* output;
+    cudaMallocAsync(&output, N * sizeof(float), stream);
+    
+    sneppx_cuda_rand_uniform_f32(stream, rng, output, N, -1.0f, 1.0f);
+    cudaStreamSynchronize(stream);
+    
+    float h_output[N];
+    cudaMemcpy(h_output, output, N * sizeof(float), cudaMemcpyDeviceToHost);
+    
+    float mean = 0.0f, var = 0.0f;
+    for (int i = 0; i < N; i++) {
