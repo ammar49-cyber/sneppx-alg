@@ -520,3 +520,265 @@ __global__ void adafactor_step_kernel(
 }
 
 SNEPPX_CudaError sneppx_cuda_adafactor_step(
+    SNEPPX_CudaStream_t stream,
+    half* params,
+    const half* grads,
+    float* exp_avg_sq,
+    float* exp_avg_sq_row,
+    float* exp_avg_sq_col,
+    int step,
+    float lr,
+    float beta2,
+    float epsilon,
+    float weight_decay,
+    int numel,
+    int rows,
+    int cols
+) {
+    if (!params || !grads || !exp_avg_sq || !exp_avg_sq_row || !exp_avg_sq_col) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int block = 256;
+    int grid = (numel + block - 1) / block;
+    
+    adafactor_step_kernel<<<grid, block, 0, stream>>>(
+        params, grads, exp_avg_sq, exp_avg_sq_row, exp_avg_sq_col,
+        step, lr, beta2, epsilon, weight_decay, numel, rows, cols
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// ZeRO-1 AdamW (partitioned optimizer states)
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_zero1_adamw_step(
+    SNEPPX_CudaStream_t stream,
+    half* params,
+    const half* grads,
+    float* exp_avg,
+    float* exp_avg_sq,
+    int step,
+    float lr,
+    float beta1,
+    float beta2,
+    float epsilon,
+    float weight_decay,
+    float loss_scale,
+    int numel,
+    int world_size,
+    int rank
+) {
+    if (!params || !grads || !exp_avg || !exp_avg_sq) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    // Determine partition range
+    int local_size = numel / world_size;
+    int remainder = numel % world_size;
+    int start = rank * local_size + min(rank, remainder);
+    if (rank < remainder) local_size++;
+    
+    // Only update the partition owned by this rank
+    // (other ranks' parameters are updated via all-gather)
+    int block = 256;
+    int grid = (local_size + block - 1) / block;
+    
+    auto kernel = adamw_step_kernel;
+    kernel<<<grid, block, 0, stream>>>(
+        params + start, grads + start,
+        exp_avg + start, exp_avg_sq + start,
+        step, lr, beta1, beta2, epsilon, weight_decay, local_size
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Optimizer Lifecycle
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_optimizer_init(
+    SNEPPX_OptimizerState* state,
+    SNEPPX_OptimizerType type,
+    float lr,
+    int num_params,
+    const int* param_sizes,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!state || !param_sizes) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    state->type = type;
+    state->lr = lr;
+    state->step = 0;
+    state->num_params = num_params;
+    
+    // Default hyperparameters
+    state->beta1 = 0.9f;
+    state->beta2 = 0.999f;
+    state->epsilon = 1e-8f;
+    state->weight_decay = 0.01f;
+    state->decoupled_wd = true;
+    state->beta1_lion = 0.9f;
+    state->beta2_lion = 0.99f;
+    state->grad_clip_max_norm = 1.0f;
+    state->grad_clip_enabled = true;
+    
+    // Allocate state buffers
+    size_t total_elts = 0;
+    for (int i = 0; i < num_params; i++) {
+        total_elts += param_sizes[i];
+    }
+    
+    if (type == SNEPPX_OPTIM_ADAM || type == SNEPPX_OPTIM_ADAMW || 
+        type == SNEPPX_OPTIM_LAMB || type == SNEPPX_OPTIM_LION) {
+        cudaMallocAsync(&state->state_buf1, total_elts * sizeof(float), stream);
+        cudaMallocAsync(&state->state_buf2, total_elts * sizeof(float), stream);
+        cudaMemsetAsync(state->state_buf1, 0, total_elts * sizeof(float), stream);
+        cudaMemsetAsync(state->state_buf2, 0, total_elts * sizeof(float), stream);
+    } else if (type == SNEPPX_OPTIM_SGD_MOMENTUM || type == SNEPPX_OPTIM_SOFSIGN) {
+        cudaMallocAsync(&state->state_buf1, total_elts * sizeof(float), stream);
+        cudaMemsetAsync(state->state_buf1, 0, total_elts * sizeof(float), stream);
+    } else if (type == SNEPPX_OPTIM_ADAFACTOR) {
+        cudaMallocAsync(&state->state_buf1, total_elts * sizeof(float), stream);
+        cudaMallocAsync(&state->state_buf2, total_elts * sizeof(float), stream);
+        cudaMallocAsync(&state->state_buf3, total_elts * sizeof(float), stream);
+        cudaMemsetAsync(state->state_buf1, 0, total_elts * sizeof(float), stream);
+    }
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_cuda_optimizer_destroy(
+    SNEPPX_OptimizerState* state,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!state) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaFreeAsync(state->state_buf1, stream);
+    cudaFreeAsync(state->state_buf2, stream);
+    cudaFreeAsync(state->state_buf3, stream);
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_cuda_optimizer_zero_grad(
+    SNEPPX_CudaStream_t stream,
+    half** gradients,
+    int num_params,
+    const int* sizes
+) {
+    if (!gradients || !sizes) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    for (int i = 0; i < num_params; i++) {
+        cudaMemsetAsync(gradients[i], 0, sizes[i] * sizeof(half), stream);
+    }
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+// ============================================================================
+// Generic Optimizer Step (dispatches to specific implementations)
+// ============================================================================
+
+SNEPPX_CudaError sneppx_cuda_optimizer_step(
+    SNEPPX_CudaStream_t stream,
+    SNEPPX_OptimizerState* state,
+    half** params,
+    half** grads,
+    int num_params,
+    const int* sizes,
+    int current_step,
+    const SNEPPX_OptimizerConfig* config
+) {
+    if (!state || !params || !grads || !sizes) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    state->step = current_step;
+    
+    // Compute learning rate
+    float lr = state->lr;
+    if (config) {
+        if (config->lr_min > 0 || config->lr_decay > 0) {
+            int total = config->total_steps ? config->total_steps : current_step + 1;
+            lr = sneppx_lr_cosine(current_step, config->lr_warmup_steps, total, state->lr, config->lr_min);
+        }
+        
+        if (config->grad_clip_enabled && config->grad_clip_max_norm > 0) {
+            for (int i = 0; i < num_params; i++) {
+                sneppx_cuda_grad_clip(stream, grads[i], sizes[i], 
+                                     config->grad_clip_max_norm, 2.0f);
+            }
+        }
+    }
+    
+    // Apply step for each parameter group
+    size_t offset = 0;
+    for (int i = 0; i < num_params; i++) {
+        int n = sizes[i];
+        
+        float* buf1 = (float*)state->state_buf1 + offset;
+        float* buf2 = (float*)state->state_buf2 + offset;
+        
+        switch (state->type) {
+            case SNEPPX_OPTIM_SGD:
+                sneppx_cuda_sgd_step(stream, params[i], grads[i], lr, 
+                                    state->weight_decay, n);
+                break;
+            case SNEPPX_OPTIM_ADAMW:
+                sneppx_cuda_adamw_step(stream, params[i], grads[i], buf1, buf2,
+                                      current_step, lr, state->beta1, state->beta2,
+                                      state->epsilon, state->weight_decay, n);
+                break;
+            case SNEPPX_OPTIM_LION:
+                sneppx_cuda_lion_step(stream, params[i], grads[i], buf1,
+                                     current_step, lr, state->beta1_lion,
+                                     state->beta2_lion, state->weight_decay, n);
+                break;
+            default:
+                break;
+        }
+        
+        offset += n;
+    }
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+// ============================================================================
+// Gradient Scaling (for mixed precision)
+// ============================================================================
+
+__global__ void check_overflow_kernel(
+    const half* grads,
+    int numel,
+    int* overflow_flag
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= numel) return;
+    
+    float g = __half2float(grads[idx]);
+    if (isinf(g) || isnan(g)) {
+        atomicAdd(overflow_flag, 1);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_check_overflow(
+    SNEPPX_CudaStream_t stream,
+    const half* grads,
+    int numel,
+    int* overflow_flag
+) {
+    if (!grads || !overflow_flag) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    int block = 256;
+    int grid = (numel + block - 1) / block;
+    
+    check_overflow_kernel<<<grid, block, 0, stream>>>(grads, numel, overflow_flag);
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
