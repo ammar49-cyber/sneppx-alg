@@ -132,3 +132,139 @@ SNEPPX_CudaError sneppx_cuda_quantize_gradients(
     cudaError_t err = cudaGetLastError();
     return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
 }
+
+__global__ void dequantize_gradients_kernel(
+    const int8_t* quantized, half* gradients,
+    const float* scale, int numel, int bits
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= numel) return;
+    int block_id = blockIdx.x;
+    gradients[idx] = __float2half_rn((float)quantized[idx] * scale[block_id]);
+}
+
+SNEPPX_CudaError sneppx_cuda_dequantize_gradients(
+    SNEPPX_CudaStream_t stream,
+    const int8_t* quantized, half* gradients,
+    const float* scale, int numel, int bits
+) {
+    if (!quantized || !gradients || !scale) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    int block = 256;
+    int grid = (numel + block - 1) / block;
+    dequantize_gradients_kernel<<<grid, block, 0, stream>>>(quantized, gradients, scale, numel, bits);
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// Top-K sparsification (simplified - uses atomic per-block selection)
+__global__ void topk_sparsify_kernel(
+    const half* gradients, half* sparse_values,
+    int* sparse_indices, int numel, int k
+) {
+    // Simplified: each block selects its top local values
+    extern __shared__ float smem[];
+    int tid = threadIdx.x;
+    int bid = blockIdx.x;
+    int start = bid * blockDim.x;
+    int end = min(start + blockDim.x, numel);
+    
+    // Each thread tracks its best
+    float best_val[2] = {0.0f, 0.0f};
+    int best_idx[2] = {-1, -1};
+    
+    for (int i = start + tid; i < end; i += blockDim.x) {
+        float g = fabsf(__half2float(gradients[i]));
+        if (g > best_val[0]) {
+            best_val[1] = best_val[0]; best_idx[1] = best_idx[0];
+            best_val[0] = g; best_idx[0] = i;
+        } else if (g > best_val[1]) {
+            best_val[1] = g; best_idx[1] = i;
+        }
+    }
+    
+    // Write block-local top-2 (in practice, use global Top-K)
+    if (tid < 2 && best_idx[tid] >= 0) {
+        int out_idx = bid * 2 + tid;
+        if (out_idx < k) {
+            sparse_values[out_idx] = gradients[best_idx[tid]];
+            sparse_indices[out_idx] = best_idx[tid];
+        }
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_topk_sparsify(
+    SNEPPX_CudaStream_t stream,
+    const half* gradients, half* sparse_values,
+    int* sparse_indices, int numel, int k
+) {
+    if (!gradients || !sparse_values || !sparse_indices) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    int block = 256;
+    int grid = (numel + block - 1) / block;
+    topk_sparsify_kernel<<<grid, block, 0, stream>>>(gradients, sparse_values, sparse_indices, numel, k);
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// Federated averaging
+__global__ void federated_average_kernel(
+    half** model_chunks, const float* weights,
+    half* output, int num_chunks, int chunk_size
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= chunk_size) return;
+    
+    float sum = 0.0f;
+    float w_sum = 0.0f;
+    for (int c = 0; c < num_chunks; c++) {
+        float w = weights[c];
+        sum += w * __half2float(model_chunks[c][idx]);
+        w_sum += w;
+    }
+    if (w_sum > 0.0f) output[idx] = __float2half_rn(sum / w_sum);
+}
+
+SNEPPX_CudaError sneppx_cuda_federated_average(
+    SNEPPX_CudaStream_t stream,
+    half** model_chunks, const float* weights,
+    half* output, int num_chunks, int chunk_size
+) {
+    if (!model_chunks || !weights || !output) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    int block = 256;
+    int grid = (chunk_size + block - 1) / block;
+    federated_average_kernel<<<grid, block, 0, stream>>>(model_chunks, weights, output, num_chunks, chunk_size);
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// Memory bank sync
+__global__ void memory_bank_sync_kernel(
+    half* local_bank, const half* remote_bank,
+    size_t bank_size, int sync_direction
+) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= bank_size / sizeof(half)) return;
+    
+    if (sync_direction == 0) {
+        local_bank[idx] = remote_bank[idx];
+    } else if (sync_direction == 1) {
+        local_bank[idx] = remote_bank[idx];
+    } else {
+        float l = __half2float(local_bank[idx]);
+        float r = __half2float(remote_bank[idx]);
+        local_bank[idx] = __float2half_rn((l + r) * 0.5f);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_memory_bank_sync(
+    SNEPPX_CudaStream_t stream,
+    half* local_bank, const half* remote_bank,
+    size_t bank_size, int sync_direction
+) {
+    if (!local_bank || !remote_bank) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    int block = 256;
+    int elements = bank_size / sizeof(half);
+    int grid = (elements + block - 1) / block;
+    memory_bank_sync_kernel<<<grid, block, 0, stream>>>(local_bank, remote_bank, bank_size, sync_direction);
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
