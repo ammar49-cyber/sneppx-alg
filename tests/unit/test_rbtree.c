@@ -1,3 +1,4 @@
+#include "rbtree.h"
 #include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>

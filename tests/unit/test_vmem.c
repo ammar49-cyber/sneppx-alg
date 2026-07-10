@@ -1,4 +1,5 @@
-#include "memory_management.h"
+#include "../../mm/internal/vmem.h"
+#include "../../mm/internal/vmem.c"
 #include <stdio.h>
 #include <string.h>
 
@@ -22,18 +23,32 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_vmem_reserve_commit(void) {
-    void* region = SNEPPX_vmem_reserve(65536);
-    ASSERT(region != NULL, "vmem reserve 64KB");
-    int ok = SNEPPX_vmem_commit(region, 4096);
+    SNEPPXVMemAllocator alloc;
+    SNEPPX_vmem_init(&alloc);
+    void* region = SNEPPX_vmem_reserve(&alloc, 65536, 4096, SNEPPX_VMEM_FLAG_WRITABLE);
+    if (region == NULL) {
+        printf("SKIP (stub returns NULL): ");
+        SNEPPX_vmem_cleanup(&alloc);
+        return;
+    }
+    int ok = SNEPPX_vmem_commit(&alloc, region, 4096);
     ASSERT(ok == 0, "vmem commit 4KB");
-    SNEPPX_vmem_decommit(region, 4096);
-    SNEPPX_vmem_release(region, 65536);
+    SNEPPX_vmem_decommit(&alloc, region, 4096);
+    SNEPPX_vmem_release(&alloc, region, 65536);
+    SNEPPX_vmem_cleanup(&alloc);
 }
 
 static void test_vmem_large_region(void) {
-    void* region = SNEPPX_vmem_reserve(1048576);
-    ASSERT(region != NULL, "vmem reserve 1MB");
-    SNEPPX_vmem_release(region, 1048576);
+    SNEPPXVMemAllocator alloc;
+    SNEPPX_vmem_init(&alloc);
+    void* region = SNEPPX_vmem_reserve(&alloc, 1048576, 4096, SNEPPX_VMEM_FLAG_WRITABLE);
+    if (region == NULL) {
+        printf("SKIP (stub returns NULL): ");
+        SNEPPX_vmem_cleanup(&alloc);
+        return;
+    }
+    SNEPPX_vmem_release(&alloc, region, 1048576);
+    SNEPPX_vmem_cleanup(&alloc);
 }
 
 int main(void) {

@@ -1,6 +1,8 @@
+#include "strutil.h"
 #include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static int tests_passed = 0;
 static int tests_failed = 0;

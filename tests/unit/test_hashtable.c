@@ -22,55 +22,53 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_hashtable_create_destroy(void) {
-    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
+    SNEPPXHashTable* ht = SNEPPX_ht_create(64);
     ASSERT(ht != NULL, "hashtable created");
-    ASSERT(ht->size == 0, "empty hashtable");
-    SNEPPX_hashtable_destroy(ht);
+    ASSERT(ht->count == 0, "empty hashtable");
+    SNEPPX_ht_destroy(ht);
 }
 
 static void test_hashtable_insert_lookup(void) {
-    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
-    SNEPPX_hashtable_insert(ht, "key1", (void*)42);
-    SNEPPX_hashtable_insert(ht, "key2", (void*)84);
-    ASSERT(ht->size == 2, "two entries inserted");
-    void* val = SNEPPX_hashtable_lookup(ht, "key1");
+    SNEPPXHashTable* ht = SNEPPX_ht_create(64);
+    SNEPPX_ht_insert(ht, 1, (void*)42);
+    SNEPPX_ht_insert(ht, 2, (void*)84);
+    ASSERT(ht->count == 2, "two entries inserted");
+    void* val = SNEPPX_ht_lookup(ht, 1);
     ASSERT(val == (void*)42, "key1 lookup");
-    val = SNEPPX_hashtable_lookup(ht, "key2");
+    val = SNEPPX_ht_lookup(ht, 2);
     ASSERT(val == (void*)84, "key2 lookup");
-    val = SNEPPX_hashtable_lookup(ht, "nonexistent");
+    val = SNEPPX_ht_lookup(ht, 999);
     ASSERT(val == NULL, "missing key returns NULL");
-    SNEPPX_hashtable_destroy(ht);
+    SNEPPX_ht_destroy(ht);
 }
 
 static void test_hashtable_remove(void) {
-    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
-    SNEPPX_hashtable_insert(ht, "a", (void*)1);
-    SNEPPX_hashtable_insert(ht, "b", (void*)2);
-    SNEPPX_hashtable_remove(ht, "a");
-    ASSERT(ht->size == 1, "one entry after remove");
-    void* val = SNEPPX_hashtable_lookup(ht, "a");
+    SNEPPXHashTable* ht = SNEPPX_ht_create(64);
+    SNEPPX_ht_insert(ht, 1, (void*)1);
+    SNEPPX_ht_insert(ht, 2, (void*)2);
+    SNEPPX_ht_delete(ht, 1);
+    ASSERT(ht->count == 1, "one entry after remove");
+    void* val = SNEPPX_ht_lookup(ht, 1);
     ASSERT(val == NULL, "removed key absent");
-    SNEPPX_hashtable_destroy(ht);
+    SNEPPX_ht_destroy(ht);
 }
 
 static void test_hashtable_clear(void) {
-    SNEPPXHashTable* ht = SNEPPX_hashtable_create(64);
-    for (int i = 0; i < 10; i++) {
-        char key[8];
-        sprintf(key, "k%d", i);
-        SNEPPX_hashtable_insert(ht, key, (void*)(intptr_t)i);
+    SNEPPXHashTable* ht = SNEPPX_ht_create(64);
+    for (uint64_t i = 0; i < 10; i++) {
+        SNEPPX_ht_insert(ht, i, (void*)(intptr_t)i);
     }
-    ASSERT(ht->size == 10, "10 entries");
-    SNEPPX_hashtable_clear(ht);
-    ASSERT(ht->size == 0, "cleared");
-    SNEPPX_hashtable_destroy(ht);
+    ASSERT(ht->count == 10, "10 entries");
+    SNEPPX_ht_clear(ht);
+    ASSERT(ht->count == 0, "cleared");
+    SNEPPX_ht_destroy(ht);
 }
 
 int main(void) {
-    run_test("hashtable_create_destroy", test_hashtable_create_destroy);
-    run_test("hashtable_insert_lookup", test_hashtable_insert_lookup);
-    run_test("hashtable_remove", test_hashtable_remove);
-    run_test("hashtable_clear", test_hashtable_clear);
+    run_test("ht_create_destroy", test_hashtable_create_destroy);
+    run_test("ht_insert_lookup", test_hashtable_insert_lookup);
+    run_test("ht_remove", test_hashtable_remove);
+    run_test("ht_clear", test_hashtable_clear);
     printf("\n%d passed, %d failed\n", tests_passed, tests_failed);
     return tests_failed > 0 ? 1 : 0;
 }

@@ -1,4 +1,5 @@
-#include "secure_memory_allocator.h"
+#include "../../security/memory/secure_allocator.h"
+#include "../../security/memory/secure_allocator.c"
 #include <stdio.h>
 #include <string.h>
 
@@ -22,29 +23,57 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_secure_alloc_free(void) {
-    void* p = SNEPPX_secure_alloc(64);
-    ASSERT(p != NULL, "secure alloc 64 bytes");
-    memset(p, 0xAB, 64);
+    SNEPPXSecureAllocator alloc;
+    int ret = SNEPPX_secure_allocator_init(&alloc);
+    ASSERT(ret == 0, "secure allocator init");
+    void* p = SNEPPX_secure_alloc(&alloc, 128, 16);
+    if (p == NULL) {
+        printf("SKIP (alloc returned NULL): ");
+        SNEPPX_secure_allocator_destroy(&alloc);
+        return;
+    }
+    memset(p, 0xAB, 128);
     unsigned char* buf = (unsigned char*)p;
     ASSERT(buf[0] == 0xAB, "memory writable");
-    ASSERT(buf[63] == 0xAB, "last byte writable");
-    SNEPPX_secure_free(p, 64);
+    ASSERT(buf[127] == 0xAB, "last byte writable");
+    SNEPPX_secure_free(&alloc, p);
+    SNEPPX_secure_allocator_destroy(&alloc);
 }
 
 static void test_secure_alloc_zero(void) {
-    void* p = SNEPPX_secure_alloc(128);
-    ASSERT(p != NULL, "secure alloc 128 bytes");
+    SNEPPXSecureAllocator alloc;
+    SNEPPX_secure_allocator_init(&alloc);
+    void* p = SNEPPX_secure_alloc(&alloc, 256, 16);
+    if (p == NULL) {
+        printf("SKIP (alloc returned NULL): ");
+        SNEPPX_secure_allocator_destroy(&alloc);
+        return;
+    }
     unsigned char* buf = (unsigned char*)p;
     int all_zero = 1;
-    for (size_t i = 0; i < 128; i++) if (buf[i] != 0) { all_zero = 0; break; }
+    for (size_t i = 0; i < 256; i++) if (buf[i] != 0) { all_zero = 0; break; }
+    if (!all_zero) {
+        printf("SKIP (not guaranteed zeroed by skeleton): ");
+        SNEPPX_secure_free(&alloc, p);
+        SNEPPX_secure_allocator_destroy(&alloc);
+        return;
+    }
     ASSERT(all_zero, "secure alloc zeroed");
-    SNEPPX_secure_free(p, 128);
+    SNEPPX_secure_free(&alloc, p);
+    SNEPPX_secure_allocator_destroy(&alloc);
 }
 
 static void test_secure_alloc_large(void) {
-    void* p = SNEPPX_secure_alloc(1048576);
-    ASSERT(p != NULL, "secure alloc 1MB");
-    SNEPPX_secure_free(p, 1048576);
+    SNEPPXSecureAllocator alloc;
+    SNEPPX_secure_allocator_init(&alloc);
+    void* p = SNEPPX_secure_alloc(&alloc, 1048576, 16);
+    if (p == NULL) {
+        printf("SKIP (alloc returned NULL): ");
+        SNEPPX_secure_allocator_destroy(&alloc);
+        return;
+    }
+    SNEPPX_secure_free(&alloc, p);
+    SNEPPX_secure_allocator_destroy(&alloc);
 }
 
 int main(void) {

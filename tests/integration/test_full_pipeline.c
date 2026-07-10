@@ -47,7 +47,7 @@ static void test_model_create(void) {
     cfg.ser_config.expert_dim = 32;
     cfg.ser_config.output_dim = 16;
 
-    SNEPPXModel* model = SNEPPX_model_create(&cfg, 42);
+    SNEPPXModel* model = SNEPPX_model_create(&cfg);
     ASSERT(model != NULL, "model created");
 
     size_t n = SNEPPX_model_get_params(model, NULL, 0);

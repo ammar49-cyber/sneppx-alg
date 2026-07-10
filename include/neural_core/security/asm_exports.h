@@ -38,6 +38,10 @@ void sneppx_poly1305_mac(uint8_t mac[16], const uint8_t *msg, size_t msg_len, co
 int sneppx_poly1305_verify(const uint8_t mac1[16], const uint8_t mac2[16]);
 void sneppx_poly1305_wipe_key(uint32_t key[8]);
 
+// SHA-512
+void SNEPPX_sha512_hash(const uint8_t *data, size_t len, uint8_t hash[64]);
+void SNEPPX_sha512_hmac(const uint8_t *key, size_t key_len, const uint8_t *data, size_t data_len, uint8_t mac[64]);
+
 // Keccak
 void sneppx_keccak_theta(uint64_t state[25]);
 void sneppx_keccak_f1600(uint64_t state[25]);

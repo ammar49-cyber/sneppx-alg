@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdarg.h>
 
 #define SNEPPX_AUDIT_HMAC_KEY_LEN 32
 

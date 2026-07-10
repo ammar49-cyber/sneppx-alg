@@ -8,7 +8,7 @@
 > Not patched later. Not bolted on. **In every instruction.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-algo0.8.2-blueviolet?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-algo0.8.6-blueviolet?style=for-the-badge" alt="Version"/>
   <img src="https://img.shields.io/badge/C-11-00599C?style=for-the-badge&logo=c" alt="C11"/>
   <img src="https://img.shields.io/badge/C++-20-f34b7d?style=for-the-badge&logo=cplusplus" alt="C++20"/>
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python" alt="Python 3.11"/>
@@ -55,7 +55,7 @@ directly into its foundation.
 - **15-year roadmap** — from Seed (v0.1) through Gaia (v5.0)
 - **Open source** — MIT license, developed in public
 
-The current release is **algo0.8.2 (Sprout stage)**: a trainable system with
+The current release is **algo0.8.6 (Sprout stage)**: a trainable system with
 all six architectural modules wired into a unified differentiable pipeline,
 a complete ten-phase security system (S0-S9), Python bindings for the full
 tensor/model/trainer API, post-quantum crypto benchmarks (Kyber, Dilithium, SPHINCS+),
@@ -354,7 +354,7 @@ sig = ax.crypto.ed25519_sign(sk, b"message")
 | Stage | Version | Params | Context | Capability | Timeframe |
 |-------|---------|--------|---------|------------|-----------|
 | Seed | v0.1 | 0 | 1K | Structural proof of architecture | 2026 — released |
-| **Sprout** | **algo0.8.2** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 complete, 3,258 lines x86-64 asm, Python bindings, PQ benchmarks** | **2026 — current** |
+| **Sprout** | **algo0.8.6** | **1–10M** | **8K** | **Trainable on CPU, S0-S9 complete, 3,258 lines x86-64 asm, Python bindings, PQ benchmarks** | **2026 — current** |
 | Sapling | v1.0 | 7B | 128K | Competitive language modeling | 2027 H2 |
 | Young Tree | v2.0 | 70B | 1M | Proto-AGI with reasoning and planning | 2029 |
 | Mature Tree | v2.5 | 140B | 2M | Multimodal AGI | 2030 |

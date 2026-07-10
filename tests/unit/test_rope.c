@@ -47,7 +47,7 @@ static void test_rope_apply_changes_values(void) {
 
     SNEPPXTensor* cos = SNEPPX_rope_precompute(2, 4, 10000.0f);
     SNEPPXTensor* sin = NULL;
-    SNEPPX_rope_apply(q, k, cos, sin);
+    SNEPPX_rope_apply(q, k, cos, sin, 0);
 
     float* q_out = (float*)q->data;
     int changed = 0;
@@ -64,44 +64,47 @@ static void test_attention_self_attention(void) {
     SNEPPXAttentionConfig cfg;
     cfg.num_heads = 2;
     cfg.head_dim = 4;
-    cfg.seq_len = 3;
+    cfg.d_model = cfg.num_heads * cfg.head_dim;
     cfg.dropout = 0.0f;
-    SNEPPXAttention* attn = SNEPPX_attention_create(&cfg, 42);
+    cfg.use_causal_mask = 0;
+    cfg.use_rope = 0;
+    cfg.rope_base = 10000.0f;
+    SNEPPXAttentionWeights* attn = SNEPPX_attn_weights_create(cfg, 42);
     ASSERT(attn != NULL, "attention layer created");
 
-    size_t shape[] = {cfg.seq_len, cfg.num_heads * cfg.head_dim};
+    size_t seq_len = 3;
+    size_t shape[] = {seq_len, cfg.num_heads * cfg.head_dim};
     SNEPPXTensor* x = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
-    SNEPPXTensor* mask = NULL;
-    SNEPPXTensor* output = SNEPPX_attention_forward(attn, x, mask);
+    SNEPPXTensor* output = SNEPPX_attn_forward(attn, x, NULL, NULL);
     ASSERT(output != NULL, "attention forward output");
-    ASSERT(output->shape[0] == cfg.seq_len, "output seq_len");
+    ASSERT(output->shape[0] == seq_len, "output seq_len");
     ASSERT(output->shape[1] == shape[1], "output feat dim");
 
     SNEPPX_tensor_destroy(output);
     SNEPPX_tensor_destroy(x);
-    SNEPPX_attention_destroy(attn);
+    SNEPPX_attn_weights_destroy(attn);
 }
 
 static void test_attention_causal_mask(void) {
     SNEPPXAttentionConfig cfg;
     cfg.num_heads = 1;
     cfg.head_dim = 2;
-    cfg.seq_len = 3;
+    cfg.d_model = cfg.num_heads * cfg.head_dim;
     cfg.dropout = 0.0f;
-    SNEPPXAttention* attn = SNEPPX_attention_create(&cfg, 42);
+    cfg.use_causal_mask = 1;
+    cfg.use_rope = 0;
+    cfg.rope_base = 10000.0f;
+    SNEPPXAttentionWeights* attn = SNEPPX_attn_weights_create(cfg, 42);
 
-    size_t shape[] = {cfg.seq_len, cfg.num_heads * cfg.head_dim};
+    size_t seq_len = 3;
+    size_t shape[] = {seq_len, cfg.num_heads * cfg.head_dim};
     SNEPPXTensor* x = SNEPPX_tensor_ones(shape, 2, SNEPPX_FLOAT32);
-    SNEPPXTensor* mask = SNEPPX_attention_causal_mask(cfg.seq_len);
-    ASSERT(mask != NULL, "causal mask created");
-
-    SNEPPXTensor* output = SNEPPX_attention_forward(attn, x, mask);
+    SNEPPXTensor* output = SNEPPX_attn_forward(attn, x, NULL, NULL);
     ASSERT(output != NULL, "causal masked forward");
 
     SNEPPX_tensor_destroy(output);
-    SNEPPX_tensor_destroy(mask);
     SNEPPX_tensor_destroy(x);
-    SNEPPX_attention_destroy(attn);
+    SNEPPX_attn_weights_destroy(attn);
 }
 
 int main(void) {

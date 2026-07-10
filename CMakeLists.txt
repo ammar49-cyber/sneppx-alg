@@ -165,28 +165,47 @@ if(SNEPPX_BUILD_PYTHON)
 endif()
 
 if(SNEPPX_BUILD_CUDA)
-    find_package(CUDAToolkit REQUIRED)
+    find_package(CUDAToolkit 12.0 REQUIRED)
     enable_language(CUDA)
 
-    file(GLOB_RECURSE SNEPPX_CUDA_KERNEL_SRC algorithms/*/cuda/*.cu)
-    if(SNEPPX_CUDA_KERNEL_SRC)
-        add_library(neural_cuda_kernels STATIC ${SNEPPX_CUDA_KERNEL_SRC})
-        target_include_directories(neural_cuda_kernels PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
-            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
-            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
-            $<INSTALL_INTERFACE:include/neural_core/architecture>
-            $<INSTALL_INTERFACE:include/neural_core/kernel>
-            $<INSTALL_INTERFACE:include/neural_core/security>
-            ${CUDAToolkit_INCLUDE_DIRS}
-        )
-        target_compile_definitions(neural_cuda_kernels PRIVATE SNEPPX_HAS_CUDA)
-        target_link_libraries(neural_cuda_kernels PUBLIC CUDA::cudart CUDA::cublas)
+    # CUDA architecture targets
+    set(CMAKE_CUDA_ARCHITECTURES "80;90")
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_EXTENSIONS OFF)
+
+    # CUDA compile flags
+    if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17 -O3 -DNDEBUG -use_fast_math")
+        set(CMAKE_CUDA_FLAGS_DEBUG "-g -G")
+        set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG -use_fast_math")
+        # Architecture-specific flags
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_80,code=sm_80")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_90,code=sm_90")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DSNEPPX_CUDA_ARCH_80 -DSNEPPX_CUDA_ARCH_90")
     endif()
 
+    # Find NCCL for distributed training
+    find_package(NCCL QUIET)
+
+    # Core CUDA kernel library
+    add_subdirectory(kernel/cuda)
+
+    # Algorithm CUDA extensions
+    add_subdirectory(algorithms/hss/cuda)
+    add_subdirectory(algorithms/ser/cuda)
+    add_subdirectory(algorithms/arc/cuda)
+    add_subdirectory(algorithms/npe/cuda)
+    add_subdirectory(algorithms/fm/cuda)
+
+    # Distributed communication
+    add_subdirectory(net/distributed)
+
+    # Link CUDA runtime to core libraries
     target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_HAS_CUDA)
     target_compile_definitions(neural_architecture_layer PRIVATE SNEPPX_HAS_CUDA)
     target_link_libraries(neural_core_kernel PUBLIC CUDA::cudart CUDA::cublas)
+    target_link_libraries(neural_architecture_layer PUBLIC CUDA::cudart)
 endif()
 
 file(GLOB_RECURSE SNEPPX_MONITOR_SRC security/monitor/*.c)

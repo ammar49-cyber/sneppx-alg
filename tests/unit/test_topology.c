@@ -1,4 +1,5 @@
-#include "network_topology.h"
+#include "../../net/topology.h"
+#include "../../net/topology.c"
 #include <stdio.h>
 #include <string.h>
 
@@ -22,44 +23,43 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_topology_create_destroy(void) {
-    SNEPPXTopology* topo = SNEPPX_topology_create(4);
+    SNEPPXTopology* topo = SNEPPX_topology_create_ring(4);
     ASSERT(topo != NULL, "topology created");
-    ASSERT(topo->num_nodes == 4, "4 nodes");
-    SNEPPX_topology_destroy(topo);
-}
-
-static void test_topology_connect_disconnect(void) {
-    SNEPPXTopology* topo = SNEPPX_topology_create(3);
-    SNEPPX_topology_connect(topo, 0, 1);
-    SNEPPX_topology_connect(topo, 1, 2);
-    ASSERT(SNEPPX_topology_is_connected(topo, 0, 1), "0-1 connected");
-    ASSERT(SNEPPX_topology_is_connected(topo, 1, 0), "1-0 connected (undirected)");
-    ASSERT(!SNEPPX_topology_is_connected(topo, 0, 2), "0-2 not connected");
-    SNEPPX_topology_disconnect(topo, 0, 1);
-    ASSERT(!SNEPPX_topology_is_connected(topo, 0, 1), "0-1 disconnected");
+    ASSERT(topo->type == SNEPPX_TOPOLOGY_RING, "ring type");
     SNEPPX_topology_destroy(topo);
 }
 
 static void test_topology_ring(void) {
     SNEPPXTopology* topo = SNEPPX_topology_create_ring(8);
     ASSERT(topo != NULL, "ring topology");
-    ASSERT(SNEPPX_topology_is_connected(topo, 0, 1), "ring 0-1");
-    ASSERT(SNEPPX_topology_is_connected(topo, 7, 0), "ring 7-0");
+    ASSERT(topo->type == SNEPPX_TOPOLOGY_RING, "ring type");
     SNEPPX_topology_destroy(topo);
 }
 
-static void test_topology_mesh(void) {
-    SNEPPXTopology* topo = SNEPPX_topology_create_mesh(4, 4);
-    ASSERT(topo != NULL, "mesh topology 4x4");
-    ASSERT(topo->num_nodes == 16, "16 nodes in 4x4 mesh");
+static void test_topology_tree(void) {
+    SNEPPXTopology* topo = SNEPPX_topology_create_tree(8, 2);
+    ASSERT(topo != NULL, "tree topology");
+    ASSERT(topo->type == SNEPPX_TOPOLOGY_TREE, "tree type");
+    SNEPPX_topology_destroy(topo);
+}
+
+static void test_topology_graph(void) {
+    int adj[9 * 9];
+    memset(adj, 0, sizeof(adj));
+    adj[0 * 9 + 1] = 1;
+    adj[1 * 9 + 2] = 1;
+    adj[2 * 9 + 0] = 1;
+    SNEPPXTopology* topo = SNEPPX_topology_create_graph(9, adj);
+    ASSERT(topo != NULL, "graph topology");
+    ASSERT(topo->type == SNEPPX_TOPOLOGY_GRAPH, "graph type");
     SNEPPX_topology_destroy(topo);
 }
 
 int main(void) {
     run_test("topology_create_destroy", test_topology_create_destroy);
-    run_test("topology_connect_disconnect", test_topology_connect_disconnect);
     run_test("topology_ring", test_topology_ring);
-    run_test("topology_mesh", test_topology_mesh);
+    run_test("topology_tree", test_topology_tree);
+    run_test("topology_graph", test_topology_graph);
     printf("\n%d passed, %d failed\n", tests_passed, tests_failed);
     return tests_failed > 0 ? 1 : 0;
 }

@@ -13,6 +13,7 @@
 ; Overwrites memory with zeros, then with pattern, then zeros again
 ; Two passes + mfence to prevent dead-store elimination
 sneppx_secure_wipe PROC
+    push rdi
     lfence
     test rdx, rdx
     jz sw_done
@@ -77,6 +78,7 @@ sw_fence:
     mfence
     lfence
 sw_done:
+    pop rdi
     ret
 sneppx_secure_wipe ENDP
 
@@ -138,10 +140,15 @@ sw_page_done:
 sneppx_secure_wipe_page ENDP
 
 ; void sneppx_secure_wipe_xmm(void)
-; Wipes all XMM/YMM registers
+; Wipes volatile XMM/YMM registers (xmm0-xmm5)
 sneppx_secure_wipe_xmm PROC
     lfence
-    vzeroall
+    pxor xmm0, xmm0
+    pxor xmm1, xmm1
+    pxor xmm2, xmm2
+    pxor xmm3, xmm3
+    pxor xmm4, xmm4
+    pxor xmm5, xmm5
     mfence
     lfence
     ret

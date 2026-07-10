@@ -31,13 +31,15 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_optimizer_config_default(void) {
-    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAM);
-    ASSERT(cfg.type == SNEPPX_ADAM, "adam default type");
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.type = SNEPPX_OPTIMIZER_ADAM;
+    ASSERT(cfg.type == SNEPPX_OPTIMIZER_ADAM, "adam default type");
     ASSERT(cfg.learning_rate > 0, "learning rate > 0");
 }
 
 static void test_sgd_create_step(void) {
-    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_SGD);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.type = SNEPPX_OPTIMIZER_SGD;
     SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "sgd optimizer created");
 
@@ -59,7 +61,8 @@ static void test_sgd_create_step(void) {
 }
 
 static void test_adam_create_step(void) {
-    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAM);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.type = SNEPPX_OPTIMIZER_ADAM;
     SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "adam optimizer created");
 
@@ -81,7 +84,8 @@ static void test_adam_create_step(void) {
 }
 
 static void test_adamw_create_step(void) {
-    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_ADAMW);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.type = SNEPPX_OPTIMIZER_ADAMW;
     SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
     ASSERT(opt != NULL, "adamw optimizer created");
 
@@ -99,10 +103,11 @@ static void test_adamw_create_step(void) {
 }
 
 static void test_lr_scheduler_step(void) {
-    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default(SNEPPX_SGD);
+    SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
+    cfg.type = SNEPPX_OPTIMIZER_SGD;
     SNEPPXOptimizer* opt = SNEPPX_optimizer_create(&cfg);
 
-    SNEPPXLRScheduler* sched = SNEPPX_lr_scheduler_create(SNEPPX_STEP, &cfg.learning_rate, 0.1f, 10);
+    SNEPPXLRScheduler* sched = SNEPPX_lr_scheduler_step_lr(&cfg.learning_rate, 0.1f, 10);
     ASSERT(sched != NULL, "lr scheduler created");
 
     SNEPPX_lr_scheduler_step(sched, 0.0f);
