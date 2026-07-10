@@ -81,3 +81,87 @@ __global__ void npe_execute_kernel(
             case 7: { // BRANCH (conditional jump)
                 float cond = __half2float(registers[src1 * blockDim.x]);
                 if (cond > 0.0f) {
+                    pc = imm;
+                    continue;
+                }
+                break;
+            }
+            case 8: { // CALL (push PC, jump)
+                // Stack not implemented for GPU kernel simplicity
+                break;
+            }
+            case 9: { // RET
+                pc = num_instructions; // Halt
+                continue;
+            }
+        }
+        pc++;
+    }
+    
+    // Write output register
+    output[batch_idx * blockDim.x + tid] = registers[0 * blockDim.x + tid];
+}
+
+SNEPPX_CudaError sneppx_cuda_npe_execute(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_NPE_Program* program,
+    SNEPPX_NPE_VMState* vm_state,
+    const half* input,
+    half* output,
+    int batch_size
+) {
+    if (!program || !vm_state || !input || !output) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    dim3 grid(1, batch_size);
+    dim3 block(256);
+    
+    npe_execute_kernel<<<grid, block, 0, stream>>>(
+        program->opcodes, program->operands,
+        vm_state->registers, vm_state->memory,
+        input, output,
+        program->num_instructions, program->max_operands,
+        batch_size
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+SNEPPX_CudaError sneppx_cuda_npe_compile(
+    SNEPPX_CudaStream_t stream,
+    const int* ir_opcodes,
+    const int* ir_operands,
+    int num_instructions,
+    SNEPPX_NPE_Program** program
+) {
+    if (!ir_opcodes || !ir_operands || !program) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    SNEPPX_NPE_Program* p = (SNEPPX_NPE_Program*)malloc(sizeof(SNEPPX_NPE_Program));
+    if (!p) return SNEPPX_CUDA_ERROR_OUT_OF_MEMORY;
+    
+    p->num_instructions = num_instructions;
+    p->max_operands = 4;
+    p->use_registers = true;
+    
+    cudaMallocAsync(&p->opcodes, num_instructions * sizeof(int), stream);
+    cudaMallocAsync(&p->operands, num_instructions * 4 * sizeof(int), stream);
+    cudaMallocAsync(&p->program_counter, sizeof(int), stream);
+    
+    cudaMemcpyAsync(p->opcodes, ir_opcodes, num_instructions * sizeof(int), cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(p->operands, ir_operands, num_instructions * 4 * sizeof(int), cudaMemcpyHostToDevice, stream);
+    
+    int zero = 0;
+    cudaMemcpyAsync(p->program_counter, &zero, sizeof(int), cudaMemcpyHostToDevice, stream);
+    
+    *program = p;
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_cuda_npe_destroy_program(SNEPPX_NPE_Program* program) {
+    if (!program) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    cudaFree(program->opcodes);
+    cudaFree(program->operands);
+    cudaFree(program->program_counter);
+    free(program);
+    return SNEPPX_CUDA_SUCCESS;
+}
