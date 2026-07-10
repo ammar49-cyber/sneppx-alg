@@ -1,57 +1,87 @@
+"""Trainer module — with optional C backend and pure Python fallback."""
+
 from typing import Optional, Callable, List, Tuple, Iterator
 from .. import _neural_engine_bridge
-from .tensor import Tensor, Device
+from .tensor import Tensor, Device, _HAS_C_BACKEND
 from .model import Model
 
 
 class TrainConfig:
     def __init__(self):
-        self._c = _neural_engine_bridge.SNEPPXTrainConfig()
-        self._c.default()
+        if _HAS_C_BACKEND:
+            self._c = _neural_engine_bridge.SNEPPXTrainConfig()
+            self._c.default()
+        else:
+            self._data = {"num_epochs": 10, "batch_size": 32, "learning_rate": 0.001,
+                         "log_interval": 1, "save_interval": 5, "device": 0}
 
     @property
     def num_epochs(self):
-        return self._c.num_epochs
+        return self._c.num_epochs if _HAS_C_BACKEND else self._data["num_epochs"]
+
     @num_epochs.setter
     def num_epochs(self, v):
-        self._c.num_epochs = v
+        if _HAS_C_BACKEND:
+            self._c.num_epochs = v
+        else:
+            self._data["num_epochs"] = v
 
     @property
     def batch_size(self):
-        return self._c.batch_size
+        return self._c.batch_size if _HAS_C_BACKEND else self._data["batch_size"]
+
     @batch_size.setter
     def batch_size(self, v):
-        self._c.batch_size = v
+        if _HAS_C_BACKEND:
+            self._c.batch_size = v
+        else:
+            self._data["batch_size"] = v
 
     @property
     def learning_rate(self):
-        return self._c.learning_rate
+        return self._c.learning_rate if _HAS_C_BACKEND else self._data["learning_rate"]
+
     @learning_rate.setter
     def learning_rate(self, v):
-        self._c.learning_rate = v
+        if _HAS_C_BACKEND:
+            self._c.learning_rate = v
+        else:
+            self._data["learning_rate"] = v
 
     @property
     def log_interval(self):
-        return self._c.log_interval
+        return self._c.log_interval if _HAS_C_BACKEND else self._data["log_interval"]
+
     @log_interval.setter
     def log_interval(self, v):
-        self._c.log_interval = v
+        if _HAS_C_BACKEND:
+            self._c.log_interval = v
+        else:
+            self._data["log_interval"] = v
 
     @property
     def save_interval(self):
-        return self._c.save_interval
+        return self._c.save_interval if _HAS_C_BACKEND else self._data["save_interval"]
+
     @save_interval.setter
     def save_interval(self, v):
-        self._c.save_interval = v
+        if _HAS_C_BACKEND:
+            self._c.save_interval = v
+        else:
+            self._data["save_interval"] = v
 
     @property
     def device(self):
-        return self._c.device
+        return self._c.device if _HAS_C_BACKEND else self._data["device"]
+
     @device.setter
     def device(self, v):
         if isinstance(v, int):
             v = Device(v)
-        self._c.device = v
+        if _HAS_C_BACKEND:
+            self._c.device = v
+        else:
+            self._data["device"] = v if isinstance(v, int) else 0
 
 
 class Optimizer:
@@ -71,30 +101,42 @@ class SGD(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.01, momentum: float = 0.0,
                  weight_decay: float = 0.0):
         super().__init__(params, lr)
-        self._opt = _neural_engine_bridge._Optimizer.sgd_create(lr, momentum, weight_decay)
+        if _HAS_C_BACKEND:
+            self._opt = _neural_engine_bridge._Optimizer.sgd_create(lr, momentum, weight_decay)
+        else:
+            self._opt = None
 
     def step(self):
-        self._opt.step(self._params, self._grads)
+        if _HAS_C_BACKEND:
+            self._opt.step(self._params, self._grads)
 
 
 class Adam(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.001, betas: Tuple[float, float] = (0.9, 0.999),
                  eps: float = 1e-8, weight_decay: float = 0.0):
         super().__init__(params, lr)
-        self._opt = _neural_engine_bridge._Optimizer.adam_create(lr, betas[0], betas[1], eps, weight_decay)
+        if _HAS_C_BACKEND:
+            self._opt = _neural_engine_bridge._Optimizer.adam_create(lr, betas[0], betas[1], eps, weight_decay)
+        else:
+            self._opt = None
 
     def step(self):
-        self._opt.step(self._params, self._grads)
+        if _HAS_C_BACKEND:
+            self._opt.step(self._params, self._grads)
 
 
 class AdamW(Optimizer):
     def __init__(self, params: List[Tensor], lr: float = 0.001, betas: Tuple[float, float] = (0.9, 0.999),
                  eps: float = 1e-8, weight_decay: float = 0.01):
         super().__init__(params, lr)
-        self._opt = _neural_engine_bridge._Optimizer.adamw_create(lr, betas[0], betas[1], eps, weight_decay)
+        if _HAS_C_BACKEND:
+            self._opt = _neural_engine_bridge._Optimizer.adamw_create(lr, betas[0], betas[1], eps, weight_decay)
+        else:
+            self._opt = None
 
     def step(self):
-        self._opt.step(self._params, self._grads)
+        if _HAS_C_BACKEND:
+            self._opt.step(self._params, self._grads)
 
 
 class LRScheduler:
@@ -108,29 +150,41 @@ class LRScheduler:
 class StepLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, step_size: int, gamma: float = 0.1):
         super().__init__(optimizer)
-        self._sched = _neural_engine_bridge._LRScheduler.step_lr(0.01, gamma, step_size)
+        if _HAS_C_BACKEND:
+            self._sched = _neural_engine_bridge._LRScheduler.step_lr(0.01, gamma, step_size)
+        else:
+            self._sched = None
 
     def step(self, current_loss: float = 0.0):
-        self._sched.step()
+        if _HAS_C_BACKEND:
+            self._sched.step()
 
 
 class ExponentialLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, gamma: float = 0.9):
         super().__init__(optimizer)
-        self._sched = _neural_engine_bridge._LRScheduler.exponential(0.01, gamma)
+        if _HAS_C_BACKEND:
+            self._sched = _neural_engine_bridge._LRScheduler.exponential(0.01, gamma)
+        else:
+            self._sched = None
 
     def step(self, current_loss: float = 0.0):
-        self._sched.step()
+        if _HAS_C_BACKEND:
+            self._sched.step()
 
 
 class CosineLR(LRScheduler):
     def __init__(self, optimizer: Optimizer, min_lr: float = 0.0, max_lr: float = 0.01,
                  total_steps: int = 100):
         super().__init__(optimizer)
-        self._sched = _neural_engine_bridge._LRScheduler.cosine(0.01, min_lr, max_lr, total_steps)
+        if _HAS_C_BACKEND:
+            self._sched = _neural_engine_bridge._LRScheduler.cosine(0.01, min_lr, max_lr, total_steps)
+        else:
+            self._sched = None
 
     def step(self, current_loss: float = 0.0):
-        self._sched.step()
+        if _HAS_C_BACKEND:
+            self._sched.step()
 
 
 class ReduceLROnPlateau(LRScheduler):
@@ -138,10 +192,14 @@ class ReduceLROnPlateau(LRScheduler):
                  mode: str = 'min'):
         super().__init__(optimizer)
         mode_min = 1 if mode == 'min' else 0
-        self._sched = _neural_engine_bridge._LRScheduler.reduce_on_plateau(0.01, factor, patience, mode_min)
+        if _HAS_C_BACKEND:
+            self._sched = _neural_engine_bridge._LRScheduler.reduce_on_plateau(0.01, factor, patience, mode_min)
+        else:
+            self._sched = None
 
     def step(self, current_loss: float = 0.0):
-        self._sched.step(current_loss)
+        if _HAS_C_BACKEND:
+            self._sched.step(current_loss)
 
 
 # ---- Loss functions ----
@@ -187,10 +245,7 @@ class Dataset:
 class TensorDataset(Dataset):
     def __init__(self, *tensors):
         self.tensors = tensors
-        if tensors:
-            self._len = len(tensors[0])
-        else:
-            self._len = 0
+        self._len = len(tensors[0]) if tensors else 0
 
     def __getitem__(self, idx):
         return tuple(t[idx] if isinstance(t, Tensor) else t for t in self.tensors)
@@ -212,19 +267,19 @@ class DataLoader:
             np.random.shuffle(indices)
         for start in range(0, len(indices), self.batch_size):
             batch_indices = indices[start:start + self.batch_size]
-            batch = self.dataset[batch_indices[0]]
-            if isinstance(batch, tuple):
-                batches = [[] for _ in range(len(batch))]
+            item = self.dataset[batch_indices[0]]
+            if isinstance(item, tuple):
+                batches = [[] for _ in range(len(item))]
                 for i in batch_indices:
-                    item = self.dataset[i]
-                    for j in range(len(item)):
-                        batches[j].append(item[j] if isinstance(item[j], Tensor)
-                                          else Tensor.from_numpy(item[j]))
-                yield tuple(Tensor.concat(b) if b else Tensor.zeros((0,)) for b in batches)
+                    elem = self.dataset[i]
+                    for j in range(len(elem)):
+                        batches[j].append(elem[j] if isinstance(elem[j], Tensor)
+                                          else Tensor.from_numpy(elem[j]))
+                yield tuple(Tensor.cat(b) if b else Tensor.zeros((0,)) for b in batches)
             else:
                 items = [self.dataset[i] if isinstance(self.dataset[i], Tensor)
                          else Tensor.from_numpy(self.dataset[i]) for i in batch_indices]
-                yield Tensor.concat(items)
+                yield Tensor.cat(items)
 
 
 # ---- Trainer ----
@@ -234,21 +289,34 @@ class Trainer:
             config = TrainConfig()
         self._config = config
         self._model = model
-        self._trainer = _neural_engine_bridge._Trainer.create(model, config._c)
+        if _HAS_C_BACKEND:
+            self._trainer = _neural_engine_bridge._Trainer.create(model, config._c)
+        else:
+            self._trainer = None
         self._optimizer = None
         self._loss_fn = None
 
     def train_step(self, input: Tensor, target: Tensor) -> float:
-        return float(self._trainer.train_step(input._t, target._t))
+        if _HAS_C_BACKEND:
+            return float(self._trainer.train_step(input._t, target._t))
+        raise RuntimeError("C backend not available for training")
 
     def evaluate(self, val_input: Tensor, val_target: Tensor) -> float:
-        return float(self._trainer.evaluate(val_input._t, val_target._t))
+        if _HAS_C_BACKEND:
+            return float(self._trainer.evaluate(val_input._t, val_target._t))
+        raise RuntimeError("C backend not available for evaluation")
 
     def save_checkpoint(self, path: str):
-        self._trainer.save_checkpoint(path)
+        if _HAS_C_BACKEND:
+            self._trainer.save_checkpoint(path)
+        else:
+            self._model.save_checkpoint(path)
 
     def load_checkpoint(self, path: str):
-        self._trainer.load_checkpoint(path)
+        if _HAS_C_BACKEND:
+            self._trainer.load_checkpoint(path)
+        else:
+            self._model.load_checkpoint(path)
 
     def fit(self, train_loader: DataLoader, val_loader: Optional[DataLoader] = None,
             epochs: Optional[int] = None):
