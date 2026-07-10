@@ -520,3 +520,264 @@ __global__ void gqa_fwd_kernel(
     }
     __syncthreads();
     
+    float output_val = 0.0f;
+    
+    for (int kv = 0; kv < seq_len_kv; kv++) {
+        for (int d = tid; d < head_dim; d += blockDim.x) {
+            k_smem[(tid % 32) * head_dim + d] = k[kv_base + kv * head_dim + d];
+        }
+        __syncthreads();
+        
+        if (tid < 32) {
+            float s = 0.0f;
+            int q_row = block_q * 32 + tid;
+            if (q_row < seq_len_q) {
+                if (!is_causal || kv <= q_row) {
+                    for (int d = 0; d < head_dim; d++) {
+                        s += __half2float(q_smem[tid * head_dim + d]) *
+                             __half2float(k_smem[0 * head_dim + d]);
+                    }
+                    s *= scale;
+                    float p = expf(s);
+                    float v_acc = 0.0f;
+                    for (int d = 0; d < head_dim; d++) {
+                        v_acc += p * __half2float(v[kv_base + kv * head_dim + d]);
+                    }
+                    output_val += v_acc;
+                }
+            }
+        }
+        __syncthreads();
+    }
+    
+    if (tid < head_dim) {
+        int out_base = ((batch_idx * num_q_heads + q_head) * seq_len_q + (block_q * 32)) * head_dim;
+        output[out_base + tid] = __float2half_rn(output_val);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_gqa_forward(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_GQAParams* params
+) {
+    if (!params || !params->q || !params->k || !params->v || !params->output) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int num_blocks_q = (params->seq_len_q + 32 - 1) / 32;
+    dim3 grid(params->num_q_heads * num_blocks_q, params->batch_size);
+    dim3 block(128);
+    
+    gqa_fwd_kernel<<<grid, block, 0, stream>>>(
+        params->q, params->k, params->v, params->output,
+        params->seq_len_q, params->seq_len_kv,
+        params->num_q_heads, params->num_kv_heads,
+        params->head_dim, params->scale, params->is_causal
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Paged Attention Forward
+// ============================================================================
+
+__global__ void paged_attn_fwd_kernel(
+    const half* __restrict__ q,
+    half* __restrict__ output,
+    half* __restrict__ key_cache,
+    half* __restrict__ value_cache,
+    const int* __restrict__ block_tables,
+    const int* __restrict__ seq_lens,
+    int num_q_heads,
+    int num_kv_heads,
+    int head_dim,
+    int block_size,
+    float scale
+) {
+    int batch_idx = blockIdx.y;
+    int bid_x = blockIdx.x;
+    int num_blocks_q = (seq_lens[batch_idx] + block_size - 1) / block_size;
+    int head_idx = bid_x / max(num_blocks_q, 1);
+    int block_q = bid_x % max(num_blocks_q, 1);
+    
+    int seq_len = seq_lens[batch_idx];
+    int tid = threadIdx.x;
+    
+    float output_val = 0.0f;
+    float max_val = -INFINITY;
+    float sum_val = 0.0f;
+    
+    int kv_head = head_idx * num_kv_heads / num_q_heads;
+    int q_base = ((batch_idx * num_q_heads + head_idx) * seq_len) * head_dim;
+    int query_offset = q_base + (block_q * block_size) * head_dim;
+    
+    __shared__ half q_smem[32 * 128];
+    
+    for (int r = tid / head_dim; r < block_size && (block_q * block_size + r) < seq_len; r++) {
+        int c = tid % head_dim;
+        q_smem[r * head_dim + c] = q[query_offset + r * head_dim + c];
+    }
+    __syncthreads();
+    
+    // Iterate over KV blocks
+    int kv_blocks = (seq_len + block_size - 1) / block_size;
+    for (int kv_block = 0; kv_block < kv_blocks; kv_block++) {
+        int physical_block = block_tables[batch_idx * kv_blocks + kv_block];
+        if (physical_block < 0) continue;
+        
+        int kv_start = kv_block * block_size;
+        int kv_count = min(block_size, seq_len - kv_start);
+        
+        // For each Q row in this block
+        for (int q_off = 0; q_off < block_size && (block_q * block_size + q_off) < seq_len; q_off++) {
+            // Compute attention scores for this kv block
+            for (int kv_off = 0; kv_off < kv_count; kv_off++) {
+                float s = 0.0f;
+                for (int d = tid; d < head_dim; d += blockDim.x) {
+                    int k_idx = ((physical_block * block_size + kv_off) * num_kv_heads + kv_head) * head_dim + d;
+                    s += __half2float(q_smem[q_off * head_dim + d]) *
+                         __half2float(key_cache[k_idx]);
+                }
+                
+                for (int offset = 16; offset > 0; offset >>= 1) {
+                    s += __shfl_down_sync(0xFFFFFFFF, s, offset);
+                }
+                s = __shfl_sync(0xFFFFFFFF, s, 0);
+                s *= scale;
+                
+                float m_prev = max_val;
+                max_val = fmaxf(max_val, s);
+                float p = expf(s - max_val);
+                sum_val = sum_val * expf(m_prev - max_val) + p;
+                
+                // V contribution
+                for (int d = tid; d < head_dim; d += blockDim.x) {
+                    int v_idx = ((physical_block * block_size + kv_off) * num_kv_heads + kv_head) * head_dim + d;
+                    output_val += p * __half2float(value_cache[v_idx]);
+                }
+            }
+        }
+    }
+    
+    // Finalize
+    if (sum_val > 0.0f) {
+        output_val /= sum_val;
+    }
+    
+    // Write output
+    for (int d = tid; d < head_dim; d += blockDim.x) {
+        int out_idx = ((batch_idx * num_q_heads + head_idx) * seq_len + (block_q * block_size)) * head_dim + d;
+        output[out_idx] = __float2half_rn(output_val);
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_paged_attn_forward(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_PagedAttnParams* params
+) {
+    if (!params || !params->q || !params->output || !params->block_tables) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int num_blocks_q = (params->max_seq_len + params->block_size - 1) / params->block_size;
+    dim3 grid(params->num_q_heads * num_blocks_q, params->batch_size);
+    dim3 block(128);
+    
+    paged_attn_fwd_kernel<<<grid, block, 0, stream>>>(
+        params->q, params->output,
+        params->key_cache, params->value_cache,
+        params->block_tables, params->seq_lens,
+        params->num_q_heads, params->num_kv_heads,
+        params->head_dim, params->block_size, params->scale
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// KV Cache Management
+// ============================================================================
+
+SNEPPX_CudaError sneppx_kvcache_create(
+    SNEPPX_KVCache** cache,
+    int num_layers,
+    int num_blocks,
+    int block_size,
+    int num_kv_heads,
+    int head_dim,
+    int max_blocks_per_seq,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!cache) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    SNEPPX_KVCache* kvc = (SNEPPX_KVCache*)malloc(sizeof(SNEPPX_KVCache));
+    if (!kvc) return SNEPPX_CUDA_ERROR_OUT_OF_MEMORY;
+    
+    kvc->num_layers = num_layers;
+    kvc->num_blocks = num_blocks;
+    kvc->block_size = block_size;
+    kvc->num_kv_heads = num_kv_heads;
+    kvc->head_dim = head_dim;
+    kvc->max_blocks_per_seq = max_blocks_per_seq;
+    kvc->num_free_blocks = num_blocks;
+    
+    size_t cache_bytes = (size_t)num_layers * num_blocks * block_size * num_kv_heads * head_dim * sizeof(half);
+    
+    cudaMallocAsync(&kvc->key_cache, cache_bytes, stream);
+    cudaMallocAsync(&kvc->value_cache, cache_bytes, stream);
+    cudaMallocAsync(&kvc->free_blocks, num_blocks * sizeof(int), stream);
+    cudaMallocAsync(&kvc->block_tables, num_blocks * sizeof(int), stream);
+    
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        free(kvc);
+        return SNEPPX_CUDA_ERROR_OUT_OF_MEMORY;
+    }
+    
+    // Initialize free blocks list
+    int* h_free = (int*)malloc(num_blocks * sizeof(int));
+    for (int i = 0; i < num_blocks; i++) h_free[i] = i;
+    cudaMemcpyAsync(kvc->free_blocks, h_free, num_blocks * sizeof(int), cudaMemcpyHostToDevice, stream);
+    free(h_free);
+    
+    *cache = kvc;
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_kvcache_destroy(
+    SNEPPX_KVCache* cache,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!cache) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    cudaFreeAsync(cache->key_cache, stream);
+    cudaFreeAsync(cache->value_cache, stream);
+    cudaFreeAsync(cache->free_blocks, stream);
+    cudaFreeAsync(cache->block_tables, stream);
+    free(cache);
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_kvcache_alloc_blocks(
+    SNEPPX_KVCache* cache,
+    int num_blocks_needed,
+    int* block_ids,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!cache || !block_ids) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    // Pop from free list
+    cudaMemcpyAsync(block_ids, cache->free_blocks, num_blocks_needed * sizeof(int), cudaMemcpyDeviceToDevice, stream);
+    
+    // Update free count
+    cache->num_free_blocks -= num_blocks_needed;
+    
+    return SNEPPX_CUDA_SUCCESS;
+}
+
+SNEPPX_CudaError sneppx_kvcache_free_blocks(
+    SNEPPX_KVCache* cache,
