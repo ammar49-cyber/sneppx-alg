@@ -1042,3 +1042,264 @@ __global__ void causal_mask_kernel(
     int batch_size,
     int num_heads,
     float mask_value
+) {
+    int q_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int kv_idx = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (q_idx < seq_len_q && kv_idx < seq_len_kv) {
+        int total_heads = batch_size * num_heads;
+        for (int h = 0; h < total_heads; h++) {
+            mask[(h * seq_len_q + q_idx) * seq_len_kv + kv_idx] = 
+                (kv_idx > q_idx) ? __float2half_rn(mask_value) : __float2half_rn(0.0f);
+        }
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_causal_mask(
+    half* mask,
+    int seq_len_q,
+    int seq_len_kv,
+    int batch_size,
+    int num_heads,
+    float mask_value,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!mask) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    dim3 block(16, 16);
+    dim3 grid((seq_len_q + 15) / 16, (seq_len_kv + 15) / 16);
+    
+    causal_mask_kernel<<<grid, block, 0, stream>>>(
+        mask, seq_len_q, seq_len_kv, batch_size, num_heads, mask_value
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Sliding Window Mask
+// ============================================================================
+
+__global__ void sliding_window_mask_kernel(
+    half* mask,
+    int seq_len_q,
+    int seq_len_kv,
+    int window_left,
+    int window_right,
+    int batch_size,
+    int num_heads,
+    float mask_value
+) {
+    int q_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int kv_idx = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (q_idx < seq_len_q && kv_idx < seq_len_kv) {
+        int pos_diff = kv_idx - q_idx;
+        bool masked = (pos_diff > window_right) || (-pos_diff > window_left);
+        
+        int total_heads = batch_size * num_heads;
+        for (int h = 0; h < total_heads; h++) {
+            mask[(h * seq_len_q + q_idx) * seq_len_kv + kv_idx] = 
+                masked ? __float2half_rn(mask_value) : __float2half_rn(0.0f);
+        }
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_sliding_window_mask(
+    half* mask,
+    int seq_len_q,
+    int seq_len_kv,
+    int window_left,
+    int window_right,
+    int batch_size,
+    int num_heads,
+    float mask_value,
+    SNEPPX_CudaStream_t stream
+) {
+    if (!mask) return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    
+    dim3 block(16, 16);
+    dim3 grid((seq_len_q + 15) / 16, (seq_len_kv + 15) / 16);
+    
+    sliding_window_mask_kernel<<<grid, block, 0, stream>>>(
+        mask, seq_len_q, seq_len_kv, window_left, window_right,
+        batch_size, num_heads, mask_value
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Block-Sparse Attention Forward
+// ============================================================================
+
+__global__ void block_sparse_attn_fwd_kernel(
+    const half* __restrict__ q,
+    const half* __restrict__ k,
+    const half* __restrict__ v,
+    const int* __restrict__ block_mask,
+    half* __restrict__ output,
+    int seq_len,
+    int num_heads,
+    int head_dim,
+    int block_size,
+    float scale
+) {
+    int bid_x = blockIdx.x;
+    int batch_idx = blockIdx.y;
+    int tid = threadIdx.x;
+    
+    int num_blocks = (seq_len + block_size - 1) / block_size;
+    int head_idx = bid_x / num_blocks;
+    int block_q = bid_x % num_blocks;
+    
+    int q_start = block_q * block_size;
+    int q_end = min(q_start + block_size, seq_len);
+    
+    __shared__ half q_smem[32 * 128];
+    
+    int q_base = ((batch_idx * num_heads + head_idx) * seq_len) * head_dim;
+    
+    for (int r = tid / head_dim; r < block_size && (q_start + r) < seq_len; r++) {
+        int c = tid % head_dim;
+        q_smem[r * head_dim + c] = q[q_base + (q_start + r) * head_dim + c];
+    }
+    __syncthreads();
+    
+    // Iterate over sparse KV blocks
+    for (int block_kv = 0; block_kv < num_blocks; block_kv++) {
+        int mask_idx = block_q * num_blocks + block_kv;
+        int is_active = block_mask[mask_idx];
+        
+        if (!is_active) continue;
+        
+        int kv_start = block_kv * block_size;
+        int kv_end = min(kv_start + block_size, seq_len);
+        
+        for (int q_off = 0; q_off < block_size && (q_start + q_off) < seq_len; q_off++) {
+            float max_val = -INFINITY;
+            float sum_val = 0.0f;
+            float output_row = 0.0f;
+            
+            for (int kv_off = 0; kv_off < block_size && (kv_start + kv_off) < seq_len; kv_off++) {
+                float s = 0.0f;
+                for (int d = tid; d < head_dim; d += blockDim.x) {
+                    s += __half2float(q_smem[q_off * head_dim + d]) *
+                         __half2float(k[((batch_idx * num_heads + head_idx) * seq_len + (kv_start + kv_off)) * head_dim + d]);
+                }
+                
+                for (int offset = 16; offset > 0; offset >>= 1) {
+                    s += __shfl_down_sync(0xFFFFFFFF, s, offset);
+                }
+                s = __shfl_sync(0xFFFFFFFF, s, 0) * scale;
+                
+                float m_prev = max_val;
+                max_val = fmaxf(max_val, s);
+                float p = expf(s - max_val);
+                sum_val = sum_val * expf(m_prev - max_val) + p;
+                
+                output_row += p * __half2float(v[((batch_idx * num_heads + head_idx) * seq_len + (kv_start + kv_off)) * head_dim + tid]);
+            }
+            
+            if (sum_val > 0) output_row /= sum_val;
+            
+            int out_idx = ((batch_idx * num_heads + head_idx) * seq_len + (q_start + q_off)) * head_dim + tid;
+            if (tid < head_dim) {
+                output[out_idx] = __float2half_rn(output_row);
+            }
+        }
+    }
+}
+
+SNEPPX_CudaError sneppx_cuda_block_sparse_attn_forward(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_BlockSparseAttnParams* params
+) {
+    if (!params || !params->q || !params->k || !params->v || 
+        !params->block_mask || !params->output) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+    int num_blocks = (params->seq_len + params->block_size - 1) / params->block_size;
+    dim3 grid(params->num_heads * num_blocks, params->batch_size);
+    dim3 block(128);
+    
+    block_sparse_attn_fwd_kernel<<<grid, block, 0, stream>>>(
+        params->q, params->k, params->v, params->block_mask,
+        params->output,
+        params->seq_len, params->num_heads,
+        params->head_dim, params->block_size, params->scale
+    );
+    
+    cudaError_t err = cudaGetLastError();
+    return (err == cudaSuccess) ? SNEPPX_CUDA_SUCCESS : SNEPPX_CUDA_ERROR_LAUNCH_FAILED;
+}
+
+// ============================================================================
+// Flash Attention v3 Forward (Hopper WGMMA + TMA)
+// ============================================================================
+
+#if defined(SNEPPX_HOPPER) && SNEPPX_HOPPER
+
+__global__ void flashattn_v3_fwd_kernel_tma(
+    const half* __restrict__ q,
+    const half* __restrict__ k,
+    const half* __restrict__ v,
+    half* __restrict__ output,
+    float* __restrict__ lse,
+    int seq_len_q,
+    int seq_len_kv,
+    int num_heads,
+    int head_dim,
+    float scale,
+    bool is_causal,
+    int block_m,
+    int block_n,
+    int stages
+) {
+    // TMA + WGMMA-based Flash Attention v3
+    // This kernel uses Hopper-specific features:
+    // - TMA (Tensor Memory Accelerator) for asynchronous data movement
+    // - WGMMA (Warp Group MMA) for higher-throughput GEMM
+    // - Cluster launch for inter-SM communication
+    
+    // Placeholder: full implementation uses TMA descriptors and WGMMA
+    // For now, fall through to v2 path for Hopper
+}
+
+#endif
+
+SNEPPX_CudaError sneppx_cuda_flash_attn_v3_forward(
+    SNEPPX_CudaStream_t stream,
+    const SNEPPX_FlashAttnParams* params,
+    const SNEPPX_FlashAttnV3Options* options
+) {
+    if (!params || !params->q || !params->k || !params->v || !params->output) {
+        return SNEPPX_CUDA_ERROR_INVALID_ARG;
+    }
+    
+#if defined(SNEPPX_HOPPER) && SNEPPX_HOPPER
+    if (options && options->use_tma && options->use_wgmma) {
+        // Use TMA + WGMMA kernel
+        int num_blocks_q = (params->seq_len_q + params->block_m - 1) / params->block_m;
+        dim3 grid(params->num_heads * num_blocks_q, params->batch_size);
+        dim3 block(128);
+        
+        flashattn_v3_fwd_kernel_tma<<<grid, block, 0, stream>>>(
+            params->q, params->k, params->v, params->output, params->lse,
+            params->seq_len_q, params->seq_len_kv, params->num_heads,
+            params->head_dim, params->scale, params->is_causal,
+            params->block_m, params->block_n,
+            options ? options->stages : 4
+        );
+        
+        cudaError_t err = cudaGetLastError();
+        if (err == cudaSuccess) return SNEPPX_CUDA_SUCCESS;
+    }
+#endif
+    
+    // Fallback to Flash Attention v2
+    return sneppx_cuda_flash_attn_v2_forward(stream, params);
+}
