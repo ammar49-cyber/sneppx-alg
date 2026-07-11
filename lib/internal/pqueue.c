@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 static int default_compare(uint64_t a, uint64_t b) {
-    return (a > b) - (a < b);
+    return (a < b) - (a > b);
 }
 
 SNEPPXPriorityQueue* SNEPPX_pq_create(size_t initial_capacity) {

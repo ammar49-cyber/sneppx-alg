@@ -1,5 +1,4 @@
 #include "pqueue.h"
-#include "polymorphic_memory_allocator.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,36 +22,42 @@ static void run_test(const char* name, void (*test_fn)(void)) {
 }
 
 static void test_pqueue_create_destroy(void) {
-    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
+    SNEPPXPriorityQueue* pq = SNEPPX_pq_create(10);
     ASSERT(pq != NULL, "pqueue created");
-    ASSERT(SNEPPX_pqueue_size(pq) == 0, "empty pqueue");
-    SNEPPX_pqueue_destroy(pq);
+    ASSERT(SNEPPX_pq_size(pq) == 0, "empty pqueue");
+    SNEPPX_pq_destroy(pq);
 }
 
 static void test_pqueue_push_pop(void) {
-    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
-    SNEPPX_pqueue_push(pq, 3.0f, (void*)3);
-    SNEPPX_pqueue_push(pq, 1.0f, (void*)1);
-    SNEPPX_pqueue_push(pq, 2.0f, (void*)2);
-    ASSERT(SNEPPX_pqueue_size(pq) == 3, "three items");
+    SNEPPXPriorityQueue* pq = SNEPPX_pq_create(10);
+    SNEPPX_pq_push(pq, 3, (void*)3);
+    SNEPPX_pq_push(pq, 1, (void*)1);
+    SNEPPX_pq_push(pq, 2, (void*)2);
+    ASSERT(SNEPPX_pq_size(pq) == 3, "three items");
 
-    void* val = SNEPPX_pqueue_pop(pq);
-    ASSERT(val == (void*)1, "pop lowest priority");
-    val = SNEPPX_pqueue_pop(pq);
-    ASSERT(val == (void*)2, "pop second lowest");
-    val = SNEPPX_pqueue_pop(pq);
-    ASSERT(val == (void*)3, "pop highest priority");
-    ASSERT(SNEPPX_pqueue_size(pq) == 0, "empty after pops");
-    SNEPPX_pqueue_destroy(pq);
+    uint64_t priority;
+    void* val;
+    int ret = SNEPPX_pq_pop(pq, &priority, &val);
+    ASSERT(ret == 0, "pop returns 0");
+    ASSERT(priority == 1 && val == (void*)1, "pop lowest priority");
+    ret = SNEPPX_pq_pop(pq, &priority, &val);
+    ASSERT(ret == 0 && priority == 2 && val == (void*)2, "pop second lowest");
+    ret = SNEPPX_pq_pop(pq, &priority, &val);
+    ASSERT(ret == 0 && priority == 3 && val == (void*)3, "pop highest priority");
+    ASSERT(SNEPPX_pq_size(pq) == 0, "empty after pops");
+    SNEPPX_pq_destroy(pq);
 }
 
 static void test_pqueue_peek(void) {
-    SNEPPXPriorityQueue* pq = SNEPPX_pqueue_create(10);
-    SNEPPX_pqueue_push(pq, 5.0f, (void*)42);
-    void* val = SNEPPX_pqueue_peek(pq);
-    ASSERT(val == (void*)42, "peek returns top");
-    ASSERT(SNEPPX_pqueue_size(pq) == 1, "size unchanged after peek");
-    SNEPPX_pqueue_destroy(pq);
+    SNEPPXPriorityQueue* pq = SNEPPX_pq_create(10);
+    SNEPPX_pq_push(pq, 5, (void*)42);
+    uint64_t priority;
+    void* val;
+    int ret = SNEPPX_pq_peek(pq, &priority, &val);
+    ASSERT(ret == 0, "peek returns 0");
+    ASSERT(priority == 5 && val == (void*)42, "peek returns top");
+    ASSERT(SNEPPX_pq_size(pq) == 1, "size unchanged after peek");
+    SNEPPX_pq_destroy(pq);
 }
 
 int main(void) {

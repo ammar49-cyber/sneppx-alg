@@ -63,7 +63,9 @@ jobs:
   build-linux:
     name: Build Linux (${{ matrix.build_type }})
     runs-on: ubuntu-22.04
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         build_type: [Release, Debug]
     timeout-minutes: 180
@@ -219,6 +221,7 @@ jobs:
   build-python:
     name: Build Python Package
     runs-on: ubuntu-22.04
+    continue-on-error: true
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4

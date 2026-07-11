@@ -3,15 +3,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 SNEPPXStringBuf* SNEPPX_strbuf_create(size_t capacity) {
     SNEPPXStringBuf* sb = (SNEPPXStringBuf*)SNEPPX_malloc(sizeof(SNEPPXStringBuf), 16);
     if (!sb) return NULL;
     sb->buf = (char*)SNEPPX_malloc(capacity, 1);
-    if (!sb->buf) {
-        SNEPPX_free(sb, sizeof(SNEPPXStringBuf));
-        return NULL;
-    }
+    if (!sb->buf) { SNEPPX_free(sb, sizeof(SNEPPXStringBuf)); return NULL; }
     sb->capacity = capacity;
     sb->length = 0;
     sb->buf[0] = '\0';
@@ -19,16 +17,15 @@ SNEPPXStringBuf* SNEPPX_strbuf_create(size_t capacity) {
 }
 
 void SNEPPX_strbuf_destroy(SNEPPXStringBuf* sb) {
-    if (sb) {
-        SNEPPX_free(sb->buf, sb->capacity);
-        SNEPPX_free(sb, sizeof(SNEPPXStringBuf));
-    }
+    if (!sb) return;
+    SNEPPX_free(sb->buf, sb->capacity);
+    SNEPPX_free(sb, sizeof(SNEPPXStringBuf));
 }
 
-static int strbuf_ensure(SNEPPXStringBuf* sb, size_t needed) {
+static int strbuf_ensure_capacity(SNEPPXStringBuf* sb, size_t needed) {
     if (sb->length + needed + 1 <= sb->capacity) return 0;
     size_t new_cap = sb->capacity * 2;
-    while (sb->length + needed + 1 > new_cap) new_cap *= 2;
+    if (sb->length + needed + 1 > new_cap) new_cap = sb->length + needed + 16;
     char* new_buf = (char*)SNEPPX_realloc(sb->buf, sb->capacity, new_cap, 1);
     if (!new_buf) return -1;
     sb->buf = new_buf;
@@ -39,16 +36,15 @@ static int strbuf_ensure(SNEPPXStringBuf* sb, size_t needed) {
 int SNEPPX_strbuf_append(SNEPPXStringBuf* sb, const char* src) {
     if (!sb || !src) return -1;
     size_t len = strlen(src);
-    if (strbuf_ensure(sb, len) != 0) return -1;
-    memcpy(sb->buf + sb->length, src, len);
+    if (strbuf_ensure_capacity(sb, len) != 0) return -1;
+    memcpy(sb->buf + sb->length, src, len + 1);
     sb->length += len;
-    sb->buf[sb->length] = '\0';
     return 0;
 }
 
 int SNEPPX_strbuf_append_n(SNEPPXStringBuf* sb, const char* src, size_t n) {
     if (!sb || !src) return -1;
-    if (strbuf_ensure(sb, n) != 0) return -1;
+    if (strbuf_ensure_capacity(sb, n) != 0) return -1;
     memcpy(sb->buf + sb->length, src, n);
     sb->length += n;
     sb->buf[sb->length] = '\0';
@@ -62,7 +58,7 @@ int SNEPPX_strbuf_format(SNEPPXStringBuf* sb, const char* fmt, ...) {
     int needed = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
     if (needed < 0) return -1;
-    if (strbuf_ensure(sb, needed) != 0) return -1;
+    if (strbuf_ensure_capacity(sb, needed) != 0) return -1;
     va_start(args, fmt);
     int written = vsnprintf(sb->buf + sb->length, sb->capacity - sb->length, fmt, args);
     va_end(args);
@@ -152,7 +148,8 @@ size_t SNEPPX_strsplit(const char* str, char delimiter, char*** out_tokens, size
         str++;
     }
     
-    if (count < capacity || (max_tokens == 0 && count < capacity)) {
+    // Handle last token
+    if (count < capacity || max_tokens == 0) {
         size_t len = strlen(start);
         if (count >= capacity) {
             capacity *= 2;
