@@ -68,13 +68,6 @@ jobs:
       matrix:
         build_type: [Release, Debug]
         cuda: [OFF, ON]
-        include:
-          - cuda: OFF
-            build_type: Release
-          - cuda: ON
-            build_type: Release
-            if: runner.os == 'Linux' && runner.arch == 'X64'
-    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -194,8 +187,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          choco install -y cmake ninja python ninja --version 1.11.1
-          choco install -y llvm --version 17.0.0
+          choco install -y cmake ninja python --version 1.11.1
+          choco install -y llvm
           refreshenv
 
       - name: Configure CMake
@@ -427,47 +420,3 @@ jobs:
           config-file: '.github/dependency-review-config.yml'
           fail-on-severity: high
 
----
-
-# .github/dependabot.yml
-version: 2
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "github-actions"
-
-  - package-ecosystem: "pip"
-    directory: "/bindings/python"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "python"
-
-  - package-ecosystem: "cargo"
-    directory: "/net/distributed"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "rust"
-
-  - package-ecosystem: "cmake"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "cmake"
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "docker"
