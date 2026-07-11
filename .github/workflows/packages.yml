@@ -1,11 +1,9 @@
 # GitHub Packages — Docker and Python package publishing for sneppx-alg
-# Publishes to GitHub Container Registry (ghcr.io)
 
 name: GitHub Packages
 
 on:
   push:
-    branches: [main]
     tags:
       - "v*"
   workflow_dispatch:
@@ -17,19 +15,14 @@ env:
 
 jobs:
   # =====================================================================
-  # Docker — sneppx-alg (CPU + CUDA)
+  # Docker — sneppx-alg CPU
   # =====================================================================
-  docker-sneppx:
-    name: Docker (SNEPPX-ALG)
-    if: github.event_name != 'pull_request'
+  docker-cpu:
+    name: Docker (CPU)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        variant: [cpu, cuda]
     steps:
       - uses: actions/checkout@v4
 
@@ -50,16 +43,15 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.OWNER }}/sneppx-alg
           tags: |
             type=ref,event=tag
-            type=raw,value=${{ matrix.variant }}
-            type=raw,value=${{ matrix.variant }}-latest
-            type=sha,prefix=${{ matrix.variant }}-,format=short
+            type=raw,value=cpu
+            type=raw,value=cpu-latest
+            type=sha,prefix=cpu-,format=short
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.variant == 'cpu' && 'Dockerfile.cpu' || 'Dockerfile' }}
-          target: ${{ matrix.variant == 'cpu' && 'cpu-runtime' || 'cuda-runtime' }}
+          file: ./Dockerfile.cpu
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -67,14 +59,67 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =====================================================================
-  # Python — sneppx-alg wheel on GitHub Packages
+  # Docker — sneppx-alg CUDA
   # =====================================================================
-  python-publish:
-    name: Python (sneppx-alg)
-    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+  docker-cuda:
+    name: Docker (CUDA)
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/sneppx-alg
+          tags: |
+            type=ref,event=tag
+            type=raw,value=cuda
+            type=raw,value=cuda-latest
+            type=sha,prefix=cuda-,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: cuda-runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            "docker_username=${{ secrets.DOCKER_USERNAME }}"
+            "docker_password=${{ secrets.DOCKER_PASSWORD }}"
+
+  # =====================================================================
+  # Python — Build wheel and upload to release
+  # =====================================================================
+  python-publish:
+    name: Python (wheel)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v4
@@ -86,15 +131,22 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          pip install --no-cache-dir build twine keyring
+          pip install --no-cache-dir build
 
       - name: Build wheel
         run: |
           cd bindings/python
           python -m build --wheel --no-isolation
 
-      - name: Publish to GitHub Packages
-        run: |
-          python -m twine upload --repository-url "https://github.com/${{ env.OWNER }}/sneppx-alg/packages" \
-            bindings/python/dist/*.whl \
-            --username __token__ --password "${{ secrets.GITHUB_TOKEN }}"
+      - name: Upload wheel to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bindings/python/dist/*.whl
+
+      - name: Upload wheel as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-wheel
+          path: bindings/python/dist/*.whl
+          retention-days: 90
