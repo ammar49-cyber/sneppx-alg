@@ -33,8 +33,8 @@ jobs:
             clang-format==17.0.6 \
             cmake-format==0.6.13 \
             cpplint==1.6.1 \
-            yamllint==1.35.1 \
-            markdownlint-cli2
+            yamllint==1.35.1
+          npm install -g markdownlint-cli2 || true
 
       - name: Check C/C++ formatting
         run: |
@@ -78,6 +78,7 @@ jobs:
             python3 python3-pip python3-dev python3-venv \
             libopenblas-dev libomp-dev \
             wget curl git
+          pip install --no-cache-dir numpy
 
       - name: Configure CMake
         run: |
@@ -127,9 +128,9 @@ jobs:
       - name: Install CUDA toolkit
         run: |
           wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-          sudo dpkg -i cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i --force-overwrite cuda-keyring_1.1-1_all.deb
           sudo apt-get update
-          sudo apt-get install -y cuda-toolkit-12-2
+          sudo apt-get install -y cuda-toolkit-12-2 cuda-cudart-dev-12-2 || sudo apt-get install -y cuda-12-2
 
       - name: Install other dependencies
         run: |
@@ -174,6 +175,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir numpy
+
       - name: Configure CMake
         run: |
           cmake -B build -S . \
@@ -215,6 +219,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco install -y cmake ninja
+          pip install --no-cache-dir numpy
 
       - name: Configure CMake
         run: |
