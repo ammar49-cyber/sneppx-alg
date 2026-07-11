@@ -25,8 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install linting tools
         run: |
@@ -71,8 +69,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -137,8 +133,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -182,8 +176,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -260,7 +252,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -341,8 +333,6 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install dependencies
         run: |
