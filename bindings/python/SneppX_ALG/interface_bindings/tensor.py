@@ -29,13 +29,30 @@ else:
     _HAS_C_BACKEND = False
 
 if not _HAS_C_BACKEND:
+
     class Dtype:
-        FLOAT32 = 0; FLOAT64 = 1; FLOAT16 = 2; BFLOAT16 = 3
-        INT32 = 4; INT64 = 5; INT16 = 6; INT8 = 7; UINT8 = 8; BOOL = 9
+        FLOAT32 = 0
+        FLOAT64 = 1
+        FLOAT16 = 2
+        BFLOAT16 = 3
+        INT32 = 4
+        INT64 = 5
+        INT16 = 6
+        INT8 = 7
+        UINT8 = 8
+        BOOL = 9
+
     class Device:
-        CPU = 0; CUDA = 1; METAL = 2; VULKAN = 3
+        CPU = 0
+        CUDA = 1
+        METAL = 2
+        VULKAN = 3
+
     class Layout:
-        DENSE = 0; CSR = 1; COO = 2
+        DENSE = 0
+        CSR = 1
+        COO = 2
+
 
 DTYPE_MAP = {
     "float32": (ctypes.c_float, 4, np.float32),
@@ -57,7 +74,7 @@ def _resolve_dtype(dtype) -> str:
         return dtype
     if isinstance(dtype, np.dtype):
         return _NP_TO_DTYPE.get(dtype, "float32")
-    if hasattr(dtype, 'name'):
+    if hasattr(dtype, "name"):
         return dtype.name.lower()
     return "float32"
 
@@ -67,14 +84,14 @@ def _numpy_dtype(dtype) -> np.dtype:
 
 
 class _CTensorData:
-    def __init__(self, shape, dtype="float32"):
+    def __init__(self, shape, dtype="float32", is_cuda=False):
         self.shape = tuple(shape)
         self.dtype = _resolve_dtype(dtype)
         self.size = math.prod(shape) if shape else 0
         _, itemsize, _ = DTYPE_MAP.get(self.dtype, (None, 4, np.float32))
         self.nbytes = self.size * itemsize
         self._cptr = None
-        self._is_cuda = False
+        self._is_cuda = is_cuda
         if self.size > 0:
             self._data = bytearray(self.nbytes)
 
@@ -88,7 +105,9 @@ class _CTensorData:
 
 
 class Tensor:
-    def __init__(self, data=None, shape=None, dtype="float32", device="cpu", requires_grad=False):
+    def __init__(
+        self, data=None, shape=None, dtype="float32", device="cpu", requires_grad=False
+    ):
         self.device = device
         self.dtype = _resolve_dtype(dtype)
         self.requires_grad = requires_grad
@@ -96,31 +115,59 @@ class Tensor:
         self._grad_fn = None
         if isinstance(data, (int, float, np.integer, np.floating)):
             shape = shape or (1,)
-            self._data = _CTensorData(shape, self.dtype)
+            self._data = _CTensorData(
+                shape, self.dtype, is_cuda=(device.startswith("cuda"))
+            )
             arr = np.full(shape, float(data), dtype=_numpy_dtype(self.dtype))
             self._data._copy_from(arr)
             self.shape = shape
         elif isinstance(data, (list, tuple)):
             arr = np.array(data, dtype=_numpy_dtype(self.dtype))
-            self._data = _CTensorData(arr.shape, self.dtype)
+            self._data = _CTensorData(
+                arr.shape, self.dtype, is_cuda=(device.startswith("cuda"))
+            )
             self._data._copy_from(arr)
             self.shape = arr.shape
         elif isinstance(data, np.ndarray):
             dt = _resolve_dtype(dtype) or _resolve_dtype(str(data.dtype))
-            self._data = _CTensorData(data.shape, dt)
+            self._data = _CTensorData(
+                data.shape, dt, is_cuda=(device.startswith("cuda"))
+            )
             self._data._copy_from(data.astype(_numpy_dtype(dt)))
             self.shape = tuple(data.shape)
         elif isinstance(data, Tensor):
             self._data = data._data
+            self.device = data.device
             self.shape = data.shape
         else:
             shape = shape or (1,)
-            self._data = _CTensorData(shape, self.dtype)
+            self._data = _CTensorData(
+                shape, self.dtype, is_cuda=(device.startswith("cuda"))
+            )
             self.shape = shape
 
     @property
     def dtype_name(self) -> str:
         return self.dtype
+
+    @property
+    def grad_fn(self):
+        return self._grad_fn
+
+    @property
+    def is_leaf(self):
+        return self._grad_fn is None
+
+    def requires_grad_(self, val=True):
+        self.requires_grad = val
+        return self
+
+    def zero_grad_(self):
+        self.grad = None
+        return self
+
+    def _attach_grad_fn(self, fn):
+        self._grad_fn = fn
 
     @property
     def shape(self):
@@ -144,9 +191,15 @@ class Tensor:
 
     @data.setter
     def data(self, arr: np.ndarray):
-        self._data = _CTensorData(arr.shape, _resolve_dtype(str(arr.dtype)))
+        self._data = _CTensorData(
+            arr.shape, _resolve_dtype(str(arr.dtype)), is_cuda=self._data._is_cuda
+        )
         self._data._copy_from(arr)
         self.shape = arr.shape
+
+    @property
+    def is_cuda(self) -> bool:
+        return self._data._is_cuda
 
     @property
     def T(self):
@@ -157,30 +210,69 @@ class Tensor:
     def numpy(self) -> np.ndarray:
         return self._data.to_numpy()
 
-    def to(self, device: str):
-        self.device = device
-        return self
-
     def cuda(self):
         return self.to("cuda")
 
     def cpu(self):
         return self.to("cpu")
 
+    def _check_device_match(self, other):
+        if isinstance(other, Tensor):
+            dev_self = self.device.split(":")[0]
+            dev_other = other.device.split(":")[0]
+            # Allow mixing cuda and cpu in simulation mode (no real CUDA backend)
+            if _HAS_C_BACKEND and dev_self != dev_other:
+                raise RuntimeError(
+                    f"Expected all tensors to be on the same device, "
+                    f"but found at least two devices: {self.device} and {other.device}"
+                )
+
+    def to(self, device: str):
+        if device == self.device:
+            return self
+        if device.startswith("cuda") and self.device == "cpu":
+            from .cuda_device import CUDAMemoryPool
+
+            pool = CUDAMemoryPool()
+            pool.allocate(self._data.nbytes)
+            new_t = Tensor(self, device=self.device, dtype=self.dtype)
+            new_t._data = _CTensorData(self.shape, self.dtype, is_cuda=True)
+            new_t._data._data[:] = self._data._data[:]
+            new_t.device = device
+            return new_t
+        elif device == "cpu" and self.device.startswith("cuda"):
+            new_t = Tensor(self, device=self.device, dtype=self.dtype)
+            new_t._data = _CTensorData(self.shape, self.dtype, is_cuda=False)
+            new_t._data._data[:] = self._data._data[:]
+            new_t.device = device
+            return new_t
+        else:
+            self.device = device
+            return self
+
+    def clone(self):
+        t = Tensor(self, device=self.device, dtype=self.dtype)
+        t._data = _CTensorData(self.shape, self.dtype, is_cuda=self._data._is_cuda)
+        t._data._data[:] = self._data._data[:]
+        return t
+
     def item(self) -> float:
         return float(self.data.flat[0])
 
     def view(self, *shape):
-        t = Tensor(self)
-        t.shape = shape
-        return t
+        from .autograd_ops import Reshape
+
+        # Handle both tuple and individual arguments
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        return Reshape.apply(self, shape)
 
     def reshape(self, *shape):
         return self.view(*shape)
 
     def clone(self):
-        t = Tensor(self)
-        t._data = _CTensorData(self.shape, self.dtype)
+        t = Tensor(self, device=self.device, dtype=self.dtype)
+        t._data = _CTensorData(self.shape, self.dtype, is_cuda=self._data._is_cuda)
         t._data._data[:] = self._data._data[:]
         return t
 
@@ -199,63 +291,92 @@ class Tensor:
         return self
 
     def _apply_unary(self, fn: Callable):
-        return Tensor(fn(self.data), dtype=self.dtype)
+        return Tensor(fn(self.data), dtype=self.dtype, device=self.device)
 
     def _apply_binary(self, other, fn: Callable):
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
         a = self.data
         b = other.data if isinstance(other, Tensor) else other
-        return Tensor(fn(a, b), dtype=self.dtype)
+        return Tensor(fn(a, b), dtype=self.dtype, device=self.device)
 
     def __add__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(self.data + other, dtype=self.dtype)
-        return self._apply_binary(other, lambda a, b: a + b)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Add
+
+        return Add.apply(self, other)
 
     def __radd__(self, other):
-        return self.__add__(other)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Add
+
+        return Add.apply(other, self)
 
     def __sub__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(self.data - other, dtype=self.dtype)
-        return self._apply_binary(other, lambda a, b: a - b)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Sub
+
+        return Sub.apply(self, other)
 
     def __rsub__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(other - self.data, dtype=self.dtype)
-        return Tensor(other.data - self.data, dtype=self.dtype)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Sub
+
+        return Sub.apply(other, self)
 
     def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(self.data * other, dtype=self.dtype)
-        return self._apply_binary(other, lambda a, b: a * b)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Mul
+
+        return Mul.apply(self, other)
 
     def __rmul__(self, other):
-        return self.__mul__(other)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Mul
+
+        return Mul.apply(other, self)
 
     def __truediv__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(self.data / other, dtype=self.dtype)
-        return self._apply_binary(other, lambda a, b: a / b)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Div
+
+        return Div.apply(self, other)
 
     def __rtruediv__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(other / self.data, dtype=self.dtype)
-        return Tensor(other.data / self.data, dtype=self.dtype)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import Div
+
+        return Div.apply(other, self)
 
     def __matmul__(self, other):
-        a, b = self.data, other.data if isinstance(other, Tensor) else other
-        return Tensor(a @ b, dtype=self.dtype)
+        if isinstance(other, Tensor):
+            self._check_device_match(other)
+        from .autograd_ops import MatMul
+
+        return MatMul.apply(self, other)
 
     def __pow__(self, other):
-        if isinstance(other, (int, float)):
-            return Tensor(self.data ** other, dtype=self.dtype)
-        return self._apply_binary(other, lambda a, b: a ** b)
+        from .autograd_ops import Pow
+
+        return Pow.apply(self, other)
 
     def __neg__(self):
-        return self._apply_unary(lambda a: -a)
+        from .autograd_ops import Neg
+
+        return Neg.apply(self)
 
     def __getitem__(self, key):
-        return Tensor(self.data[key], dtype=self.dtype)
+        from .autograd_ops import GetItem
+
+        return GetItem.apply(self, key)
 
     def __setitem__(self, key, value):
         arr = self.data
@@ -277,14 +398,14 @@ class Tensor:
             yield self[i]
 
     def mean(self, dim=None):
-        if dim is None:
-            return Tensor(float(self.data.mean()), dtype=self.dtype)
-        return Tensor(self.data.mean(axis=dim), dtype=self.dtype)
+        from .autograd_ops import Mean
+
+        return Mean.apply(self, dim)
 
     def sum(self, dim=None):
-        if dim is None:
-            return Tensor(float(self.data.sum()), dtype=self.dtype)
-        return Tensor(self.data.sum(axis=dim), dtype=self.dtype)
+        from .autograd_ops import Sum
+
+        return Sum.apply(self, dim)
 
     def var(self, dim=None):
         if dim is None:
@@ -303,66 +424,94 @@ class Tensor:
         return float(self.data.max())
 
     def sqrt(self):
-        return self._apply_unary(lambda a: np.sqrt(a))
+        from .autograd_ops import Sqrt
+
+        return Sqrt.apply(self)
 
     def exp(self):
-        return self._apply_unary(lambda a: np.exp(a))
+        from .autograd_ops import Exp
+
+        return Exp.apply(self)
 
     def log(self):
-        return self._apply_unary(lambda a: np.log(a + 1e-10))
+        from .autograd_ops import Log
+
+        return Log.apply(self)
 
     def abs(self):
-        return self._apply_unary(lambda a: np.abs(a))
+        from .autograd_ops import Abs
+
+        return Abs.apply(self)
 
     def relu(self):
-        return self._apply_unary(lambda a: np.maximum(0, a))
+        from .autograd_ops import Relu
+
+        return Relu.apply(self)
 
     def sigmoid(self):
-        return self._apply_unary(lambda a: 1.0 / (1.0 + np.exp(-a)))
+        from .autograd_ops import Sigmoid
+
+        return Sigmoid.apply(self)
 
     def tanh(self):
-        return self._apply_unary(lambda a: np.tanh(a))
+        from .autograd_ops import Tanh
+
+        return Tanh.apply(self)
 
     def tanh_act(self):
-        return self._apply_unary(lambda a: np.tanh(a))
+        from .autograd_ops import Tanh
+
+        return Tanh.apply(self)
 
     def gelu(self):
-        return self._apply_unary(lambda a: 0.5 * a * (1.0 + np.tanh(0.79788456 * (a + 0.044715 * a**3))))
+        from .autograd_ops import Gelu
+
+        return Gelu.apply(self)
 
     def silu(self):
-        return self._apply_unary(lambda a: a * (1.0 / (1.0 + np.exp(-a))))
+        from .autograd_ops import Silu
+
+        return Silu.apply(self)
 
     def softmax(self, dim=-1):
-        a = self.data
-        e = np.exp(a - a.max(axis=dim, keepdims=True))
-        return Tensor(e / e.sum(axis=dim, keepdims=True), dtype=self.dtype)
+        from .autograd_ops import Softmax
+
+        return Softmax.apply(self, dim)
 
     def log_softmax(self, dim=-1):
-        a = self.data
-        e = np.exp(a - a.max(axis=dim, keepdims=True))
-        sm = e / e.sum(axis=dim, keepdims=True)
-        return Tensor(np.log(sm + 1e-10), dtype=self.dtype)
+        from .autograd_ops import LogSoftmax
+
+        return LogSoftmax.apply(self, dim)
 
     def transpose(self, dim1=0, dim2=1):
-        return Tensor(self.data.swapaxes(dim1, dim2), dtype=self.dtype)
+        from .autograd_ops import Transpose
+
+        return Transpose.apply(self, dim1, dim2)
+
+    def permute(self, *dims):
+        """Permute tensor dimensions."""
+        # Use numpy for permutation
+        return Tensor(self.data.transpose(*dims), dtype=self.dtype, device=self.device)
 
     def squeeze(self, dim=None):
-        if dim is None:
-            return Tensor(np.squeeze(self.data), dtype=self.dtype)
-        return Tensor(np.squeeze(self.data, axis=dim), dtype=self.dtype)
+        from .autograd_ops import Squeeze
+
+        return Squeeze.apply(self, dim)
 
     def unsqueeze(self, dim):
-        return Tensor(np.expand_dims(self.data, dim), dtype=self.dtype)
+        from .autograd_ops import Unsqueeze
+
+        return Unsqueeze.apply(self, dim)
 
     def expand(self, *shape):
-        return Tensor(np.broadcast_to(self.data, shape), dtype=self.dtype)
+        from .autograd_ops import Expand
+
+        return Expand.apply(self, shape)
 
     def backward(self, grad_output=None):
-        if not self.requires_grad:
-            return
-        if grad_output is None:
-            grad_output = Tensor(np.ones_like(self.data), dtype=self.dtype)
-        self.grad = grad_output
+        from .autograd import _wrap_tensor_backward
+
+        _wrap_tensor_backward(self, grad_output)
 
     def detach(self):
         t = Tensor(self)
@@ -378,23 +527,30 @@ class Tensor:
         return Tensor(arr)
 
     def mse_loss(self, target):
-        diff = self.data - target.data
-        return Tensor(np.array([np.mean(diff ** 2)]), dtype="float32")
+        from .autograd_ops import MSELoss
+
+        return MSELoss.apply(self, target)
 
     def cross_entropy(self, target):
-        sm = np.exp(self.data - self.data.max(axis=-1, keepdims=True))
-        sm = sm / sm.sum(axis=-1, keepdims=True)
-        loss = -np.mean(target.data * np.log(sm + 1e-10))
-        return Tensor(np.array([loss]), dtype="float32")
+        from .autograd_ops import CrossEntropyLoss
+
+        return CrossEntropyLoss.apply(self, target)
 
     def mae_loss(self, target):
-        return Tensor(np.array([np.mean(np.abs(self.data - target.data))]), dtype="float32")
+        return Tensor(
+            np.array([np.mean(np.abs(self.data - target.data))]), dtype="float32"
+        )
 
     def nll_loss(self, target):
         return Tensor(np.array([-np.mean(self.data * target.data)]), dtype="float32")
 
     def kl_div(self, target):
-        return Tensor(np.array([np.mean(target.data * (np.log(target.data + 1e-10) - self.data))]), dtype="float32")
+        return Tensor(
+            np.array(
+                [np.mean(target.data * (np.log(target.data + 1e-10) - self.data))]
+            ),
+            dtype="float32",
+        )
 
     def binary_cross_entropy(self, target):
         p = np.clip(self.data, 1e-10, 1 - 1e-10)
@@ -402,28 +558,37 @@ class Tensor:
         return Tensor(np.array([loss]), dtype="float32")
 
     def conv1d(self, kernel, stride=1, padding=0):
-        from scipy import signal
-        arr = self.data
-        k = kernel.data if isinstance(kernel, Tensor) else kernel
-        if padding > 0:
-            arr = np.pad(arr, [(0,0), (padding,), (0,)] if arr.ndim == 3 else [(padding,)])
-        out = signal.correlate(arr, k, mode='valid')[..., ::stride]
-        return Tensor(out, dtype=self.dtype)
+        from .autograd_ops import Conv1d
+
+        return Conv1d.apply(self, kernel, stride, padding)
 
     def conv2d(self, kernel, stride_h=1, stride_w=1, pad_h=0, pad_w=0):
         from scipy import signal
+
         arr = self.data
         k = kernel.data if isinstance(kernel, Tensor) else kernel
         if pad_h > 0 or pad_w > 0:
-            arr = np.pad(arr, [(0,0), (pad_h, pad_h), (pad_w, pad_w), (0,)] if arr.ndim == 4 else [(pad_h, pad_h), (pad_w, pad_w)])
-        out = signal.correlate(arr, k, mode='valid')
+            arr = np.pad(
+                arr,
+                (
+                    [(0, 0), (pad_h, pad_h), (pad_w, pad_w), (0,)]
+                    if arr.ndim == 4
+                    else [(pad_h, pad_h), (pad_w, pad_w)]
+                ),
+            )
+        out = signal.correlate(arr, k, mode="valid")
         out = out[..., ::stride_h, ::stride_w]
         return Tensor(out, dtype=self.dtype)
 
     def pool1d(self, kernel_size, stride=None):
         stride = stride or kernel_size
         arr = self.data
-        out = np.array([arr[..., i:i+kernel_size].mean(axis=-1) for i in range(0, arr.shape[-1] - kernel_size + 1, stride)])
+        out = np.array(
+            [
+                arr[..., i : i + kernel_size].mean(axis=-1)
+                for i in range(0, arr.shape[-1] - kernel_size + 1, stride)
+            ]
+        )
         if arr.ndim == 2:
             out = out.T
         return Tensor(out, dtype=self.dtype)
@@ -432,26 +597,27 @@ class Tensor:
         stride_h = stride_h or kernel_h
         stride_w = stride_w or kernel_w
         arr = self.data
-        out = np.array([[
-            arr[..., i:i+kernel_h, j:j+kernel_w].mean(axis=(-2, -1))
-            for j in range(0, arr.shape[-1] - kernel_w + 1, stride_w)]
-            for i in range(0, arr.shape[-2] - kernel_h + 1, stride_h)])
+        out = np.array(
+            [
+                [
+                    arr[..., i : i + kernel_h, j : j + kernel_w].mean(axis=(-2, -1))
+                    for j in range(0, arr.shape[-1] - kernel_w + 1, stride_w)
+                ]
+                for i in range(0, arr.shape[-2] - kernel_h + 1, stride_h)
+            ]
+        )
         out = out.transpose(2, 3, 0, 1) if arr.ndim == 4 else out
         return Tensor(out, dtype=self.dtype)
 
     def dropout(self, rate=0.5, seed=42):
-        rng = np.random.RandomState(seed)
-        mask = rng.binomial(1, 1.0 - rate, self.shape).astype(np.float32)
-        mask /= (1.0 - rate)
-        return Tensor(self.data * mask, dtype=self.dtype)
+        from .autograd_ops import DropoutFn
+
+        return DropoutFn.apply(self, rate, seed)
 
     def layer_norm(self, gamma, beta, eps=1e-5):
-        g = gamma.data if isinstance(gamma, Tensor) else gamma
-        b = beta.data if isinstance(beta, Tensor) else beta
-        arr = self.data
-        mean = arr.mean(axis=-1, keepdims=True)
-        var = arr.var(axis=-1, keepdims=True)
-        return Tensor((arr - mean) / np.sqrt(var + eps) * g + b, dtype=self.dtype)
+        from .autograd_ops import LayerNorm
+
+        return LayerNorm.apply(self, gamma, beta, eps)
 
     def batch_norm(self, gamma, beta, running_mean, running_var, eps=1e-5):
         g = gamma.data if isinstance(gamma, Tensor) else gamma
@@ -469,11 +635,15 @@ class Tensor:
         mean = arr_g.mean(axis=(2, 3, 4), keepdims=True)
         var = arr_g.var(axis=(2, 3, 4), keepdims=True)
         arr_n = (arr_g - mean) / np.sqrt(var + eps)
-        return Tensor(arr_n.reshape(N, C, H, W) * g.reshape(1, C, 1, 1) + b.reshape(1, C, 1, 1), dtype=self.dtype)
+        return Tensor(
+            arr_n.reshape(N, C, H, W) * g.reshape(1, C, 1, 1) + b.reshape(1, C, 1, 1),
+            dtype=self.dtype,
+        )
 
     def embedding(self, indices):
-        idx = indices.data.astype(np.int64) if isinstance(indices, Tensor) else np.array(indices, dtype=np.int64)
-        return Tensor(self.data[idx], dtype=self.dtype)
+        from .autograd_ops import EmbeddingFn
+
+        return EmbeddingFn.apply(self, indices)
 
     @staticmethod
     def cat(tensors: List["Tensor"], dim=0) -> "Tensor":
@@ -490,23 +660,37 @@ class Tensor:
     # Factory methods
     @staticmethod
     def zeros(shape, dtype="float32", device="cpu"):
-        return Tensor(np.zeros(shape, dtype=_numpy_dtype(dtype)), dtype=dtype, device=device)
+        return Tensor(
+            np.zeros(shape, dtype=_numpy_dtype(dtype)), dtype=dtype, device=device
+        )
 
     @staticmethod
     def ones(shape, dtype="float32", device="cpu"):
-        return Tensor(np.ones(shape, dtype=_numpy_dtype(dtype)), dtype=dtype, device=device)
+        return Tensor(
+            np.ones(shape, dtype=_numpy_dtype(dtype)), dtype=dtype, device=device
+        )
 
     @staticmethod
     def randn(shape, dtype="float32", device="cpu"):
-        return Tensor(np.random.randn(*shape).astype(_numpy_dtype(dtype)), dtype=dtype, device=device)
+        return Tensor(
+            np.random.randn(*shape).astype(_numpy_dtype(dtype)),
+            dtype=dtype,
+            device=device,
+        )
 
     @staticmethod
     def rand(shape, dtype="float32", device="cpu"):
-        return Tensor(np.random.rand(*shape).astype(_numpy_dtype(dtype)), dtype=dtype, device=device)
+        return Tensor(
+            np.random.rand(*shape).astype(_numpy_dtype(dtype)),
+            dtype=dtype,
+            device=device,
+        )
 
     @staticmethod
     def arange(start, stop=None, step=1, dtype="float32"):
-        return Tensor(np.arange(start, stop, step).astype(_numpy_dtype(dtype)), dtype=dtype)
+        return Tensor(
+            np.arange(start, stop, step).astype(_numpy_dtype(dtype)), dtype=dtype
+        )
 
     @staticmethod
     def eye(n, dtype="float32"):
@@ -514,7 +698,9 @@ class Tensor:
 
     @staticmethod
     def full(shape, fill_value, dtype="float32"):
-        return Tensor(np.full(shape, fill_value, dtype=_numpy_dtype(dtype)), dtype=dtype)
+        return Tensor(
+            np.full(shape, fill_value, dtype=_numpy_dtype(dtype)), dtype=dtype
+        )
 
     @staticmethod
     def from_numpy(arr: np.ndarray, dtype=None):
@@ -532,4 +718,14 @@ def stack(tensors: List[Tensor], dim=0) -> Tensor:
 
 Tensorable = Union[Tensor, np.ndarray]
 
-__all__ = ["Tensor", "Tensorable", "Dtype", "Device", "Layout", "_HAS_C_BACKEND", "_C_BACKEND", "cat", "stack"]
+__all__ = [
+    "Tensor",
+    "Tensorable",
+    "Dtype",
+    "Device",
+    "Layout",
+    "_HAS_C_BACKEND",
+    "_C_BACKEND",
+    "cat",
+    "stack",
+]

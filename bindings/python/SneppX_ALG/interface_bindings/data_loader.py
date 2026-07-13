@@ -26,12 +26,12 @@ class Dataset:
             self._targets = targets
 
     def __len__(self) -> int:
-        if hasattr(self, '_data'):
+        if hasattr(self, "_data"):
             return len(self._data)
         raise NotImplementedError
 
     def __getitem__(self, idx: int) -> Any:
-        if hasattr(self, '_data'):
+        if hasattr(self, "_data"):
             if self._targets is not None:
                 return self._data[idx], self._targets[idx]
             return self._data[idx]
@@ -80,7 +80,7 @@ class MemoryMappedTextDataset(Dataset):
         if idx < 0 or idx >= self.num_samples:
             raise IndexError(idx)
         start = idx * self.itemsize
-        buf = self._mm[start:start + self.seq_len * self.itemsize]
+        buf = self._mm[start : start + self.seq_len * self.itemsize]
         arr = np.frombuffer(buf, dtype=np.int32)
         # input/target shift handled by the training loop
         return arr
@@ -103,8 +103,14 @@ class DistributedSampler:
     epoch-based seed for shuffling so each epoch visits a different order.
     """
 
-    def __init__(self, dataset: Dataset, num_replicas: int = 1, rank: int = 0,
-                 shuffle: bool = True, seed: int = 0):
+    def __init__(
+        self,
+        dataset: Dataset,
+        num_replicas: int = 1,
+        rank: int = 0,
+        shuffle: bool = True,
+        seed: int = 0,
+    ):
         self.dataset = dataset
         self.num_replicas = max(1, num_replicas)
         self.rank = rank
@@ -123,9 +129,9 @@ class DistributedSampler:
             rng = random.Random(self.seed + self.epoch)
             rng.shuffle(indices)
         # trim to multiple of world_size
-        indices = indices[:self.total_size]
+        indices = indices[: self.total_size]
         # shard
-        indices = indices[self.rank:self.total_size:self.num_replicas]
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         return iter(indices)
 
     def __len__(self) -> int:
@@ -135,8 +141,13 @@ class DistributedSampler:
 class _PrefetchWorker:
     """Background fetcher that keeps ``prefetch_factor`` batches ready."""
 
-    def __init__(self, dataset: Dataset, indices: List[int],
-                 collate_fn: Optional[Callable], prefetch: int):
+    def __init__(
+        self,
+        dataset: Dataset,
+        indices: List[int],
+        collate_fn: Optional[Callable],
+        prefetch: int,
+    ):
         self.dataset = dataset
         self.indices = indices
         self.collate_fn = collate_fn
@@ -178,11 +189,18 @@ def default_collate(batch: List[Any]) -> Any:
 class DataLoader:
     """Configurable data loader with prefetch and sharding."""
 
-    def __init__(self, dataset: Dataset, batch_size: int = 32,
-                 shuffle: bool = False, num_workers: int = 0,
-                 collate_fn: Optional[Callable] = None,
-                 drop_last: bool = False, pin_memory: bool = False,
-                 prefetch_factor: int = 2, sampler: Optional[Any] = None):
+    def __init__(
+        self,
+        dataset: Dataset,
+        batch_size: int = 32,
+        shuffle: bool = False,
+        num_workers: int = 0,
+        collate_fn: Optional[Callable] = None,
+        drop_last: bool = False,
+        pin_memory: bool = False,
+        prefetch_factor: int = 2,
+        sampler: Optional[Any] = None,
+    ):
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -219,7 +237,7 @@ class DataLoader:
 
     def _iter_single(self, indices: List[int]):
         for i in range(0, len(indices), self.batch_size):
-            batch_idx = indices[i:i + self.batch_size]
+            batch_idx = indices[i : i + self.batch_size]
             if self.drop_last and len(batch_idx) < self.batch_size:
                 continue
             samples = [self.dataset[j] for j in batch_idx]
@@ -230,11 +248,10 @@ class DataLoader:
 
     def _iter_workers(self, indices: List[int]):
         # Split indices into per-worker chunks
-        chunks = [indices[p::self.num_workers] for p in range(self.num_workers)]
+        chunks = [indices[p :: self.num_workers] for p in range(self.num_workers)]
         workers = []
         for c in chunks:
-            w = _PrefetchWorker(self.dataset, c, self.collate_fn,
-                                self.prefetch_factor)
+            w = _PrefetchWorker(self.dataset, c, self.collate_fn, self.prefetch_factor)
             w.start()
             workers.append(w)
         # Round-robin merge of worker outputs
@@ -284,4 +301,4 @@ class StreamingTokenDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx: int) -> np.ndarray:
-        return np.array(self.tokens[idx:idx + self.seq_len], dtype=np.int32)
+        return np.array(self.tokens[idx : idx + self.seq_len], dtype=np.int32)

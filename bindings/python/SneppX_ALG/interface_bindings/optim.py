@@ -21,9 +21,33 @@ class Optimizer:
     def step(self):
         raise NotImplementedError
 
+    def state_dict(self) -> dict:
+        state_copy = []
+        for s in self.state:
+            state_copy.append(
+                {k: v.copy() if hasattr(v, "copy") else v for k, v in s.items()}
+            )
+        return {
+            "lr": self.lr,
+            "weight_decay": self.weight_decay,
+            "state": state_copy,
+            "param_count": len(self.params),
+        }
+
+    def load_state_dict(self, state_dict: dict):
+        self.lr = state_dict.get("lr", self.lr)
+        self.weight_decay = state_dict.get("weight_decay", self.weight_decay)
+        restored = state_dict.get("state", [])
+        for i, s in enumerate(restored):
+            if i < len(self.state):
+                for k, v in s.items():
+                    self.state[i][k] = v
+
 
 class SGD(Optimizer):
-    def __init__(self, params, lr: float = 0.01, momentum: float = 0.0, weight_decay: float = 0.0):
+    def __init__(
+        self, params, lr: float = 0.01, momentum: float = 0.0, weight_decay: float = 0.0
+    ):
         super().__init__(params, lr, weight_decay)
         self.momentum = momentum
 
@@ -33,23 +57,41 @@ class SGD(Optimizer):
                 continue
             g = p.grad.data + self.weight_decay * p.data
             if self.momentum > 0:
-                if 'momentum_buf' not in self.state[i]:
-                    self.state[i]['momentum_buf'] = np.zeros_like(g)
-                buf = self.state[i]['momentum_buf']
+                if "momentum_buf" not in self.state[i]:
+                    self.state[i]["momentum_buf"] = np.zeros_like(g)
+                buf = self.state[i]["momentum_buf"]
                 buf = self.momentum * buf + g
-                self.state[i]['momentum_buf'] = buf
+                self.state[i]["momentum_buf"] = buf
                 g = buf
-            p_new = p.data - self.lr * g
-            self.params[i] = Tensor.from_numpy(p_new)
+            p.data = p.data - self.lr * g
 
 
 class AdamW(Optimizer):
-    def __init__(self, params, lr: float = 0.001, betas=(0.9, 0.999),
-                 eps: float = 1e-8, weight_decay: float = 0.01):
+    def __init__(
+        self,
+        params,
+        lr: float = 0.001,
+        betas=(0.9, 0.999),
+        eps: float = 1e-8,
+        weight_decay: float = 0.01,
+    ):
         super().__init__(params, lr, weight_decay)
         self.betas = betas
         self.eps = eps
         self._step = 0
+
+    def state_dict(self) -> dict:
+        sd = super().state_dict()
+        sd["_step"] = self._step
+        sd["betas"] = list(self.betas)
+        sd["eps"] = self.eps
+        return sd
+
+    def load_state_dict(self, state_dict: dict):
+        super().load_state_dict(state_dict)
+        self._step = state_dict.get("_step", 0)
+        self.betas = tuple(state_dict.get("betas", self.betas))
+        self.eps = state_dict.get("eps", self.eps)
 
     def step(self):
         self._step += 1
@@ -57,26 +99,25 @@ class AdamW(Optimizer):
             if p.grad is None:
                 continue
             g = p.grad.data
-            if 'exp_avg' not in self.state[i]:
-                self.state[i]['exp_avg'] = np.zeros_like(g)
-                self.state[i]['exp_avg_sq'] = np.zeros_like(g)
-            m = self.state[i]['exp_avg']
-            v = self.state[i]['exp_avg_sq']
+            if "exp_avg" not in self.state[i]:
+                self.state[i]["exp_avg"] = np.zeros_like(g)
+                self.state[i]["exp_avg_sq"] = np.zeros_like(g)
+            m = self.state[i]["exp_avg"]
+            v = self.state[i]["exp_avg_sq"]
             m = self.betas[0] * m + (1 - self.betas[0]) * g
-            v = self.betas[1] * v + (1 - self.betas[1]) * g ** 2
-            self.state[i]['exp_avg'] = m
-            self.state[i]['exp_avg_sq'] = v
+            v = self.betas[1] * v + (1 - self.betas[1]) * g**2
+            self.state[i]["exp_avg"] = m
+            self.state[i]["exp_avg_sq"] = v
             m_hat = m / (1 - self.betas[0] ** self._step)
             v_hat = v / (1 - self.betas[1] ** self._step)
-            p_arr = p.data
-            p_arr = p_arr - self.lr * self.weight_decay * p_arr
-            p_arr = p_arr - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
-            self.params[i] = Tensor.from_numpy(p_arr)
+            p.data = p.data - self.lr * self.weight_decay * p.data
+            p.data = p.data - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
 
 
 class Lion(Optimizer):
-    def __init__(self, params, lr: float = 0.0001, betas=(0.9, 0.99),
-                 weight_decay: float = 0.0):
+    def __init__(
+        self, params, lr: float = 0.0001, betas=(0.9, 0.99), weight_decay: float = 0.0
+    ):
         super().__init__(params, lr, weight_decay)
         self.betas = betas
 
@@ -85,21 +126,25 @@ class Lion(Optimizer):
             if p.grad is None:
                 continue
             g = p.grad.data
-            if 'momentum' not in self.state[i]:
-                self.state[i]['momentum'] = np.zeros_like(g)
-            m = self.state[i]['momentum']
+            if "momentum" not in self.state[i]:
+                self.state[i]["momentum"] = np.zeros_like(g)
+            m = self.state[i]["momentum"]
             update = self.betas[0] * m + (1 - self.betas[0]) * g
             m = self.betas[1] * m + (1 - self.betas[1]) * g
-            self.state[i]['momentum'] = m
-            p_arr = p.data
-            p_arr = p_arr - self.lr * self.weight_decay * p_arr
-            p_arr = p_arr - self.lr * np.sign(update)
-            self.params[i] = Tensor.from_numpy(p_arr)
+            self.state[i]["momentum"] = m
+            p.data = p.data - self.lr * self.weight_decay * p.data
+            p.data = p.data - self.lr * np.sign(update)
 
 
 class LAMB(Optimizer):
-    def __init__(self, params, lr: float = 0.001, betas=(0.9, 0.999),
-                 eps: float = 1e-8, weight_decay: float = 0.0):
+    def __init__(
+        self,
+        params,
+        lr: float = 0.001,
+        betas=(0.9, 0.999),
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+    ):
         super().__init__(params, lr, weight_decay)
         self.betas = betas
         self.eps = eps
@@ -111,15 +156,15 @@ class LAMB(Optimizer):
             if p.grad is None:
                 continue
             g = p.grad.data
-            if 'exp_avg' not in self.state[i]:
-                self.state[i]['exp_avg'] = np.zeros_like(g)
-                self.state[i]['exp_avg_sq'] = np.zeros_like(g)
-            m = self.state[i]['exp_avg']
-            v = self.state[i]['exp_avg_sq']
+            if "exp_avg" not in self.state[i]:
+                self.state[i]["exp_avg"] = np.zeros_like(g)
+                self.state[i]["exp_avg_sq"] = np.zeros_like(g)
+            m = self.state[i]["exp_avg"]
+            v = self.state[i]["exp_avg_sq"]
             m = self.betas[0] * m + (1 - self.betas[0]) * g
-            v = self.betas[1] * v + (1 - self.betas[1]) * g ** 2
-            self.state[i]['exp_avg'] = m
-            self.state[i]['exp_avg_sq'] = v
+            v = self.betas[1] * v + (1 - self.betas[1]) * g**2
+            self.state[i]["exp_avg"] = m
+            self.state[i]["exp_avg_sq"] = v
             m_hat = m / (1 - self.betas[0] ** self._step)
             v_hat = v / (1 - self.betas[1] ** self._step)
             update = m_hat / (np.sqrt(v_hat) + self.eps) + self.weight_decay * p.data
@@ -128,8 +173,7 @@ class LAMB(Optimizer):
             trust = 1.0
             if p_norm > 0 and g_norm > 0:
                 trust = p_norm / g_norm
-            p_arr = p.data - self.lr * trust * update
-            self.params[i] = Tensor.from_numpy(p_arr)
+            p.data = p.data - self.lr * trust * update
 
 
 class CosineAnnealingLR:

@@ -25,8 +25,13 @@ class Lion:
              m <- beta2*m + (1-beta2)*g
     """
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-4,
-                 betas: tuple = (0.9, 0.99), weight_decay: float = 0.0):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-4,
+        betas: tuple = (0.9, 0.99),
+        weight_decay: float = 0.0,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2 = betas
@@ -57,9 +62,14 @@ class LAMB:
     their parameter norm, enabling very large batch LAMB training.
     """
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-3,
-                 betas: tuple = (0.9, 0.999), eps: float = 1e-6,
-                 weight_decay: float = 0.0):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-3,
+        betas: tuple = (0.9, 0.999),
+        eps: float = 1e-6,
+        weight_decay: float = 0.0,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2 = betas
@@ -107,9 +117,15 @@ class LAMB:
 class LARS:
     """LARS (Layer-wise Adaptive Rate Scaling, Yang 2017) — SGD variant."""
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-2,
-                 momentum: float = 0.9, weight_decay: float = 1e-4,
-                 trust_coef: float = 0.001, eps: float = 1e-8):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-2,
+        momentum: float = 0.9,
+        weight_decay: float = 1e-4,
+        trust_coef: float = 0.001,
+        eps: float = 1e-8,
+    ):
         self.params = params
         self.lr = lr
         self.momentum = momentum
@@ -149,11 +165,18 @@ class AdaFactor:
     embeddings without a full 32-bit momentum buffer per parameter.
     """
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-3,
-                 beta1: float = 0.0, beta2: float = 0.999,
-                 eps1: float = 1e-30, eps2: float = 1e-3,
-                 clip_threshold: float = 1.0, weight_decay: float = 0.0,
-                 min_dim_size_to_factor: int = 128):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-3,
+        beta1: float = 0.0,
+        beta2: float = 0.999,
+        eps1: float = 1e-30,
+        eps2: float = 1e-3,
+        clip_threshold: float = 1.0,
+        weight_decay: float = 0.0,
+        min_dim_size_to_factor: int = 128,
+    ):
         self.params = params
         self.lr = lr
         self.beta1 = beta1
@@ -190,7 +213,9 @@ class AdaFactor:
                 col = np.mean(g * g, axis=0)
                 self.r_row[i] = self.beta2 * self.r_row[i] + (1 - self.beta2) * row
                 self.r_col[i] = self.beta2 * self.r_col[i] + (1 - self.beta2) * col
-                r_factor = np.outer(self.r_row[i] + self.eps1, self.r_col[i] + self.eps1)
+                r_factor = np.outer(
+                    self.r_row[i] + self.eps1, self.r_col[i] + self.eps1
+                )
                 denom = np.sqrt(r_factor) + self.eps2
             else:
                 self.r_row[i] = self.beta2 * self.r_row[i] + (1 - self.beta2) * (g * g)
@@ -217,9 +242,14 @@ class AdaFactor:
 class RAdam:
     """RAdam (Liu 2019) — Adam with rectified variance warmup."""
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-3,
-                 betas: tuple = (0.9, 0.999), eps: float = 1e-8,
-                 weight_decay: float = 0.0):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-3,
+        betas: tuple = (0.9, 0.999),
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2 = betas
@@ -234,18 +264,22 @@ class RAdam:
 
     def step(self):
         self.step_count += 1
-        beta2_power = self.beta2 ** self.step_count
+        beta2_power = self.beta2**self.step_count
         rho_inf = 2.0 / (1 - self.beta2) - 1
         for i, p in enumerate(self.params):
             g = _as_array(p.grad) if p.grad is not None else np.zeros_like(_as_array(p))
             m = self.beta1 * self.m[i] + (1 - self.beta1) * g
             v = self.beta2 * self.v[i] + (1 - self.beta2) * (g * g)
-            mhat = m / (1 - self.beta1 ** self.step_count)
+            mhat = m / (1 - self.beta1**self.step_count)
             vhat = v / (1 - beta2_power)
             rho = rho_inf - 2 * self.step_count * beta2_power / (1 - beta2_power)
             if rho > 5:
-                r = math.sqrt((rho - 4) * (rho - 2) * rho_inf /
-                              ((rho_inf - 4) * (rho_inf - 2) * rho))
+                r = math.sqrt(
+                    (rho - 4)
+                    * (rho - 2)
+                    * rho_inf
+                    / ((rho_inf - 4) * (rho_inf - 2) * rho)
+                )
                 numer = r
             else:
                 numer = 1.0
@@ -270,9 +304,15 @@ class Sophia:
     update, giving faster convergence than Adam for language models.
     """
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-4,
-                 betas: tuple = (0.965, 0.99), rho: float = 0.04,
-                 weight_decay: float = 1e-2, eps: float = 1e-12):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-4,
+        betas: tuple = (0.965, 0.99),
+        rho: float = 0.04,
+        weight_decay: float = 1e-2,
+        eps: float = 1e-12,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2 = betas
@@ -328,9 +368,14 @@ class Sophia:
 class Adan:
     """Adan (Xie 2022) — adaptive Nesterov momentum with decoupled WD."""
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-3,
-                 betas: tuple = (0.98, 0.92, 0.99), eps: float = 1e-8,
-                 weight_decay: float = 0.0):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-3,
+        betas: tuple = (0.98, 0.92, 0.99),
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2, self.beta3 = betas
@@ -355,10 +400,11 @@ class Adan:
             v = self.beta2 * self.v[i] + (1 - self.beta2) * (g - self.m[i])
             # n (second-order Nesterov)
             n = self.beta3 * self.n[i] + (1 - self.beta3) * (
-                (g - self.m[i]) * (g - self.m[i]))
+                (g - self.m[i]) * (g - self.m[i])
+            )
             # predicted gradient
             nesterov_grad = g + self.beta2 * (g - self.m[i])
-            nesterov_delta = (nesterov_grad + self.beta3 * (nesterov_grad ** 2))
+            nesterov_delta = nesterov_grad + self.beta3 * (nesterov_grad**2)
             denom = np.sqrt(n) + self.eps
             update = nesterov_delta / denom
             if self.weight_decay > 0:
@@ -382,9 +428,15 @@ class ScheduleFreeAdamW:
     training with one hyperparameter (lr).
     """
 
-    def __init__(self, params: List[Tensor], lr: float = 1e-3,
-                 betas: tuple = (0.9, 0.999), weight_decay: float = 0.1,
-                 eps: float = 1e-8, beta: float = 0.9):
+    def __init__(
+        self,
+        params: List[Tensor],
+        lr: float = 1e-3,
+        betas: tuple = (0.9, 0.999),
+        weight_decay: float = 0.1,
+        eps: float = 1e-8,
+        beta: float = 0.9,
+    ):
         self.params = params
         self.lr = lr
         self.beta1, self.beta2 = betas
@@ -404,16 +456,21 @@ class ScheduleFreeAdamW:
 
     def step(self):
         self.step_count += 1
-        z = self.beta * (1 - self.beta ** (self.step_count - 1)) / (1 - self.beta ** self.step_count) \
-            if self.beta != 1 else 1.0
+        z = (
+            self.beta
+            * (1 - self.beta ** (self.step_count - 1))
+            / (1 - self.beta**self.step_count)
+            if self.beta != 1
+            else 1.0
+        )
         for i, p in enumerate(self.params):
             g = _as_array(p.grad) if p.grad is not None else np.zeros_like(_as_array(p))
             x = self.x[i]
             # update y (fast weights)
             m = self.beta1 * self.m[i] + (1 - self.beta1) * g
             v = self.beta2 * self.v[i] + (1 - self.beta2) * (g * g)
-            mhat = m / (1 - self.beta1 ** self.step_count)
-            vhat = v / (1 - self.beta2 ** self.step_count)
+            mhat = m / (1 - self.beta1**self.step_count)
+            vhat = v / (1 - self.beta2**self.step_count)
             y_new = self.y[i] - self.lr * (mhat / (np.sqrt(vhat) + self.eps))
             if self.weight_decay > 0:
                 y_new = y_new - self.lr * self.weight_decay * x
@@ -433,8 +490,13 @@ class ScheduleFreeAdamW:
 def get_optimizer(name: str, params: List[Tensor], **kwargs):
     """Factory for extra optimizers."""
     registry = {
-        "lion": Lion, "lamb": LAMB, "lars": LARS, "adafactor": AdaFactor,
-        "radam": RAdam, "sophia": Sophia, "adan": Adan,
+        "lion": Lion,
+        "lamb": LAMB,
+        "lars": LARS,
+        "adafactor": AdaFactor,
+        "radam": RAdam,
+        "sophia": Sophia,
+        "adan": Adan,
         "schedule_free_adamw": ScheduleFreeAdamW,
     }
     if name not in registry:
