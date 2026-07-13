@@ -39,7 +39,7 @@ static void test_checkpoint_open(void) {
 }
 
 static void test_checkpoint_write_read(void) {
-    const char* path = "/tmp/test_checkpoint.ckpt";
+    const char* path = "C:\\Users\\PC\\test_checkpoint.ckpt";
     SNEPPXCheckpointHeader header = {0};
     header.num_tensors = 1;
     void* handle = NULL;
@@ -63,7 +63,7 @@ static void test_checkpoint_write_read(void) {
     // Read back
     SNEPPXCheckpointHeader read_header = {0};
     void* read_handle = NULL;
-    ret = SNEPPX_ckpt_read_open("/tmp/test_checkpoint.ckpt", &read_header, &handle);
+    ret = SNEPPX_ckpt_read_open(path, &read_header, &handle);
     ASSERT(ret == 0, "read open succeeds");
     ASSERT(read_header.num_tensors == 1, "num_tensors matches");
     

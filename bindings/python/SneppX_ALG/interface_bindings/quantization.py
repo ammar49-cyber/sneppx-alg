@@ -33,6 +33,7 @@ class QuantGranularity:
 # INT8 Quantization (pure NumPy)
 # ============================================================================
 
+
 def quantize_int8_sym(tensor: Tensor) -> Tuple[Tensor, float]:
     """Symmetric INT8 quantization: x_q = round(x / scale), scale = max(|x|) / 127."""
     arr = tensor.data
@@ -75,8 +76,9 @@ def quantize_int8_channel(tensor: Tensor, dim: int = -1) -> Tuple[Tensor, Tensor
     arr = tensor.data
     if dim < 0:
         dim = arr.ndim + dim
-    max_abs = np.max(np.abs(arr), axis=tuple(d for d in range(arr.ndim) if d != dim),
-                     keepdims=True)
+    max_abs = np.max(
+        np.abs(arr), axis=tuple(d for d in range(arr.ndim) if d != dim), keepdims=True
+    )
     scales = np.where(max_abs < 1e-10, 1.0, max_abs / 127.0)
     q_arr = np.round(arr / scales).clip(-128, 127).astype(np.int8)
     return Tensor.from_numpy(q_arr, dtype="int8"), Tensor.from_numpy(scales.squeeze())
@@ -85,6 +87,7 @@ def quantize_int8_channel(tensor: Tensor, dim: int = -1) -> Tuple[Tensor, Tensor
 # ============================================================================
 # INT4 Quantization (packed, symmetric)
 # ============================================================================
+
 
 def quantize_int4_sym(tensor: Tensor) -> Tuple[Tensor, float]:
     """Symmetric INT4 quantization with 2 values packed per byte."""
@@ -116,6 +119,7 @@ def dequantize_int4_sym(qtensor: Tensor, scale: float, n: int) -> Tensor:
 # FP8 Quantization (E4M3 / E5M2)
 # ============================================================================
 
+
 def _float_to_fp8_e4m3(value: float) -> int:
     """Encode a single float32 to FP8 E4M3."""
     b = np.float32(value).view(np.uint32)
@@ -142,8 +146,8 @@ def _fp8_e4m3_to_float(fp8: int) -> float:
     e4m3_mant = fp8 & 0x07
     if e4m3_exp == 0x0F:
         if e4m3_mant == 0:
-            return float('inf') if sign == 0 else float('-inf')
-        return float('nan')
+            return float("inf") if sign == 0 else float("-inf")
+        return float("nan")
     if e4m3_exp == 0 and e4m3_mant == 0:
         return 0.0
     exp = e4m3_exp - 7
@@ -151,7 +155,7 @@ def _fp8_e4m3_to_float(fp8: int) -> float:
     if f32_exp <= 0:
         return 0.0
     if f32_exp >= 255:
-        return float('inf') if sign == 0 else float('-inf')
+        return float("inf") if sign == 0 else float("-inf")
     f32 = int((sign << 31) | (f32_exp << 23) | (e4m3_mant << 20))
     return np.uint32(f32).view(np.float32).item()
 
@@ -182,8 +186,8 @@ def _fp8_e5m2_to_float(fp8: int) -> float:
     e5m2_mant = fp8 & 0x03
     if e5m2_exp == 0x1F:
         if e5m2_mant == 0:
-            return float('inf') if sign == 0 else float('-inf')
-        return float('nan')
+            return float("inf") if sign == 0 else float("-inf")
+        return float("nan")
     if e5m2_exp == 0 and e5m2_mant == 0:
         return 0.0
     exp = e5m2_exp - 15
@@ -191,7 +195,7 @@ def _fp8_e5m2_to_float(fp8: int) -> float:
     if f32_exp <= 0:
         return 0.0
     if f32_exp >= 255:
-        return float('inf') if sign == 0 else float('-float')
+        return float("inf") if sign == 0 else float("-float")
     f32 = int((sign << 31) | (f32_exp << 23) | (e5m2_mant << 21))
     return np.uint32(f32).view(np.float32).item()
 
@@ -228,8 +232,10 @@ def dequantize_fp8_e5m2(qtensor: Tensor) -> Tensor:
 # AWQ: Activation-aware Weight Quantization
 # ============================================================================
 
-def _compute_best_scale(w_row: np.ndarray, col: int, group_size: int,
-                        act_scale: float) -> float:
+
+def _compute_best_scale(
+    w_row: np.ndarray, col: int, group_size: int, act_scale: float
+) -> float:
     """Grid search for optimal per-channel scale."""
     cols = len(w_row)
     g_start = (col // group_size) * group_size
@@ -254,8 +260,9 @@ def _compute_best_scale(w_row: np.ndarray, col: int, group_size: int,
     return best_s
 
 
-def awq_scale_weights(weights: Tensor, act_scales: Tensor,
-                      group_size: int = 128) -> Tensor:
+def awq_scale_weights(
+    weights: Tensor, act_scales: Tensor, group_size: int = 128
+) -> Tensor:
     """Scale weights by optimal per-channel factors (AWQ preprocessing)."""
     w = weights.data.copy()
     act = act_scales.data.flatten()
@@ -263,15 +270,17 @@ def awq_scale_weights(weights: Tensor, act_scales: Tensor,
     scale_out = np.ones_like(w)
     for r in range(rows):
         for c in range(cols):
-            s = _compute_best_scale(w[r], c, group_size,
-                                    act[c] if c < len(act) else 0.5)
+            s = _compute_best_scale(
+                w[r], c, group_size, act[c] if c < len(act) else 0.5
+            )
             scale_out[r, c] = s
             w[r, c] *= s
     return Tensor.from_numpy(w)
 
 
-def awq_quantize(weights: Tensor, act_scales: Tensor,
-                 group_size: int = 128) -> Tuple[Tensor, Tensor]:
+def awq_quantize(
+    weights: Tensor, act_scales: Tensor, group_size: int = 128
+) -> Tuple[Tensor, Tensor]:
     """AWQ: scale + quantize weights to INT8 per group."""
     w = weights.data
     act = act_scales.data.flatten()
@@ -285,8 +294,9 @@ def awq_quantize(weights: Tensor, act_scales: Tensor,
             ge = min(gs + group_size, cols)
             block = w[r, gs:ge].copy()
             for c in range(gs, ge):
-                s = _compute_best_scale(w[r], c, group_size,
-                                        act[c] if c < len(act) else 0.5)
+                s = _compute_best_scale(
+                    w[r], c, group_size, act[c] if c < len(act) else 0.5
+                )
                 block[c - gs] *= s
             max_abs = np.max(np.abs(block))
             scale = max_abs / 127.0 if max_abs > 1e-10 else 1.0
@@ -299,6 +309,7 @@ def awq_quantize(weights: Tensor, act_scales: Tensor,
 # ============================================================================
 # GPTQ: Post-Training Quantization
 # ============================================================================
+
 
 def _cholesky_inv(h: np.ndarray) -> np.ndarray:
     """Compute inverse of Cholesky factor: H^{-1} = (L^{-T})(L^{-1})."""
@@ -320,9 +331,13 @@ def gptq_compute_hessian(activations: Tensor, reg: float = 1e-5) -> Tensor:
     return Tensor.from_numpy(H)
 
 
-def gptq_quantize(weights: Tensor, hessian: Optional[Tensor] = None,
-                  group_size: int = 128, bits: int = 8,
-                  sym: bool = True) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+def gptq_quantize(
+    weights: Tensor,
+    hessian: Optional[Tensor] = None,
+    group_size: int = 128,
+    bits: int = 8,
+    sym: bool = True,
+) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
     """GPTQ: one-shot weight quantization with Hessian-based error compensation.
 
     Args:
@@ -337,7 +352,7 @@ def gptq_quantize(weights: Tensor, hessian: Optional[Tensor] = None,
     """
     w = weights.data.astype(np.float64)
     rows, cols = w.shape
-    qmax = 2 ** (bits - 1) - 1 if sym else 2 ** bits - 1
+    qmax = 2 ** (bits - 1) - 1 if sym else 2**bits - 1
     qmin = -qmax if sym else 0
     num_groups = (cols + group_size - 1) // group_size
     qw = np.zeros_like(w, dtype=np.float32)
@@ -348,7 +363,7 @@ def gptq_quantize(weights: Tensor, hessian: Optional[Tensor] = None,
         H = hessian.data.astype(np.float64)
         if H.shape[0] < cols:
             H_big = np.eye(cols, dtype=np.float64) * 1e-5
-            H_big[:H.shape[0], :H.shape[0]] = H
+            H_big[: H.shape[0], : H.shape[0]] = H
             H = H_big
     else:
         H = np.eye(cols, dtype=np.float64)
@@ -382,21 +397,30 @@ def gptq_quantize(weights: Tensor, hessian: Optional[Tensor] = None,
                 qw[r, gs + j] = q_val
                 if j + 1 < gs_eff and abs(H_block[j, j]) > 1e-10:
                     coef = -err / H_block[j, j]
-                    block[j + 1:] += coef * H_block[j + 1:, j]
+                    block[j + 1 :] += coef * H_block[j + 1 :, j]
 
-    return Tensor.from_numpy(qw), Tensor.from_numpy(scales), \
-           Tensor.from_numpy(zeros) if zeros is not None else None
+    return (
+        Tensor.from_numpy(qw),
+        Tensor.from_numpy(scales),
+        Tensor.from_numpy(zeros) if zeros is not None else None,
+    )
 
 
 # ============================================================================
 # Quantized Linear Layer
 # ============================================================================
 
+
 class QuantizedLinear:
     """INT8 quantized linear layer (simulates W8A16 inference)."""
 
-    def __init__(self, weight: Tensor, scale: Union[float, Tensor],
-                 bias: Optional[Tensor] = None, mode: int = QuantMode.INT8_SYM):
+    def __init__(
+        self,
+        weight: Tensor,
+        scale: Union[float, Tensor],
+        bias: Optional[Tensor] = None,
+        mode: int = QuantMode.INT8_SYM,
+    ):
         self.weight = weight
         self.scale = scale
         self.bias = bias
@@ -406,6 +430,7 @@ class QuantizedLinear:
     def from_float(cls, linear_layer, mode: int = QuantMode.INT8_SYM):
         """Quantize a Linear layer's weight."""
         from .nn import Linear
+
         w = linear_layer.weight.data
         if mode == QuantMode.INT8_SYM:
             qw, scale = quantize_int8_sym(linear_layer.weight)
@@ -445,8 +470,8 @@ def dequantize_int8_channel(qtensor: Tensor, scales: Tensor) -> Tensor:
 # Utility
 # ============================================================================
 
-def quantize_error(original: Tensor, quantized: Tensor,
-                   metric: str = "mse") -> float:
+
+def quantize_error(original: Tensor, quantized: Tensor, metric: str = "mse") -> float:
     """Compute quantization error between original and dequantized tensors."""
     orig = original.data.flatten()
     recon = quantized.data.flatten()
@@ -455,22 +480,31 @@ def quantize_error(original: Tensor, quantized: Tensor,
     elif metric == "mae":
         return float(np.mean(np.abs(orig - recon)))
     elif metric == "snr":
-        signal = np.mean(orig ** 2)
+        signal = np.mean(orig**2)
         noise = np.mean((orig - recon) ** 2)
-        return float(10 * np.log10(signal / noise)) if noise > 0 else float('inf')
+        return float(10 * np.log10(signal / noise)) if noise > 0 else float("inf")
     return 0.0
 
 
 __all__ = [
-    'QuantMode', 'QuantGranularity',
-    'quantize_int8_sym', 'dequantize_int8_sym',
-    'quantize_int8_asym', 'dequantize_int8_asym',
-    'quantize_int8_channel', 'dequantize_int8_channel',
-    'quantize_int4_sym', 'dequantize_int4_sym',
-    'quantize_fp8_e4m3', 'dequantize_fp8_e4m3',
-    'quantize_fp8_e5m2', 'dequantize_fp8_e5m2',
-    'awq_scale_weights', 'awq_quantize',
-    'gptq_compute_hessian', 'gptq_quantize',
-    'QuantizedLinear',
-    'quantize_error',
+    "QuantMode",
+    "QuantGranularity",
+    "quantize_int8_sym",
+    "dequantize_int8_sym",
+    "quantize_int8_asym",
+    "dequantize_int8_asym",
+    "quantize_int8_channel",
+    "dequantize_int8_channel",
+    "quantize_int4_sym",
+    "dequantize_int4_sym",
+    "quantize_fp8_e4m3",
+    "dequantize_fp8_e4m3",
+    "quantize_fp8_e5m2",
+    "dequantize_fp8_e5m2",
+    "awq_scale_weights",
+    "awq_quantize",
+    "gptq_compute_hessian",
+    "gptq_quantize",
+    "QuantizedLinear",
+    "quantize_error",
 ]

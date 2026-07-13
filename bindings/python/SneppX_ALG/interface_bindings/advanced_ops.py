@@ -13,10 +13,10 @@ def conv2d(
     stride: Tuple[int, int] = (1, 1),
     padding: Tuple[int, int] = (0, 0),
     dilation: Tuple[int, int] = (1, 1),
-    groups: int = 1
+    groups: int = 1,
 ) -> Tensor:
     """2D convolution with optional bias.
-    
+
     Args:
         input: [N, C_in, H, W] or [N, H, W, C_in]
         weight: [C_out, C_in // groups, kH, kW]
@@ -25,49 +25,54 @@ def conv2d(
         padding: (pad_h, pad_w)
         dilation: (dil_h, dil_w)
         groups: number of groups
-    
+
     Returns:
         output: [N, C_out, H_out, W_out]
     """
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
-    
+
     N, C_in, H, W = x.shape
     C_out, C_in_g, kH, kW = w.shape
-    
+
     assert C_in == C_in_g * groups, "Input channels must match weight channels * groups"
-    
+
     # Calculate output dimensions
     pad_h, pad_w = padding
     dil_h, dil_w = dilation
     stride_h, stride_w = stride
-    
+
     H_out = (H + 2 * pad_h - dil_h * (kH - 1) - 1) // stride_h + 1
     W_out = (W + 2 * pad_w - dil_w * (kW - 1) - 1) // stride_w + 1
-    
+
     # Pad input
     if pad_h > 0 or pad_w > 0:
-        x = np.pad(x, ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)), mode='constant')
-    
+        x = np.pad(x, ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)), mode="constant")
+
     # im2col
     col = np.zeros((N, C_in * kH * kW, H_out * W_out), dtype=np.float64)
     for i in range(H_out):
         h_start = i * stride_h
         for j in range(W_out):
             w_start = j * stride_w
-            col[:, :, i * W_out + j] = x[:, :, h_start:h_start + kH * dil_h:dil_h, w_start:w_start + kW * dil_w:dil_w].reshape(N, -1)
-    
+            col[:, :, i * W_out + j] = x[
+                :,
+                :,
+                h_start : h_start + kH * dil_h : dil_h,
+                w_start : w_start + kW * dil_w : dil_w,
+            ].reshape(N, -1)
+
     # Weight matrix
     w_mat = w.reshape(C_out, -1)
-    
+
     # Convolution via GEMM
     out = w_mat @ col  # [C_out, N * H_out * W_out]
     out = out.reshape(C_out, N, H_out, W_out).transpose(1, 0, 2, 3)
-    
+
     if bias is not None:
         b = np.asarray(bias.data, dtype=np.float64)
         out += b.reshape(1, -1, 1, 1)
-    
+
     return Tensor.from_numpy(out.astype(np.float32), dtype="float32")
 
 
@@ -78,34 +83,36 @@ def conv1d(
     stride: int = 1,
     padding: int = 0,
     dilation: int = 1,
-    groups: int = 1
+    groups: int = 1,
 ) -> Tensor:
     """1D convolution."""
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
-    
+
     N, C_in, L = x.shape
     C_out, C_in_g, kL = w.shape
     assert C_in == C_in_g * groups
-    
+
     L_out = (L + 2 * padding - dilation * (kL - 1) - 1) // stride + 1
-    
+
     if padding > 0:
-        x = np.pad(x, ((0, 0), (0, 0), (padding, padding)), mode='constant')
-    
+        x = np.pad(x, ((0, 0), (0, 0), (padding, padding)), mode="constant")
+
     col = np.zeros((N, C_in * kL, L_out), dtype=np.float64)
     for i in range(L_out):
         l_start = i * stride
-        col[:, :, i] = x[:, :, l_start:l_start + kL * dilation:dilation].reshape(N, -1)
-    
+        col[:, :, i] = x[:, :, l_start : l_start + kL * dilation : dilation].reshape(
+            N, -1
+        )
+
     w_mat = w.reshape(C_out, -1)
     out = w_mat @ col
     out = out.reshape(C_out, N, L_out).transpose(1, 0, 2)
-    
+
     if bias is not None:
         b = np.asarray(bias.data, dtype=np.float64)
         out += b.reshape(1, -1, 1)
-    
+
     return Tensor.from_numpy(out.astype(np.float32), dtype="float32")
 
 
@@ -115,17 +122,17 @@ def max_pool2d(
     stride: Optional[Union[int, Tuple[int, int]]] = None,
     padding: Union[int, Tuple[int, int]] = 0,
     dilation: Union[int, Tuple[int, int]] = 1,
-    return_indices: bool = False
+    return_indices: bool = False,
 ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
     """2D max pooling."""
     x = np.asarray(input.data, dtype=np.float64)
     N, C, H, W = x.shape
-    
+
     if isinstance(kernel_size, int):
         kH = kW = kernel_size
     else:
         kH, kW = kernel_size
-    
+
     if stride is None:
         stride_h = kH
         stride_w = kW
@@ -133,38 +140,48 @@ def max_pool2d(
         stride_h = stride_w = stride
     else:
         stride_h, stride_w = stride
-    
+
     if isinstance(padding, int):
         pad_h = pad_w = padding
     else:
         pad_h, pad_w = padding
-    
+
     if isinstance(dilation, int):
         dil_h = dil_w = dilation
     else:
         dil_h, dil_w = dilation
-    
+
     if pad_h > 0 or pad_w > 0:
-        x = np.pad(x, ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)), mode='constant', constant_values=-np.inf)
-    
+        x = np.pad(
+            x,
+            ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)),
+            mode="constant",
+            constant_values=-np.inf,
+        )
+
     H_out = (H + 2 * pad_h - dil_h * (kH - 1) - 1) // stride_h + 1
     W_out = (W + 2 * pad_w - dil_w * (kW - 1) - 1) // stride_w + 1
-    
+
     out = np.zeros((N, C, H_out, W_out), dtype=np.float64)
     indices = np.zeros((N, C, H_out, W_out, 2), dtype=np.int32)
-    
+
     for i in range(H_out):
         h_start = i * stride_h
         for j in range(W_out):
             w_start = j * stride_w
-            window = x[:, :, h_start:h_start + kH * dil_h:dil_h, w_start:w_start + kW * dil_w:dil_w]
+            window = x[
+                :,
+                :,
+                h_start : h_start + kH * dil_h : dil_h,
+                w_start : w_start + kW * dil_w : dil_w,
+            ]
             max_vals = np.max(window, axis=(2, 3))
             out[:, :, i, j] = max_vals
             # Find indices (simplified)
             idx = np.argmax(window.reshape(N, C, -1), axis=-1)
             indices[:, :, i, j, 0] = idx // kW
             indices[:, :, i, j, 1] = idx % kW
-    
+
     if return_indices:
         return Tensor.from_numpy(out.astype(np.float32)), Tensor.from_numpy(indices)
     return Tensor.from_numpy(out.astype(np.float32))
@@ -175,17 +192,17 @@ def avg_pool2d(
     kernel_size: Union[int, Tuple[int, int]],
     stride: Optional[Union[int, Tuple[int, int]]] = None,
     padding: Union[int, Tuple[int, int]] = 0,
-    count_include_pad: bool = True
+    count_include_pad: bool = True,
 ) -> Tensor:
     """2D average pooling."""
     x = np.asarray(input.data, dtype=np.float64)
     N, C, H, W = x.shape
-    
+
     if isinstance(kernel_size, int):
         kH = kW = kernel_size
     else:
         kH, kW = kernel_size
-    
+
     if stride is None:
         stride_h = kH
         stride_w = kW
@@ -193,31 +210,33 @@ def avg_pool2d(
         stride_h = stride_w = stride
     else:
         stride_h, stride_w = stride
-    
+
     if isinstance(padding, int):
         pad_h = pad_w = padding
     else:
         pad_h, pad_w = padding
-    
+
     if pad_h > 0 or pad_w > 0:
-        x = np.pad(x, ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)), mode='constant')
-    
+        x = np.pad(x, ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)), mode="constant")
+
     H_out = (H + 2 * pad_h - kH) // stride_h + 1
     W_out = (W + 2 * pad_w - kW) // stride_w + 1
-    
+
     out = np.zeros((N, C, H_out, W_out), dtype=np.float64)
     for i in range(H_out):
         h_start = i * stride_h
         for j in range(W_out):
             w_start = j * stride_w
-            window = x[:, :, h_start:h_start + kH, w_start:w_start + kW]
+            window = x[:, :, h_start : h_start + kH, w_start : w_start + kW]
             if count_include_pad:
                 out[:, :, i, j] = np.mean(window, axis=(2, 3))
             else:
                 # Only count non-padded elements
                 valid = window != 0  # simplified
-                out[:, :, i, j] = np.sum(window, axis=(2, 3)) / np.maximum(1, np.sum(valid, axis=(2, 3)))
-    
+                out[:, :, i, j] = np.sum(window, axis=(2, 3)) / np.maximum(
+                    1, np.sum(valid, axis=(2, 3))
+                )
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -226,7 +245,7 @@ def adaptive_avg_pool2d(input: Tensor, output_size: Tuple[int, int]) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     N, C, H, W = x.shape
     H_out, W_out = output_size
-    
+
     out = np.zeros((N, C, H_out, W_out), dtype=np.float64)
     for i in range(H_out):
         h_start = i * H // H_out
@@ -234,8 +253,10 @@ def adaptive_avg_pool2d(input: Tensor, output_size: Tuple[int, int]) -> Tensor:
         for j in range(W_out):
             w_start = j * W // W_out
             w_end = (j + 1) * W // W_out
-            out[:, :, i, j] = np.mean(x[:, :, h_start:h_end, w_start:w_end], axis=(2, 3))
-    
+            out[:, :, i, j] = np.mean(
+                x[:, :, h_start:h_end, w_start:w_end], axis=(2, 3)
+            )
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -244,7 +265,7 @@ def adaptive_max_pool2d(input: Tensor, output_size: Tuple[int, int]) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     N, C, H, W = x.shape
     H_out, W_out = output_size
-    
+
     out = np.zeros((N, C, H_out, W_out), dtype=np.float64)
     for i in range(H_out):
         h_start = i * H // H_out
@@ -253,7 +274,7 @@ def adaptive_max_pool2d(input: Tensor, output_size: Tuple[int, int]) -> Tensor:
             w_start = j * W // W_out
             w_end = (j + 1) * W // W_out
             out[:, :, i, j] = np.max(x[:, :, h_start:h_end, w_start:w_end], axis=(2, 3))
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -264,28 +285,28 @@ def rnn_cell(
     weight_hh: Tensor,
     bias_ih: Optional[Tensor] = None,
     bias_hh: Optional[Tensor] = None,
-    nonlinearity: str = "tanh"
+    nonlinearity: str = "tanh",
 ) -> Tensor:
     """Simple RNN cell: h = activation(x @ W_ih + b_ih + h_prev @ W_hh + b_hh)"""
     x = np.asarray(input.data, dtype=np.float64)
     W_ih = np.asarray(weight_ih.data, dtype=np.float64)
     W_hh = np.asarray(weight_hh.data, dtype=np.float64)
-    
+
     if hx is not None:
         h_prev = np.asarray(hx.data, dtype=np.float64)
     else:
         h_prev = np.zeros((x.shape[0], W_hh.shape[0]), dtype=np.float64)
-    
+
     b_ih = np.asarray(bias_ih.data, dtype=np.float64) if bias_ih is not None else 0
     b_hh = np.asarray(bias_hh.data, dtype=np.float64) if bias_hh is not None else 0
-    
+
     h = x @ W_ih.T + b_ih + h_prev @ W_hh.T + b_hh
-    
+
     if nonlinearity == "tanh":
         h = np.tanh(h)
     elif nonlinearity == "relu":
         h = np.maximum(h, 0)
-    
+
     return Tensor.from_numpy(h.astype(np.float32))
 
 
@@ -296,30 +317,40 @@ def lstm_cell(
     weight_ih: Tensor,
     weight_hh: Tensor,
     bias_ih: Optional[Tensor] = None,
-    bias_hh: Optional[Tensor] = None
+    bias_hh: Optional[Tensor] = None,
 ) -> Tuple[Tensor, Tensor]:
     """LSTM cell with all gates."""
     x = np.asarray(input.data, dtype=np.float64)
     W_ih = np.asarray(weight_ih.data, dtype=np.float64)
     W_hh = np.asarray(weight_hh.data, dtype=np.float64)
-    
-    h_prev = np.asarray(hx.data, dtype=np.float64) if hx is not None else np.zeros((x.shape[0], W_hh.shape[0] // 4), dtype=np.float64)
-    c_prev = np.asarray(cx.data, dtype=np.float64) if cx is not None else np.zeros_like(h_prev)
-    
+
+    h_prev = (
+        np.asarray(hx.data, dtype=np.float64)
+        if hx is not None
+        else np.zeros((x.shape[0], W_hh.shape[0] // 4), dtype=np.float64)
+    )
+    c_prev = (
+        np.asarray(cx.data, dtype=np.float64)
+        if cx is not None
+        else np.zeros_like(h_prev)
+    )
+
     b_ih = np.asarray(bias_ih.data, dtype=np.float64) if bias_ih is not None else 0
     b_hh = np.asarray(bias_hh.data, dtype=np.float64) if bias_hh is not None else 0
-    
+
     gates = x @ W_ih.T + b_ih + h_prev @ W_hh.T + b_hh
     h_size = gates.shape[1] // 4
     i = sigmoid(gates[:, :h_size])
-    f = sigmoid(gates[:, h_size:2*h_size])
-    g = np.tanh(gates[:, 2*h_size:3*h_size])
-    o = sigmoid(gates[:, 3*h_size:])
-    
+    f = sigmoid(gates[:, h_size : 2 * h_size])
+    g = np.tanh(gates[:, 2 * h_size : 3 * h_size])
+    o = sigmoid(gates[:, 3 * h_size :])
+
     c = f * c_prev + i * g
     h = o * np.tanh(c)
-    
-    return Tensor.from_numpy(h.astype(np.float32)), Tensor.from_numpy(c.astype(np.float32))
+
+    return Tensor.from_numpy(h.astype(np.float32)), Tensor.from_numpy(
+        c.astype(np.float32)
+    )
 
 
 def gru_cell(
@@ -328,26 +359,30 @@ def gru_cell(
     weight_ih: Tensor,
     weight_hh: Tensor,
     bias_ih: Optional[Tensor] = None,
-    bias_hh: Optional[Tensor] = None
+    bias_hh: Optional[Tensor] = None,
 ) -> Tensor:
     """GRU cell."""
     x = np.asarray(input.data, dtype=np.float64)
     W_ih = np.asarray(weight_ih.data, dtype=np.float64)
     W_hh = np.asarray(weight_hh.data, dtype=np.float64)
-    
-    h_prev = np.asarray(hx.data, dtype=np.float64) if hx is not None else np.zeros((x.shape[0], W_hh.shape[0] // 3), dtype=np.float64)
-    
+
+    h_prev = (
+        np.asarray(hx.data, dtype=np.float64)
+        if hx is not None
+        else np.zeros((x.shape[0], W_hh.shape[0] // 3), dtype=np.float64)
+    )
+
     b_ih = np.asarray(bias_ih.data, dtype=np.float64) if bias_ih is not None else 0
     b_hh = np.asarray(bias_hh.data, dtype=np.float64) if bias_hh is not None else 0
-    
+
     gates_ih = x @ W_ih.T + b_ih
     gates_hh = h_prev @ W_hh.T + b_hh
     h_size = gates_ih.shape[1] // 3
-    
+
     r = sigmoid(gates_ih[:, :h_size] + gates_hh[:, :h_size])
-    z = sigmoid(gates_ih[:, h_size:2*h_size] + gates_hh[:, h_size:2*h_size])
-    n = np.tanh(gates_ih[:, 2*h_size:] + r * gates_hh[:, 2*h_size:])
-    
+    z = sigmoid(gates_ih[:, h_size : 2 * h_size] + gates_hh[:, h_size : 2 * h_size])
+    n = np.tanh(gates_ih[:, 2 * h_size :] + r * gates_hh[:, 2 * h_size :])
+
     h = (1 - z) * n + z * h_prev
     return Tensor.from_numpy(h.astype(np.float32))
 
@@ -359,40 +394,40 @@ def multi_head_attention(
     num_heads: int,
     mask: Optional[Tensor] = None,
     dropout_p: float = 0.0,
-    training: bool = True
+    training: bool = True,
 ) -> Tensor:
     """Multi-head attention."""
     q = np.asarray(query.data, dtype=np.float64)
     k = np.asarray(key.data, dtype=np.float64)
     v = np.asarray(value.data, dtype=np.float64)
-    
+
     N, L_q, D = q.shape
     _, L_k, _ = k.shape
     _, L_v, _ = v.shape
-    
+
     head_dim = D // num_heads
     assert D % num_heads == 0
-    
+
     q = q.reshape(N, L_q, num_heads, head_dim).transpose(0, 2, 1, 3)
     k = k.reshape(N, L_k, num_heads, head_dim).transpose(0, 2, 1, 3)
     v = v.reshape(N, L_v, num_heads, head_dim).transpose(0, 2, 1, 3)
-    
-    scale = head_dim ** -0.5
+
+    scale = head_dim**-0.5
     attn = q @ k.transpose(0, 1, 3, 2) * scale
-    
+
     if mask is not None:
         m = np.asarray(mask.data, dtype=np.float64)
         attn = attn + m.reshape(N, 1, 1, -1) * -1e9
-    
+
     attn = softmax(attn, axis=-1)
-    
+
     if training and dropout_p > 0:
         mask = np.random.rand(*attn.shape) > dropout_p
         attn = attn * mask / (1 - dropout_p)
-    
+
     out = attn @ v  # [N, num_heads, L_q, head_dim]
     out = out.transpose(0, 2, 1, 3).reshape(N, L_q, D)
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -410,15 +445,17 @@ def transformer_block(
     ln2_bias: Optional[Tensor],
     num_heads: int = 8,
     dropout: float = 0.1,
-    training: bool = True
+    training: bool = True,
 ) -> Tensor:
     """Transformer encoder block: attention + FFN with residual connections."""
     # Self-attention
     residual = x
     x_ln = layernorm(x, ln1_weight, ln1_bias)
-    attn_out = multi_head_attention(x_ln, x_ln, x_ln, num_heads, dropout_p=dropout, training=training)
+    attn_out = multi_head_attention(
+        x_ln, x_ln, x_ln, num_heads, dropout_p=dropout, training=training
+    )
     x = residual + attn_out
-    
+
     # FFN
     residual = x
     x_ln = layernorm(x, ln2_weight, ln2_bias)
@@ -426,7 +463,7 @@ def transformer_block(
     x_act = gelu(ff1)
     ff2 = linear(x_act, ff2_weight, ff2_bias)
     x = residual + ff2
-    
+
     return x
 
 
@@ -456,12 +493,14 @@ def rope(x: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> np.ndarray:
     """Apply rotary position embedding."""
     # x: [..., seq_len, head_dim]
     # cos, sin: [..., seq_len, head_dim]
-    x1 = x[..., :x.shape[-1] // 2]
-    x2 = x[..., x.shape[-1] // 2:]
+    x1 = x[..., : x.shape[-1] // 2]
+    x2 = x[..., x.shape[-1] // 2 :]
     return np.concatenate([x1 * cos - x2 * sin, x1 * sin + x2 * cos], axis=-1)
 
 
-def apply_rotary_pos_emb(q: np.ndarray, k: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> tuple:
+def apply_rotary_pos_emb(
+    q: np.ndarray, k: np.ndarray, cos: np.ndarray, sin: np.ndarray
+) -> tuple:
     """Apply rotary position embedding to q and k."""
     q_embed = rope(q, cos, sin)
     k_embed = rope(k, cos, sin)
@@ -470,25 +509,22 @@ def apply_rotary_pos_emb(q: np.ndarray, k: np.ndarray, cos: np.ndarray, sin: np.
 
 def gelu(x: np.ndarray) -> np.ndarray:
     """GELU activation: x * 0.5 * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))"""
-    return x * 0.5 * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))
+    return x * 0.5 * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x**3)))
 
 
 def layernorm(
-    input: Tensor,
-    weight: Tensor,
-    bias: Optional[Tensor],
-    eps: float = 1e-5
+    input: Tensor, weight: Tensor, bias: Optional[Tensor], eps: float = 1e-5
 ) -> Tensor:
     """Layer normalization."""
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
     b = np.asarray(bias.data, dtype=np.float64) if bias is not None else 0
-    
+
     mean = np.mean(x, axis=-1, keepdims=True)
     var = np.var(x, axis=-1, keepdims=True)
     x_norm = (x - mean) / np.sqrt(var + eps)
     out = x_norm * w + b
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -496,12 +532,12 @@ def linear(input: Tensor, weight: Tensor, bias: Optional[Tensor] = None) -> Tens
     """Linear transformation: y = x @ W^T + b"""
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
-    
+
     out = x @ w.T
     if bias is not None:
         b = np.asarray(bias.data, dtype=np.float64)
         out = out + b
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -515,7 +551,9 @@ def dropout(input: Tensor, p: float = 0.5, training: bool = True) -> Tensor:
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def embedding(input: Tensor, weight: Tensor, padding_idx: Optional[int] = None) -> Tensor:
+def embedding(
+    input: Tensor, weight: Tensor, padding_idx: Optional[int] = None
+) -> Tensor:
     """Embedding lookup."""
     indices = np.asarray(input.data, dtype=np.int64)
     w = np.asarray(weight.data, dtype=np.float64)
@@ -531,52 +569,52 @@ def batch_norm(
     running_var: Optional[Tensor] = None,
     training: bool = True,
     momentum: float = 0.1,
-    eps: float = 1e-5
+    eps: float = 1e-5,
 ) -> Tensor:
     """Batch normalization."""
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
     b = np.asarray(bias.data, dtype=np.float64)
-    
+
     if training:
         mean = np.mean(x, axis=(0, 2, 3), keepdims=True)
         var = np.var(x, axis=(0, 2, 3), keepdims=True)
         if running_mean is not None:
-            running_mean.data = (1 - momentum) * np.asarray(running_mean.data) + momentum * mean.squeeze()
-            running_var.data = (1 - momentum) * np.asarray(running_var.data) + momentum * var.squeeze()
+            running_mean.data = (1 - momentum) * np.asarray(
+                running_mean.data
+            ) + momentum * mean.squeeze()
+            running_var.data = (1 - momentum) * np.asarray(
+                running_var.data
+            ) + momentum * var.squeeze()
     else:
         mean = np.asarray(running_mean.data).reshape(1, -1, 1, 1) if running_mean else 0
         var = np.asarray(running_var.data).reshape(1, -1, 1, 1) if running_var else 1
-    
+
     x_norm = (x - mean) / np.sqrt(var + 1e-5)
     out = x_norm * w.reshape(1, -1, 1, 1) + b.reshape(1, -1, 1, 1)
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
 def group_norm(
-    input: Tensor,
-    num_groups: int,
-    weight: Tensor,
-    bias: Tensor,
-    eps: float = 1e-5
+    input: Tensor, num_groups: int, weight: Tensor, bias: Tensor, eps: float = 1e-5
 ) -> Tensor:
     """Group normalization."""
     x = np.asarray(input.data, dtype=np.float64)
     N, C, H, W = x.shape
     G = num_groups
     assert C % G == 0
-    
+
     x = x.reshape(N, G, C // G, H, W)
     mean = np.mean(x, axis=(2, 3, 4), keepdims=True)
     var = np.var(x, axis=(2, 3, 4), keepdims=True)
     x = (x - mean) / np.sqrt(var + eps)
     x = x.reshape(N, C, H, W)
-    
+
     w = np.asarray(weight.data, dtype=np.float64).reshape(1, C, 1, 1)
     b = np.asarray(bias.data, dtype=np.float64).reshape(1, C, 1, 1)
     out = x * w + b
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
@@ -584,7 +622,7 @@ def instance_norm(
     input: Tensor,
     weight: Optional[Tensor] = None,
     bias: Optional[Tensor] = None,
-    eps: float = 1e-5
+    eps: float = 1e-5,
 ) -> Tensor:
     """Instance normalization."""
     return group_norm(input, input.shape[1], weight, bias, eps)
@@ -595,48 +633,49 @@ def layer_norm(
     normalized_shape: Tuple[int, ...],
     weight: Optional[Tensor] = None,
     bias: Optional[Tensor] = None,
-    eps: float = 1e-5
+    eps: float = 1e-5,
 ) -> Tensor:
     """Layer normalization."""
     x = np.asarray(input.data, dtype=np.float64)
     # normalized_shape indicates the last dims to normalize over
     ndim = len(normalized_shape)
     dims = tuple(range(-ndim, 0))
-    
+
     mean = np.mean(x, axis=dims, keepdims=True)
     var = np.var(x, axis=dims, keepdims=True)
     x_norm = (x - mean) / np.sqrt(var + eps)
-    
+
     if weight is not None:
-        w = np.asarray(weight.data, dtype=np.float64).reshape([1] * (x.ndim - ndim) + list(normalized_shape))
+        w = np.asarray(weight.data, dtype=np.float64).reshape(
+            [1] * (x.ndim - ndim) + list(normalized_shape)
+        )
         x_norm = x_norm * w
     if bias is not None:
-        b = np.asarray(bias.data, dtype=np.float64).reshape([1] * (x.ndim - ndim) + list(normalized_shape))
+        b = np.asarray(bias.data, dtype=np.float64).reshape(
+            [1] * (x.ndim - ndim) + list(normalized_shape)
+        )
         x_norm = x_norm + b
-    
+
     return Tensor.from_numpy(x_norm.astype(np.float32))
 
 
-def rmsnorm(
-    input: Tensor,
-    weight: Tensor,
-    eps: float = 1e-5
-) -> Tensor:
+def rmsnorm(input: Tensor, weight: Tensor, eps: float = 1e-5) -> Tensor:
     """RMS normalization (Root Mean Square Layer Normalization)."""
     x = np.asarray(input.data, dtype=np.float64)
     w = np.asarray(weight.data, dtype=np.float64)
-    
+
     # Compute RMS
-    rms = np.sqrt(np.mean(x ** 2, axis=-1, keepdims=True) + eps)
+    rms = np.sqrt(np.mean(x**2, axis=-1, keepdims=True) + eps)
     x_norm = x / rms
     out = x_norm * w
-    
+
     return Tensor.from_numpy(out.astype(np.float32))
 
 
 # =========================================================================
 # Tensor Operations Helpers
 # =========================================================================
+
 
 def cat(tensors: List[Tensor], dim: int = 0) -> Tensor:
     """Concatenate tensors along a dimension."""
@@ -652,7 +691,9 @@ def stack(tensors: List[Tensor], dim: int = 0) -> Tensor:
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def split(tensor: Tensor, split_size: Union[int, List[int]], dim: int = 0) -> List[Tensor]:
+def split(
+    tensor: Tensor, split_size: Union[int, List[int]], dim: int = 0
+) -> List[Tensor]:
     """Split tensor into chunks."""
     x = np.asarray(tensor.data, dtype=np.float64)
     if isinstance(split_size, int):
@@ -739,23 +780,24 @@ def flatten(tensor: Tensor, start_dim: int = 1, end_dim: int = -1) -> Tensor:
     if end_dim < 0:
         end_dim = x.ndim + end_dim + 1
     shape = x.shape
-    new_shape = shape[:start_dim] + (np.prod(shape[start_dim:end_dim+1]),) + shape[end_dim+1:]
+    new_shape = (
+        shape[:start_dim]
+        + (np.prod(shape[start_dim : end_dim + 1]),)
+        + shape[end_dim + 1 :]
+    )
     out = x.reshape(new_shape)
     return Tensor.from_numpy(out.astype(np.float32))
 
 
 def pad(
-    input: Tensor,
-    pad: Tuple[int, ...],
-    mode: str = "constant",
-    value: float = 0.0
+    input: Tensor, pad: Tuple[int, ...], mode: str = "constant", value: float = 0.0
 ) -> Tensor:
     """Pad tensor."""
     x = np.asarray(input.data, dtype=np.float64)
     # pad format: (pad_left, pad_right, pad_top, pad_bottom, ...) for each dim reversed
     pad_width = []
     for i in range(len(pad) // 2):
-        pad_width.insert(0, (pad[2*i], pad[2*i+1]))
+        pad_width.insert(0, (pad[2 * i], pad[2 * i + 1]))
     out = np.pad(x, pad_width, mode=mode, constant_values=value)
     return Tensor.from_numpy(out.astype(np.float32))
 
@@ -774,7 +816,11 @@ def rot90(tensor: Tensor, k: int = 1, dims: Tuple[int, int] = (0, 1)) -> Tensor:
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def roll(tensor: Tensor, shifts: Union[int, List[int]], dims: Optional[Union[int, List[int]]] = None) -> Tensor:
+def roll(
+    tensor: Tensor,
+    shifts: Union[int, List[int]],
+    dims: Optional[Union[int, List[int]]] = None,
+) -> Tensor:
     """Roll tensor elements."""
     x = np.asarray(tensor.data, dtype=np.float64)
     out = np.roll(x, shifts, axis=dims)
@@ -790,10 +836,7 @@ def gather(input: Tensor, dim: int, index: Tensor) -> Tensor:
 
 
 def scatter(
-    input: Tensor,
-    dim: int,
-    index: Tensor,
-    src: Union[Tensor, float]
+    input: Tensor, dim: int, index: Tensor, src: Union[Tensor, float]
 ) -> Tensor:
     """Scatter values from src into input at indices."""
     x = np.asarray(input.data, dtype=np.float64).copy()
@@ -840,14 +883,18 @@ def where(condition: Tensor, x: Tensor, y: Tensor) -> Tensor:
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def clamp(input: Tensor, min: Optional[float] = None, max: Optional[float] = None) -> Tensor:
+def clamp(
+    input: Tensor, min: Optional[float] = None, max: Optional[float] = None
+) -> Tensor:
     """Clamp tensor values."""
     x = np.asarray(input.data, dtype=np.float64)
     out = np.clip(x, min, max)
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def clamp_(input: Tensor, min: Optional[float] = None, max: Optional[float] = None) -> Tensor:
+def clamp_(
+    input: Tensor, min: Optional[float] = None, max: Optional[float] = None
+) -> Tensor:
     """In-place clamp."""
     return clamp(input, min, max)
 
@@ -855,6 +902,7 @@ def clamp_(input: Tensor, min: Optional[float] = None, max: Optional[float] = No
 # =========================================================================
 # Reduction Operations
 # =========================================================================
+
 
 def sum(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
@@ -868,21 +916,33 @@ def mean(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Ten
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def var(input: Tensor, dim: Optional[int] = None, keepdim: bool = False, unbiased: bool = True) -> Tensor:
+def var(
+    input: Tensor,
+    dim: Optional[int] = None,
+    keepdim: bool = False,
+    unbiased: bool = True,
+) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     ddof = 1 if unbiased else 0
     out = np.var(x, axis=dim, keepdims=keepdim, ddof=ddof)
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def std(input: Tensor, dim: Optional[int] = None, keepdim: bool = False, unbiased: bool = True) -> Tensor:
+def std(
+    input: Tensor,
+    dim: Optional[int] = None,
+    keepdim: bool = False,
+    unbiased: bool = True,
+) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     ddof = 1 if unbiased else 0
     out = np.std(x, axis=dim, keepdims=keepdim, ddof=ddof)
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def max(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+def max(
+    input: Tensor, dim: Optional[int] = None, keepdim: bool = False
+) -> Union[Tensor, Tuple[Tensor, Tensor]]:
     x = np.asarray(input.data, dtype=np.float64)
     if dim is None:
         out = np.max(x)
@@ -891,10 +951,14 @@ def max(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Unio
     indices = np.argmax(x, axis=dim)
     if not keepdim:
         indices = np.expand_dims(indices, axis=dim)
-    return Tensor.from_numpy(values.astype(np.float32)), Tensor.from_numpy(indices.astype(np.int64))
+    return Tensor.from_numpy(values.astype(np.float32)), Tensor.from_numpy(
+        indices.astype(np.int64)
+    )
 
 
-def min(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+def min(
+    input: Tensor, dim: Optional[int] = None, keepdim: bool = False
+) -> Union[Tensor, Tuple[Tensor, Tensor]]:
     x = np.asarray(input.data, dtype=np.float64)
     if dim is None:
         out = np.min(x)
@@ -903,7 +967,9 @@ def min(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Unio
     indices = np.argmin(x, axis=dim)
     if not keepdim:
         indices = np.expand_dims(indices, axis=dim)
-    return Tensor.from_numpy(values.astype(np.float32)), Tensor.from_numpy(indices.astype(np.int64))
+    return Tensor.from_numpy(values.astype(np.float32)), Tensor.from_numpy(
+        indices.astype(np.int64)
+    )
 
 
 def prod(input: Tensor, dim: Optional[int] = None, keepdim: bool = False) -> Tensor:
@@ -924,12 +990,14 @@ def cumprod(input: Tensor, dim: int) -> Tensor:
     return Tensor.from_numpy(out.astype(np.float32))
 
 
-def norm(input: Tensor, p: float = 2, dim: Optional[int] = None, keepdim: bool = False) -> Tensor:
+def norm(
+    input: Tensor, p: float = 2, dim: Optional[int] = None, keepdim: bool = False
+) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     if p == 1:
         out = np.sum(np.abs(x), axis=dim, keepdims=keepdim)
     elif p == 2:
-        out = np.sqrt(np.sum(x ** 2, axis=dim, keepdims=keepdim))
+        out = np.sqrt(np.sum(x**2, axis=dim, keepdims=keepdim))
     elif p == np.inf:
         out = np.max(np.abs(x), axis=dim, keepdims=keepdim)
     elif p == -np.inf:
@@ -942,6 +1010,7 @@ def norm(input: Tensor, p: float = 2, dim: Optional[int] = None, keepdim: bool =
 # =========================================================================
 # Pointwise Operations
 # =========================================================================
+
 
 def add(a: Tensor, b: Union[Tensor, float]) -> Tensor:
     return binary_op(a, b, lambda x, y: x + y)
@@ -960,7 +1029,7 @@ def div(a: Tensor, b: Union[Tensor, float]) -> Tensor:
 
 
 def pow(a: Tensor, b: Union[Tensor, float]) -> Tensor:
-    return binary_op(a, b, lambda x, y: x ** y)
+    return binary_op(a, b, lambda x, y: x**y)
 
 
 def eq(a: Tensor, b: Union[Tensor, float]) -> Tensor:
@@ -1104,7 +1173,9 @@ def relu6(input: Tensor) -> Tensor:
 
 def hardswish(input: Tensor) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
-    return Tensor.from_numpy((x * np.minimum(np.maximum(x + 3, 0), 6) / 6).astype(np.float32))
+    return Tensor.from_numpy(
+        (x * np.minimum(np.maximum(x + 3, 0), 6) / 6).astype(np.float32)
+    )
 
 
 def leaky_relu(input: Tensor, negative_slope: float = 0.01) -> Tensor:
@@ -1114,14 +1185,18 @@ def leaky_relu(input: Tensor, negative_slope: float = 0.01) -> Tensor:
 
 def elu(input: Tensor, alpha: float = 1.0) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
-    return Tensor.from_numpy(np.where(x >= 0, x, alpha * (np.exp(x) - 1)).astype(np.float32))
+    return Tensor.from_numpy(
+        np.where(x >= 0, x, alpha * (np.exp(x) - 1)).astype(np.float32)
+    )
 
 
 def selu(input: Tensor) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     scale = 1.0507009873554804934193349852946
     alpha = 1.6732632423543772848170429916717
-    return Tensor.from_numpy(scale * np.where(x >= 0, x, alpha * (np.exp(x) - 1)).astype(np.float32))
+    return Tensor.from_numpy(
+        scale * np.where(x >= 0, x, alpha * (np.exp(x) - 1)).astype(np.float32)
+    )
 
 
 def softplus(input: Tensor, beta: float = 1.0, threshold: float = 20.0) -> Tensor:
