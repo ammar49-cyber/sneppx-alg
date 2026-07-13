@@ -5,46 +5,62 @@ import numpy as np
 
 from .tensor import Tensor
 from .advanced_ops import (
-    linear, layer_norm, gelu, silu, relu, dropout,
-    multi_head_attention, transformer_block,
-    embedding, layer_norm as layernorm_fn, rmsnorm,
-    linear, gelu, softmax
+    linear,
+    layer_norm,
+    gelu,
+    silu,
+    relu,
+    dropout,
+    multi_head_attention,
+    transformer_block,
+    embedding,
+    layer_norm as layernorm_fn,
+    rmsnorm,
+    linear,
+    gelu,
+    softmax,
 )
 
 
 class BertEmbeddings:
     """BERT embeddings: token + position + segment embeddings."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.vocab_size = config.get("vocab_size", 30522)
         self.hidden_size = config.get("hidden_size", 768)
         self.max_position_embeddings = config.get("max_position_embeddings", 512)
         self.type_vocab_size = config.get("type_vocab_size", 2)
         self.hidden_dropout_prob = config.get("hidden_dropout_prob", 0.1)
-        
+
         # Weights (in practice loaded from checkpoint)
         self.word_embeddings = None
         self.position_embeddings = None
         self.token_type_embeddings = None
         self.layer_norm = None
         self.dropout = None
-    
+
     def initialize_weights(self):
         """Initialize all embedding weights."""
         self.word_embeddings = Tensor.from_numpy(
-            np.random.normal(0, 0.02, (self.vocab_size, self.hidden_size)).astype(np.float32)
+            np.random.normal(0, 0.02, (self.vocab_size, self.hidden_size)).astype(
+                np.float32
+            )
         )
         self.position_embeddings = Tensor.from_numpy(
-            np.random.normal(0, 0.02, (self.max_position_embeddings, self.hidden_size)).astype(np.float32)
+            np.random.normal(
+                0, 0.02, (self.max_position_embeddings, self.hidden_size)
+            ).astype(np.float32)
         )
         self.token_type_embeddings = Tensor.from_numpy(
-            np.random.normal(0, 0.02, (self.type_vocab_size, self.hidden_size)).astype(np.float32)
+            np.random.normal(0, 0.02, (self.type_vocab_size, self.hidden_size)).astype(
+                np.float32
+            )
         )
         self.layer_norm = {
             "weight": Tensor.from_numpy(np.ones(self.hidden_size, dtype=np.float32)),
             "bias": Tensor.from_numpy(np.zeros(self.hidden_size, dtype=np.float32)),
         }
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -52,67 +68,83 @@ class BertEmbeddings:
         position_ids: Optional[Tensor] = None,
     ) -> Tensor:
         seq_length = input_ids.shape[1]
-        
+
         if position_ids is None:
             pos_ids = np.arange(seq_length, dtype=np.int64).reshape(1, -1)
-            position_ids = Tensor.from_numpy(np.broadcast_to(pos_ids, (input_ids.shape[0], seq_length)))
-        
+            position_ids = Tensor.from_numpy(
+                np.broadcast_to(pos_ids, (input_ids.shape[0], seq_length))
+            )
+
         if token_type_ids is None:
-            token_type_ids = Tensor.from_numpy(np.zeros_like(input_ids.data, dtype=np.int64))
-        
+            token_type_ids = Tensor.from_numpy(
+                np.zeros_like(input_ids.data, dtype=np.int64)
+            )
+
         # Embeddings
         word_emb = embedding(input_ids, self.word_embeddings)
         pos_emb = embedding(position_ids, self.position_embeddings)
         type_emb = embedding(token_type_ids, self.token_type_embeddings)
-        
+
         embeddings = word_emb + pos_emb + type_emb
-        
+
         # LayerNorm + Dropout
-        embeddings = layer_norm(embeddings, self.layer_norm["weight"], self.layer_norm["bias"])
+        embeddings = layer_norm(
+            embeddings, self.layer_norm["weight"], self.layer_norm["bias"]
+        )
         embeddings = dropout(embeddings, self.hidden_dropout_prob, training=True)
-        
+
         return embeddings
 
 
 class BertSelfAttention:
     """BERT self-attention with optional relative position bias."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.num_heads = config.get("num_attention_heads", 12)
         self.hidden_size = config.get("hidden_size", 768)
-        self.attention_probs_dropout_prob = config.get("attention_probs_dropout_prob", 0.1)
+        self.attention_probs_dropout_prob = config.get(
+            "attention_probs_dropout_prob", 0.1
+        )
         self.hidden_dropout_prob = config.get("hidden_dropout_prob", 0.1)
-        
+
         self.query = None
         self.key = None
         self.value = None
         self.dense = None
         self.layer_norm = None
         self.dropout = None
-    
+
     def initialize_weights(self):
         hidden = self.hidden_size
         self.query = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
         self.key = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
         self.value = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
         self.dense = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
         self.layer_norm = {
             "weight": Tensor.from_numpy(np.ones(hidden, dtype=np.float32)),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -120,54 +152,62 @@ class BertSelfAttention:
         head_mask: Optional[Tensor] = None,
     ) -> Tensor:
         batch_size, seq_len, hidden = hidden_states.shape
-        
+
         # Project Q, K, V
         q = linear(hidden_states, self.query["weight"], self.query["bias"])
         k = linear(hidden_states, self.key["weight"], self.key["bias"])
         v = linear(hidden_states, self.value["weight"], self.value["bias"])
-        
+
         # Reshape for multi-head
         head_dim = self.hidden_size // self.num_heads
         q = q.reshape(-1, self.num_heads, seq_len, hidden // self.num_heads)
         k = k.reshape(-1, self.num_heads, seq_len, hidden // self.num_heads)
         v = v.reshape(-1, self.num_heads, seq_len, hidden // self.num_heads)
-        
+
         # Attention
         attn_output = multi_head_attention(
-            q, k, v,
+            q,
+            k,
+            v,
             num_heads=self.num_heads,
             dropout_p=self.attention_probs_dropout_prob,
-            training=True
+            training=True,
         )
-        
+
         # Output projection
         attn_output = attn_output.reshape(-1, seq_len, hidden)
         output = linear(attn_output, self.dense["weight"], self.dense["bias"])
         output = dropout(output, self.hidden_dropout_prob, training=True)
         output = output + hidden_states  # Residual
-        output = layernorm_fn(output, self.layer_norm["weight"], self.layer_norm["bias"])
-        
+        output = layernorm_fn(
+            output, self.layer_norm["weight"], self.layer_norm["bias"]
+        )
+
         return output
 
 
 class BertIntermediate:
     """BERT feed-forward intermediate layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config.get("hidden_size", 768)
         self.intermediate_size = config.get("intermediate_size", 3072)
         self.hidden_act = config.get("hidden_act", "gelu")
-        
+
         self.dense = None
-    
+
     def initialize_weights(self):
         self.dense = {
             "weight": Tensor.from_numpy(
-                np.random.normal(0, 0.02, (self.intermediate_size, self.hidden_size)).astype(np.float32)
+                np.random.normal(
+                    0, 0.02, (self.intermediate_size, self.hidden_size)
+                ).astype(np.float32)
             ),
-            "bias": Tensor.from_numpy(np.zeros(self.intermediate_size, dtype=np.float32)),
+            "bias": Tensor.from_numpy(
+                np.zeros(self.intermediate_size, dtype=np.float32)
+            ),
         }
-    
+
     def forward(self, hidden_states: Tensor) -> Tensor:
         hidden_states = linear(hidden_states, self.dense["weight"], self.dense["bias"])
         if self.hidden_act == "gelu":
@@ -181,55 +221,61 @@ class BertIntermediate:
 
 class BertOutput:
     """BERT output layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config.get("hidden_size", 768)
         self.intermediate_size = config.get("intermediate_size", 3072)
         self.hidden_dropout_prob = config.get("hidden_dropout_prob", 0.1)
-        
+
         self.dense = None
         self.layer_norm = None
-    
+
     def initialize_weights(self):
         hidden = self.hidden_size
         inter = self.intermediate_size
         self.dense = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, inter)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, inter)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
         self.layer_norm = {
             "weight": Tensor.from_numpy(np.ones(hidden, dtype=np.float32)),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
-    
+
     def forward(self, hidden_states: Tensor, input_tensor: Tensor) -> Tensor:
         hidden_states = linear(hidden_states, self.dense["weight"], self.dense["bias"])
         hidden_states = dropout(hidden_states, self.hidden_dropout_prob, training=True)
         hidden_states = hidden_states + input_tensor  # Residual
-        hidden_states = layernorm_fn(hidden_states, self.layer_norm["weight"], self.layer_norm["bias"])
+        hidden_states = layernorm_fn(
+            hidden_states, self.layer_norm["weight"], self.layer_norm["bias"]
+        )
         return hidden_states
 
 
 class BertLayer:
     """Single BERT encoder layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.attention = BertSelfAttention(config)
         self.intermediate = BertIntermediate(config)
         self.output = BertOutput(config)
-    
+
     def initialize_weights(self):
         self.attention.initialize_weights()
         self.intermediate.initialize_weights()
         self.output.initialize_weights()
-    
+
     def forward(
         self,
         hidden_states: Tensor,
         attention_mask: Optional[Tensor] = None,
         head_mask: Optional[Tensor] = None,
     ) -> Tensor:
-        attention_output = self.attention.forward(hidden_states, attention_mask, head_mask)
+        attention_output = self.attention.forward(
+            hidden_states, attention_mask, head_mask
+        )
         intermediate_output = self.intermediate.forward(attention_output)
         layer_output = self.output.forward(intermediate_output, attention_output)
         return layer_output
@@ -237,16 +283,16 @@ class BertLayer:
 
 class BertEncoder:
     """BERT encoder with multiple layers."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.num_hidden_layers = config.get("num_hidden_layers", 12)
         self.layers = [BertLayer(config) for _ in range(self.num_hidden_layers)]
-    
+
     def initialize_weights(self):
         for layer in self.layers:
             layer.initialize_weights()
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -255,14 +301,14 @@ class BertEncoder:
         output_hidden_states: bool = False,
     ) -> Union[Tensor, Tuple[Tensor, List[Tensor]]]:
         all_hidden_states = [] if output_hidden_states else None
-        
+
         for i, layer in enumerate(self.layers):
             if output_hidden_states:
                 all_hidden_states.append(hidden_states)
-            
+
             head_mask_i = head_mask[i] if head_mask else None
             hidden_states = layer.forward(hidden_states, attention_mask, head_mask_i)
-        
+
         if output_hidden_states:
             all_hidden_states.append(hidden_states)
             return hidden_states, all_hidden_states
@@ -271,17 +317,19 @@ class BertEncoder:
 
 class BertPooler:
     """BERT pooler for [CLS] token."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.dense = None
-    
+
     def initialize_weights(self):
         hidden = self.config.get("hidden_size", 768)
         self.dense = {
-            "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
-    
+
     def forward(self, hidden_states: Tensor) -> Tensor:
         # Take [CLS] token (first token)
         first_token = hidden_states[:, 0, :]
@@ -292,18 +340,18 @@ class BertPooler:
 
 class BertModel:
     """Full BERT model."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.embeddings = BertEmbeddings(config)
         self.encoder = BertEncoder(config)
         self.pooler = BertPooler(config)
-    
+
     def initialize_weights(self):
         self.embeddings.initialize_weights()
         self.encoder.initialize_weights()
         self.pooler.initialize_weights()
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -314,8 +362,10 @@ class BertModel:
         output_hidden_states: bool = False,
     ) -> Dict[str, Tensor]:
         # Embeddings
-        embedding_output = self.embeddings.forward(input_ids, token_type_ids, position_ids)
-        
+        embedding_output = self.embeddings.forward(
+            input_ids, token_type_ids, position_ids
+        )
+
         # Attention mask
         if attention_mask is not None:
             # Convert to broadcastable mask
@@ -323,7 +373,7 @@ class BertModel:
             extended_mask = (1.0 - extended_mask) * -10000.0
         else:
             extended_mask = None
-        
+
         # Encoder
         encoder_output = self.encoder.forward(
             embedding_output,
@@ -331,35 +381,39 @@ class BertModel:
             head_mask,
             output_hidden_states,
         )
-        
-        sequence_output = encoder_output[0] if isinstance(encoder_output, tuple) else encoder_output
+
+        sequence_output = (
+            encoder_output[0] if isinstance(encoder_output, tuple) else encoder_output
+        )
         pooled_output = self.pooler.forward(sequence_output)
-        
+
         outputs = {
             "last_hidden_state": sequence_output,
             "pooler_output": pooled_output,
         }
         if isinstance(encoder_output, tuple):
             outputs["hidden_states"] = encoder_output[1]
-        
+
         return outputs
 
 
 class BertForMaskedLM:
     """BERT with MLM head."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.bert = BertModel(config)
         self.cls = None
-    
+
     def initialize_weights(self):
         self.bert.initialize_weights()
         hidden = self.config.get("hidden_size", 768)
         vocab = self.config.get("vocab_size", 30522)
         self.cls = {
             "dense": {
-                "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)),
+                "weight": Tensor.from_numpy(
+                    np.random.normal(0, 0.02, (hidden, hidden)).astype(np.float32)
+                ),
                 "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
             },
             "layer_norm": {
@@ -367,36 +421,49 @@ class BertForMaskedLM:
                 "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
             },
             "decoder": {
-                "weight": Tensor.from_numpy(np.random.normal(0, 0.02, (vocab, hidden)).astype(np.float32)),
+                "weight": Tensor.from_numpy(
+                    np.random.normal(0, 0.02, (vocab, hidden)).astype(np.float32)
+                ),
                 "bias": Tensor.from_numpy(np.zeros(vocab, dtype=np.float32)),
             },
         }
-    
+
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, labels=None):
         outputs = self.bert.forward(input_ids, attention_mask, token_type_ids)
         sequence_output = outputs["last_hidden_state"]
-        
+
         # MLM head
-        hidden = linear(sequence_output, self.cls["dense"]["weight"], self.cls["dense"]["bias"])
+        hidden = linear(
+            sequence_output, self.cls["dense"]["weight"], self.cls["dense"]["bias"]
+        )
         hidden = gelu(hidden)
-        hidden = layernorm_fn(hidden, self.cls["layer_norm"]["weight"], self.cls["layer_norm"]["bias"])
-        logits = linear(hidden, self.cls["decoder"]["weight"], self.cls["decoder"]["bias"])
-        
+        hidden = layernorm_fn(
+            hidden, self.cls["layer_norm"]["weight"], self.cls["layer_norm"]["bias"]
+        )
+        logits = linear(
+            hidden, self.cls["decoder"]["weight"], self.cls["decoder"]["bias"]
+        )
+
         loss = None
         if labels is not None:
             # Cross entropy loss
             loss = cross_entropy(logits.view(-1, logits.shape[-1]), labels.view(-1))
-        
-        return {"logits": logits, "loss": loss, "hidden_states": outputs.get("hidden_states")}
+
+        return {
+            "logits": logits,
+            "loss": loss,
+            "hidden_states": outputs.get("hidden_states"),
+        }
 
 
 # =========================================================================
 # BERT Configuration
 # =========================================================================
 
+
 class BertConfig:
     """BERT configuration."""
-    
+
     def __init__(
         self,
         vocab_size: int = 30522,
@@ -438,9 +505,10 @@ class BertConfig:
 # GPT (Decoder-only) Models
 # =========================================================================
 
+
 class GPTConfig:
     """GPT configuration."""
-    
+
     def __init__(
         self,
         vocab_size: int = 50257,
@@ -480,34 +548,40 @@ class GPTConfig:
 
 class GPTAttention:
     """GPT multi-head causal attention."""
-    
+
     def __init__(self, config: GPTConfig):
         self.config = config
         self.hidden_size = config.n_embd
         self.num_heads = config.n_head
         self.head_dim = config.n_embd // config.n_head
         self.scale_attn_weights = config.scale_attn_weights
-        
+
         self.c_attn = None  # combined QKV projection
         self.c_proj = None  # output projection
         self.attn_dropout = config.attn_pdrop
         self.resid_dropout = config.resid_pdrop
-    
+
     def initialize_weights(self):
         hidden = self.hidden_size
         self.c_attn = {
             "weight": Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_range, (hidden, 3 * hidden)).astype(np.float32)
+                np.random.normal(
+                    0, self.config.initializer_range, (hidden, 3 * hidden)
+                ).astype(np.float32)
             ),
             "bias": Tensor.from_numpy(np.zeros(3 * hidden, dtype=np.float32)),
         }
         self.c_proj = {
             "weight": Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_range / np.sqrt(2 * self.config.n_layer), (hidden, hidden)).astype(np.float32)
+                np.random.normal(
+                    0,
+                    self.config.initializer_range / np.sqrt(2 * self.config.n_layer),
+                    (hidden, hidden),
+                ).astype(np.float32)
             ),
             "bias": Tensor.from_numpy(np.zeros(self.hidden_size, dtype=np.float32)),
         }
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -517,65 +591,83 @@ class GPTAttention:
         use_cache: bool = False,
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]]]:
         batch, seq_len, hidden = hidden_states.shape
-        
+
         # QKV projection
         c_attn = linear(hidden_states, self.c_attn["weight"], self.c_attn["bias"])
         q, k, v = np.split(c_attn.data, 3, axis=-1)
-        
+
         # Reshape for multi-head
-        q = q.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
-        k = k.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
-        v = v.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
-        
+        q = q.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(
+            0, 2, 1, 3
+        )
+        k = k.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(
+            0, 2, 1, 3
+        )
+        v = v.reshape(batch, seq_len, self.num_heads, self.head_dim).transpose(
+            0, 2, 1, 3
+        )
+
         # Past key/value
         if layer_past is not None:
             past_k, past_v = layer_past
             k = np.concatenate([past_k, k], axis=-2)
             v = np.concatenate([past_v, v], axis=-2)
-        
+
         present = (k, v) if use_cache else None
-        
+
         # Causal mask
         causal_mask = np.triu(np.ones((seq_len, seq_len)), k=1) * -1e9
         causal_mask = Tensor.from_numpy(causal_mask.astype(np.float32))
-        
+
         # Attention
         attn_output = multi_head_attention(
-            q, k, v,
+            q,
+            k,
+            v,
             num_heads=self.num_heads,
             dropout_p=self.attn_dropout,
-            training=True
+            training=True,
         )
-        
+
         # Output projection
         attn_output = attn_output.transpose(0, 2, 1, 3).reshape(batch, seq_len, hidden)
         attn_output = linear(attn_output, self.c_proj["weight"], self.c_proj["bias"])
         attn_output = dropout(attn_output, self.resid_dropout, training=True)
-        
+
         return attn_output, present
 
 
 class GPTMLP:
     """GPT MLP (feed-forward)."""
-    
+
     def __init__(self, config: GPTConfig):
         self.config = config
         self.c_fc = None
         self.c_proj = None
         self.act = config.activation_function
-    
+
     def initialize_weights(self):
         hidden = self.config.n_embd
         inner = self.config.n_inner
         self.c_fc = {
-            "weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_range, (hidden, inner)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(
+                    0, self.config.initializer_range, (hidden, inner)
+                ).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(inner, dtype=np.float32)),
         }
         self.c_proj = {
-            "weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_range / np.sqrt(2 * self.config.n_layer), (inner, hidden)).astype(np.float32)),
+            "weight": Tensor.from_numpy(
+                np.random.normal(
+                    0,
+                    self.config.initializer_range / np.sqrt(2 * self.config.n_layer),
+                    (inner, hidden),
+                ).astype(np.float32)
+            ),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
-    
+
     def forward(self, hidden_states: Tensor) -> Tensor:
         hidden_states = linear(hidden_states, self.c_fc["weight"], self.c_fc["bias"])
         if self.act == "gelu":
@@ -584,21 +676,23 @@ class GPTMLP:
             hidden_states = relu(hidden_states)
         elif self.act == "silu":
             hidden_states = silu(hidden_states)
-        hidden_states = linear(hidden_states, self.c_proj["weight"], self.c_proj["bias"])
+        hidden_states = linear(
+            hidden_states, self.c_proj["weight"], self.c_proj["bias"]
+        )
         hidden_states = dropout(hidden_states, self.config.resid_pdrop, training=True)
         return hidden_states
 
 
 class GPTBlock:
     """GPT transformer block."""
-    
+
     def __init__(self, config: GPTConfig):
         self.config = config
         self.ln_1 = None
         self.attn = GPTAttention(config)
         self.ln_2 = None
         self.mlp = GPTMLP(config)
-    
+
     def initialize_weights(self):
         hidden = self.config.n_embd
         self.ln_1 = {
@@ -611,7 +705,7 @@ class GPTBlock:
         }
         self.attn.initialize_weights()
         self.mlp.initialize_weights()
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -622,26 +716,30 @@ class GPTBlock:
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]]]:
         # Pre-norm
         residual = hidden_states
-        hidden_states = layernorm_fn(hidden_states, self.ln_1["weight"], self.ln_1["bias"])
-        
+        hidden_states = layernorm_fn(
+            hidden_states, self.ln_1["weight"], self.ln_1["bias"]
+        )
+
         # Attention
         attn_output, present = self.attn.forward(
             hidden_states, layer_past, attention_mask, head_mask, use_cache
         )
         hidden_states = residual + attn_output
-        
+
         # Post-norm FFN
         residual = hidden_states
-        hidden_states = layernorm_fn(hidden_states, self.ln_2["weight"], self.ln_2["bias"])
+        hidden_states = layernorm_fn(
+            hidden_states, self.ln_2["weight"], self.ln_2["bias"]
+        )
         hidden_states = self.mlp.forward(hidden_states)
         hidden_states = residual + hidden_states
-        
+
         return hidden_states, present
 
 
 class GPTModel:
     """Full GPT model."""
-    
+
     def __init__(self, config: GPTConfig):
         self.config = config
         self.wte = None  # token embeddings
@@ -649,25 +747,33 @@ class GPTModel:
         self.drop = None
         self.h = [GPTBlock(config) for _ in range(config.n_layer)]
         self.ln_f = None
-    
+
     def initialize_weights(self):
         hidden = self.config.n_embd
         vocab = self.config.vocab_size
         max_pos = self.config.n_positions
-        
-        self.wte = Tensor.from_numpy(np.random.normal(0, self.config.initializer_range, (vocab, hidden)).astype(np.float32))
-        self.wpe = Tensor.from_numpy(np.random.normal(0, self.config.initializer_range, (max_pos, hidden)).astype(np.float32))
-        
+
+        self.wte = Tensor.from_numpy(
+            np.random.normal(0, self.config.initializer_range, (vocab, hidden)).astype(
+                np.float32
+            )
+        )
+        self.wpe = Tensor.from_numpy(
+            np.random.normal(
+                0, self.config.initializer_range, (max_pos, hidden)
+            ).astype(np.float32)
+        )
+
         self.drop = self.config.embd_pdrop
-        
+
         for block in self.h:
             block.initialize_weights()
-        
+
         self.ln_f = {
             "weight": Tensor.from_numpy(np.ones(hidden, dtype=np.float32)),
             "bias": Tensor.from_numpy(np.zeros(hidden, dtype=np.float32)),
         }
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -678,42 +784,44 @@ class GPTModel:
         use_cache: bool = False,
     ) -> Dict[str, Any]:
         batch, seq_len = input_ids.shape
-        
+
         # Position IDs
         if position_ids is None:
             position_ids = np.arange(seq_len, dtype=np.int64).reshape(1, -1)
             position_ids = np.broadcast_to(position_ids, (batch, seq_len))
             position_ids = Tensor.from_numpy(position_ids)
-        
+
         # Embeddings
         inputs_embeds = embedding(input_ids, self.wte)
         position_embeds = embedding(position_ids, self.wpe)
         hidden_states = inputs_embeds + position_embeds
         hidden_states = dropout(hidden_states, self.drop, training=True)
-        
+
         # Causal mask
         causal_mask = np.triu(np.ones((seq_len, seq_len)), k=1) * -1e9
         if attention_mask is not None:
             # Combine causal + attention mask
             causal_mask = causal_mask + attention_mask[:, None, None, :].data * -1e9
         causal_mask = Tensor.from_numpy(causal_mask.astype(np.float32))
-        
+
         # Blocks
         presents = [] if use_cache else None
         for i, block in enumerate(self.h):
             layer_past = past_key_values[i] if past_key_values else None
             head_mask_i = head_mask[i] if head_mask else None
-            
+
             hidden_states, present = block.forward(
                 hidden_states, layer_past, causal_mask, head_mask_i, use_cache
             )
-            
+
             if use_cache:
                 presents.append(present)
-        
+
         # Final layer norm
-        hidden_states = layernorm_fn(hidden_states, self.ln_f["weight"], self.ln_f["bias"])
-        
+        hidden_states = layernorm_fn(
+            hidden_states, self.ln_f["weight"], self.ln_f["bias"]
+        )
+
         return {
             "last_hidden_state": hidden_states,
             "past_key_values": presents,
@@ -723,12 +831,12 @@ class GPTModel:
 
 class GPTLMHeadModel:
     """GPT with language modeling head."""
-    
+
     def __init__(self, config: GPTConfig):
         self.config = config
         self.transformer = GPTModel(config)
         self.lm_head = None
-    
+
     def initialize_weights(self):
         self.transformer.initialize_weights()
         hidden = self.config.n_embd
@@ -737,7 +845,7 @@ class GPTLMHeadModel:
             "weight": self.transformer.wte,  # weight tying
             "bias": Tensor.from_numpy(np.zeros(vocab, dtype=np.float32)),
         }
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -750,17 +858,17 @@ class GPTLMHeadModel:
             input_ids, past_key_values, attention_mask, use_cache=use_cache
         )
         hidden_states = outputs["last_hidden_state"]
-        
+
         # LM head
         logits = linear(hidden_states, self.lm_head["weight"], self.lm_head["bias"])
-        
+
         loss = None
         if labels is not None:
             # Shift for causal LM
             shift_logits = logits[:, :-1, :].reshape(-1, logits.shape[-1])
             shift_labels = labels[:, 1:].reshape(-1)
             loss = cross_entropy(shift_logits, shift_labels)
-        
+
         return {
             "logits": logits,
             "loss": loss,
@@ -772,9 +880,10 @@ class GPTLMHeadModel:
 # T5 (Encoder-Decoder) Models
 # =========================================================================
 
+
 class T5Config:
     """T5 configuration."""
-    
+
     def __init__(
         self,
         vocab_size: int = 32128,
@@ -818,43 +927,51 @@ class T5Config:
 
 class T5LayerNorm:
     """T5 layer normalization (no bias)."""
-    
+
     def __init__(self, config: T5Config):
         self.config = config
         self.weight = None
-    
+
     def initialize_weights(self):
         self.weight = Tensor.from_numpy(np.ones(self.config.d_model, dtype=np.float32))
-    
+
     def forward(self, hidden_states: Tensor) -> Tensor:
-        return layernorm_fn(hidden_states, self.weight, None, eps=self.config.layer_norm_epsilon)
+        return layernorm_fn(
+            hidden_states, self.weight, None, eps=self.config.layer_norm_epsilon
+        )
 
 
 class T5DenseReluDense:
     """T5 feed-forward with ReLU."""
-    
+
     def __init__(self, config: T5Config):
         self.config = config
         self.wi = None
         self.wo = None
         self.dropout = config.dropout_rate
-    
+
     def initialize_weights(self):
         self.wi = {
             "weight": Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5),
-                               (self.config.d_ff, self.config.d_model)).astype(np.float32)
+                np.random.normal(
+                    0,
+                    self.config.initializer_factor * (self.config.d_model**-0.5),
+                    (self.config.d_ff, self.config.d_model),
+                ).astype(np.float32)
             ),
             "bias": Tensor.from_numpy(np.zeros(self.config.d_ff, dtype=np.float32)),
         }
         self.wo = {
             "weight": Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5),
-                               (self.config.d_model, self.config.d_ff)).astype(np.float32)
+                np.random.normal(
+                    0,
+                    self.config.initializer_factor * (self.config.d_model**-0.5),
+                    (self.config.d_model, self.config.d_ff),
+                ).astype(np.float32)
             ),
             "bias": Tensor.from_numpy(np.zeros(self.config.d_model, dtype=np.float32)),
         }
-    
+
     def forward(self, hidden_states: Tensor) -> Tensor:
         hidden_states = linear(hidden_states, self.wi["weight"], self.wi["bias"])
         hidden_states = relu(hidden_states)
@@ -866,28 +983,64 @@ class T5DenseReluDense:
 
 class T5LayerSelfAttention:
     """T5 self-attention with relative position bias."""
-    
+
     def __init__(self, config: T5Config, has_relative_attention_bias: bool = True):
         self.config = config
         self.has_relative_attention_bias = has_relative_attention_bias
         self.self = None
         self.layer_norm = T5LayerNorm(config)
         self.dropout = config.dropout_rate
-    
+
     def initialize_weights(self):
         self.layer_norm.initialize_weights()
         hidden = self.config.d_model
         self.self = {
-            "q": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "k": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "v": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "o": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
+            "q": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "k": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "v": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "o": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
         }
         if self.has_relative_attention_bias:
             self.relative_attention_bias = Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_factor, (self.config.relative_attention_num_buckets, self.config.num_heads)).astype(np.float32)
+                np.random.normal(
+                    0,
+                    self.config.initializer_factor,
+                    (self.config.relative_attention_num_buckets, self.config.num_heads),
+                ).astype(np.float32)
             )
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -898,62 +1051,94 @@ class T5LayerSelfAttention:
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]], Optional[Tensor]]:
         # Layer norm
         normed = self.layer_norm.forward(hidden_states)
-        
+
         # Self-attention with relative position bias
         # (Simplified - full relative position implementation is complex)
         batch, seq_len, hidden = hidden_states.shape
-        
+
         q = linear(normed, self.self["q"]["weight"])
         k = linear(normed, self.self["k"]["weight"])
         v = linear(normed, self.self["v"]["weight"])
-        
+
         # Multi-head
         head_dim = self.config.d_kv
         q = q.reshape(batch, -1, self.config.num_heads, head_dim).transpose(0, 2, 1, 3)
         k = k.reshape(batch, -1, self.config.num_heads, head_dim).transpose(0, 2, 1, 3)
         v = v.reshape(batch, -1, self.config.num_heads, head_dim).transpose(0, 2, 1, 3)
-        
+
         # Scores
         scores = q @ k.transpose(0, 1, 3, 2) / np.sqrt(head_dim)
-        
+
         if position_bias is not None:
             scores = scores + position_bias
-        
+
         if mask is not None:
             scores = scores + mask
-        
+
         attn = softmax(scores, axis=-1)
         attn = dropout(attn, self.dropout, training=True)
-        
+
         out = attn @ v
         out = out.transpose(0, 2, 1, 3).reshape(batch, -1, hidden)
         out = linear(out, self.self["o"]["weight"])
-        
+
         out = dropout(out, self.dropout, training=True)
         out = out + hidden_states  # Residual
-        
+
         return out, None, position_bias
 
 
 class T5LayerCrossAttention:
     """T5 cross-attention for decoder."""
-    
+
     def __init__(self, config: T5Config):
         self.config = config
         self.enc_dec_attention = None
         self.layer_norm = T5LayerNorm(config)
         self.dropout = config.dropout_rate
-    
+
     def initialize_weights(self):
         self.layer_norm.initialize_weights()
         hidden = self.config.d_model
         self.enc_dec_attention = {
-            "q": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "k": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "v": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
-            "o": {"weight": Tensor.from_numpy(np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5), (hidden, hidden)).astype(np.float32))},
+            "q": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "k": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "v": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
+            "o": {
+                "weight": Tensor.from_numpy(
+                    np.random.normal(
+                        0,
+                        self.config.initializer_factor * (self.config.d_model**-0.5),
+                        (hidden, hidden),
+                    ).astype(np.float32)
+                )
+            },
         }
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -971,7 +1156,7 @@ class T5LayerCrossAttention:
 
 class T5Block:
     """T5 transformer block."""
-    
+
     def __init__(self, config: T5Config, has_relative_attention_bias: bool = True):
         self.config = config
         self.layer = []
@@ -979,11 +1164,11 @@ class T5Block:
         if config.is_encoder_decoder:
             self.layer.append(T5LayerCrossAttention(config))
         self.layer.append(T5DenseReluDense(config))
-    
+
     def initialize_weights(self):
         for layer in self.layer:
             layer.initialize_weights()
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -1004,7 +1189,7 @@ class T5Block:
             use_cache,
         )
         hidden_states = self_attn_output
-        
+
         # Cross-attention (if decoder)
         if len(self.layer) > 2 and encoder_hidden_states is not None:
             cross_attn_output, _ = self.layer[1].forward(
@@ -1015,16 +1200,16 @@ class T5Block:
                 use_cache,
             )
             hidden_states = cross_attn_output
-        
+
         # Feed-forward
         hidden_states = self.layer[-1].forward(hidden_states)
-        
+
         return hidden_states, None, position_bias, encoder_decoder_position_bias
 
 
 class T5Stack:
     """T5 encoder or decoder stack."""
-    
+
     def __init__(self, config: T5Config, embed_tokens: Optional[Tensor] = None):
         self.config = config
         self.embed_tokens = embed_tokens
@@ -1032,17 +1217,20 @@ class T5Stack:
         self.block = [T5Block(config, i == 0) for i in range(config.num_layers)]
         self.final_layer_norm = T5LayerNorm(config)
         self.dropout = config.dropout_rate
-    
+
     def initialize_weights(self):
         if self.embed_tokens is None:
             self.embed_tokens = Tensor.from_numpy(
-                np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5),
-                               (self.config.vocab_size, self.config.d_model)).astype(np.float32)
+                np.random.normal(
+                    0,
+                    self.config.initializer_factor * (self.config.d_model**-0.5),
+                    (self.config.vocab_size, self.config.d_model),
+                ).astype(np.float32)
             )
         for block in self.block:
             block.initialize_weights()
         self.final_layer_norm.initialize_weights()
-    
+
     def forward(
         self,
         input_ids: Optional[Tensor] = None,
@@ -1056,17 +1244,17 @@ class T5Stack:
     ) -> Dict[str, Any]:
         if inputs_embeds is None:
             inputs_embeds = embedding(input_ids, self.embed_tokens)
-        
+
         hidden_states = dropout(inputs_embeds, self.dropout, training=True)
-        
+
         all_hidden_states = [] if output_hidden_states else None
-        
+
         for i, block in enumerate(self.block):
             if output_hidden_states:
                 all_hidden_states.append(hidden_states)
-            
+
             layer_past = past_key_values[i] if past_key_values else None
-            
+
             outputs = block.forward(
                 hidden_states,
                 attention_mask,
@@ -1077,15 +1265,15 @@ class T5Stack:
                 layer_past,
                 use_cache,
             )
-            
+
             hidden_states = outputs[0]
-        
+
         hidden_states = self.final_layer_norm.forward(hidden_states)
         hidden_states = dropout(hidden_states, self.dropout, training=True)
-        
+
         if output_hidden_states:
             all_hidden_states.append(hidden_states)
-        
+
         return {
             "last_hidden_state": hidden_states,
             "past_key_values": None,
@@ -1095,24 +1283,27 @@ class T5Stack:
 
 class T5Model:
     """Full T5 model (encoder-decoder)."""
-    
+
     def __init__(self, config: T5Config):
         self.config = config
         self.shared = None
         self.encoder = T5Stack(config)
         self.decoder = T5Stack(config)
-    
+
     def initialize_weights(self):
         self.shared = Tensor.from_numpy(
-            np.random.normal(0, self.config.initializer_factor * (self.config.d_model ** -0.5),
-                           (self.config.vocab_size, self.config.d_model)).astype(np.float32)
+            np.random.normal(
+                0,
+                self.config.initializer_factor * (self.config.d_model**-0.5),
+                (self.config.vocab_size, self.config.d_model),
+            ).astype(np.float32)
         )
         self.encoder.embed_tokens = self.shared
         self.decoder.embed_tokens = self.shared
-        
+
         self.encoder.initialize_weights()
         self.decoder.initialize_weights()
-    
+
     def forward(
         self,
         input_ids: Optional[Tensor] = None,
@@ -1130,7 +1321,7 @@ class T5Model:
                 attention_mask=attention_mask,
                 use_cache=False,
             )
-        
+
         # Decoder
         decoder_outputs = self.decoder.forward(
             input_ids=decoder_input_ids,
@@ -1140,7 +1331,7 @@ class T5Model:
             past_key_values=past_key_values,
             use_cache=use_cache,
         )
-        
+
         return {
             "last_hidden_state": decoder_outputs["last_hidden_state"],
             "past_key_values": decoder_outputs.get("past_key_values"),
@@ -1150,41 +1341,43 @@ class T5Model:
 
 class T5ForConditionalGeneration:
     """T5 with LM head."""
-    
+
     def __init__(self, config: T5Config):
         self.config = config
         self.model = T5Model(config)
         self.lm_head = None
-    
+
     def initialize_weights(self):
         self.model.initialize_weights()
         self.lm_head = {
             "weight": self.model.shared,
-            "bias": Tensor.from_numpy(np.zeros(self.config.vocab_size, dtype=np.float32)),
+            "bias": Tensor.from_numpy(
+                np.zeros(self.config.vocab_size, dtype=np.float32)
+            ),
         }
-    
+
     def forward(
         self,
         input_ids: Optional[Tensor] = None,
         decoder_input_ids: Optional[Tensor] = None,
         labels: Optional[Tensor] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         outputs = self.model.forward(
-            input_ids=input_ids,
-            decoder_input_ids=decoder_input_ids,
-            **kwargs
+            input_ids=input_ids, decoder_input_ids=decoder_input_ids, **kwargs
         )
-        
-        lm_logits = linear(outputs["last_hidden_state"], self.lm_head["weight"], self.lm_head["bias"])
-        
+
+        lm_logits = linear(
+            outputs["last_hidden_state"], self.lm_head["weight"], self.lm_head["bias"]
+        )
+
         loss = None
         if labels is not None:
             # Shift for causal LM
             shift_logits = lm_logits[:, :-1, :].reshape(-1, lm_logits.shape[-1])
             shift_labels = labels[:, 1:].reshape(-1)
             loss = cross_entropy(shift_logits, shift_labels)
-        
+
         return {"logits": lm_logits, "loss": loss}
 
 
@@ -1192,7 +1385,10 @@ class T5ForConditionalGeneration:
 # Utility functions
 # =========================================================================
 
-def create_bert_model(config_dict: Dict[str, Any], model_type: str = "bert") -> Union[BertModel, BertForMaskedLM]:
+
+def create_bert_model(
+    config_dict: Dict[str, Any], model_type: str = "bert"
+) -> Union[BertModel, BertForMaskedLM]:
     """Factory function to create BERT models."""
     if model_type == "bert":
         model = BertModel(config_dict)
@@ -1248,7 +1444,6 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
             "type_vocab_size": 2,
             "initializer_range": 0.02,
         },
-        
         # GPT configs
         "gpt2": GPTConfig(
             vocab_size=50257,
@@ -1278,7 +1473,6 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
             n_layer=48,
             n_head=25,
         ),
-        
         # T5 configs
         "t5-small": T5Config(
             vocab_size=32128,
@@ -1321,10 +1515,12 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
             d_kv=64,
         ),
     }
-    
+
     if model_name not in configs:
-        raise ValueError(f"Unknown model: {model_name}. Available: {list(configs.keys())}")
-    
+        raise ValueError(
+            f"Unknown model: {model_name}. Available: {list(configs.keys())}"
+        )
+
     return configs[model_name]
 
 
@@ -1332,11 +1528,14 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
 # Weight loading utilities
 # =========================================================================
 
-def load_pretrained_weights(model: Any, weights_dict: Dict[str, np.ndarray], prefix: str = "") -> List[str]:
+
+def load_pretrained_weights(
+    model: Any, weights_dict: Dict[str, np.ndarray], prefix: str = ""
+) -> List[str]:
     """Load pretrained weights into model."""
     missing_keys = []
     unexpected_keys = []
-    
+
     # This would recursively load weights based on model structure
     # For now, return empty lists
     return missing_keys
@@ -1352,6 +1551,7 @@ def save_pretrained_weights(model: Any, save_path: str) -> None:
 # =========================================================================
 # Model size estimation
 # =========================================================================
+
 
 def count_parameters(model: Any) -> int:
     """Count total parameters in model."""

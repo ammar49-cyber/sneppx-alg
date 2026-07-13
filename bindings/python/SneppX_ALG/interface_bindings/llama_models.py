@@ -5,57 +5,74 @@ import numpy as np
 
 from .tensor import Tensor
 from .advanced_ops import (
-    linear, layernorm, rmsnorm, gelu, silu, softmax, rope,
-    multi_head_attention, rmsnorm
+    linear,
+    layernorm,
+    rmsnorm,
+    gelu,
+    silu,
+    softmax,
+    rope,
+    multi_head_attention,
+    rmsnorm,
 )
 from .nn import Module, Linear, LayerNorm, Dropout, Embedding, Sequential
-
 
 # =========================================================================
 # LLaMA Architecture
 # =========================================================================
 
+
 class LlamaRMSNorm:
     """LLaMA RMSNorm implementation."""
-    
+
     def __init__(self, dim: int, eps: float = 1e-6):
         self.weight = Tensor.from_numpy(np.ones(dim, dtype=np.float32))
         self.eps = eps
-    
+
     def __call__(self, x: Tensor) -> Tensor:
         return rmsnorm(x, self.weight, self.eps)
 
 
 class LlamaRotaryEmbedding:
     """Rotary Position Embedding (RoPE)."""
-    
-    def __init__(self, dim: int, max_position_embeddings: int = 4096, base: float = 10000.0):
+
+    def __init__(
+        self, dim: int, max_position_embeddings: int = 4096, base: float = 10000.0
+    ):
         self.dim = dim
         self.max_position_embeddings = max_position_embeddings
         self.base = base
         self.inv_freq = 1.0 / (base ** (np.arange(0, dim, 2, dtype=np.float32) / dim))
-    
-    def forward(self, x: Tensor, position_ids: Optional[np.ndarray] = None) -> Tuple[Tensor, Tensor]:
+
+    def forward(
+        self, x: Tensor, position_ids: Optional[np.ndarray] = None
+    ) -> Tuple[Tensor, Tensor]:
         # x: [B, seq_len, num_heads, head_dim]
         seq_len = x.shape[1]
         if position_ids is None:
             position_ids = np.arange(seq_len, dtype=np.float32)
-        
+
         inv_freq = self.inv_freq.astype(np.float32)
         freqs = np.outer(position_ids, inv_freq)
         emb = np.concatenate([freqs, freqs], axis=-1)
-        
+
         cos = np.cos(emb).astype(np.float32)
         sin = np.sin(emb).astype(np.float32)
-        
+
         return Tensor.from_numpy(cos), Tensor.from_numpy(sin)
 
 
-def apply_rotary_pos_emb(q: Tensor, k: Tensor, cos: Tensor, sin: Tensor, position_ids: Optional[np.ndarray] = None) -> Tuple[Tensor, Tensor]:
+def apply_rotary_pos_emb(
+    q: Tensor,
+    k: Tensor,
+    cos: Tensor,
+    sin: Tensor,
+    position_ids: Optional[np.ndarray] = None,
+) -> Tuple[Tensor, Tensor]:
     """Apply rotary position embedding to q and k."""
     # q, k: [B, num_heads, seq_len, head_dim]
     # cos, sin: [seq_len, head_dim] or [1, seq_len, 1, head_dim]
-    
+
     q_embed = (q * cos) + (rotate_half(q) * sin)
     k_embed = (k * cos) + (rotate_half(k) * sin)
     return q_embed, k_embed
@@ -64,14 +81,14 @@ def apply_rotary_pos_emb(q: Tensor, k: Tensor, cos: Tensor, sin: Tensor, positio
 def rotate_half(x: Tensor) -> Tensor:
     """Rotate half the hidden dims of the input."""
     x_np = np.asarray(x.data)
-    x1 = x_np[..., :x_np.shape[-1] // 2]
-    x2 = x_np[..., x_np.shape[-1] // 2:]
+    x1 = x_np[..., : x_np.shape[-1] // 2]
+    x2 = x_np[..., x_np.shape[-1] // 2 :]
     return Tensor.from_numpy(np.concatenate([-x2, x1], axis=-1).astype(np.float32))
 
 
 class LlamaAttention:
     """LLaMA multi-head attention with RoPE."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.hidden_size = config.get("hidden_size", 4096)
@@ -80,21 +97,27 @@ class LlamaAttention:
         self.head_dim = self.hidden_size // self.num_heads
         self.max_position_embeddings = config.get("max_position_embeddings", 4096)
         self.rope_theta = config.get("rope_theta", 10000.0)
-        
-        self.q_proj = Linear(self.hidden_size, self.num_heads * self.head_dim, bias=False)
-        self.k_proj = Linear(self.hidden_size, self.num_kv_heads * self.head_dim, bias=False)
-        self.v_proj = Linear(self.hidden_size, self.num_kv_heads * self.head_dim, bias=False)
-        self.o_proj = Linear(self.num_heads * self.head_dim, self.hidden_size, bias=False)
-        
-        self.rotary_emb = LlamaRotaryEmbedding(
-            self.head_dim, 
-            self.max_position_embeddings, 
-            self.rope_theta
+
+        self.q_proj = Linear(
+            self.hidden_size, self.num_heads * self.head_dim, bias=False
         )
-        
+        self.k_proj = Linear(
+            self.hidden_size, self.num_kv_heads * self.head_dim, bias=False
+        )
+        self.v_proj = Linear(
+            self.hidden_size, self.num_kv_heads * self.head_dim, bias=False
+        )
+        self.o_proj = Linear(
+            self.num_heads * self.head_dim, self.hidden_size, bias=False
+        )
+
+        self.rotary_emb = LlamaRotaryEmbedding(
+            self.head_dim, self.max_position_embeddings, self.rope_theta
+        )
+
         self.attention_dropout = config.get("attention_dropout", 0.0)
         self.hidden_dropout = config.get("hidden_dropout", 0.0)
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -104,61 +127,63 @@ class LlamaAttention:
         use_cache: bool = False,
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]]]:
         B, L, _ = hidden_states.shape
-        
+
         # Project Q, K, V
         q = self.q_proj(hidden_states)
         k = self.k_proj(hidden_states)
         v = self.v_proj(hidden_states)
-        
+
         # Reshape for multi-head
         q = q.reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
         k = k.reshape(B, -1, self.num_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
         v = v.reshape(B, -1, self.num_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
-        
+
         # Apply RoPE
         cos, sin = self.rotary_emb.forward(q, position_ids)
         q, k = apply_rotary_pos_emb(q, k, cos, sin, position_ids)
-        
+
         # Handle KV cache
         if past_key_value is not None:
             k = np.concatenate([past_key_value[0], k], axis=2)
             v = np.concatenate([past_key_value[1], v], axis=2)
-        
+
         present = (k, v) if use_cache else None
-        
+
         # Repeat K/V for GQA
         if self.num_kv_heads != self.num_heads:
             k = np.repeat(k, self.num_heads // self.num_kv_heads, axis=1)
             v = np.repeat(v, self.num_heads // self.num_kv_heads, axis=1)
-        
+
         # Scaled dot-product attention
         attn_weights = np.matmul(q, k.transpose(0, 1, 3, 2)) / np.sqrt(self.head_dim)
-        
+
         if attention_mask is not None:
             attn_weights = attn_weights + attention_mask
-        
+
         attn_weights = softmax(attn_weights, axis=-1)
-        
+
         attn_output = np.matmul(attn_weights, v)
-        attn_output = attn_output.transpose(0, 2, 1, 3).reshape(B, -1, self.num_heads * self.head_dim)
-        
+        attn_output = attn_output.transpose(0, 2, 1, 3).reshape(
+            B, -1, self.num_heads * self.head_dim
+        )
+
         output = self.o_proj(attn_output)
         output = dropout(output, self.hidden_dropout, training=True)
-        
+
         return output, present
 
 
 class LlamaMLP:
     """LLaMA MLP with SwiGLU activation."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config.get("hidden_size", 4096)
         self.intermediate_size = config.get("intermediate_size", 11008)
-        
+
         self.gate_proj = Linear(self.hidden_size, self.intermediate_size, bias=False)
         self.up_proj = Linear(self.hidden_size, self.intermediate_size, bias=False)
         self.down_proj = Linear(self.intermediate_size, self.hidden_size, bias=False)
-    
+
     def forward(self, x: Tensor) -> Tensor:
         gate = self.gate_proj(x)
         up = self.up_proj(x)
@@ -167,15 +192,15 @@ class LlamaMLP:
 
 class LlamaDecoderLayer:
     """LLaMA decoder layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config.get("hidden_size", 4096)
-        
+
         self.self_attn = LlamaAttention(config)
         self.mlp = LlamaMLP(config)
         self.input_layernorm = LlamaRMSNorm(self.hidden_size)
         self.post_attention_layernorm = LlamaRMSNorm(self.hidden_size)
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -185,37 +210,37 @@ class LlamaDecoderLayer:
         use_cache: bool = False,
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]]]:
         residual = hidden_states
-        
+
         # Self attention
         hidden_states = self.input_layernorm(hidden_states)
         hidden_states, present = self.self_attn.forward(
             hidden_states, attention_mask, position_ids, past_key_value
         )
         hidden_states = residual + hidden_states
-        
+
         # MLP
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
         hidden_states = residual + hidden_states
-        
+
         return hidden_states, present
 
 
 class LlamaModel:
     """LLaMA model."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.vocab_size = config.get("vocab_size", 32000)
         self.hidden_size = config.get("hidden_size", 4096)
         self.num_hidden_layers = config.get("num_hidden_layers", 32)
         self.pad_token_id = config.get("pad_token_id", 0)
-        
+
         self.embed_tokens = Embedding(self.vocab_size, self.hidden_size)
         self.layers = [LlamaDecoderLayer(config) for _ in range(self.num_hidden_layers)]
         self.norm = LlamaRMSNorm(self.hidden_size)
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -225,19 +250,19 @@ class LlamaModel:
         use_cache: bool = False,
     ) -> Dict[str, Any]:
         hidden_states = self.embed_tokens(input_ids)
-        
+
         if position_ids is None:
             seq_len = input_ids.shape[1]
             position_ids = np.arange(seq_len, dtype=np.int64).reshape(1, -1)
-        
+
         # Prepare attention mask
         if attention_mask is not None:
             attention_mask = attention_mask[:, None, None, :] * -1e9
-        
+
         # Transformer layers
         past_key_values = past_key_values or [None] * len(self.layers)
         next_cache = []
-        
+
         for i, layer in enumerate(self.layers):
             layer_output = layer.forward(
                 hidden_states=hidden_states,
@@ -248,9 +273,9 @@ class LlamaModel:
             hidden_states = layer_output[0]
             if use_cache:
                 next_cache.append(layer_output[1])
-        
+
         hidden_states = self.norm(hidden_states)
-        
+
         return {
             "last_hidden_state": hidden_states,
             "past_key_values": next_cache if use_cache else None,
@@ -259,12 +284,12 @@ class LlamaModel:
 
 class LlamaForCausalLM:
     """LLaMA for causal language modeling."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.model = LlamaModel(config)
         self.lm_head = Linear(config["hidden_size"], config["vocab_size"], bias=False)
-    
+
     def forward(
         self,
         input_ids: Tensor,
@@ -277,31 +302,36 @@ class LlamaForCausalLM:
         outputs = self.model.forward(
             input_ids, attention_mask, position_ids, past_key_values, use_cache
         )
-        
+
         hidden_states = outputs["last_hidden_state"]
         logits = self.lm_head(hidden_states)
-        
+
         loss = None
         if labels is not None:
             # Shift for causal LM
             shift_logits = logits[:, :-1, :].reshape(-1, logits.shape[-1])
             shift_labels = labels[:, 1:].reshape(-1)
             loss = cross_entropy(shift_logits, shift_labels)
-        
-        return {"logits": logits, "loss": loss, "past_key_values": outputs.get("past_key_values")}
+
+        return {
+            "logits": logits,
+            "loss": loss,
+            "past_key_values": outputs.get("past_key_values"),
+        }
 
 
 # =========================================================================
 # Mistral Architecture
 # =========================================================================
 
+
 class MistralAttention(LlamaAttention):
     """Mistral attention with sliding window attention."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.sliding_window = config.get("sliding_window", 4096)
-    
+
     def forward(self, *args, **kwargs):
         # Add sliding window mask
         return super().forward(*args, **kwargs)
@@ -309,17 +339,19 @@ class MistralAttention(LlamaAttention):
 
 class MistralMLP(LlamaMLP):
     """Mistral MLP (same as LLaMA)."""
+
     pass
 
 
 class MistralDecoderLayer(LlamaDecoderLayer):
     """Mistral decoder layer."""
+
     pass
 
 
 class MistralModel(LlamaModel):
     """Mistral model."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         config["sliding_window"] = config.get("sliding_window", 4096)
         super().__init__(config)
@@ -327,6 +359,7 @@ class MistralModel(LlamaModel):
 
 class MistralForCausalLM(LlamaForCausalLM):
     """Mistral for causal LM."""
+
     pass
 
 
@@ -334,25 +367,45 @@ class MistralForCausalLM(LlamaForCausalLM):
 # Qwen2 Architecture
 # =========================================================================
 
+
 class Qwen2Attention(LlamaAttention):
     """Qwen2 attention with QKV bias and RMSNorm."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         # Qwen2 uses bias in QKV projections
-        self.q_proj = Linear(config["hidden_size"], config["num_attention_heads"] * config["hidden_size"] // config["num_attention_heads"], bias=True)
-        self.k_proj = Linear(config["hidden_size"], config["num_key_value_heads"] * config["hidden_size"] // config["num_attention_heads"], bias=True)
-        self.v_proj = Linear(config["hidden_size"], config["num_key_value_heads"] * config["hidden_size"] // config["num_attention_heads"], bias=True)
+        self.q_proj = Linear(
+            config["hidden_size"],
+            config["num_attention_heads"]
+            * config["hidden_size"]
+            // config["num_attention_heads"],
+            bias=True,
+        )
+        self.k_proj = Linear(
+            config["hidden_size"],
+            config["num_key_value_heads"]
+            * config["hidden_size"]
+            // config["num_attention_heads"],
+            bias=True,
+        )
+        self.v_proj = Linear(
+            config["hidden_size"],
+            config["num_key_value_heads"]
+            * config["hidden_size"]
+            // config["num_attention_heads"],
+            bias=True,
+        )
 
 
 class Qwen2MLP(LlamaMLP):
     """Qwen2 MLP."""
+
     pass
 
 
 class Qwen2DecoderLayer:
     """Qwen2 decoder layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config["hidden_size"]
         self.self_attn = Qwen2Attention(config)
@@ -363,21 +416,23 @@ class Qwen2DecoderLayer:
 
 class Qwen2Model:
     """Qwen2 model."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.vocab_size = config["vocab_size"]
         self.hidden_size = config["hidden_size"]
         self.num_hidden_layers = config["num_hidden_layers"]
-        
+
         self.embed_tokens = Embedding(config["vocab_size"], config["hidden_size"])
-        self.layers = [Qwen2DecoderLayer(config) for _ in range(config["num_hidden_layers"])]
+        self.layers = [
+            Qwen2DecoderLayer(config) for _ in range(config["num_hidden_layers"])
+        ]
         self.norm = rmsnorm(config["hidden_size"])
 
 
 class Qwen2ForCausalLM:
     """Qwen2 for causal LM."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.model = Qwen2Model(config)
@@ -388,9 +443,10 @@ class Qwen2ForCausalLM:
 # DeepSeek V2 Architecture (with MLA)
 # =========================================================================
 
+
 class DeepSeekV2Attention:
     """DeepSeek V2 Multi-head Latent Attention (MLA)."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.hidden_size = config["hidden_size"]
@@ -398,21 +454,37 @@ class DeepSeekV2Attention:
         self.num_kv_heads = config.get("num_key_value_heads", self.num_heads)
         self.q_lora_rank = config.get("q_lora_rank", 1536)
         self.kv_lora_rank = config.get("kv_lora_rank", 512)
-        self.head_dim = config.get("head_dim", config["hidden_size"] // config["num_attention_heads"])
-        
+        self.head_dim = config.get(
+            "head_dim", config["hidden_size"] // config["num_attention_heads"]
+        )
+
         # MLA projections
         self.q_a_proj = Linear(config["hidden_size"], config["q_lora_rank"], bias=False)
-        self.q_b_proj = Linear(config["q_lora_rank"], config["num_attention_heads"] * config["head_dim"], bias=False)
-        self.kv_a_proj = Linear(config["hidden_size"], config["kv_lora_rank"], bias=False)
-        self.kv_b_proj = Linear(config["kv_lora_rank"], config["num_key_value_heads"] * config["head_dim"] * 2, bias=False)
-        self.o_proj = Linear(config["num_attention_heads"] * config["head_dim"], config["hidden_size"], bias=False)
-        
+        self.q_b_proj = Linear(
+            config["q_lora_rank"],
+            config["num_attention_heads"] * config["head_dim"],
+            bias=False,
+        )
+        self.kv_a_proj = Linear(
+            config["hidden_size"], config["kv_lora_rank"], bias=False
+        )
+        self.kv_b_proj = Linear(
+            config["kv_lora_rank"],
+            config["num_key_value_heads"] * config["head_dim"] * 2,
+            bias=False,
+        )
+        self.o_proj = Linear(
+            config["num_attention_heads"] * config["head_dim"],
+            config["hidden_size"],
+            bias=False,
+        )
+
         self.rotary_emb = LlamaRotaryEmbedding(
             config["head_dim"],
             config.get("max_position_embeddings", 4096),
-            config.get("rope_theta", 10000.0)
+            config.get("rope_theta", 10000.0),
         )
-    
+
     def forward(
         self,
         hidden_states: Tensor,
@@ -420,113 +492,125 @@ class DeepSeekV2Attention:
         past_key_value: Optional[Tuple[Tensor, Tensor]] = None,
     ) -> Tuple[Tensor, Optional[Tuple[Tensor, Tensor]]]:
         B, L, _ = hidden_states.shape
-        
+
         # Q projection through low-rank
         q_a = self.q_a_proj(hidden_states)
-        q = self.q_b_proj(q_a).reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
-        
+        q = (
+            self.q_b_proj(q_a)
+            .reshape(B, -1, self.num_heads, self.head_dim)
+            .transpose(0, 2, 1, 3)
+        )
+
         # KV projection through low-rank
         kv_a = self.kv_a_proj(hidden_states)
         kv_b = self.kv_b_proj(kv_a)
         k, v = np.split(kv_b, 2, axis=-1)
         k = k.reshape(B, -1, self.num_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
         v = v.reshape(B, -1, self.num_kv_heads, self.head_dim).transpose(0, 2, 1, 3)
-        
+
         # RoPE on Q and K
         cos, sin = self.rotary_emb.forward(q, position_ids)
         q, k = apply_rotary_pos_emb(q, k, cos, sin, position_ids)
-        
+
         # Handle past KV
         if past_key_value is not None:
             k = np.concatenate([past_key_value[0], k], axis=2)
             v = np.concatenate([past_key_value[1], v], axis=2)
-        
+
         present = (k, v)
-        
+
         # GQA
         if self.num_kv_heads != self.num_heads:
             k = np.repeat(k, self.num_heads // self.num_kv_heads, axis=1)
             v = np.repeat(v, self.num_heads // self.num_kv_heads, axis=1)
-        
+
         # Attention
         attn = np.matmul(q, k.transpose(0, 1, 3, 2)) / np.sqrt(self.head_dim)
         attn = softmax(attn, axis=-1)
         out = np.matmul(attn, v)
         out = out.transpose(0, 2, 1, 3).reshape(B, -1, self.num_heads * self.head_dim)
-        
+
         # Output projection
         out = self.o_proj(out)
-        
+
         return out, present
 
 
 class DeepSeekV2MLP:
     """DeepSeek V2 MLP with SiLU."""
-    
+
     def __init__(self, config: Dict[str, Any]):
-        self.gate_proj = Linear(config["hidden_size"], config["intermediate_size"], bias=False)
-        self.up_proj = Linear(config["hidden_size"], config["intermediate_size"], bias=False)
-        self.down_proj = Linear(config["intermediate_size"], config["hidden_size"], bias=False)
-    
+        self.gate_proj = Linear(
+            config["hidden_size"], config["intermediate_size"], bias=False
+        )
+        self.up_proj = Linear(
+            config["hidden_size"], config["intermediate_size"], bias=False
+        )
+        self.down_proj = Linear(
+            config["intermediate_size"], config["hidden_size"], bias=False
+        )
+
     def forward(self, x: Tensor) -> Tensor:
         return self.down_proj(silu(self.gate_proj(x)) * self.up_proj(x))
 
 
 class DeepSeekV2DecoderLayer:
     """DeepSeek V2 decoder layer."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.hidden_size = config["hidden_size"]
         self.self_attn = DeepSeekV2Attention(config)
         self.mlp = DeepSeekV2MLP(config)
         self.input_layernorm = rmsnorm(config["hidden_size"])
         self.post_attention_layernorm = rmsnorm(config["hidden_size"])
-    
+
     def forward(self, hidden_states: Tensor, **kwargs) -> Tuple[Tensor, Any]:
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         hidden_states, present = self.self_attn(hidden_states, **kwargs)
         hidden_states = residual + hidden_states
-        
+
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
         hidden_states = residual + hidden_states
-        
+
         return hidden_states, present
 
 
 class DeepSeekV2Model:
     """DeepSeek V2 model."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.vocab_size = config["vocab_size"]
         self.hidden_size = config["hidden_size"]
         self.num_hidden_layers = config["num_hidden_layers"]
-        
+
         self.embed_tokens = Embedding(config["vocab_size"], config["hidden_size"])
-        self.layers = [DeepSeekV2DecoderLayer(config) for _ in range(config["num_hidden_layers"])]
+        self.layers = [
+            DeepSeekV2DecoderLayer(config) for _ in range(config["num_hidden_layers"])
+        ]
         self.norm = rmsnorm(config["hidden_size"])
-    
+
     def forward(self, input_ids: Tensor, **kwargs) -> Dict[str, Any]:
         hidden_states = self.embed_tokens(input_ids)
-        
+
         for layer in self.layers:
             hidden_states, _ = layer(hidden_states, **kwargs)
-        
+
         hidden_states = self.norm(hidden_states)
         return {"last_hidden_state": hidden_states}
 
 
 class DeepSeekV2ForCausalLM:
     """DeepSeek V2 for causal LM."""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.model = DeepSeekV2Model(config)
         self.lm_head = Linear(config["hidden_size"], config["vocab_size"], bias=False)
-    
+
     def forward(self, input_ids: Tensor, **kwargs) -> Dict[str, Any]:
         outputs = self.model.forward(input_ids, **kwargs)
         logits = self.lm_head(outputs["last_hidden_state"])
@@ -637,9 +721,16 @@ DEEPSEEK_V2_CONFIGS = {
 
 def get_model_config(model_name: str) -> Dict[str, Any]:
     """Get model configuration by name."""
-    all_configs = {**LLAMA_CONFIGS, **MISTRAL_CONFIGS, **QWEN2_CONFIGS, **DEEPSEEK_V2_CONFIGS}
+    all_configs = {
+        **LLAMA_CONFIGS,
+        **MISTRAL_CONFIGS,
+        **QWEN2_CONFIGS,
+        **DEEPSEEK_V2_CONFIGS,
+    }
     if model_name not in all_configs:
-        raise ValueError(f"Unknown model: {model_name}. Available: {list(all_configs.keys())}")
+        raise ValueError(
+            f"Unknown model: {model_name}. Available: {list(all_configs.keys())}"
+        )
     return all_configs[model_name]
 
 
@@ -681,7 +772,10 @@ def create_model(model_name: str):
 # Weight Loading Utilities
 # =========================================================================
 
-def load_hf_weights(model: Any, hf_state_dict: Dict[str, np.ndarray], mapping: Dict[str, str]) -> None:
+
+def load_hf_weights(
+    model: Any, hf_state_dict: Dict[str, np.ndarray], mapping: Dict[str, str]
+) -> None:
     """Load HuggingFace weights into SNEPPX model."""
     for sneppx_name, hf_name in mapping.items():
         if hf_name in hf_state_dict:
@@ -689,7 +783,7 @@ def load_hf_weights(model: Any, hf_state_dict: Dict[str, np.ndarray], mapping: D
             param = get_nested_attr(model, sneppx_name)
             if param is not None:
                 param.data = hf_state_dict[hf_name]
-    
+
     print(f"Loaded {len(mapping)} weights from HuggingFace checkpoint")
 
 
@@ -704,7 +798,9 @@ def get_nested_attr(obj: Any, path: str) -> Optional[Any]:
     return obj
 
 
-def convert_hf_llama_weights(hf_state_dict: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+def convert_hf_llama_weights(
+    hf_state_dict: Dict[str, np.ndarray],
+) -> Dict[str, np.ndarray]:
     """Convert HuggingFace LLaMA weights to SNEPPX format."""
     converted = {}
     for k, v in hf_state_dict.items():
@@ -717,18 +813,45 @@ def convert_hf_llama_weights(hf_state_dict: Dict[str, np.ndarray]) -> Dict[str, 
 # Export
 __all__ = [
     # LLaMA
-    "LlamaRMSNorm", "LlamaRotaryEmbedding", "apply_rotary_pos_emb", "rotate_half",
-    "LlamaAttention", "LlamaMLP", "LlamaDecoderLayer", "LlamaModel", "LlamaForCausalLM",
+    "LlamaRMSNorm",
+    "LlamaRotaryEmbedding",
+    "apply_rotary_pos_emb",
+    "rotate_half",
+    "LlamaAttention",
+    "LlamaMLP",
+    "LlamaDecoderLayer",
+    "LlamaModel",
+    "LlamaForCausalLM",
     # Mistral
-    "MistralAttention", "MistralMLP", "MistralDecoderLayer", "MistralModel", "MistralForCausalLM",
+    "MistralAttention",
+    "MistralMLP",
+    "MistralDecoderLayer",
+    "MistralModel",
+    "MistralForCausalLM",
     # Qwen2
-    "Qwen2Attention", "Qwen2MLP", "Qwen2DecoderLayer", "Qwen2Model", "Qwen2ForCausalLM",
+    "Qwen2Attention",
+    "Qwen2MLP",
+    "Qwen2DecoderLayer",
+    "Qwen2Model",
+    "Qwen2ForCausalLM",
     # DeepSeek V2
-    "DeepSeekV2Attention", "DeepSeekV2MLP", "DeepSeekV2DecoderLayer", "DeepSeekV2Model", "DeepSeekV2ForCausalLM",
+    "DeepSeekV2Attention",
+    "DeepSeekV2MLP",
+    "DeepSeekV2DecoderLayer",
+    "DeepSeekV2Model",
+    "DeepSeekV2ForCausalLM",
     # Configs
-    "LLAMA_CONFIGS", "MISTRAL_CONFIGS", "QWEN2_CONFIGS", "DEEPSEEK_V2_CONFIGS",
-    "get_model_config", "create_model", "create_llama_model", "create_mistral_model",
-    "create_qwen2_model", "create_deepseek_v2_model",
+    "LLAMA_CONFIGS",
+    "MISTRAL_CONFIGS",
+    "QWEN2_CONFIGS",
+    "DEEPSEEK_V2_CONFIGS",
+    "get_model_config",
+    "create_model",
+    "create_llama_model",
+    "create_mistral_model",
+    "create_qwen2_model",
+    "create_deepseek_v2_model",
     # Weight loading
-    "load_hf_weights", "convert_hf_llama_weights",
+    "load_hf_weights",
+    "convert_hf_llama_weights",
 ]

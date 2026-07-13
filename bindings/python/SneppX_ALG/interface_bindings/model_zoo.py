@@ -106,58 +106,115 @@ class DeepSeekV2Config:
 # Registry of known model architectures
 _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
     "llama2": {
-        "7B": {"hidden_size": 4096, "intermediate_size": 11008,
-               "num_hidden_layers": 32, "num_attention_heads": 32,
-               "num_key_value_heads": 32, "vocab_size": 32000,
-               "max_position_embeddings": 4096},
-        "13B": {"hidden_size": 5120, "intermediate_size": 13824,
-                "num_hidden_layers": 40, "num_attention_heads": 40,
-                "num_key_value_heads": 40, "vocab_size": 32000,
-                "max_position_embeddings": 4096},
-        "70B": {"hidden_size": 8192, "intermediate_size": 28672,
-                "num_hidden_layers": 80, "num_attention_heads": 64,
-                "num_key_value_heads": 8, "vocab_size": 32000,
-                "max_position_embeddings": 4096},
+        "7B": {
+            "hidden_size": 4096,
+            "intermediate_size": 11008,
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 32,
+            "vocab_size": 32000,
+            "max_position_embeddings": 4096,
+        },
+        "13B": {
+            "hidden_size": 5120,
+            "intermediate_size": 13824,
+            "num_hidden_layers": 40,
+            "num_attention_heads": 40,
+            "num_key_value_heads": 40,
+            "vocab_size": 32000,
+            "max_position_embeddings": 4096,
+        },
+        "70B": {
+            "hidden_size": 8192,
+            "intermediate_size": 28672,
+            "num_hidden_layers": 80,
+            "num_attention_heads": 64,
+            "num_key_value_heads": 8,
+            "vocab_size": 32000,
+            "max_position_embeddings": 4096,
+        },
     },
     "llama3": {
-        "8B": {"hidden_size": 4096, "intermediate_size": 14336,
-               "num_hidden_layers": 32, "num_attention_heads": 32,
-               "num_key_value_heads": 8, "vocab_size": 128256,
-               "max_position_embeddings": 8192, "use_scaled_rope": True,
-               "rope_theta": 500000.0},
-        "70B": {"hidden_size": 8192, "intermediate_size": 28672,
-                "num_hidden_layers": 80, "num_attention_heads": 64,
-                "num_key_value_heads": 8, "vocab_size": 128256,
-                "max_position_embeddings": 8192, "use_scaled_rope": True,
-                "rope_theta": 500000.0},
+        "8B": {
+            "hidden_size": 4096,
+            "intermediate_size": 14336,
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 8,
+            "vocab_size": 128256,
+            "max_position_embeddings": 8192,
+            "use_scaled_rope": True,
+            "rope_theta": 500000.0,
+        },
+        "70B": {
+            "hidden_size": 8192,
+            "intermediate_size": 28672,
+            "num_hidden_layers": 80,
+            "num_attention_heads": 64,
+            "num_key_value_heads": 8,
+            "vocab_size": 128256,
+            "max_position_embeddings": 8192,
+            "use_scaled_rope": True,
+            "rope_theta": 500000.0,
+        },
     },
     "mistral": {
-        "7B": {"hidden_size": 4096, "intermediate_size": 14336,
-               "num_hidden_layers": 32, "num_attention_heads": 32,
-               "num_key_value_heads": 8, "vocab_size": 32000,
-               "max_position_embeddings": 32768, "sliding_window": 4096},
+        "7B": {
+            "hidden_size": 4096,
+            "intermediate_size": 14336,
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 8,
+            "vocab_size": 32000,
+            "max_position_embeddings": 32768,
+            "sliding_window": 4096,
+        },
     },
     "qwen2": {
-        "7B": {"hidden_size": 3584, "intermediate_size": 18944,
-               "num_hidden_layers": 28, "num_attention_heads": 28,
-               "num_key_value_heads": 4, "vocab_size": 152064,
-               "max_position_embeddings": 32768, "rope_theta": 1000000.0},
-        "72B": {"hidden_size": 8192, "intermediate_size": 29568,
-                "num_hidden_layers": 80, "num_attention_heads": 64,
-                "num_key_value_heads": 8, "vocab_size": 152064,
-                "max_position_embeddings": 32768, "rope_theta": 1000000.0},
+        "7B": {
+            "hidden_size": 3584,
+            "intermediate_size": 18944,
+            "num_hidden_layers": 28,
+            "num_attention_heads": 28,
+            "num_key_value_heads": 4,
+            "vocab_size": 152064,
+            "max_position_embeddings": 32768,
+            "rope_theta": 1000000.0,
+        },
+        "72B": {
+            "hidden_size": 8192,
+            "intermediate_size": 29568,
+            "num_hidden_layers": 80,
+            "num_attention_heads": 64,
+            "num_key_value_heads": 8,
+            "vocab_size": 152064,
+            "max_position_embeddings": 32768,
+            "rope_theta": 1000000.0,
+        },
     },
     "deepseek_v2": {
-        "lite": {"hidden_size": 2048, "intermediate_size": 10944,
-                 "num_hidden_layers": 27, "num_attention_heads": 16,
-                 "num_key_value_heads": 16, "vocab_size": 102400,
-                 "max_position_embeddings": 4096, "kv_lora_rank": 512,
-                 "q_lora_rank": 1536},
-        "full": {"hidden_size": 5120, "intermediate_size": 12288,
-                 "num_hidden_layers": 60, "num_attention_heads": 64,
-                 "num_key_value_heads": 64, "vocab_size": 102400,
-                 "max_position_embeddings": 4096, "kv_lora_rank": 512,
-                 "q_lora_rank": 1536},
+        "lite": {
+            "hidden_size": 2048,
+            "intermediate_size": 10944,
+            "num_hidden_layers": 27,
+            "num_attention_heads": 16,
+            "num_key_value_heads": 16,
+            "vocab_size": 102400,
+            "max_position_embeddings": 4096,
+            "kv_lora_rank": 512,
+            "q_lora_rank": 1536,
+        },
+        "full": {
+            "hidden_size": 5120,
+            "intermediate_size": 12288,
+            "num_hidden_layers": 60,
+            "num_attention_heads": 64,
+            "num_key_value_heads": 64,
+            "vocab_size": 102400,
+            "max_position_embeddings": 4096,
+            "kv_lora_rank": 512,
+            "q_lora_rank": 1536,
+        },
     },
 }
 
@@ -168,11 +225,15 @@ def get_model_config(family: str, size: str) -> dict:
     if family == "llama":
         family = "llama2"
     if family not in _MODEL_REGISTRY:
-        raise ValueError(f"Unknown model family '{family}'. "
-                         f"Available: {list(_MODEL_REGISTRY.keys())}")
+        raise ValueError(
+            f"Unknown model family '{family}'. "
+            f"Available: {list(_MODEL_REGISTRY.keys())}"
+        )
     if size not in _MODEL_REGISTRY[family]:
-        raise ValueError(f"Unknown size '{size}' for {family}. "
-                         f"Available: {list(_MODEL_REGISTRY[family].keys())}")
+        raise ValueError(
+            f"Unknown size '{size}' for {family}. "
+            f"Available: {list(_MODEL_REGISTRY[family].keys())}"
+        )
     return dict(_MODEL_REGISTRY[family][size])
 
 
@@ -259,7 +320,7 @@ HF_WEIGHT_MAP["llama3"] = dict(HF_WEIGHT_MAP["llama2"])
 
 def _remap_hf_weight_name(hf_name: str, family: str) -> Optional[str]:
     """Map an HF weight name to SneppX internal format using the layer pattern.
-    
+
     HF format: model.layers.{i}.{module}.weight
     SneppX format: layers.{i}.{module}.weight
     """
@@ -306,19 +367,20 @@ def _generate_sneppx_weight_names(family: str, num_layers: int) -> List[str]:
 # Safetensors Reader
 # =========================================================================
 
+
 def read_safetensors(path: str) -> Tuple[dict, Dict[str, bytes]]:
     """Read a safetensors file, returns (metadata, {name: tensor_bytes})."""
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         header_len_bytes = f.read(8)
-        header_len = struct.unpack('<Q', header_len_bytes)[0]
+        header_len = struct.unpack("<Q", header_len_bytes)[0]
         header_bytes = f.read(header_len)
         header = json.loads(header_bytes)
         tensors = {}
         for name, info in header.items():
             if name == "__metadata__":
                 continue
-            f.seek(8 + header_len + info['data_offsets'][0])
-            tensors[name] = f.read(info['data_offsets'][1] - info['data_offsets'][0])
+            f.seek(8 + header_len + info["data_offsets"][0])
+            tensors[name] = f.read(info["data_offsets"][1] - info["data_offsets"][0])
         return header.get("__metadata__", {}), tensors
 
 
@@ -326,21 +388,22 @@ def read_safetensors(path: str) -> Tuple[dict, Dict[str, bytes]]:
 # Weight Converter
 # =========================================================================
 
+
 def convert_hf_to_sneppx(
     hf_dir: str,
     family: str,
     output_path: str,
     num_layers: Optional[int] = None,
-    verbose: bool = True
+    verbose: bool = True,
 ) -> int:
     """Convert HuggingFace safetensors weights to SneppX checkpoint format.
-    
+
     Args:
         hf_dir: Directory containing .safetensors files and config.json
         family: Model family ('llama2', 'llama3', 'mistral', 'qwen2', 'deepseek_v2')
         output_path: Where to write the .sneppx checkpoint
         num_layers: Override number of layers (auto-detected if None)
-    
+
     Returns:
         Number of weights converted
     """
@@ -348,6 +411,7 @@ def convert_hf_to_sneppx(
 
     # Find all safetensors files
     import glob
+
     st_files = sorted(glob.glob(os.path.join(hf_dir, "*.safetensors")))
     if not st_files:
         raise FileNotFoundError(f"No .safetensors files found in {hf_dir}")
@@ -366,7 +430,9 @@ def convert_hf_to_sneppx(
 
     # Read all tensors
     if verbose:
-        print(f"[SNEPPX Convert] Reading {len(st_files)} safetensors files from {hf_dir}")
+        print(
+            f"[SNEPPX Convert] Reading {len(st_files)} safetensors files from {hf_dir}"
+        )
     all_tensors = {}
     for st_path in st_files:
         meta, tensors = read_safetensors(st_path)
@@ -396,7 +462,7 @@ def convert_hf_to_sneppx(
         if data is None:
             if verbose:
                 print(f"  WARNING: missing weight '{name}', writing zeros")
-            data = b'\x00' * 4  # placeholder
+            data = b"\x00" * 4  # placeholder
         w.write_tensor(data, shape=(len(data),), dtype=0)
     meta = {
         "family": family,
@@ -416,17 +482,18 @@ def convert_hf_to_sneppx(
 # Model Builder
 # =========================================================================
 
+
 def build_model_from_config(
     config: dict,
     batch_size: int = 1,
     seq_len: int = 128,
-) -> 'Tensor':
+) -> "Tensor":
     """Build a model from a config dict and return example output shape info.
-    
+
     In a real implementation this would construct Transformer layers, but the
     current NN module (nn.py) already has TransformerBlock and Transformer
     classes. This function serves as the config-to-architecture mapper.
-    
+
     Returns the estimated parameter count.
     """
     hidden_size = config.get("hidden_size", 4096)
@@ -480,7 +547,7 @@ def build_model_from_config(
 
 def build_transformer_from_config(
     config: dict,
-) -> 'Module':
+) -> "Module":
     """Build a Transformer nn.Module from a config dict."""
     from .nn import Transformer, TransformerBlock, MultiheadAttention
 
@@ -519,6 +586,7 @@ def build_transformer_from_config(
 # from_pretrained() API
 # =========================================================================
 
+
 def from_pretrained(
     model_id: str,
     cache_dir: Optional[str] = None,
@@ -526,16 +594,16 @@ def from_pretrained(
     verbose: bool = True,
 ) -> dict:
     """Load a pretrained model configuration.
-    
+
     This is a simplified version that returns a config dict. In production,
     this would download weights from HuggingFace and build the full model.
-    
+
     Args:
         model_id: HF-style model ID (e.g., 'meta-llama/Llama-2-7b-hf')
         cache_dir: Cache directory for downloaded files
         force_download: Re-download even if cached
         verbose: Print progress
-    
+
     Returns:
         Model config dict with architecture info
     """
@@ -561,16 +629,19 @@ def from_pretrained(
             break
 
     if family is None:
-        raise ValueError(f"Unknown model_id '{model_id}'. "
-                         f"Supported: {[p[0] for p in mapping]}")
+        raise ValueError(
+            f"Unknown model_id '{model_id}'. " f"Supported: {[p[0] for p in mapping]}"
+        )
 
     config = get_model_config(family, size)
     if verbose:
         print(f"[SNEPPX from_pretrained] {model_id} -> family={family}, size={size}")
-        print(f"  hidden_size={config['hidden_size']}, "
-              f"layers={config['num_hidden_layers']}, "
-              f"heads={config['num_attention_heads']}, "
-              f"kv_heads={config.get('num_key_value_heads', 'N/A')}")
+        print(
+            f"  hidden_size={config['hidden_size']}, "
+            f"layers={config['num_hidden_layers']}, "
+            f"heads={config['num_attention_heads']}, "
+            f"kv_heads={config.get('num_key_value_heads', 'N/A')}"
+        )
 
     result = build_model_from_config(config)
     result["model_id"] = model_id
