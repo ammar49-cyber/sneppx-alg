@@ -1,0 +1,47 @@
+# Example training configuration for the v3 autograd trainer
+# Usage: python -m SneppX_ALG.interface_bindings.train_cli --config config/training/example.yaml
+
+model:
+  name: mlp
+  dims: [64, 128, 64, 10]
+
+training:
+  batch_size: 32
+  gradient_accumulation_steps: 1
+  max_steps: 1000
+  max_epochs: 0
+  seed: 42
+  max_grad_norm: 1.0
+  device: cpu
+  log_every: 10
+  eval_every: 200
+  save_every: 500
+  checkpoint_dir: checkpoints
+  resume_from: null
+
+optimizer:
+  name: adamw
+  lr: 0.0003
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+scheduler:
+  name: cosine
+  warmup_steps: 100
+  min_lr: 0.00001
+
+amp:
+  enabled: false
+  dtype: float16
+
+logging:
+  use_wandb: false
+
+privacy:
+  enabled: false
+  noise_multiplier: 1.0
+  max_per_sample_grad_norm: 1.0
+  epsilon: 8.0
+  delta: 1.0e-5
+  accountant: rdp
