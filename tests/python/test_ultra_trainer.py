@@ -5,9 +5,10 @@ sys.path.insert(
     0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../bindings/python")
 )
 import SneppX_ALG.interface_bindings.tensor as tensor
+from SneppX_ALG.interface_bindings.tensor import Tensor as TensorCls
 
 from SneppX_ALG.interface_bindings.profiler import Timer
-from SneppX_ALG.interface_bindings.train import Optimizer, AdamW
+from SneppX_ALG.interface_bindings.train import Optimizer, SGD, AdamW
 from SneppX_ALG.interface_bindings.nn import Module, Linear
 from SneppX_ALG.interface_bindings.amp import GradScaler, autocast
 from SneppX_ALG.interface_bindings.grad_checkpoint import GradientCheckpointer
@@ -31,8 +32,6 @@ class SimpleModel(Module):
 
 # Minimal training loop
 def test_basic_training():
-    from SneppX_ALG.interface_bindings.optimizer import SGD
-
     model = SimpleModel()
     optimizer = SGD(
         [p for m in [model.fc1, model.fc2] for p in m.parameters()], lr=0.01
@@ -49,10 +48,10 @@ def test_basic_training():
     for epoch in range(10):
         epoch_loss = 0.0
         for inp, tgt in data:
-            inp_t = SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+            inp_t = tensor.Tensor.from_numpy(
                 np.array(inp, dtype=np.float32), dtype="float32"
             )
-            tgt_t = SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+            tgt_t = tensor.Tensor.from_numpy(
                 np.array(tgt, dtype=np.float32), dtype="float32"
             )
             out = model(inp_t)
@@ -72,10 +71,10 @@ def test_basic_training():
 def test_autocast():
     with autocast(enabled=True, dtype="float16"):
         with Timer("autocast_block"):
-            a = SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+            a = tensor.Tensor.from_numpy(
                 np.array([1.0, 2.0, 3.0]), dtype="float32"
             )
-            b = SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+            b = tensor.Tensor.from_numpy(
                 np.array([0.5, 1.0, 1.5]), dtype="float32"
             )
             c = a * b
@@ -86,7 +85,7 @@ def test_autocast():
 def test_amp():
     scaler = GradScaler(init_scale=2.0**16, growth_factor=2.0)
     params = [
-        SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+        tensor.Tensor.from_numpy(
             np.array([1.0, 2.0, 3.0], dtype=np.float32), dtype="float32"
         )
     ]
@@ -120,7 +119,7 @@ def test_checkpointing():
 
 
 def test_quantization():
-    inp = SneppX_ALG.interface_bindings.tensor.Tensor.from_numpy(
+    inp = tensor.Tensor.from_numpy(
         np.array([1.0, 2.0, 3.0, 4.0]), dtype="float32"
     )
     quant_tensor, scale = quantize_int8_sym(inp)

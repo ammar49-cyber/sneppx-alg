@@ -5,7 +5,7 @@ sys.path.insert(
 )
 
 from SneppX_ALG.interface_bindings.train import Trainer, TrainConfig, MSELoss
-from SneppX_ALG.interface_bindings.nn import Module
+from SneppX_ALG.interface_bindings.nn import Module, Linear
 from SneppX_ALG.interface_bindings.tensor import Tensor
 
 failed = []
@@ -77,7 +77,6 @@ def test_mse_loss():
 
 if __name__ == "__main__":
     import numpy as np
-    from SneppX_ALG.interface_bindings.nn import Linear
 
     test_train_config()
     test_trainer_init()
