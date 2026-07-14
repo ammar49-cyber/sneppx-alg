@@ -804,7 +804,7 @@ class MSELoss(Function):
         diff = inp.data - target.data
         ctx.save_for_backward(inp=inp, target=target)
         ctx.save_attr(n=inp.numel)
-        return Tensor(np.array([(diff**2).mean()]), dtype=inp.dtype)
+        return Tensor(np.array(float((diff**2).mean())), dtype=inp.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
