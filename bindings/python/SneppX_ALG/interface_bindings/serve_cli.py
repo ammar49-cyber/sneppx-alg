@@ -79,6 +79,47 @@ def main():
         action="store_true",
         help="Disable output verification",
     )
+    parser.add_argument(
+        "--firewall-config", type=str, default=None,
+        help="Path to firewall YAML config",
+    )
+    parser.add_argument(
+        "--firewall-enabled", type=str, default=None,
+        choices=["true", "false"],
+        help="Enable/disable firewall (overrides config)",
+    )
+    parser.add_argument(
+        "--tls-enabled", action="store_true",
+        help="Enable TLS (requires --tls-certfile and --tls-keyfile)",
+    )
+    parser.add_argument(
+        "--tls-certfile", type=str, default=None,
+        help="Path to TLS certificate file",
+    )
+    parser.add_argument(
+        "--tls-keyfile", type=str, default=None,
+        help="Path to TLS private key file",
+    )
+    parser.add_argument(
+        "--tls-cafile", type=str, default=None,
+        help="Path to CA certificate file for mTLS",
+    )
+    parser.add_argument(
+        "--firewall-allowlist", type=str, default=None,
+        help="Comma-separated CIDR allowlist",
+    )
+    parser.add_argument(
+        "--firewall-denylist", type=str, default=None,
+        help="Comma-separated CIDR denylist",
+    )
+    parser.add_argument(
+        "--firewall-rate-limit", type=int, default=None,
+        help="Max requests per IP per minute",
+    )
+    parser.add_argument(
+        "--firewall-knock-ports", type=str, default=None,
+        help="Comma-separated port knock sequence",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -86,42 +127,64 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
-    # Configure security
-    if args.auth_mode is not None or args.rate_limit_rpm is not None:
-        from .security_middleware import (
-            SecurityConfig,
-            AuthConfig,
-            RateLimitConfig,
-            PromptFilterConfig,
-            OutputVerifierConfig,
-        )
-        from .inference_server import set_security
+    from .inference_server import set_security
+    from .security_middleware import (
+        SecurityConfig,
+        AuthConfig,
+        RateLimitConfig,
+        PromptFilterConfig,
+        OutputVerifierConfig,
+    )
 
-        auth = AuthConfig(
-            mode=args.auth_mode or "none",
-            api_keys=(
-                [k.strip() for k in args.api_keys.split(",")]
-                if args.api_keys
-                else []
-            ),
-        )
-        rate_limit = RateLimitConfig(
-            enabled=(args.rate_limit_rpm or 60) > 0,
-            requests_per_minute=args.rate_limit_rpm or 60,
-        )
-        prompt_filter = PromptFilterConfig(enabled=not args.no_prompt_filter)
-        output_verifier = OutputVerifierConfig(enabled=not args.no_output_verifier)
-        sec_config = SecurityConfig(
-            auth=auth,
-            rate_limit=rate_limit,
-            prompt_filter=prompt_filter,
-            output_verifier=output_verifier,
-        )
-        set_security(sec_config)
-        logging.info(
-            f"Security: auth={auth.mode}, rate_limit={rate_limit.requests_per_minute}/min, "
-            f"prompt_filter={prompt_filter.enabled}, output_verifier={output_verifier.enabled}"
-        )
+    firewall_overrides = {}
+    if args.firewall_config:
+        firewall_overrides["config_path"] = args.firewall_config
+    if args.firewall_enabled is not None:
+        firewall_overrides["enabled"] = args.firewall_enabled == "true"
+    if args.tls_enabled:
+        firewall_overrides["tls_enabled"] = True
+    if args.tls_certfile:
+        firewall_overrides["certfile"] = args.tls_certfile
+    if args.tls_keyfile:
+        firewall_overrides["keyfile"] = args.tls_keyfile
+    if args.tls_cafile:
+        firewall_overrides["cafile"] = args.tls_cafile
+    if args.firewall_allowlist:
+        firewall_overrides["allowlist"] = [x.strip() for x in args.firewall_allowlist.split(",")]
+    if args.firewall_denylist:
+        firewall_overrides["denylist"] = [x.strip() for x in args.firewall_denylist.split(",")]
+    if args.firewall_rate_limit:
+        firewall_overrides["rate_limit_max"] = args.firewall_rate_limit
+    if args.firewall_knock_ports:
+        firewall_overrides["knock_ports"] = [int(p.strip()) for p in args.firewall_knock_ports.split(",")]
+
+    auth = AuthConfig(
+        mode=args.auth_mode or "none",
+        api_keys=(
+            [k.strip() for k in args.api_keys.split(",")]
+            if args.api_keys
+            else []
+        ),
+    )
+    rate_limit = RateLimitConfig(
+        enabled=(args.rate_limit_rpm or 60) > 0,
+        requests_per_minute=args.rate_limit_rpm or 60,
+    )
+    prompt_filter = PromptFilterConfig(enabled=not args.no_prompt_filter)
+    output_verifier = OutputVerifierConfig(enabled=not args.no_output_verifier)
+    sec_config = SecurityConfig(
+        auth=auth,
+        rate_limit=rate_limit,
+        prompt_filter=prompt_filter,
+        output_verifier=output_verifier,
+    )
+    set_security(sec_config, firewall_config=firewall_overrides if firewall_overrides else None)
+    logging.info(
+        f"Security: auth={auth.mode}, rate_limit={rate_limit.requests_per_minute}/min, "
+        f"prompt_filter={prompt_filter.enabled}, output_verifier={output_verifier.enabled}"
+    )
+    if firewall_overrides:
+        logging.info(f"Firewall: {firewall_overrides}")
 
     # Pre-load model if config provided
     if args.model_config:

@@ -58,6 +58,7 @@ class FirewallApplication:
         allowed_content_types: Optional[Set[str]] = None,
         max_concurrent_per_ip: int = 10,
         enable_injection_filter: bool = True,
+        **kwargs,
     ):
         self.max_body_size = max_body_size
         self.allowed_methods = allowed_methods or {"GET", "POST"}

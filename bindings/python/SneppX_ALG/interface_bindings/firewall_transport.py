@@ -25,6 +25,7 @@ class FirewallTransport:
         ciphers: Optional[str] = None,
         pinned_cert_fingerprints: Optional[list] = None,
         alpn_protocols: Optional[list] = None,
+        **kwargs,
     ):
         self.tls_enabled = tls_enabled
         self.certfile = certfile

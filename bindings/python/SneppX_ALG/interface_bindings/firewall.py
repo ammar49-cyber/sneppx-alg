@@ -177,9 +177,13 @@ def _apply_cli_overrides(cfg: FirewallConfig, overrides: dict):
     for key, value in overrides.items():
         if value is None:
             continue
-        if key in ("tls_enabled", "certfile", "keyfile", "cafile", "require_client_cert", "min_version", "ciphers", "alpn_protocols"):
+        if key == "enabled":
+            cfg.enabled = value
+        elif key == "block_all_by_default":
+            cfg.block_all_by_default = value
+        elif key in ("tls_enabled", "certfile", "keyfile", "cafile", "require_client_cert", "min_version", "ciphers", "alpn_protocols"):
             cfg.transport[key] = value
-        elif key in ("max_connections", "rate_limit_max", "rate_window_seconds", "block_duration_seconds", "knock_ports", "knock_window_ms", "geoip_enabled", "geoip_db_path"):
+        elif key in ("max_connections", "rate_limit_max", "rate_window_seconds", "block_duration_seconds", "knock_ports", "knock_window_ms", "geoip_enabled", "geoip_db_path", "allowlist", "denylist", "allowlist_enabled", "denylist_enabled"):
             cfg.network[key] = value
         elif key in ("max_body_size", "allowed_methods", "max_concurrent_per_ip", "enable_injection_filter"):
             cfg.application[key] = value

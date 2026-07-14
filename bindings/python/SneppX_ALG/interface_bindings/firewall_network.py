@@ -100,11 +100,12 @@ class FirewallNetwork:
         knock_window_ms: int = 5000,
         geoip_enabled: bool = False,
         geoip_db_path: Optional[str] = None,
+        **kwargs,
     ):
         self._allowlist = [self._parse_cidr(c) for c in (allowlist or [])]
         self._denylist = [self._parse_cidr(c) for c in (denylist or [])]
-        self._allowlist_enabled = bool(allowlist)
-        self._denylist_enabled = bool(denylist)
+        self._allowlist_enabled = bool(allowlist) if allowlist is not None else False
+        self._denylist_enabled = bool(denylist) if denylist is not None else False
         self._rate_limiter = SlidingWindowCounter(rate_limit_max, rate_window_seconds)
         self._conn_tracker = ConnectionTracker(max_connections, block_duration_seconds)
         self._blocked_ips: dict = {}
