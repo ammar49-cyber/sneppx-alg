@@ -11,7 +11,7 @@ has_c_ext = any(
 
 setup(
     name="sneppx-alg",
-    version="0.9.0",
+    version="0.9.2.094",
     description="Next-generation AI architecture with security built into the foundation",
     long_description=open(os.path.join(os.path.dirname(__file__), "..", "..", "README.md")).read() if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "README.md")) else "",
     long_description_content_type="text/markdown",

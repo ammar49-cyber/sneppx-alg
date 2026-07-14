@@ -1,6 +1,6 @@
-SneppX-ALG algo0.9.0
-Release Date: 2026-07-10
-Status: Feature Complete — Vision Transformers, LLM Models, Benchmarking, LLM Architectures
-Security: S0-S9 Complete — 21,809+ lines of security implementation
+SneppX-ALG algo0.9.2.094
+Release Date: 2026-07-14
+Status: Feature Complete — Security Python Bindings, DP, Adversarial, Watermarking, S5 AI Safety, Middleware, CI/CD Pipeline
+Security: S0-S9 Complete — 21,809+ lines of C security + 87 P0 Python security tests
 Build: cmake 3.16+, C11/C++20, Python 3.11+, macOS/Linux/Windows
-Total Codebase: ~113,738 lines across 500+ files
+Total Codebase: ~120,000+ lines across 500+ files
