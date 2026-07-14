@@ -597,7 +597,7 @@ from .generation import (
 )
 from .tokenizer import (
     Tokenizer,
-    SimpleTokenizer,
+    SimpleTokenizer as TokenizerSimpleTokenizer,
 )
 from .train import (
     Trainer,
