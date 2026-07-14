@@ -244,7 +244,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="SneppX Inference API",
-    version="0.9.2.094",
+    version="0.9.4.467",
     lifespan=lifespan,
 )
 
@@ -314,7 +314,7 @@ async def _auth_rate_limit_middleware(request, call_next):
 async def health():
     return HealthResponse(
         status="ok",
-        version="0.9.2.094",
+version="0.9.4.467",
         models_loaded=len(_models),
         uptime_seconds=time.time() - _start_time,
     )

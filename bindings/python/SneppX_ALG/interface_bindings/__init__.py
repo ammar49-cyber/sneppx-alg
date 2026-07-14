@@ -1,6 +1,6 @@
 from .. import _neural_engine_bridge
 
-__version__ = "0.9.2.094"
+__version__ = "0.9.4.467"
 
 from .tensor import (
     Tensor,
