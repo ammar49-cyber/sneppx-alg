@@ -10,7 +10,11 @@ Usage:
 try:
     from . import _arix_c as _neural_engine_bridge
 except ImportError:
-    from . import _SNEPPX_c as _neural_engine_bridge
+    try:
+        from . import _SNEPPX_c as _neural_engine_bridge
+    except ImportError:
+        import types
+        _neural_engine_bridge = types.ModuleType("_neural_engine_bridge_fallback")
 
 from .interface_bindings import *
 
