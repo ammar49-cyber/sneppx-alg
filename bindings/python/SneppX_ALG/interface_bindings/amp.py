@@ -28,9 +28,6 @@ def get_autocast_dtype() -> str:
 
 
 @contextmanager
-from contextlib import contextmanager
-
-@contextmanager
 def autocast(enabled: bool = True, dtype: str = "float16"):
     """Context manager selecting a reduced-precision compute dtype."""
     global _AUTOCAST_ENABLED, _AUTOCAST_DTYPE
