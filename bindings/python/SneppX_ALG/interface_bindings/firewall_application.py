@@ -26,9 +26,14 @@ _PATH_BYPASS_PATTERNS = [
     (re.compile(r"//+"), "/"),
     (re.compile(r"/\./"), "/"),
     (re.compile(r"/[^/]+/\.\./"), "/"),
-    (re.compile(r"%2e%2e%2f|%2e%2e/|\.\.[/\\]"), "/"),
     (re.compile(r"%00"), ""),
     (re.compile(r"\\"), "/"),
+]
+
+_TRAVERSAL_PATTERNS = [
+    re.compile(r"\.\."),
+    re.compile(r"%2e%2e", re.IGNORECASE),
+    re.compile(r"%252e%252e", re.IGNORECASE),
 ]
 
 
@@ -125,15 +130,16 @@ class FirewallApplication:
         return None
 
     def _check_path(self, path: str) -> Optional[FirewallResult]:
-        normalized = self._normalize_path(path)
-        if normalized != path:
-            return FirewallResult(
-                allowed=False, status_code=400, reason="path traversal detected", ring=3
-            )
-        if ".." in path.split("/"):
-            return FirewallResult(
-                allowed=False, status_code=400, reason="path traversal detected", ring=3
-            )
+        for segment in path.split("/"):
+            if segment == "..":
+                return FirewallResult(
+                    allowed=False, status_code=400, reason="path traversal detected", ring=3
+                )
+        for pattern in _TRAVERSAL_PATTERNS:
+            if pattern.search(path):
+                return FirewallResult(
+                    allowed=False, status_code=400, reason="path traversal detected", ring=3
+                )
         return None
 
     def _check_injection(self, body: Optional[bytes], query: str) -> Optional[FirewallResult]:

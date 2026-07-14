@@ -37,7 +37,7 @@ class FirewallTransport:
         self.pinned_fingerprints = pinned_cert_fingerprints or []
         self.alpn_protocols = alpn_protocols or ["h2", "http/1.1"]
         self._ssl_context = None
-        if self.tls_enabled:
+        if self.tls_enabled and self.certfile and self.keyfile:
             self._build_context()
 
     def _build_context(self) -> ssl.SSLContext:
