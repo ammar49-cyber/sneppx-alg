@@ -341,23 +341,19 @@ class BenchmarkSuite:
 
             if cfg["type"] == "lstm":
                 fn = lambda: lstm_cell(
-                    x,
-                    h0,
-                    c0,
+                    x[:, 0, :], h0, c0,
                     Tensor.from_numpy(np.random.randn(I + H, 4 * H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(4 * H).astype(np.float32)),
                 )
             elif cfg["type"] == "gru":
                 fn = lambda: gru_cell(
-                    x,
-                    h0,
+                    x[:, 0, :], h0,
                     Tensor.from_numpy(np.random.randn(I + H, 3 * H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(3 * H).astype(np.float32)),
                 )
             else:
                 fn = lambda: rnn_cell(
-                    x,
-                    h0,
+                    x[:, 0, :], h0,
                     Tensor.from_numpy(np.random.randn(I + H, H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(H).astype(np.float32)),
                 )

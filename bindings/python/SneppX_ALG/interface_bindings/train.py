@@ -373,6 +373,9 @@ class Trainer:
         else:
             self._model.load_checkpoint(path)
 
+    def train(self, *args, **kwargs):
+        return self.fit(*args, **kwargs)
+
     def fit(
         self,
         train_loader: DataLoader,
