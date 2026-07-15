@@ -1,6 +1,6 @@
-SneppX-ALG algo0.9.4.467
-Release Date: 2026-07-14
-Status: Feature Complete — 4-Ring Firewall Architecture, ASM Hot-Path Routines, TLS/mTLS, Port Knocking, Injection Filter
-Security: S0-S9 Complete — 21,809+ lines of C security + 87 P0 Python security tests + 3-ring firewall
-Build: cmake 3.16+, C11/C++20, Python 3.11+, macOS/Linux/Windows + MASM x64 (Windows)
-Total Codebase: ~121,000+ lines across 550+ files
+SneppX-ALG algo0.9.5.748
+Release Date: 2026-07-15
+Status: Feature Complete — Unified Python Bindings (Phases 1-7), CLI Entry Points, Dispatch Layer, Crypto/Security/Algo/Kernel/Infra/ASM Interface
+Security: S0-S9 Complete — 21,809+ lines of C security + 31 Python test suites (300+ tests) + 4-ring firewall
+Build: cmake 3.16+, C11/C20, Python 3.11+, macOS/Linux/Windows + MASM x64 (Windows)
+Total Codebase: ~130,000+ lines across 630+ files

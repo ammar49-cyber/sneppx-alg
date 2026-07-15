@@ -121,7 +121,7 @@ class ModelListResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    version: str = "0.9.0"
+    version: str = "0.9.5.748"
     models_loaded: int = 0
     uptime_seconds: float = 0.0
 
@@ -244,77 +244,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="SneppX Inference API",
-    version="0.9.4.467",
-    lifespan=lifespan,
-)
+    version="0.9.5.748",
 
-
-# ------------------------------------------------------------------
-#  Security helpers
-# ------------------------------------------------------------------
-
-
-def _check_auth(request) -> bool:
-    """Authenticate and rate-limit request.  Returns True if allowed."""
-    sec = get_security()
-    if sec is None:
-        return True
-    auth_header = request.headers.get("Authorization")
-    user = sec.authenticate(auth_header)
-    if user is None and sec.authenticator.enabled:
-        return False
-    allowed, _ = sec.check_rate_limit(user or "anonymous")
-    return allowed
-
-
-def _filter_prompt(prompt: str) -> Tuple[str, str]:
-    sec = get_security()
-    if sec is None:
-        return "clean", prompt
-    return sec.filter_prompt(prompt)
-
-
-def _verify_output(text: str) -> Tuple[str, str]:
-    sec = get_security()
-    if sec is None:
-        return "clean", text
-    return sec.verify_output(text)
-
-
-@app.middleware("http")
-async def _auth_rate_limit_middleware(request, call_next):
-    sec = get_security()
-    if sec is not None:
-        fw_result = sec.check_firewall(
-            client_ip=request.client.host if request.client else "",
-            method=request.method,
-            path=request.url.path,
-            headers={k.lower(): v for k, v in request.headers.items()},
-            query=str(request.url.query),
-        )
-        if not fw_result.allowed:
-            from fastapi.responses import JSONResponse
-            return JSONResponse(status_code=fw_result.status_code, content={"detail": fw_result.reason})
-        if sec.authenticator.enabled:
-            auth_header = request.headers.get("Authorization")
-            user = sec.authenticate(auth_header)
-            if user is None:
-                from fastapi.responses import JSONResponse
-                return JSONResponse(status_code=401, content=sec.auth_required_error())
-            if not sec.check_rate_limit(user)[0]:
-                from fastapi.responses import JSONResponse
-                return JSONResponse(status_code=429, content=sec.rate_limit_error("Rate limit exceeded"))
-    response = await call_next(request)
-    if sec is not None and request.client:
-        sec.release_concurrent(request.client.host)
-    return response
-
-
-@app.get("/v1/health", response_model=HealthResponse)
-async def health():
-    return HealthResponse(
-        status="ok",
-version="0.9.4.467",
+  version="0.9.5.748",
         models_loaded=len(_models),
         uptime_seconds=time.time() - _start_time,
     )

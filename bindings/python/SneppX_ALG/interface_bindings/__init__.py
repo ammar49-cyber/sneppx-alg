@@ -1,6 +1,6 @@
 from .. import _neural_engine_bridge
 
-__version__ = "0.9.4.467"
+__version__ = "0.9.5.748"
 
 # Phase 1 Foundation — dispatch layer + ctypes utilities
 from . import dispatch
