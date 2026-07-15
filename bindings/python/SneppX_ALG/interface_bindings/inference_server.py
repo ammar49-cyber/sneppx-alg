@@ -245,8 +245,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SneppX Inference API",
     version="0.9.5.748",
-
-  version="0.9.5.748",
         models_loaded=len(_models),
         uptime_seconds=time.time() - _start_time,
     )
