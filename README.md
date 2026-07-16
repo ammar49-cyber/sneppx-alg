@@ -16,14 +16,14 @@
 
 ### Key Features
 
-- **🚀 High-Performance Tensor Engine**: SIMD-optimized (AVX2/AVX-512), CUDA kernels for NVIDIA GPUs (Ampere/Hopper)
-- **🔒 Security-First Design**: S0-S9 security layers (memory hardening, obfuscation, post-quantum crypto, AI safety)
-- **🧠 Modern Architectures**: Vision Transformers (ViT, DeiT, Swin), LLMs (LLaMA, Mistral, Qwen2, DeepSeek V2), MAE
-- **⚡ Distributed Training**: ZeRO-1/2/3, Pipeline/Tensor/Expert Parallelism, Elastic Training
-- **🔧 Model Compression**: Quantization (INT8/FP8/AWQ/GPTQ), Pruning (Magnitude/Movement/Taylor), Distillation
-- **📦 Deployment Ready**: ONNX Export, TensorRT Integration, Python/C++ APIs
-- **🐍 Complete Python Bindings**: 37 modules across 7 phases with 300+ tests, pure-Python fallback
-- **🖥️ CLI Commands**: `sneppx-train`, `sneppx-serve`, `sneppx-experiment` installed with the package
+- **High-Performance Tensor Engine**: SIMD-optimized (AVX2/AVX-512), CUDA kernels for NVIDIA GPUs (Ampere/Hopper)
+- **Security-First Design**: S0-S9 security layers (memory hardening, obfuscation, post-quantum crypto, AI safety)
+- **Modern Architectures**: Vision Transformers (ViT, DeiT, Swin), LLMs (LLaMA, Mistral, Qwen2, DeepSeek V2), MAE
+- **Distributed Training**: ZeRO-1/2/3, Pipeline/Tensor/Expert Parallelism, Elastic Training
+- **Model Compression**: Quantization (INT8/FP8/AWQ/GPTQ), Pruning, Distillation
+- **Deployment Ready**: ONNX Export, TensorRT Integration, Python/C++ APIs
+- **Complete Python Bindings**: 37 modules across 7 phases with 300+ tests, pure-Python fallback
+- **CLI Commands**: `sneppx-train`, `sneppx-serve`, `sneppx-experiment` installed with the package
 
 ---
 
@@ -103,15 +103,17 @@ SNEPPX-ALG (v0.9.5.748)
 │   ├── CUDA Kernels (GEMM, Conv, Flash Attention v2/v3, LayerNorm, Softmax, AdamW fused)
 │   ├── Autodiff Engine (reverse-mode, 100+ ops)
 │   ├── Memory Management (pools, streams, events, pinned/managed)
-│   └── RNG (Philox, Xavier/Kaiming init, fused dropout)
-├── Python Bindings (Phases 1-7, 37 modules)
+│   ├── RNG (Philox, Xavier/Kaiming init, fused dropout)
+│   └── Profiling & Logging (NVTX markers, JSON structured logs, sanitizer CI)
+├── Python Bindings (Phases 1-8, 37+ modules)
 │   ├── Phase 1: Foundation — c_loader, c_types, dispatch factory
 │   ├── Phase 2: Crypto — 6 families (sign, kem, symmetric, hash, kdf, util)
 │   ├── Phase 3: Security S1-S9 — 10 modules (memory, network, monitor, vault, updates, verify, pen-test, obfuscation, AI safety, middleware)
 │   ├── Phase 4: Algorithms — ARC, FM, HSS, NPE, SER
 │   ├── Phase 5: Kernels — attention, arch (GELU/Mamba2), memory, thread, tensor_expr, simd_gemm, logger
 │   ├── Phase 6: Infrastructure — net (topology, RDMA, gRPC, NCCL), drivers (CUDA/ROCm/TPU)
-│   └── Phase 7: ASM — CPU features, crypto assembly (AES-NI, SHA-NI, AVX2), MASM build
+│   ├── Phase 7: ASM — CPU features, crypto assembly (AES-NI, SHA-NI, AVX2), MASM build
+│   └── Phase 8: Model Zoo — from_pretrained(), weight converters, JSON configs
 ├── Neural Architectures
 │   ├── Vision: ViT (Tiny/Small/Base/Large/Huge), DeiT, Swin, MAE
 │   ├── LLMs: LLaMA 2/3 (7B/13B/70B), Mistral 7B, Qwen2 (7B/72B), DeepSeek V2 (Lite/Full)
@@ -125,6 +127,11 @@ SNEPPX-ALG (v0.9.5.748)
 │   ├── Quantization: INT8 (sym/asym/channel), INT4 (packed), FP8 (E4M3/E5M2), AWQ, GPTQ
 │   ├── Pruning: Magnitude, L1 Channel, Taylor, Global Magnitude, Movement, Soft
 │   └── Distillation: KD, Attention Transfer, Feature Matching, CRD, Multi-teacher, Online
+├── Networking Layer (C)
+│   ├── Topology (ring/tree/graph with BFS routing)
+│   ├── Socket Communication (TCP with WinSock2/POSIX + message framing)
+│   ├── RDMA (memory registration, QP lifecycle, read/write)
+│   └── gRPC (server/stub lifecycle, barrier, all_gather, tensor transfer)
 └── Security (S0-S9, 21,809+ lines C + 31 Python test suites)
     ├── S0: Build Integrity (SBOM, Reproducible Builds)
     ├── S1: Memory Hardening (Guard Pages, Canaries, ASLR, Locked Memory)
@@ -164,6 +171,17 @@ pip install sneppx-alg[cuda]
 # Or build from source with: cmake -B build -DSNEPPX_BUILD_CUDA=ON
 ```
 
+### C/C++ Build (without Python)
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+
+# Specific targets
+cmake --build build --config Release --target neural_core_kernel
+cmake --build build --config Release --target neural_security_c
+cmake --build build --config Release --target neural_security_cpp
+```
+
 ---
 
 ## Python API Overview
@@ -175,61 +193,134 @@ from SneppX_ALG import (
     Tensor, Dtype, Device, Linear, Embedding, Dropout,
     LayerNorm, RMSNorm, GELU, SiLU, ReLU, Sequential,
     MultiheadAttention, TransformerBlock, Transformer,
-    
+
     # Optimizers
     Optimizer, SGD, AdamW, Lion, LAMB, LARS, AdaFactor,
     RAdam, Sophia, Adan, ScheduleFreeAdamW,
-    
+
     # Schedulers
     CosineAnnealingLR, OneCycleLR, LinearWarmupCosineDecay,
     ReduceLROnPlateau, PolynomialLR, TriStageLR,
-    
+
     # Training
     Trainer, TrainConfig,
-    
+
     # Data
     Dataset, TensorDataset, DataLoader, DistributedSampler,
-    
+
     # Distributed
     init_process_group, all_reduce, barrier, get_rank, get_world_size,
-    
+
     # Model Zoo
     from_pretrained, get_model_config, build_transformer_from_config,
     LlamaConfig, MistralConfig, Qwen2Config, DeepSeekV2Config,
-    
+
     # Quantization
     QuantMode, quantize_int8_sym, quantize_fp8_e4m3, awq_quantize,
     gptq_quantize, QuantizedLinear,
-    
+
     # Checkpointing
     CheckpointWriter, CheckpointReader, CheckpointCoordinator,
     HeartbeatMonitor, ElasticTrainer, FaultToleranceManager,
-    
+
     # Profiling
     Profiler, Timer, MemoryTracker, TrainProfiler, timeit,
-    
+
     # Security (S1-S9)
     SecureAllocator, StackCanary, ASLR, DDoSMitigation,
     IdentityManager, TransportSecurity, IntegrityMonitor,
     KeyVault, SignedUpdate, LTLProperty, NetworkFuzzer,
     ObfuscationPipeline, RLHFSafety, AIPromptFilter, AIOutputVerifier,
     SecurityConfig, SecurityMiddleware, AuthConfig, PromptFilterConfig,
-    
+
     # Algorithms
     AlgoHSSModel, AlgoSERModel, ARCAttackSim, FMController,
     NPECompiler, NPEVM,
-    
+
     # Kernels
     Attention, DifferentialAttention, FlexAttention, ArchOps, Mamba2,
     MemoryPool, WorkStealingPool, TensorExprCompiler, SimdGemm,
-    
+
     # Infrastructure
     Topology, SocketComm, RDMA, CUDADriver, ROCmDriver, TPUDriver,
-    
+
     # ASM
     CPUFeatures, AESNI, SHANI, ChaCha20AVX2, Poly1305ASM,
     Ed25519ASM, ConstantTimeOps, FirewallASM,
 )
+```
+
+---
+
+## Project Structure
+
+```
+sneppx-alg/
+├── kernel/                  # Core computational substrate
+│   ├── tensor/              #  Tensor engine (GEMM, ops, expressions)
+│   ├── autodiff/            #  Reverse-mode autodiff engine
+│   ├── optimizer/           #  Optimizer implementations
+│   ├── train/               #  Training pipeline
+│   ├── cuda/                #  CUDA kernels (GEMM, attention, autodiff, optim, RNG, memory)
+│   ├── attention/           #  Attention mechanisms (Flash, Differential, Flex, Mamba2)
+│   ├── arch/                #  Advanced architectures (DifferentialAttn, MLA, MoD)
+│   ├── activations/         #  Activation functions
+│   ├── position/            #  Position encodings (RoPE, ALiBi, YaRN)
+│   ├── thread/              #  Thread pool
+│   ├── memory/              #  Memory allocator
+│   ├── distributed/         #  Distributed training (ZeRO, pipeline, TP, EP, DDP, checkpoint, elastic)
+│   ├── quantization/        #  INT8/FP8/AWQ/GPTQ quantization
+│   ├── data/                #  Data pipeline
+│   ├── tokenizer/           #  Tokenizer
+│   ├── inference/           #  Inference engine
+│   ├── model_zoo/           #  Model configs & weight converters
+│   ├── profiler.c           #  Profiling infrastructure
+│   └── logger.c             #  Structured logging
+├── algorithms/              # Neural architecture algorithms
+│   ├── hss/                 #  Hierarchical State Space (Mamba/S6)
+│   ├── ser/                 #  Sparse Expert Routing (MoE)
+│   ├── arc/                 #  Adversarial Robustness Certification
+│   ├── npe/                 #  Neural Programming Engine
+│   └── fm/                  #  Fractal Memory Orchestrator
+├── security/                # S0-S9 security layers
+│   ├── crypto/              #  Post-quantum crypto (Kyber, Dilithium, SPHINCS+)
+│   ├── memory/              #  S1: Memory hardening
+│   ├── obfuscation/         #  S2: Code obfuscation
+│   ├── monitor/             #  S3: Runtime monitoring
+│   ├── network/             #  S4: Network security
+│   ├── ai/                  #  S5/S6: AI safety & sanitizer
+│   ├── updates/             #  S7: Supply chain security
+│   ├── formal/              #  S8: Formal verification
+│   ├── pentest/             #  S9: Penetration testing
+│   └── ...                  #  Additional: firewall, compliance, threat intel, zero trust
+├── net/                     # Networking layer (C)
+│   ├── topology/            #  Ring/tree/graph topology + BFS routing
+│   ├── socket/              #  TCP socket communication
+│   ├── rdma/                #  RDMA memory registration & QP lifecycle
+│   └── grpc/                #  gRPC server/stub lifecycle
+├── include/                 # C/C++ headers
+│   └── neural_core/         #  Public API headers
+├── bindings/                # Python bindings
+│   └── python/              #  pybind11 module + SneppX_ALG package
+├── tests/                   # Test suites
+│   ├── python/              #  Python tests (300+)
+│   ├── security/            #  Security module tests
+│   ├── quantization/        #  Quantization C tests
+│   ├── unit/                #  C unit tests
+│   ├── integration/         #  Integration tests
+│   ├── fuzz/                #  Fuzz testing
+│   ├── chaos/               #  Chaos engineering
+│   └── benchmark/           #  Benchmarks
+├── drivers/                 # Hardware drivers
+│   ├── cuda/                #  CUDA driver
+│   ├── rocm/                #  ROCm driver
+│   └── tpu/                 #  TPU driver
+├── examples/                # Example programs
+├── scripts/                 # Build & CI scripts
+├── tools/                   # CLI tools
+├── docs/                    # Documentation
+└── config/                  # Configuration files
+    └── model_zoo/           #  Model JSON configs
 ```
 
 ---
@@ -250,22 +341,28 @@ SNEPPX-ALG implements **10 layers of security (S0-S9)** — fully implemented in
 
 | Layer | Description | Status |
 |-------|-------------|--------|
-| S0 | Build Integrity (SBOM, Reproducible Builds, TUF) | ✅ Complete |
-| S1 | Memory Hardening (Guard Pages, Canaries, ASLR, Locked Memory, W^X) | ✅ Complete |
-| S2 | Code Obfuscation (CFG Flattening, Instruction Substitution, Opaque Predicates, String Encryption, VM Obfuscation) | ✅ Complete |
-| S3 | Runtime Monitoring (Integrity, Container Breakout, ML Anomaly, File System) | ✅ Complete |
-| S4 | Network Security (TLS 1.3, Noise NK/XX/IK, QUIC, mTLS, DDoS, Port Knocking) | ✅ Complete |
-| S5 | AI Safety (RLHF, Differential Privacy, Prompt/Output Filters, Watermarking, Adversarial Smoothing) | ✅ Complete |
-| S6 | AI Sanitizer (Semantic Injection, Encoded Attack Decoder, Token Anomaly Scoring, Model Inversion Defense) | ✅ Complete |
-| S7 | Supply Chain (TUF Multi-Role Keys, bsdiff Deltas, A/B Partitions, TPM PCR, Canary Rollout) | ✅ Complete |
-| S8 | Formal Verification (TLA+ Parser, LTL Model Checking, Symbolic Execution, Lean 4 Export) | ✅ Complete |
-| S9 | Penetration Testing (CVE Scanner, Fuzzer, API Security, Supply Chain Audit, Compliance Auto-checker) | ✅ Complete |
+| S0 | Build Integrity (SBOM, Reproducible Builds, TUF) | Complete |
+| S1 | Memory Hardening (Guard Pages, Canaries, ASLR, Locked Memory, W^X) | Complete |
+| S2 | Code Obfuscation (CFG Flattening, Instruction Substitution, Opaque Predicates, String Encryption, VM Obfuscation) | Complete |
+| S3 | Runtime Monitoring (Integrity, Container Breakout, ML Anomaly, File System) | Complete |
+| S4 | Network Security (TLS 1.3, Noise NK/XX/IK, QUIC, mTLS, DDoS, Port Knocking) | Complete |
+| S5 | AI Safety (RLHF, Differential Privacy, Prompt/Output Filters, Watermarking, Adversarial Smoothing) | Complete |
+| S6 | AI Sanitizer (Semantic Injection, Encoded Attack Decoder, Token Anomaly Scoring, Model Inversion Defense) | Complete |
+| S7 | Supply Chain (TUF Multi-Role Keys, bsdiff Deltas, A/B Partitions, TPM PCR, Canary Rollout) | Complete |
+| S8 | Formal Verification (TLA+ Parser, LTL Model Checking, Symbolic Execution, Lean 4 Export) | Complete |
+| S9 | Penetration Testing (CVE Scanner, Fuzzer, API Security, Supply Chain Audit, Compliance Auto-checker) | Complete |
 
 **4-Ring Firewall Architecture** (v0.9.4.467+):
 - **Transport Ring**: TLS 1.3/mTLS, cert pinning, ALPN
 - **Network Ring**: CIDR allow/deny, rate limiting (token bucket), connection tracking, port knocking
 - **Application Ring**: Injection filter (SQLi/XSS/command), path traversal, concurrent limiter
 - **Security Middleware**: `set_security()` with firewall overrides, `check_firewall()` in pipeline
+
+**Post-Quantum Cryptography**:
+- **Kyber** (ML-KEM): CCA-secure KEM, IND-CCA2, 3 security levels
+- **Dilithium** (ML-DSA): EUF-CMA-secure digital signatures
+- **SPHINCS+**: Stateless hash-based signatures
+- Classical: AES-GCM, ChaCha20-Poly1305, Ed25519, X25519, SHA-3, BLAKE3, Argon2
 
 **MASM x64 Hot-Path Routines**:
 - `ip_match.asm` — CIDR matching with SIMD
@@ -277,7 +374,7 @@ SNEPPX-ALG implements **10 layers of security (S0-S9)** — fully implemented in
 
 ## Testing
 
-All **31 test suites** (300+ tests) pass on pure-Python fallback (no C compiler needed):
+All **31+ test suites** (300+ tests) pass on pure-Python fallback (no C compiler needed):
 
 ```bash
 # Run all tests
@@ -285,12 +382,19 @@ $env:PYTHONPATH = "bindings/python"
 python -m pytest tests/python/ -v
 
 # Run specific phase
-python tests/python/test_crypto_sign.py
-python tests/python/test_secure_memory.py
-python tests/python/test_algo_hss.py
-python tests/python/test_c_attention.py
-python tests/python/test_net_bindings.py
-python tests/python/test_asm_bridge.py
+python tests/python/test_tensor.py
+python tests/python/test_nn.py
+python tests/python/test_optim.py
+python tests/python/test_quantization.py
+python tests/python/test_checkpoint.py
+python tests/python/test_profiler.py
+python tests/python/test_model_zoo.py
+```
+
+C tests (requires build):
+```bash
+cmake --build build --config Release
+cd build && ctest -C Release --output-on-failure
 ```
 
 ---
@@ -309,19 +413,24 @@ python tests/python/test_asm_bridge.py
 
 ## Documentation
 
-- [Installation Guide](docs/getting-started/installation.md)
-- [Quickstart](docs/getting-started/quickstart.md)
-- [GPU Setup](docs/getting-started/gpu-setup.md)
-- [API Reference](docs/api/)
-- [Advanced Guides](docs/advanced/)
-- [Security Architecture](docs/security/)
-- [CHANGELOG](CHANGELOG.md)
+| Document | Description |
+|----------|-------------|
+| `docs/architecture.txt` | System architecture overview |
+| `docs/build.txt` | Build instructions for all platforms |
+| `docs/api_quickref.txt` | Quick API reference |
+| `docs/security_layers.txt` | S0-S9 security layer deep-dive |
+| `docs/` | Additional docs (security, threat modeling, compliance) |
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+See `AGENTS.md` and `docs/build.txt` for development guidelines. Key points:
+- C11 + C++20, MASM for x86-64 hot paths
+- `SNEPPX_` prefix for all public functions/types/macros
+- 4-space indentation, no tabs
+- No VLAs (MSVC C11 limitation)
+- Run `scripts/run_sanitizers.ps1` before submitting PRs
 
 ---
 
