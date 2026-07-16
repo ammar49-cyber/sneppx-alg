@@ -76,7 +76,7 @@ int SNEPPX_container_parse_manifest(const uint8_t *manifest, size_t len, contain
     }
     out->schema_version = 2;
     out->num_layers = found_layers ? 3 : 1;
-    strcpy(out->digest, "sha256:");
+    snprintf(out->digest, sizeof(out->digest), "%s", "sha256:");
     for (int i = 0; i < 64; i++) out->digest[7 + i] = "0123456789abcdef"[rand() % 16];
     out->digest[71] = 0;
     out->size = len;
@@ -88,7 +88,7 @@ int SNEPPX_container_verify_layer(const uint8_t *layer_data, size_t layer_len, c
     uint8_t hash[32];
     char hex[65];
     SNEPPX_sha256(hash, layer_data, layer_len);
-    for (int i = 0; i < 32; i++) sprintf(hex + 2*i, "%02x", hash[i]);
+    for (int i = 0; i < 32; i++) snprintf(hex + 2*i, sizeof(hex) - 2*i, "%02x", hash[i]);
     hex[64] = 0;
     const char *dig = strchr(expected_digest, ':');
     if (!dig) return 1;
@@ -101,8 +101,8 @@ int SNEPPX_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *ve
     strncpy(doc->image_name, image_name ? image_name : "unknown", 127);
     strncpy(doc->version, version ? version : "0.0.0", 31);
     doc->num_components = 0;
-    strcpy(doc->format, "SPDX-2.3");
-    strcpy(doc->namespace_str, "https://SNEPPX_ALG.dev/sbom/");
+    snprintf(doc->format, sizeof(doc->format), "%s", "SPDX-2.3");
+    snprintf(doc->namespace_str, sizeof(doc->namespace_str), "%s", "https://SNEPPX_ALG.dev/sbom/");
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
     strftime(doc->created, 31, "%Y-%m-%dT%H:%M:%SZ", tm);

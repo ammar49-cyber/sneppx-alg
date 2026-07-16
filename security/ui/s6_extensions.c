@@ -561,7 +561,7 @@ int SNEPPX_security_dashboard_remove_widget(const char* name) {
 int SNEPPX_security_dashboard_get_status(char* status_out) {
     if (!status_out) return -1;
     if (!dash_state.initialized) return -1;
-    sprintf(status_out,
+    snprintf(status_out, 512,
         "{\"requests\":%d,\"critical\":%d,\"warnings\":%d,\"info\":%d,\"connections\":%d,\"errors\":%d}",
         dash_state.total_requests, dash_state.critical_alerts,
         dash_state.warnings, dash_state.info_count,

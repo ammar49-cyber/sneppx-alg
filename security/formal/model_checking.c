@@ -71,7 +71,7 @@ SNEPPXModelCheckResult SNEPPX_model_check(SNEPPXFormalModel* model) {
     }
 
     result.property_satisfied = (result.error_states == 0) ? 1 : 0;
-    strcpy(result.counterexample, result.property_satisfied ? "ok" : "error state reachable");
+    snprintf(result.counterexample, sizeof(result.counterexample), "%s", result.property_satisfied ? "ok" : "error state reachable");
     return result;
 }
 
