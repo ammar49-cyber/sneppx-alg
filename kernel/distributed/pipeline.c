@@ -1,3 +1,4 @@
+#ifdef SNEPPX_HAS_CUDA
 #include "../../include/neural_core/architecture/distributed.h"
 #include <cuda_runtime.h>
 #include <stdlib.h>
@@ -117,3 +118,4 @@ int sneppx_pipeline_destroy(SNEPPX_PipelineParallel* pp) {
     free(pp);
     return 0;
 }
+#endif

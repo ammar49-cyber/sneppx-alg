@@ -64,7 +64,7 @@ int  SNEPPX_gradient_clip_norm(void** grads, size_t num_params, size_t param_siz
 int  SNEPPX_gradient_clip_value(void** grads, size_t num_params, size_t param_size, float min_val, float max_val);
 
 int  SNEPPX_lr_scheduler_init(SNEPPXLRScheduler* sched, SNEPPXLRSchedule type);
-float SNEPPX_lr_scheduler_step(SNEPPXLRScheduler* sched);
+float SNEPPX_impl_lr_scheduler_step(SNEPPXLRScheduler* sched);
 void  SNEPPX_lr_scheduler_reset(SNEPPXLRScheduler* sched);
 
 #ifdef __cplusplus

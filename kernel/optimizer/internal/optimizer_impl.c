@@ -43,7 +43,7 @@ int SNEPPX_lr_scheduler_init(SNEPPXLRScheduler* sched, SNEPPXLRSchedule type) {
     return 0;
 }
 
-float SNEPPX_lr_scheduler_step(SNEPPXLRScheduler* sched) {
+float SNEPPX_impl_lr_scheduler_step(SNEPPXLRScheduler* sched) {
     if (!sched) return 0.0f;
     return sched->current_lr;
 }

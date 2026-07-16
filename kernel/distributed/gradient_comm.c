@@ -1,3 +1,4 @@
+#ifdef SNEPPX_HAS_CUDA
 #include "../../include/neural_core/architecture/distributed.h"
 #include <cuda_runtime.h>
 #include <stdlib.h>
@@ -208,3 +209,4 @@ int sneppx_grad_decompress(SNEPPX_GradCompressor* gc,
                                                           gc->compressed_indices, gc->k);
     return 0;
 }
+#endif

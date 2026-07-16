@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+#ifndef SNEPPX_HAS_CUDA
+typedef void* cudaStream_t;
+#endif
+
 // ============================================================================
 // Distributed Training Configuration
 // ============================================================================

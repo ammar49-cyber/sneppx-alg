@@ -68,23 +68,6 @@ float SNEPPX_fp8_e4m3_to_float(uint8_t fp8)
     return result;
 }
 
-float SNEPPX_fp8_e4m3_to_float(uint8_t fp8)
-{
-    if (fp8 == 0 || fp8 == 0x80) return 0.0f;
-    if ((fp8 & 0x7F) == 0x7F) {
-        return (fp8 & 0x80) ? -INFINITY : INFINITY;
-    }
-    uint32_t sign = (uint32_t)((fp8 >> 7) & 1);
-    uint32_t e4m3_exp = (uint32_t)((fp8 >> 3) & 0x0F);
-    uint32_t e4m3_mant = (uint32_t)(fp8 & 0x07);
-    int32_t exp = (int32_t)e4m3_exp - 7;
-    uint32_t f32_exp = (uint32_t)(exp + 127);
-    uint32_t f32 = (sign << 31) | (f32_exp << 23) | (e4m3_mant << 20);
-    float result;
-    memcpy(&result, &f32, sizeof(result));
-    return result;
-}
-
 int SNEPPX_quantize_fp8_e4m3(const float* input, uint8_t* output, size_t n)
 {
     if (!input || !output) return -1;

@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 typedef SOCKET snepx_socket_t;
 #define SNEPPX_INVALID_SOCKET INVALID_SOCKET

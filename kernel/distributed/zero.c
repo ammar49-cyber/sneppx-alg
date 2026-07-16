@@ -1,9 +1,13 @@
 #include "../../include/neural_core/architecture/distributed.h"
+#ifdef SNEPPX_HAS_CUDA
 #include <cuda_runtime.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+
+#ifdef SNEPPX_HAS_CUDA
 
 // ============================================================================
 // ZeRO Stage 1: Optimizer State Partitioning
@@ -158,3 +162,4 @@ int sneppx_zero_destroy(SNEPPX_ZeroOptimizer* opt) {
     free(opt);
     return 0;
 }
+#endif

@@ -3,11 +3,15 @@
 #include "../../include/neural_core/kernel/checkpoint.h"
 #include "../../include/neural_core/architecture/distributed.h"
 #include "../../fs/format/checkpoint_reader.h"
+#ifdef SNEPPX_HAS_CUDA
 #include <cuda_runtime.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+
+#ifdef SNEPPX_HAS_CUDA
 
 #ifdef _WIN32
 #include <windows.h>
@@ -423,3 +427,4 @@ int sneppx_fault_tolerance_handle_failure(SNEPPX_FaultTolerance* ft,
            new_world_size, new_rank, ft->restart_count, ft->max_restarts);
     return 0;
 }
+#endif

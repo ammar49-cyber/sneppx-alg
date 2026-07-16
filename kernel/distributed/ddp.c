@@ -1,3 +1,4 @@
+#ifdef SNEPPX_HAS_CUDA
 #include "../../include/neural_core/architecture/distributed.h"
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
@@ -92,3 +93,4 @@ int sneppx_ddp_bucket_all_reduce(SNEPPX_DDPState* ddp, int bucket_id,
     }
     return 0;
 }
+#endif

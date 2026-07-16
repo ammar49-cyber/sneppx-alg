@@ -1,4 +1,4 @@
-#include "neural_core/kernel/logger.h"
+#include "logger.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

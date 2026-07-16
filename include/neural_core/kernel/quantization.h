@@ -46,6 +46,10 @@ typedef struct {
     int group_size;
 } SNEPPXGPTQState;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* INT8 symmetric quantization */
 int SNEPPX_quantize_int8_sym(const float* input, int8_t* output,
                               size_t n, float* scale_out);
@@ -102,10 +106,6 @@ int SNEPPX_gptq_quantize_block(float* w, float* h_inv,
 /* Utility */
 int SNEPPX_quant_params_create(SNEPPXQuantParams* params, SNEPPXQuantMode mode);
 const char* SNEPPX_quant_mode_name(SNEPPXQuantMode mode);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef __cplusplus
 }

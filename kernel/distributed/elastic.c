@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 static int64_t snepx_ns_now_elastic(void) {
 #ifdef _WIN32

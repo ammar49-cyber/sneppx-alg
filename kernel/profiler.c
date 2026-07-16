@@ -1,4 +1,4 @@
-#include "neural_core/kernel/profiler.h"
+#include "profiler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -70,17 +70,7 @@ void SNEPPX_kernel_timer_destroy(SNEPPX_KernelTimer* kt) {
 }
 
 #else
-int SNEPPX_kernel_timer_init(SNEPPX_KernelTimer* kt) { (void)kt; return -1; }
-void SNEPPX_kernel_timer_start(SNEPPX_KernelTimer* kt, void* stream) { (void)kt; (void)stream; }
-float SNEPPX_kernel_timer_stop(SNEPPX_KernelTimer* kt, void* stream) { (void)kt; (void)stream; return 0.0f; }
-void SNEPPX_kernel_timer_destroy(SNEPPX_KernelTimer* kt) { (void)kt; }
-#endif
-
-#else
-int SNEPPX_kernel_timer_init(SNEPPX_KernelTimer* kt) { (void)kt; return -1; }
-void SNEPPX_kernel_timer_start(SNEPPX_KernelTimer* kt, void* stream) { (void)kt; (void)stream; }
-float SNEPPX_kernel_timer_stop(SNEPPX_KernelTimer* kt, void* stream) { (void)kt; (void)stream; return 0.0f; }
-void SNEPPX_kernel_timer_destroy(SNEPPX_KernelTimer* kt) { (void)kt; }
+/* Stubs come from profiler.h macros when SNEPPX_HAS_CUDA is not defined */
 #endif
 
 /* =========================================================================

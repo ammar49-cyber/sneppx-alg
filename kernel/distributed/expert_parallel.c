@@ -1,3 +1,4 @@
+#ifdef SNEPPX_HAS_CUDA
 #include "../../include/neural_core/architecture/distributed.h"
 #include <cuda_runtime.h>
 #include <stdlib.h>
@@ -97,3 +98,4 @@ int sneppx_fm_distributed_broadcast(float* data, int size, int root,
     // Placeholder: in real implementation, calls NCCL broadcast
     return 0;
 }
+#endif

@@ -1,4 +1,4 @@
-#include "neural_core/kernel/simd_gemm.h"
+#include "simd_gemm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

@@ -1,3 +1,4 @@
+#ifdef SNEPPX_HAS_CUDA
 #include "../../include/neural_core/architecture/advanced_arch.h"
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
@@ -138,3 +139,4 @@ int sneppx_latent_attn_destroy(SNEPPX_LatentAttn* la) {
     free(la);
     return 0;
 }
+#endif

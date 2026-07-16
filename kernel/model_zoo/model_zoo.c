@@ -1,4 +1,4 @@
-#include "neural_core/kernel/model_zoo.h"
+#include "model_zoo.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

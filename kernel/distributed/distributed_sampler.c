@@ -77,6 +77,8 @@ int64_t sneppx_distributed_sampler_get_indices(SNEPPX_DistributedSampler* sample
     return sampler->num_samples_per_rank;
 }
 
+#ifdef SNEPPX_HAS_CUDA
+
 // ============================================================================
 // Gradient Accumulation Manager
 // ============================================================================
@@ -134,3 +136,4 @@ int sneppx_grad_accumulator_step(SNEPPX_GradAccumulator* ga,
     ga->current_step = 0;
     return 1;
 }
+#endif

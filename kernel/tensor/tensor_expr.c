@@ -1,5 +1,5 @@
-#include "neural_core/kernel/tensor_expr.h"
-#include "neural_core/kernel/simd_gemm.h"
+#include "tensor_expr.h"
+#include "simd_gemm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
