@@ -70,7 +70,7 @@ WORKDIR /workspace
 # =====================================================================
 # CPU-ONLY RUNTIME IMAGE
 # =====================================================================
-FROM ubuntu:22.04 AS cpu-runtime
+FROM ubuntu:26.04 AS cpu-runtime
 
 ARG DEBIAN_FRONTEND=noninteractive
 

@@ -1,7 +1,7 @@
 # SNEPPX-ALG CPU-Only Runtime Image
 # Self-contained single-stage build (no builder dependency)
 
-FROM ubuntu:22.04
+FROM ubuntu:26.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
