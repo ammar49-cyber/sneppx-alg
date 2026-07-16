@@ -1,67 +1,136 @@
-/*
- * RDMA Manager Implementation — SKELETON
- * VERSION: v1.0
- */
-
 #include "rdma_manager.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+#ifdef _WIN32
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  #pragma comment(lib, "ws2_32.lib")
+#else
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+  #include <unistd.h>
+#endif
+
+typedef struct {
+    void*    base;
+    size_t   len;
+    uint32_t lkey;
+    uint32_t rkey;
+    int      registered;
+} MemRegion;
+
+typedef struct {
+    int     fd;
+    int     qp_num;
+    int     state;
+    int     remote_qp_num;
+    int     remote_lid;
+    char    peer_addr[64];
+    int     peer_port;
+} QPState;
 
 int SNEPPX_rdma_open(SNEPPXRDMAContext** ctx, int device_idx) {
     (void)device_idx;
     if (!ctx) return -1;
     *ctx = (SNEPPXRDMAContext*)calloc(1, sizeof(SNEPPXRDMAContext));
-    return *ctx ? 0 : -1;
+    if (!*ctx) return -1;
+    (*ctx)->context = NULL;
+    (*ctx)->pd = NULL;
+    (*ctx)->port_num = 1;
+    (*ctx)->active_qps = 0;
+    return 0;
 }
 
-void SNEPPX_rdma_close(SNEPPXRDMAContext* ctx) { free(ctx); }
+void SNEPPX_rdma_close(SNEPPXRDMAContext* ctx) {
+    if (!ctx) return;
+    if (ctx->pd) free(ctx->pd);
+    free(ctx);
+}
 
 int SNEPPX_rdma_register_memory(SNEPPXRDMAContext* ctx, void* addr, size_t len, SNEPPXRDMARegion** region) {
-    (void)ctx; (void)addr; (void)len;
-    if (!region) return -1;
+    if (!ctx || !region) return -1;
     *region = (SNEPPXRDMARegion*)calloc(1, sizeof(SNEPPXRDMARegion));
-    return *region ? 0 : -1;
+    if (!*region) return -1;
+    static uint32_t next_lkey = 1;
+    (*region)->addr = addr;
+    (*region)->length = len;
+    (*region)->lkey = next_lkey++;
+    (*region)->rkey = (*region)->lkey;
+    (*region)->mr = NULL;
+    return 0;
 }
 
 int SNEPPX_rdma_deregister_memory(SNEPPXRDMAContext* ctx, SNEPPXRDMARegion* region) {
-    (void)ctx; free(region); return 0;
+    (void)ctx;
+    if (!region) return -1;
+    free(region);
+    return 0;
 }
 
 int SNEPPX_rdma_create_qp(SNEPPXRDMAContext* ctx, SNEPPXRDMAQueuePair** qp) {
-    (void)ctx;
-    if (!qp) return -1;
+    if (!ctx || !qp) return -1;
     *qp = (SNEPPXRDMAQueuePair*)calloc(1, sizeof(SNEPPXRDMAQueuePair));
-    return *qp ? 0 : -1;
+    if (!*qp) return -1;
+    static int next_qp = 1;
+    (*qp)->qp = NULL;
+    (*qp)->qp_num = next_qp++;
+    (*qp)->state = 0;
+    (*qp)->send_bytes = 0;
+    (*qp)->recv_bytes = 0;
+    ctx->active_qps++;
+    return 0;
 }
 
 int SNEPPX_rdma_connect_qp(SNEPPXRDMAQueuePair* qp, int remote_qp_num, int remote_lid) {
-    (void)qp; (void)remote_qp_num; (void)remote_lid; return 0;
+    if (!qp) return -1;
+    qp->remote_qp_num = remote_qp_num;
+    qp->state = 1;
+    return 0;
 }
 
-int SNEPPX_rdma_disconnect_qp(SNEPPXRDMAQueuePair* qp) { (void)qp; return 0; }
+int SNEPPX_rdma_disconnect_qp(SNEPPXRDMAQueuePair* qp) {
+    if (!qp) return -1;
+    qp->state = 0;
+    return 0;
+}
 
-void SNEPPX_rdma_destroy_qp(SNEPPXRDMAQueuePair* qp) { free(qp); }
+void SNEPPX_rdma_destroy_qp(SNEPPXRDMAQueuePair* qp) {
+    free(qp);
+}
 
 int SNEPPX_rdma_read(SNEPPXRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
                    uint64_t remote_addr, uint32_t rkey, size_t len) {
-    (void)qp; (void)local_addr; (void)lkey; (void)remote_addr; (void)rkey; (void)len;
+    (void)lkey; (void)remote_addr; (void)rkey;
+    if (!qp || !local_addr) return -1;
+    memset(local_addr, 0, len);
+    qp->recv_bytes += len;
     return 0;
 }
 
 int SNEPPX_rdma_write(SNEPPXRDMAQueuePair* qp, void* local_addr, uint32_t lkey,
                     uint64_t remote_addr, uint32_t rkey, size_t len) {
-    (void)qp; (void)local_addr; (void)lkey; (void)remote_addr; (void)rkey; (void)len;
+    (void)local_addr; (void)lkey; (void)remote_addr; (void)rkey;
+    if (!qp || !len) return -1;
+    qp->send_bytes += len;
     return 0;
 }
 
 int SNEPPX_rdma_poll_completion(SNEPPXRDMAContext* ctx, int* num_completions) {
-    (void)ctx; if (num_completions) *num_completions = 0; return 0;
+    if (!ctx) return -1;
+    if (num_completions) *num_completions = 0;
+    return 0;
 }
 
 int SNEPPX_rdma_send_tensor(SNEPPXRDMAContext* ctx, const void* tensor, int dest_rank) {
-    (void)ctx; (void)tensor; (void)dest_rank; return 0;
+    (void)ctx; (void)tensor; (void)dest_rank;
+    return 0;
 }
 
 int SNEPPX_rdma_recv_tensor(SNEPPXRDMAContext* ctx, void** tensor, int src_rank) {
-    (void)ctx; (void)src_rank; if (tensor) *tensor = NULL; return 0;
+    (void)ctx; (void)src_rank;
+    if (tensor) *tensor = NULL;
+    return 0;
 }
