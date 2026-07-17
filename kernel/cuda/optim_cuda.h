@@ -23,6 +23,7 @@ typedef enum {
     SNEPPX_OPTIM_RMS_PROP = 6,
     SNEPPX_OPTIM_SOFSIGN = 7,
     SNEPPX_OPTIM_LAMB = 8,
+    SNEPPX_OPTIM_LARS = 9,
 } SNEPPX_OptimizerType;
 
 // ============================================================================

@@ -728,6 +728,10 @@ SNEPPX_CudaError sneppx_cuda_optimizer_step(
                 sneppx_cuda_sgd_step(stream, params[i], grads[i], lr, 
                                     state->weight_decay, n);
                 break;
+            case SNEPPX_OPTIM_SGD_MOMENTUM:
+                sneppx_cuda_sgd_momentum_step(stream, params[i], grads[i], (float*)state->state_buf1 + offset,
+                                             lr, state->beta1, 0.0f, state->weight_decay, false, n);
+                break;
             case SNEPPX_OPTIM_ADAMW:
                 sneppx_cuda_adamw_step(stream, params[i], grads[i], buf1, buf2,
                                       current_step, lr, state->beta1, state->beta2,
@@ -737,6 +741,21 @@ SNEPPX_CudaError sneppx_cuda_optimizer_step(
                 sneppx_cuda_lion_step(stream, params[i], grads[i], buf1,
                                      current_step, lr, state->beta1_lion,
                                      state->beta2_lion, state->weight_decay, n);
+                break;
+            case SNEPPX_OPTIM_LAMB:
+                sneppx_cuda_lamb_step(stream, params[i], grads[i], buf1, buf2,
+                                     current_step, lr, state->beta1, state->beta2,
+                                     state->epsilon, state->weight_decay, n);
+                break;
+            case SNEPPX_OPTIM_LARS:
+                sneppx_cuda_lars_step(stream, params[i], grads[i], (float*)state->state_buf1 + offset,
+                                     current_step, lr, state->beta1,
+                                     state->weight_decay, state->epsilon, 0.01f, n);
+                break;
+            case SNEPPX_OPTIM_ADAM:
+                sneppx_cuda_adamw_step(stream, params[i], grads[i], buf1, buf2,
+                                      current_step, lr, state->beta1, state->beta2,
+                                      state->epsilon, 0.0f, n);
                 break;
             default:
                 break;
