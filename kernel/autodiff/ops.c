@@ -1,6 +1,7 @@
 /* ===== Zero-gradient helper for comparison ops (no gradient through comparisons) ===== */
 #include "automatic_differentiation_framework.h"
 #include "multidimensional_tensor_engine.h"
+#include "multi_head_attention_module.h"
 #include "polymorphic_memory_allocator.h"
 #include <stddef.h>
 #include <string.h>
@@ -1344,6 +1345,935 @@ SNEPPXVariable* SNEPPX_embedding(SNEPPXTape* tape, SNEPPXVariable* weight, SNEPP
         if (ctx) { ctx->weight = weight; ctx->indices = indices; var->backward_fn = backward_embedding; var->backward_ctx = ctx; var->free_ctx = free_ctx_EmbeddingCtx; var->recompute_ctx = recompute_EmbeddingCtx; }
         SNEPPXVariable* pars[2]; pars[0] = weight; pars[1] = indices;
         set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== cross_entropy forward/backward ===== */
+typedef struct { SNEPPXVariable* pred; SNEPPXVariable* target; } CrossEntropyCtx;
+static void free_ctx_CrossEntropyCtx(void* p) { SNEPPX_free(p, sizeof(CrossEntropyCtx)); }
+static void* recompute_CrossEntropyCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    CrossEntropyCtx* ctx = (CrossEntropyCtx*)SNEPPX_malloc(sizeof(CrossEntropyCtx), 64);
+    if (ctx) { ctx->pred = var->parents[0]; ctx->target = var->parents[1]; var->free_ctx = free_ctx_CrossEntropyCtx; }
+    return ctx;
+}
+static void backward_cross_entropy(void* ctx, SNEPPXTensor* grad_output) {
+    CrossEntropyCtx* c = (CrossEntropyCtx*)ctx;
+    if (!c->pred->requires_grad) return;
+    size_t N = c->pred->data->shape[0];
+    size_t C = c->pred->data->shape[1];
+    SNEPPXTensor* sm = SNEPPX_tensor_softmax(c->pred->data, 1);
+    if (!sm) return;
+    float* smd = (float*)sm->data;
+    float* go = (float*)grad_output->data;
+    float inv_N = 1.0f / (float)N;
+    float scale = go[0] * inv_N;
+    int* tidx = (int*)c->target->data->data;
+    for (size_t i = 0; i < N * C; i++) smd[i] *= scale;
+    for (size_t i = 0; i < N; i++) {
+        int cl = tidx[i];
+        if (cl >= 0 && (size_t)cl < C) smd[i * C + cl] -= scale;
+    }
+    grad_accum(&c->pred->grad, sm);
+}
+SNEPPXVariable* SNEPPX_cross_entropy(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
+    int rg = requires_grad1(pred);
+    if (!pred || !target || !pred->data || !target->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_cross_entropy(pred->data, target->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        CrossEntropyCtx* ctx = (CrossEntropyCtx*)SNEPPX_malloc(sizeof(CrossEntropyCtx), 64);
+        if (ctx) { ctx->pred = pred; ctx->target = target; var->backward_fn = backward_cross_entropy; var->backward_ctx = ctx; var->free_ctx = free_ctx_CrossEntropyCtx; var->recompute_ctx = recompute_CrossEntropyCtx; }
+        SNEPPXVariable* pars[2]; pars[0] = pred; pars[1] = target;
+        set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== sqrt forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } SqrtCtx;
+static void free_ctx_SqrtCtx(void* p) { SNEPPX_free(p, sizeof(SqrtCtx)); }
+static void* recompute_SqrtCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    SqrtCtx* ctx = (SqrtCtx*)SNEPPX_malloc(sizeof(SqrtCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_SqrtCtx; }
+    return ctx;
+}
+static void backward_sqrt(void* ctx, SNEPPXTensor* grad_output) {
+    SqrtCtx* c = (SqrtCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+    if (!ga) return;
+    float* gad = (float*)ga->data;
+    float* ad = (float*)c->a->data->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] *= 0.5f / sqrtf(ad[i]);
+    grad_accum(&c->a->grad, ga);
+}
+SNEPPXVariable* SNEPPX_sqrt(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_sqrt(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        SqrtCtx* ctx = (SqrtCtx*)SNEPPX_malloc(sizeof(SqrtCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sqrt; var->backward_ctx = ctx; var->free_ctx = free_ctx_SqrtCtx; var->recompute_ctx = recompute_SqrtCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== abs forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } AbsCtx;
+static void free_ctx_AbsCtx(void* p) { SNEPPX_free(p, sizeof(AbsCtx)); }
+static void* recompute_AbsCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    AbsCtx* ctx = (AbsCtx*)SNEPPX_malloc(sizeof(AbsCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_AbsCtx; }
+    return ctx;
+}
+static void backward_abs(void* ctx, SNEPPXTensor* grad_output) {
+    AbsCtx* c = (AbsCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* s = SNEPPX_tensor_sign(c->a->data);
+    if (!s) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(s, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(s);
+}
+SNEPPXVariable* SNEPPX_abs(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_abs(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        AbsCtx* ctx = (AbsCtx*)SNEPPX_malloc(sizeof(AbsCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_abs; var->backward_ctx = ctx; var->free_ctx = free_ctx_AbsCtx; var->recompute_ctx = recompute_AbsCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== log_softmax forward/backward ===== */
+typedef struct { SNEPPXVariable* a; size_t dim; } LogSoftmaxCtx;
+static void free_ctx_LogSoftmaxCtx(void* p) { SNEPPX_free(p, sizeof(LogSoftmaxCtx)); }
+static void* recompute_LogSoftmaxCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    LogSoftmaxCtx* ctx = (LogSoftmaxCtx*)SNEPPX_malloc(sizeof(LogSoftmaxCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->dim = n > 0 ? params[0] : 0; var->free_ctx = free_ctx_LogSoftmaxCtx; }
+    return ctx;
+}
+static void backward_log_softmax(void* ctx, SNEPPXTensor* grad_output) {
+    LogSoftmaxCtx* c = (LogSoftmaxCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* sm = SNEPPX_tensor_softmax(c->a->data, c->dim);
+    if (!sm) return;
+    SNEPPXTensor* sum_go = SNEPPX_tensor_sum(grad_output, c->dim);
+    if (!sum_go) { SNEPPX_tensor_destroy(sm); return; }
+    size_t* expand_shape = (size_t*)SNEPPX_malloc(c->a->data->ndim * sizeof(size_t), 64);
+    if (!expand_shape) { SNEPPX_tensor_destroy(sm); SNEPPX_tensor_destroy(sum_go); return; }
+    for (size_t i = 0; i < c->a->data->ndim; i++)
+        expand_shape[i] = i == c->dim ? c->a->data->shape[c->dim] : 1;
+    SNEPPXTensor* expanded = SNEPPX_tensor_expand(sum_go, expand_shape, c->a->data->ndim);
+    SNEPPX_free(expand_shape, c->a->data->ndim * sizeof(size_t));
+    if (!expanded) { SNEPPX_tensor_destroy(sm); SNEPPX_tensor_destroy(sum_go); return; }
+    SNEPPXTensor* term = SNEPPX_tensor_mul(sm, expanded);
+    if (!term) { SNEPPX_tensor_destroy(sm); SNEPPX_tensor_destroy(sum_go); SNEPPX_tensor_destroy(expanded); return; }
+    SNEPPXTensor* ga = SNEPPX_tensor_sub(grad_output, term);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(sm);
+    SNEPPX_tensor_destroy(sum_go);
+    SNEPPX_tensor_destroy(expanded);
+    SNEPPX_tensor_destroy(term);
+}
+SNEPPXVariable* SNEPPX_log_softmax(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_log_softmax(a->data, dim);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        LogSoftmaxCtx* ctx = (LogSoftmaxCtx*)SNEPPX_malloc(sizeof(LogSoftmaxCtx), 64);
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_log_softmax; var->backward_ctx = ctx; var->free_ctx = free_ctx_LogSoftmaxCtx; var->recompute_ctx = recompute_LogSoftmaxCtx; var->params[0] = dim; var->param_count = 1; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== minimum forward/backward ===== */
+typedef struct { SNEPPXVariable* a; SNEPPXVariable* b; } MinCtx;
+static void free_ctx_MinCtx(void* p) { SNEPPX_free(p, sizeof(MinCtx)); }
+static void* recompute_MinCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    MinCtx* ctx = (MinCtx*)SNEPPX_malloc(sizeof(MinCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->b = var->parents[1]; var->free_ctx = free_ctx_MinCtx; }
+    return ctx;
+}
+static void backward_min(void* ctx, SNEPPXTensor* grad_output) {
+    MinCtx* c = (MinCtx*)ctx;
+    float* ad = (float*)c->a->data->data;
+    float* bd = (float*)c->b->data->data;
+    (void)grad_output;
+    if (c->a->requires_grad) {
+        SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+        if (ga) {
+            float* gad = (float*)ga->data;
+            for (size_t i = 0; i < ga->size; i++) {
+                if (ad[i] > bd[i]) gad[i] = 0.0f;
+                else if (ad[i] == bd[i]) gad[i] *= 0.5f;
+            }
+            grad_accum(&c->a->grad, ga);
+        }
+    }
+    if (c->b->requires_grad) {
+        SNEPPXTensor* gb = SNEPPX_tensor_copy(grad_output);
+        if (gb) {
+            float* gbd = (float*)gb->data;
+            for (size_t i = 0; i < gb->size; i++) {
+                if (ad[i] < bd[i]) gbd[i] = 0.0f;
+                else if (ad[i] == bd[i]) gbd[i] *= 0.5f;
+            }
+            grad_accum(&c->b->grad, gb);
+        }
+    }
+}
+SNEPPXVariable* SNEPPX_minimum(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
+    int rg = requires_grad(a, b);
+    if (!a || !b || !a->data || !b->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_minimum(a->data, b->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        MinCtx* ctx = (MinCtx*)SNEPPX_malloc(sizeof(MinCtx), 64);
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_min; var->backward_ctx = ctx; var->free_ctx = free_ctx_MinCtx; var->recompute_ctx = recompute_MinCtx; }
+        SNEPPXVariable* pars[2]; pars[0] = a; pars[1] = b;
+        set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== maximum forward/backward ===== */
+typedef struct { SNEPPXVariable* a; SNEPPXVariable* b; } MaxCtx;
+static void free_ctx_MaxCtx(void* p) { SNEPPX_free(p, sizeof(MaxCtx)); }
+static void* recompute_MaxCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    MaxCtx* ctx = (MaxCtx*)SNEPPX_malloc(sizeof(MaxCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->b = var->parents[1]; var->free_ctx = free_ctx_MaxCtx; }
+    return ctx;
+}
+static void backward_max(void* ctx, SNEPPXTensor* grad_output) {
+    MaxCtx* c = (MaxCtx*)ctx;
+    float* ad = (float*)c->a->data->data;
+    float* bd = (float*)c->b->data->data;
+    (void)grad_output;
+    if (c->a->requires_grad) {
+        SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+        if (ga) {
+            float* gad = (float*)ga->data;
+            for (size_t i = 0; i < ga->size; i++) {
+                if (ad[i] < bd[i]) gad[i] = 0.0f;
+                else if (ad[i] == bd[i]) gad[i] *= 0.5f;
+            }
+            grad_accum(&c->a->grad, ga);
+        }
+    }
+    if (c->b->requires_grad) {
+        SNEPPXTensor* gb = SNEPPX_tensor_copy(grad_output);
+        if (gb) {
+            float* gbd = (float*)gb->data;
+            for (size_t i = 0; i < gb->size; i++) {
+                if (ad[i] > bd[i]) gbd[i] = 0.0f;
+                else if (ad[i] == bd[i]) gbd[i] *= 0.5f;
+            }
+            grad_accum(&c->b->grad, gb);
+        }
+    }
+}
+SNEPPXVariable* SNEPPX_maximum(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
+    int rg = requires_grad(a, b);
+    if (!a || !b || !a->data || !b->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_maximum(a->data, b->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        MaxCtx* ctx = (MaxCtx*)SNEPPX_malloc(sizeof(MaxCtx), 64);
+        if (ctx) { ctx->a = a; ctx->b = b; var->backward_fn = backward_max; var->backward_ctx = ctx; var->free_ctx = free_ctx_MaxCtx; var->recompute_ctx = recompute_MaxCtx; }
+        SNEPPXVariable* pars[2]; pars[0] = a; pars[1] = b;
+        set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== rope forward/backward ===== */
+typedef struct { SNEPPXVariable* a; SNEPPXTensor* cos_table; } RopeCtx;
+static void free_ctx_RopeCtx(void* p) { SNEPPX_free(p, sizeof(RopeCtx)); }
+static void* recompute_RopeCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    RopeCtx* ctx = (RopeCtx*)SNEPPX_malloc(sizeof(RopeCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->cos_table = NULL; var->free_ctx = free_ctx_RopeCtx; }
+    return ctx;
+}
+static void backward_rope(void* ctx, SNEPPXTensor* grad_output) {
+    RopeCtx* c = (RopeCtx*)ctx;
+    if (!c->a->requires_grad || !c->cos_table) return;
+    SNEPPXTensor* inv_table = SNEPPX_tensor_copy(c->cos_table);
+    if (!inv_table) return;
+    float* td = (float*)inv_table->data;
+    for (size_t i = 1; i < inv_table->size; i += 2) td[i] = -td[i];
+    SNEPPXTensor* ga = SNEPPX_tensor_rope(grad_output, inv_table);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(inv_table);
+}
+SNEPPXVariable* SNEPPX_rope(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXTensor* cos_table) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data || !cos_table) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_rope(a->data, cos_table);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        RopeCtx* ctx = (RopeCtx*)SNEPPX_malloc(sizeof(RopeCtx), 64);
+        if (ctx) { ctx->a = a; ctx->cos_table = cos_table; var->backward_fn = backward_rope; var->backward_ctx = ctx; var->free_ctx = free_ctx_RopeCtx; var->recompute_ctx = recompute_RopeCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== var (variance along dim) forward/backward ===== */
+typedef struct { SNEPPXVariable* a; size_t dim; } VarCtx;
+static void free_ctx_VarCtx(void* p) { SNEPPX_free(p, sizeof(VarCtx)); }
+static void* recompute_VarCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    VarCtx* ctx = (VarCtx*)SNEPPX_malloc(sizeof(VarCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->dim = n > 0 ? params[0] : 0; var->free_ctx = free_ctx_VarCtx; }
+    return ctx;
+}
+static void backward_var(void* ctx, SNEPPXTensor* grad_output) {
+    VarCtx* c = (VarCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    size_t N = c->a->data->shape[c->dim];
+    float inv_n1 = 1.0f / (float)(N > 1 ? N - 1 : 1);
+    SNEPPXTensor* mean_t = SNEPPX_tensor_mean(c->a->data, c->dim);
+    if (!mean_t) return;
+    SNEPPXTensor* centered = SNEPPX_tensor_sub(c->a->data, mean_t);
+    SNEPPX_tensor_destroy(mean_t);
+    if (!centered) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(centered, grad_output);
+    if (!ga) { SNEPPX_tensor_destroy(centered); return; }
+    float* gad = (float*)ga->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] *= 2.0f * inv_n1;
+    grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(centered);
+}
+SNEPPXVariable* SNEPPX_var(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_var(a->data, dim);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        VarCtx* ctx = (VarCtx*)SNEPPX_malloc(sizeof(VarCtx), 64);
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_var; var->backward_ctx = ctx; var->free_ctx = free_ctx_VarCtx; var->recompute_ctx = recompute_VarCtx; var->params[0] = dim; var->param_count = 1; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== std (standard deviation along dim) forward/backward ===== */
+typedef struct { SNEPPXVariable* a; size_t dim; } StdCtx;
+static void free_ctx_StdCtx(void* p) { SNEPPX_free(p, sizeof(StdCtx)); }
+static void* recompute_StdCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    StdCtx* ctx = (StdCtx*)SNEPPX_malloc(sizeof(StdCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->dim = n > 0 ? params[0] : 0; var->free_ctx = free_ctx_StdCtx; }
+    return ctx;
+}
+static void backward_std(void* ctx, SNEPPXTensor* grad_output) {
+    StdCtx* c = (StdCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    size_t N = c->a->data->shape[c->dim];
+    float inv_n1 = 1.0f / (float)(N > 1 ? N - 1 : 1);
+    SNEPPXTensor* mean_t = SNEPPX_tensor_mean(c->a->data, c->dim);
+    if (!mean_t) return;
+    SNEPPXTensor* centered = SNEPPX_tensor_sub(c->a->data, mean_t);
+    SNEPPX_tensor_destroy(mean_t);
+    if (!centered) return;
+    SNEPPXTensor* std_t = SNEPPX_tensor_std(c->a->data, c->dim);
+    if (!std_t) { SNEPPX_tensor_destroy(centered); return; }
+    float* stdd = (float*)std_t->data;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(centered, grad_output);
+    if (!ga) { SNEPPX_tensor_destroy(centered); SNEPPX_tensor_destroy(std_t); return; }
+    float* gad = (float*)ga->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] *= inv_n1 / (stdd[i % std_t->size] + 1e-12f);
+    grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(centered);
+    SNEPPX_tensor_destroy(std_t);
+}
+SNEPPXVariable* SNEPPX_std(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_std(a->data, dim);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        StdCtx* ctx = (StdCtx*)SNEPPX_malloc(sizeof(StdCtx), 64);
+        if (ctx) { ctx->a = a; ctx->dim = dim; var->backward_fn = backward_std; var->backward_ctx = ctx; var->free_ctx = free_ctx_StdCtx; var->recompute_ctx = recompute_StdCtx; var->params[0] = dim; var->param_count = 1; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== sin forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } SinCtx;
+static void free_ctx_SinCtx(void* p) { SNEPPX_free(p, sizeof(SinCtx)); }
+static void* recompute_SinCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    SinCtx* ctx = (SinCtx*)SNEPPX_malloc(sizeof(SinCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_SinCtx; }
+    return ctx;
+}
+static void backward_sin(void* ctx, SNEPPXTensor* grad_output) {
+    SinCtx* c = (SinCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* cos_t = SNEPPX_tensor_cos(c->a->data);
+    if (!cos_t) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(cos_t, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(cos_t);
+}
+SNEPPXVariable* SNEPPX_sin(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_sin(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        SinCtx* ctx = (SinCtx*)SNEPPX_malloc(sizeof(SinCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sin; var->backward_ctx = ctx; var->free_ctx = free_ctx_SinCtx; var->recompute_ctx = recompute_SinCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== cos forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } CosCtx;
+static void free_ctx_CosCtx(void* p) { SNEPPX_free(p, sizeof(CosCtx)); }
+static void* recompute_CosCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    CosCtx* ctx = (CosCtx*)SNEPPX_malloc(sizeof(CosCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_CosCtx; }
+    return ctx;
+}
+static void backward_cos(void* ctx, SNEPPXTensor* grad_output) {
+    CosCtx* c = (CosCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* sin_t = SNEPPX_tensor_sin(c->a->data);
+    if (!sin_t) return;
+    float* sd = (float*)sin_t->data;
+    for (size_t i = 0; i < sin_t->size; i++) sd[i] = -sd[i];
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(sin_t, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(sin_t);
+}
+SNEPPXVariable* SNEPPX_cos(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_cos(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        CosCtx* ctx = (CosCtx*)SNEPPX_malloc(sizeof(CosCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_cos; var->backward_ctx = ctx; var->free_ctx = free_ctx_CosCtx; var->recompute_ctx = recompute_CosCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== tan forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } TanCtx;
+static void free_ctx_TanCtx(void* p) { SNEPPX_free(p, sizeof(TanCtx)); }
+static void* recompute_TanCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    TanCtx* ctx = (TanCtx*)SNEPPX_malloc(sizeof(TanCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_TanCtx; }
+    return ctx;
+}
+static void backward_tan(void* ctx, SNEPPXTensor* grad_output) {
+    TanCtx* c = (TanCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* cos_t = SNEPPX_tensor_cos(c->a->data);
+    if (!cos_t) return;
+    float* cd = (float*)cos_t->data;
+    for (size_t i = 0; i < cos_t->size; i++) cd[i] = 1.0f / (cd[i] * cd[i] + 1e-12f);
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(cos_t, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(cos_t);
+}
+SNEPPXVariable* SNEPPX_tan(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_tan(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        TanCtx* ctx = (TanCtx*)SNEPPX_malloc(sizeof(TanCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_tan; var->backward_ctx = ctx; var->free_ctx = free_ctx_TanCtx; var->recompute_ctx = recompute_TanCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== asin forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } AsinCtx;
+static void free_ctx_AsinCtx(void* p) { SNEPPX_free(p, sizeof(AsinCtx)); }
+static void* recompute_AsinCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    AsinCtx* ctx = (AsinCtx*)SNEPPX_malloc(sizeof(AsinCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_AsinCtx; }
+    return ctx;
+}
+static void backward_asin(void* ctx, SNEPPXTensor* grad_output) {
+    AsinCtx* c = (AsinCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+    if (!ga) return;
+    float* gad = (float*)ga->data;
+    float* ad = (float*)c->a->data->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] /= sqrtf(1.0f - ad[i] * ad[i] + 1e-12f);
+    grad_accum(&c->a->grad, ga);
+}
+SNEPPXVariable* SNEPPX_asin(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_asin(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        AsinCtx* ctx = (AsinCtx*)SNEPPX_malloc(sizeof(AsinCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_asin; var->backward_ctx = ctx; var->free_ctx = free_ctx_AsinCtx; var->recompute_ctx = recompute_AsinCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== acos forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } AcosCtx;
+static void free_ctx_AcosCtx(void* p) { SNEPPX_free(p, sizeof(AcosCtx)); }
+static void* recompute_AcosCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    AcosCtx* ctx = (AcosCtx*)SNEPPX_malloc(sizeof(AcosCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_AcosCtx; }
+    return ctx;
+}
+static void backward_acos(void* ctx, SNEPPXTensor* grad_output) {
+    AcosCtx* c = (AcosCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+    if (!ga) return;
+    float* gad = (float*)ga->data;
+    float* ad = (float*)c->a->data->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] /= -sqrtf(1.0f - ad[i] * ad[i] + 1e-12f);
+    grad_accum(&c->a->grad, ga);
+}
+SNEPPXVariable* SNEPPX_acos(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_acos(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        AcosCtx* ctx = (AcosCtx*)SNEPPX_malloc(sizeof(AcosCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_acos; var->backward_ctx = ctx; var->free_ctx = free_ctx_AcosCtx; var->recompute_ctx = recompute_AcosCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== atan forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } AtanCtx;
+static void free_ctx_AtanCtx(void* p) { SNEPPX_free(p, sizeof(AtanCtx)); }
+static void* recompute_AtanCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    AtanCtx* ctx = (AtanCtx*)SNEPPX_malloc(sizeof(AtanCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_AtanCtx; }
+    return ctx;
+}
+static void backward_atan(void* ctx, SNEPPXTensor* grad_output) {
+    AtanCtx* c = (AtanCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+    if (!ga) return;
+    float* gad = (float*)ga->data;
+    float* ad = (float*)c->a->data->data;
+    for (size_t i = 0; i < ga->size; i++) gad[i] /= 1.0f + ad[i] * ad[i];
+    grad_accum(&c->a->grad, ga);
+}
+SNEPPXVariable* SNEPPX_atan(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_atan(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        AtanCtx* ctx = (AtanCtx*)SNEPPX_malloc(sizeof(AtanCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_atan; var->backward_ctx = ctx; var->free_ctx = free_ctx_AtanCtx; var->recompute_ctx = recompute_AtanCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== sinh forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } SinhCtx;
+static void free_ctx_SinhCtx(void* p) { SNEPPX_free(p, sizeof(SinhCtx)); }
+static void* recompute_SinhCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    SinhCtx* ctx = (SinhCtx*)SNEPPX_malloc(sizeof(SinhCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_SinhCtx; }
+    return ctx;
+}
+static void backward_sinh(void* ctx, SNEPPXTensor* grad_output) {
+    SinhCtx* c = (SinhCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* cosh_t = SNEPPX_tensor_cosh(c->a->data);
+    if (!cosh_t) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(cosh_t, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(cosh_t);
+}
+SNEPPXVariable* SNEPPX_sinh(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_sinh(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        SinhCtx* ctx = (SinhCtx*)SNEPPX_malloc(sizeof(SinhCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_sinh; var->backward_ctx = ctx; var->free_ctx = free_ctx_SinhCtx; var->recompute_ctx = recompute_SinhCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== cosh forward/backward ===== */
+typedef struct { SNEPPXVariable* a; } CoshCtx;
+static void free_ctx_CoshCtx(void* p) { SNEPPX_free(p, sizeof(CoshCtx)); }
+static void* recompute_CoshCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    CoshCtx* ctx = (CoshCtx*)SNEPPX_malloc(sizeof(CoshCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; var->free_ctx = free_ctx_CoshCtx; }
+    return ctx;
+}
+static void backward_cosh(void* ctx, SNEPPXTensor* grad_output) {
+    CoshCtx* c = (CoshCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* sinh_t = SNEPPX_tensor_sinh(c->a->data);
+    if (!sinh_t) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_mul(sinh_t, grad_output);
+    if (ga) grad_accum(&c->a->grad, ga);
+    SNEPPX_tensor_destroy(sinh_t);
+}
+SNEPPXVariable* SNEPPX_cosh(SNEPPXTape* tape, SNEPPXVariable* a) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_cosh(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        CoshCtx* ctx = (CoshCtx*)SNEPPX_malloc(sizeof(CoshCtx), 64);
+        if (ctx) { ctx->a = a; var->backward_fn = backward_cosh; var->backward_ctx = ctx; var->free_ctx = free_ctx_CoshCtx; var->recompute_ctx = recompute_CoshCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== sign (non-differentiable, zero gradient) ===== */
+SNEPPXVariable* SNEPPX_sign(SNEPPXTape* tape, SNEPPXVariable* a) {
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_sign(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, 0);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (tape) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== floor (non-differentiable, zero gradient) ===== */
+SNEPPXVariable* SNEPPX_floor(SNEPPXTape* tape, SNEPPXVariable* a) {
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_floor(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, 0);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (tape) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== ceil (non-differentiable, zero gradient) ===== */
+SNEPPXVariable* SNEPPX_ceil(SNEPPXTape* tape, SNEPPXVariable* a) {
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_ceil(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, 0);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (tape) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== round (non-differentiable, zero gradient) ===== */
+SNEPPXVariable* SNEPPX_round(SNEPPXTape* tape, SNEPPXVariable* a) {
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_round(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, 0);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (tape) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== trunc (non-differentiable, zero gradient) ===== */
+SNEPPXVariable* SNEPPX_trunc(SNEPPXTape* tape, SNEPPXVariable* a) {
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_trunc(a->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, 0);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (tape) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== nll_loss forward/backward ===== */
+typedef struct { SNEPPXVariable* pred; SNEPPXVariable* target; } NllLossCtx;
+static void free_ctx_NllLossCtx(void* p) { SNEPPX_free(p, sizeof(NllLossCtx)); }
+static void* recompute_NllLossCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    NllLossCtx* ctx = (NllLossCtx*)SNEPPX_malloc(sizeof(NllLossCtx), 64);
+    if (ctx) { ctx->pred = var->parents[0]; ctx->target = var->parents[1]; var->free_ctx = free_ctx_NllLossCtx; }
+    return ctx;
+}
+static void backward_nll_loss(void* ctx, SNEPPXTensor* grad_output) {
+    NllLossCtx* c = (NllLossCtx*)ctx;
+    if (!c->pred->requires_grad) return;
+    size_t N = c->pred->data->shape[0];
+    size_t C = c->pred->data->shape[1];
+    float inv_N = -1.0f / (float)N;
+    float scale = grad_output ? ((float*)grad_output->data)[0] * inv_N : inv_N;
+    int* tidx = (int*)c->target->data->data;
+    SNEPPXTensor* g = SNEPPX_tensor_zeros(c->pred->data->shape, c->pred->data->ndim, SNEPPX_FLOAT32);
+    if (!g) return;
+    float* gd = (float*)g->data;
+    for (size_t i = 0; i < N; i++) {
+        int cl = tidx[i];
+        if (cl >= 0 && (size_t)cl < C) gd[i * C + cl] = scale;
+    }
+    grad_accum(&c->pred->grad, g);
+}
+SNEPPXVariable* SNEPPX_nll_loss(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
+    int rg = requires_grad1(pred);
+    if (!pred || !target || !pred->data || !target->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_nll_loss(pred->data, target->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        NllLossCtx* ctx = (NllLossCtx*)SNEPPX_malloc(sizeof(NllLossCtx), 64);
+        if (ctx) { ctx->pred = pred; ctx->target = target; var->backward_fn = backward_nll_loss; var->backward_ctx = ctx; var->free_ctx = free_ctx_NllLossCtx; var->recompute_ctx = recompute_NllLossCtx; }
+        SNEPPXVariable* pars[2]; pars[0] = pred; pars[1] = target;
+        set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== bce_loss forward/backward ===== */
+typedef struct { SNEPPXVariable* pred; SNEPPXVariable* target; } BceLossCtx;
+static void free_ctx_BceLossCtx(void* p) { SNEPPX_free(p, sizeof(BceLossCtx)); }
+static void* recompute_BceLossCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    BceLossCtx* ctx = (BceLossCtx*)SNEPPX_malloc(sizeof(BceLossCtx), 64);
+    if (ctx) { ctx->pred = var->parents[0]; ctx->target = var->parents[1]; var->free_ctx = free_ctx_BceLossCtx; }
+    return ctx;
+}
+static void backward_bce_loss(void* ctx, SNEPPXTensor* grad_output) {
+    BceLossCtx* c = (BceLossCtx*)ctx;
+    if (!c->pred->requires_grad) return;
+    float* pd = (float*)c->pred->data->data;
+    float* td = (float*)c->target->data->data;
+    float n = (float)c->pred->data->size;
+    float scale = grad_output ? ((float*)grad_output->data)[0] / n : 1.0f / n;
+    SNEPPXTensor* g = SNEPPX_tensor_zeros(c->pred->data->shape, c->pred->data->ndim, SNEPPX_FLOAT32);
+    if (!g) return;
+    float* gd = (float*)g->data;
+    for (size_t i = 0; i < g->size; i++)
+        gd[i] = scale * (pd[i] - td[i]);
+    grad_accum(&c->pred->grad, g);
+}
+SNEPPXVariable* SNEPPX_bce_loss(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
+    int rg = requires_grad1(pred);
+    if (!pred || !target || !pred->data || !target->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_binary_cross_entropy(pred->data, target->data);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        BceLossCtx* ctx = (BceLossCtx*)SNEPPX_malloc(sizeof(BceLossCtx), 64);
+        if (ctx) { ctx->pred = pred; ctx->target = target; var->backward_fn = backward_bce_loss; var->backward_ctx = ctx; var->free_ctx = free_ctx_BceLossCtx; var->recompute_ctx = recompute_BceLossCtx; }
+        SNEPPXVariable* pars[2]; pars[0] = pred; pars[1] = target;
+        set_parents(var, pars, 2);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
+/* ===== batch_norm forward/backward ===== */
+typedef struct { SNEPPXVariable *a, *gamma, *beta, *running_mean, *running_var; float eps; } BatchNormCtx;
+static void free_ctx_BatchNormCtx(void* p) { SNEPPX_free(p, sizeof(BatchNormCtx)); }
+static void* recompute_BatchNormCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    BatchNormCtx* ctx = (BatchNormCtx*)SNEPPX_malloc(sizeof(BatchNormCtx), 64);
+    if (ctx) {
+        ctx->a = var->parents[0]; ctx->gamma = var->parents[1]; ctx->beta = var->parents[2];
+        ctx->running_mean = NULL; ctx->running_var = NULL;
+        ctx->eps = n > 0 ? *(float*)&params[0] : 1e-5f;
+        var->free_ctx = free_ctx_BatchNormCtx;
+    }
+    return ctx;
+}
+static void backward_batch_norm(void* ctx, SNEPPXTensor* grad_output) {
+    BatchNormCtx* c = (BatchNormCtx*)ctx;
+    int need_a = c->a->requires_grad;
+    int need_gamma = c->gamma && c->gamma->requires_grad;
+    int need_beta = c->beta && c->beta->requires_grad;
+    if (!need_a && !need_gamma && !need_beta) return;
+    float* xd = (float*)c->a->data->data;
+    float* go = (float*)grad_output->data;
+    float* gd = c->gamma ? (float*)c->gamma->data->data : NULL;
+    float eps = c->eps;
+    size_t N = c->a->data->shape[0];
+    size_t C = c->a->data->shape[1];
+    size_t H = c->a->data->ndim > 2 ? c->a->data->shape[2] : 1;
+    size_t W = c->a->data->ndim > 3 ? c->a->data->shape[3] : 1;
+    size_t spatial = H * W;
+    size_t per_chn = N * spatial;
+    float inv_N = 1.0f / (float)(N * spatial);
+
+    if (need_a) {
+        SNEPPXTensor* gx = SNEPPX_tensor_zeros(c->a->data->shape, c->a->data->ndim, SNEPPX_FLOAT32);
+        if (gx) {
+            float* gxd = (float*)gx->data;
+                for (size_t ch = 0; ch < C; ch++) {
+                    double sum_x = 0.0, sum_x2 = 0.0;
+                    for (size_t i = 0; i < per_chn; i++) {
+                        float v = xd[ch * per_chn + i];
+                        sum_x += v; sum_x2 += (double)v * v;
+                    }
+                    double mean = sum_x * (double)inv_N;
+                    double var = sum_x2 * (double)inv_N - mean * mean;
+                    double inv_std = 1.0 / sqrt(var + (double)eps);
+                    double gsum = 0.0, gxsum = 0.0, gamma_val = gd ? (double)gd[ch] : 1.0;
+                    for (size_t i = 0; i < per_chn; i++) {
+                        size_t idx = ch * per_chn + i;
+                        double x_hat = (xd[idx] - mean) * inv_std;
+                        gsum += (double)go[idx] * gamma_val;
+                        gxsum += (double)go[idx] * gamma_val * x_hat;
+                    }
+                    for (size_t i = 0; i < per_chn; i++) {
+                        size_t idx = ch * per_chn + i;
+                        double x_hat = (xd[idx] - mean) * inv_std;
+                        gxd[idx] = (float)(gamma_val * inv_std * (go[idx] - (gsum * inv_N) - x_hat * (gxsum * inv_N)));
+                    }
+            }
+            grad_accum(&c->a->grad, gx);
+        }
+    }
+    if (need_gamma) {
+        SNEPPXTensor* gg = SNEPPX_tensor_zeros(c->gamma->data->shape, c->gamma->data->ndim, SNEPPX_FLOAT32);
+        if (gg) {
+            float* ggd = (float*)gg->data;
+            for (size_t ch = 0; ch < C; ch++) {
+                double sum_x = 0.0, sum_x2 = 0.0;
+                for (size_t i = 0; i < per_chn; i++) {
+                    float v = xd[ch * per_chn + i];
+                    sum_x += v; sum_x2 += (double)v * v;
+                }
+                double mean = sum_x * (double)inv_N;
+                double var = sum_x2 * (double)inv_N - mean * mean;
+                double inv_std = 1.0 / sqrt(var + (double)eps);
+                double accum = 0.0;
+                for (size_t i = 0; i < per_chn; i++) {
+                    size_t idx = ch * per_chn + i;
+                    double x_hat = (xd[idx] - mean) * inv_std;
+                    accum += (double)go[idx] * x_hat;
+                }
+                ggd[ch] = (float)accum;
+            }
+            grad_accum(&c->gamma->grad, gg);
+        }
+    }
+    if (need_beta) {
+        SNEPPXTensor* gb = SNEPPX_tensor_zeros(c->beta->data->shape, c->beta->data->ndim, SNEPPX_FLOAT32);
+        if (gb) {
+            float* gbd = (float*)gb->data;
+            for (size_t ch = 0; ch < C; ch++) {
+                double accum = 0.0;
+                for (size_t i = 0; i < per_chn; i++)
+                    accum += (double)go[ch * per_chn + i];
+                gbd[ch] = (float)accum;
+            }
+            grad_accum(&c->beta->grad, gb);
+        }
+    }
+}
+SNEPPXVariable* SNEPPX_batch_norm(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* gamma, SNEPPXVariable* beta, SNEPPXVariable* running_mean, SNEPPXVariable* running_var, float eps) {
+    int rg = requires_grad(a, gamma) || (beta && beta->requires_grad);
+    if (!a || !a->data || !gamma || !gamma->data || !beta || !beta->data || !running_mean || !running_mean->data || !running_var || !running_var->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_batch_norm(a->data, gamma->data, beta->data, running_mean->data, running_var->data, eps);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        BatchNormCtx* ctx = (BatchNormCtx*)SNEPPX_malloc(sizeof(BatchNormCtx), 64);
+        if (ctx) {
+            ctx->a = a; ctx->gamma = gamma; ctx->beta = beta;
+            ctx->running_mean = running_mean; ctx->running_var = running_var; ctx->eps = eps;
+            var->backward_fn = backward_batch_norm; var->backward_ctx = ctx;
+            var->free_ctx = free_ctx_BatchNormCtx; var->recompute_ctx = recompute_BatchNormCtx;
+            *(float*)&var->params[0] = eps; var->param_count = 1;
+        }
+        SNEPPXVariable* pars[3]; pars[0] = a; pars[1] = gamma; pars[2] = beta;
+        set_parents(var, pars, 3);
     }
     if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
     return var;

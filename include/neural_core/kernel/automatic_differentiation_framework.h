@@ -110,4 +110,19 @@ SNEPPXVariable* SNEPPX_round(SNEPPXTape* tape, SNEPPXVariable* a);
 SNEPPXVariable* SNEPPX_trunc(SNEPPXTape* tape, SNEPPXVariable* a);
 SNEPPXVariable* SNEPPX_batch_norm(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* gamma, SNEPPXVariable* beta, SNEPPXVariable* running_mean, SNEPPXVariable* running_var, float eps);
 
+/* ---------- comparison ops (zero gradient) ---------- */
+SNEPPXVariable* SNEPPX_eq(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+SNEPPXVariable* SNEPPX_ne(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+SNEPPXVariable* SNEPPX_lt(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+SNEPPXVariable* SNEPPX_le(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+SNEPPXVariable* SNEPPX_gt(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+SNEPPXVariable* SNEPPX_ge(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b);
+
+/* ---------- convolution / scan ---------- */
+SNEPPXVariable* SNEPPX_conv1d(SNEPPXTape* tape, SNEPPXVariable* input, SNEPPXVariable* kernel, size_t stride, size_t padding);
+
+/* ---------- cumulative ops ---------- */
+SNEPPXVariable* SNEPPX_cumsum(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim);
+SNEPPXVariable* SNEPPX_cumprod(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim);
+
 #endif
