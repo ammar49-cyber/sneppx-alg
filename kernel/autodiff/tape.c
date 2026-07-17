@@ -178,6 +178,12 @@ float SNEPPX_tape_global_norm(SNEPPXTape* tape) {
     return sqrtf(sum_sq);
 }
 
+/* ---------- no_grad context ---------- */
+static int g_no_grad_depth = 0;
+void SNEPPX_no_grad_enter(void) { g_no_grad_depth++; }
+void SNEPPX_no_grad_exit(void) { if (g_no_grad_depth > 0) g_no_grad_depth--; }
+int  SNEPPX_no_grad_is_active(void) { return g_no_grad_depth > 0; }
+
 void SNEPPX_tape_clip_grad_norm(SNEPPXTape* tape, float max_norm) {
     if (!tape || max_norm <= 0.0f) return;
     float total_norm = SNEPPX_tape_global_norm(tape);
