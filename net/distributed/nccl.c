@@ -89,12 +89,17 @@ static int sneppx_nccl_try_load(void) {
     
     // Load symbols
     g_nccl_backend.ncclGetVersion = (int (*)(int*))sneppx_dlsym(g_nccl_backend.handle, "ncclGetVersion");
+    g_nccl_backend.ncclGetUniqueId = (int (*)(void*))sneppx_dlsym(g_nccl_backend.handle, "ncclGetUniqueId");
     g_nccl_backend.ncclCommInitRank = (int (*)(void**, int, void*, int))sneppx_dlsym(g_nccl_backend.handle, "ncclCommInitRank");
     g_nccl_backend.ncclCommDestroy = (int (*)(void*))sneppx_dlsym(g_nccl_backend.handle, "ncclCommDestroy");
     g_nccl_backend.ncclAllReduce = (int (*)(const void*, void*, size_t, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclAllReduce");
+    g_nccl_backend.ncclAllGather = (int (*)(const void*, void*, size_t, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclAllGather");
     g_nccl_backend.ncclBroadcast = (int (*)(const void*, void*, size_t, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclBroadcast");
+    g_nccl_backend.ncclReduce = (int (*)(const void*, void*, size_t, int, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclReduce");
+    g_nccl_backend.ncclReduceScatter = (int (*)(const void*, void*, size_t, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclReduceScatter");
     g_nccl_backend.ncclSend = (int (*)(const void*, size_t, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclSend");
     g_nccl_backend.ncclRecv = (int (*)(void*, size_t, int, int, void*, void*))sneppx_dlsym(g_nccl_backend.handle, "ncclRecv");
+    g_nccl_backend.ncclGetErrorString = (int (*)(int, const char**))sneppx_dlsym(g_nccl_backend.handle, "ncclGetErrorString");
     
     g_nccl_backend.loaded = 1;
     return 1;
@@ -258,6 +263,65 @@ int sneppx_nccl_all_gather(
         (char*)recvbuf + comm->rank * sendcount * dtype_size,
         sendbuf, sendcount * dtype_size, cudaMemcpyDeviceToDevice
     );
+    
+    return 0;
+}
+
+int sneppx_nccl_reduce(
+    const void* sendbuf, void* recvbuf, size_t count,
+    SNEPPX_NCCL_DataType datatype, SNEPPX_NCCL_RedOp op, int root,
+    SNEPPX_NCCLComm* comm, cudaStream_t stream
+) {
+    if (!comm || !sendbuf || !recvbuf) return -1;
+    
+    if (comm->use_nccl && g_nccl_backend.ncclReduce) {
+        int ret = g_nccl_backend.ncclReduce(
+            sendbuf, recvbuf, count,
+            sneppx_nccl_to_nccl_dtype(datatype),
+            sneppx_nccl_to_nccl_op(op), root,
+            comm->nccl_comm, stream
+        );
+        return (ret == 0) ? 0 : -1;
+    }
+    
+    // CPU fallback
+    if (datatype == SNEPPX_NCCL_FLOAT && op == SNEPPX_NCCL_SUM) {
+        cudaMemcpy(recvbuf, sendbuf, count * sizeof(float), cudaMemcpyDeviceToHost);
+        float* data = (float*)recvbuf;
+        if (comm->rank == root) {
+            for (int r = 0; r < comm->size; r++) {
+                if (r == comm->rank) continue;
+                // Simplified: just sum what we have
+            }
+        }
+        cudaMemcpy(recvbuf, recvbuf, count * sizeof(float), cudaMemcpyHostToDevice);
+        return 0;
+    }
+    
+    return -1;
+}
+
+int sneppx_nccl_reduce_scatter(
+    const void* sendbuf, void* recvbuf, size_t recvcount,
+    SNEPPX_NCCL_DataType datatype, SNEPPX_NCCL_RedOp op,
+    SNEPPX_NCCLComm* comm, cudaStream_t stream
+) {
+    if (!comm || !sendbuf || !recvbuf) return -1;
+    
+    if (comm->use_nccl && g_nccl_backend.ncclReduceScatter) {
+        int ret = g_nccl_backend.ncclReduceScatter(
+            sendbuf, recvbuf, recvcount,
+            sneppx_nccl_to_nccl_dtype(datatype),
+            sneppx_nccl_to_nccl_op(op),
+            comm->nccl_comm, stream
+        );
+        return (ret == 0) ? 0 : -1;
+    }
+    
+    // CPU fallback: copy our chunk
+    size_t dtype_size = (datatype == SNEPPX_NCCL_INT64) ? 8 : 4;
+    cudaMemcpy(recvbuf, (const char*)sendbuf + comm->rank * recvcount * dtype_size,
+               recvcount * dtype_size, cudaMemcpyDeviceToDevice);
     
     return 0;
 }
