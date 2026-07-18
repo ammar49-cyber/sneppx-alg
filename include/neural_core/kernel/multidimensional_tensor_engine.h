@@ -51,7 +51,7 @@ SNEPPXStorage* SNEPPX_storage_create(size_t num_bytes);
 void         SNEPPX_storage_retain(SNEPPXStorage* s);
 void         SNEPPX_storage_release(SNEPPXStorage* s);
 
-typedef struct {
+typedef struct SNEPPXTensor {
     SNEPPXStorage* storage;     /* ref-counted storage (NULL for unmanaged) */
     void* data;               /* convenience pointer: storage->data + offset * item_size */
     size_t offset;            /* element offset into storage->data */

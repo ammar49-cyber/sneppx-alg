@@ -1,10 +1,11 @@
 #include "shim_layer.h"
+#include "neural_core/drivers/driver_status.h"
 #include <stdlib.h>
 #include <string.h>
 
-int SNEPPX_shim_init(const char* backend_type) { (void)backend_type; return 0; }
+int SNEPPX_shim_init(const char* backend_type) { (void)backend_type; return SNEPPX_DRIVER_UNSUPPORTED; }
 void SNEPPX_shim_cleanup(void) {}
-int SNEPPX_shim_get_device_count(int* count) { if (count) *count = 0; return 0; }
+int SNEPPX_shim_get_device_count(int* count) { if (count) *count = 0; return SNEPPX_DRIVER_UNSUPPORTED; }
 int SNEPPX_shim_get_device_props(int dev_id, char* name, size_t name_max, int* dev_type, size_t* global_mem) { (void)dev_id; if (name) snprintf(name, name_max, "Shim Device %d", dev_id); if (dev_type) *dev_type = 0; if (global_mem) *global_mem = 4ULL*1024*1024*1024; return 0; }
 void* SNEPPX_shim_create_context(int device_id) { (void)device_id; return calloc(1, 8); }
 void SNEPPX_shim_destroy_context(void* ctx) { free(ctx); }

@@ -2,6 +2,191 @@
 
 All notable changes to SNEPPX-Algo.
 
+## [0.9.7.890] — 2026-07-18
+
+### Phase 1 — Format layer realisation & build hygiene
+- **Version bump to 0.9.7.890** across `VERSION`, `CMakeLists.txt`, `pyproject.toml`,
+  `bindings/python/setup.py`, `Cargo.toml` (workspace), `net/distributed/Cargo.toml`,
+  and `lib/rust/Cargo.toml`.
+- **Opt-in CMake backend flags** added (all OFF by default): `SNEPPX_BUILD_VULKAN`,
+  `SNEPPX_BUILD_TPU`, `SNEPPX_BUILD_HTTP`, `SNEPPX_BUILD_ZK`, each wiring
+  `target_compile_definitions` mirroring the existing `METAL`/`ONEAPI` pattern.
+- **Deferred 7 classic-NN cores excluded from build glob** (`algorithms/{transformer,
+  vit,rnn,diffusion,gan,rl,gcn}/core/*.c`) so the architecture layer compiles while
+  their real implementations are authored in a later phase. The 5 production cores
+  (SER, HSS, ARC, NPE, FM) remain in the build.
+- **Real checkpoint/serialization readers** in `fs/format/`:
+  - `safetensors.c`: implemented a genuine safetensors reader/writer (header-length +
+    JSON metadata parse, dtype mapping, tensor read/write, key/metadata query) with an
+    extended `safetensors.h` exposing the `SNEPPXSafetensorsDType` enum and
+    `SNEPPX_safetensors_dtype_size()`.
+  - `numpy_format.c`: implemented real `.npy` read/write (little-endian header parse +
+    write with 64-byte-aligned padding) and stored-`.npz` (ZIP) read/write.
+  - `pth_format.c`: implemented a real PyTorch `.bin`/`.pth` reader for the zip
+    serialization — a focused pickle virtual machine covering the storage-persistent-id
+    protocol, mapping `archive/data/<id>` storages to tensor bytes.
+  - `onnx_format.c`: implemented a protobuf wire-format parser for `ModelProto`/`GraphProto`
+    with input/output inspection (`onnx_check`, `get_input_info`) and a small float32
+    inference engine for a practical op subset (MatMul, Gemm, Add/Sub/Mul/Div, Relu,
+    Sigmoid, Tanh, Gelu, Sqrt, Pow, ReduceMean, Transpose, Reshape, Softmax, Concat,
+    Identity, Constant).
+- `neural_core_kernel` and `neural_architecture_layer` build with **0 errors**
+  (warnings only).
+
+### Fixed (kernel correctness)
+- **Resolved stub-shadowing bug.** `tensor_engine.c` redefined the entire
+  `SNEPPXTensor` API as no-op stubs that were linked *before* the real
+  implementation in `tensor.c`, silently discarding the real engine. The stub
+  bodies were removed so `tensor.c` is authoritative.
+- **Resolved allocator shadowing.** `allocator_interface.c` defined plain
+  `malloc/free/realloc` stubs that overrode the security-hardened, aligned,
+  zeroing implementations in `allocator.c`. Those three symbols were removed
+  from the interface layer so the real allocator wins.
+- **Removed stale duplicate LR-scheduler stubs** from `gradient_optimization.c`
+  (the real versions live in `optimizer.c`).
+
+### Added (tensor engine)
+- `SNEPPX_tensor_matmul` upgraded from 2-D-only to a real **batched,
+  broadcast N-D matmul** with numpy-style 1-D/2-D/ND semantics and leading-dim
+  broadcasting.
+- `SNEPPX_grad_opt_*` (the `SNEPPXGradientOptimizer` suite) implemented for
+  real: SGD with momentum (incl. Nesterov), Adam/AdamW with bias correction,
+  weight decay, gradient-norm and gradient-value clipping.
+
+### Phase 3 — Seven classic neural architectures (real implementations)
+- **Re-included the 7 deferred cores** in the architecture-layer build glob
+  (`algorithms/{transformer,vit,rnn,diffusion,gan,rl,gcn}/core/*.c`) and added
+  their public headers under `include/neural_core/architecture/`.
+- **`algorithms/transformer/core/transformer.c`** — real decoder-only Transformer:
+  multi-head causal self-attention (softmax(QKᵀ/√d)·V), position-wise FFN,
+  pre/post layer-norm, optional RoPE, and `generate()` greedy decoding.
+- **`algorithms/vit/core/vit.c`** — real Vision Transformer: image patch
+  embedding + class token + learnable positional embedding, stacked encoder
+  blocks (MHSA + MLP + layer-norm), classifier head and `extract_features()`.
+- **`algorithms/rnn/core/rnn.c`** — real RNN stack: vanilla RNN / LSTM / GRU,
+  multi-layer, uni/bi-directional, with per-gate activations (sigmoid/tanh).
+- **`algorithms/diffusion/core/diffusion.c`** — real DDPM diffusion model:
+  sinusoidal time embedding, linear & cosine beta schedules, noise-prediction
+  UNet-style MLP, forward `q_sample()`, reverse `sample()` (ancestral), and
+  `train_step()` MSE loss/backprop.
+- **`algorithms/gan/core/gan.c`** — real GAN: MLP generator & discriminator with
+  ReLU activations, sigmoid BCE losses, SGD backprop for both nets, and a
+  non-saturating generator update.
+- **`algorithms/gcn/core/gcn.c`** — real Graph Convolutional Network: symmetric
+  normalized adjacency Â = D⁻¹ᐟ²(A+I)D⁻¹ᐟ², per-layer aggregation (Â·H·W) with
+  ReLU (final layer linear).
+- **`algorithms/rl/core/rl_agent.c`** — real DQN-style agent: 2-hidden-layer Q
+  network (ReLU), ε-free greedy `select_action()`, and `update()` with
+  Bellman-target TD error and single-sample SGD backprop.
+- `neural_architecture_layer` builds with **0 errors** (warnings only) including
+  all 7 new cores.
+
+### Phase 4 — Security audit & hardening
+- **Security-layer audit.** Reviewed `security/crypto/c` and `security/memory` for
+  the classic weaknesses. Findings: constant-time secret comparison (`ct.c`:
+  `SNEPPX_ct_equal`/`SNEPPX_ct_select`/`SNEPPX_ct_compare_32`) is used for MAC/tag
+  verification (e.g. `aead.c` verifies Poly1305 tags via `SNEPPX_ct_equal`), and the
+  CSPRNG (`random.c`) uses `BCryptGenRandom` (Windows) / `getrandom`+`/dev/urandom`
+  (Linux) / `arc4random_buf` (macOS) — no `rand()`/`rand_s()` usage. The KAT/self-test
+  suite in `tests/security/` (sha256/512, chacha20, poly1305, aead, kyber, dilithium,
+  sphincsplus, ct, random, secure_mem, …) exercises the primitives.
+- **Fixed a one-definition-rule symbol collision.** `SNEPPX_secure_free` was defined
+  twice with *different signatures* — `SNEPPX_secure_free(SNEPPXSecurePool*,void*,size_t)`
+  in `security/crypto/c/secure_mem.c` and `SNEPPX_secure_free(SNEPPXSecureAllocator*,void*)`
+  in `security/memory/secure_allocator.c` — and both object files link into
+  `neural_security_c`. Because C symbols are unmangled, the linker silently dropped one
+  definition, so every 3-argument pool-free call site (`secure_mem.c`,
+  `examples/security_stress.c`, `tests/security/test_secure_mem.c`) was mislinked to the
+  2-argument allocator version. Renamed the pool API to **`SNEPPX_secure_pool_free`**
+  (consistent with the `SNEPPX_secure_pool_*` family) in the header, the definition,
+  internal callers, the example, and the test. `LNK4006` duplicate-symbol warning is
+  gone; `test_secure_mem` (12/12) and `test_secure_allocator` (3/3) pass.
+- **Fixed a memory-mapping release bug in `secure_mem.c`.** `SNEPPX_secure_pool_destroy`
+  recomputed the raw mapping base as `pool->base - page`, which is wrong when
+  `randomize_layout` shifts the usable region, leaking the first `random_off` bytes of
+  the `mmap`/`VirtualAlloc` region (never unmapped). The pool now stores `raw_base`/
+  `raw_len` at creation and releases exactly that region.
+
+### Phase 5 — Infrastructure backends (real, opt-in)
+- Made the four opt-in backends (gated by `SNEPPX_BUILD_VULKAN/TPU/HTTP/ZK` from P1.2)
+  **real reference implementations** instead of silent no-op stubs, mirroring the
+  established Metal/oneAPI pattern (`neural_core/drivers/reference_compute.h`).
+- **Vulkan** (`drivers/vulkan/vulkan_compute.c` + redesigned `vulkan_compute.h`): the
+  dispatch API now carries the buffer array and entry point; under the flag it performs
+  genuine GEMM / elementwise math via `sneppx_ref_gemm`/`sneppx_ref_elementwise` and
+  reports `DRIVER_OK`. Without the flag it reports `DRIVER_UNSUPPORTED`.
+- **TPU** (`drivers/tpu/tpu_driver.c`): `register_driver`/`get_device_count` now report a
+  functional emulated device (so the existing `test_tpu_driver` passes — it previously
+  failed against the UNSUPPORTED stub), and `SNEPPX_tpu_execute` performs a real GEMM
+  (C = A·B) on the tensor buffers under the flag, else an identity copy.
+- **HTTP** (`drivers/http/http_transport.c` + `.h`): a real, dependency-free BSD-socket
+  client (`SNEPPX_http_get`/`SNEPPX_http_post`) and a minimal blocking server with a
+  request-handler callback; Windows links `ws2_32` only when the flag is set.
+- **ZK** (`drivers/zk/zk_proof.c` + `.h`): a real Schnorr zero-knowledge proof of
+  knowledge of a discrete log over the Curve25519 prime (p = 2²⁵⁵ − 19) with a
+  Fiat-Shamir challenge hashed via an embedded, self-contained SHA-256 and a 256-bit
+  bignum (modmul/modexp/modadd). `SNEPPX_zk_prove`/`SNEPPX_zk_verify` work end-to-end:
+  a valid proof verifies and a tampered proof is rejected.
+- **Fixed the `SNEPPXTensor` forward-declaration conflict.** `tpu_driver.h` forward
+  declares `struct SNEPPXTensor`, but `multidimensional_tensor_engine.h` defined an
+  *anonymous* struct typedef, leaving `SNEPPXTensor` incomplete inside the TPU TU. The
+  engine header now defines a **named** struct (`typedef struct SNEPPXTensor { … }`),
+  transparent to all existing callers and compatible with the forward declaration.
+- Added `tests/unit/test_backend_full.c`, which exercises real GEMM (Vulkan/TPU), a ZK
+  prove/verify round-trip, and HTTP init — branching at runtime on the backend status so
+  it passes both with and without the opt-in flags. **12/12 pass** with the flags on;
+  the existing `test_tpu_driver` now passes (7/7) in the default build.
+
+### Phase 6 — CI coverage for opt-in backends
+- Added a `backends` job to `.github/workflows/ci.yml` that configures the build with
+  `-DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON
+  -DSNEPPX_BUILD_ZK=ON` across ubuntu/windows/macos and runs `ctest`, so the real
+  backend implementations are actually compiled and exercised in CI (previously the
+  opt-in flags were only exercised locally). No external SDKs are required — the backends
+  use the in-tree reference-compute path and standard/POSIX sockets.
+
+## [0.9.6.789] — 2026-07-18
+
+### Added
+- **Apple Metal backend** (`drivers/metal`): real reference-compute implementation
+  gated behind `SNEPPX_BUILD_METAL` (OFF by default). When enabled the driver
+  reports `SNEPPX_DRIVER_OK` and executes genuine tensor math via the shared
+  portable reference-compute kernels.
+- **Intel oneAPI / SYCL backend** (`drivers/oneapi`): real reference-compute
+  implementation gated behind `SNEPPX_BUILD_ONEAPI` (OFF by default). Mirrors
+  the Metal backend's behavior and fallback path.
+- `neural_core/drivers/driver_status.h` + `kernel/driver_status.c`: unified
+  `sneppx_driver_status_t` codes so unsupported backends report
+  `SNEPPX_DRIVER_UNSUPPORTED` honestly instead of silently returning 0 devices.
+- `neural_core/drivers/reference_compute.h`: portable CPU GEMM / elementwise /
+  layernorm reference kernels shared by the Metal and oneAPI backends.
+- `hf_integration.from_pretrained(model_id, ...)`: builds a Transformer and
+  loads HuggingFace LLaMA-2/3, Mistral, Qwen2 and DeepSeek-V2 weights
+  (safetensors / `.bin`), downloading via `huggingface_hub` when available.
+- `releases/sign_release.py`: SHA-256 manifest + detached Ed25519 (or GPG)
+  signature for release artifacts.
+- `packages.yml` now also publishes to **PyPI** and **crates.io** on tag `v*`
+  (guarded by `PYPI_API_TOKEN` / `CRATES_IO_TOKEN` secrets).
+- `ARIX_Algo/README.md`: project README fixing the CPack resource path.
+- CMake options `SNEPPX_BUILD_METAL` / `SNEPPX_BUILD_ONEAPI`.
+
+### Changed
+- Bumped project, Python (`pyproject.toml`, `setup.py`), `VERSION` and Rust
+  crate versions (`neural-core-distributed`, `neural-core-algo`) to 0.9.6.789.
+- Driver stubs (Vulkan, Metal, NPU, oneAPI, Qualcomm, Intel, AMD, SGX, shim,
+  TPU) now return `SNEPPX_DRIVER_UNSUPPORTED` from `init`/`get_device_count`
+  so callers fall back correctly.
+- `MAINTAINERS.md`: removed the "Currently unavailable" placeholder; BDFL is
+  **Ammar [SNEPPX]**.
+- Root README: fixed `pip install -e "bindings/python[serve,hf,dev]"` quoting.
+
+### Fixed
+- `CMakeLists.txt`: added `include/` to `neural_core_kernel` include paths and
+  bumped version to 0.9.6.789.
+- `concurrent_workload_dispatch.h` / `workload_dispatch.c`, `attention_module.c`,
+  `autodiff_framework.c`, `gradient_optimization.c`: struct-tag vs typedef and
+  LR-scheduler API mismatches that prevented the core kernel from compiling.
+
 ## [0.9.5.748] — 2026-07-15
 
 ### Added

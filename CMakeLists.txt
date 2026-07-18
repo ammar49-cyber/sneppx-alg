@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cognitive_processing_system VERSION 0.9.5.748 LANGUAGES C CXX ASM_MASM)
+project(cognitive_processing_system VERSION 0.9.7.890 LANGUAGES C CXX ASM_MASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -11,6 +11,16 @@ option(SNEPPX_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(SNEPPX_BUILD_PYTHON "Build Python bindings" OFF)
 option(SNEPPX_BUILD_CUDA "Build CUDA kernels" OFF)
 option(SNEPPX_BUILD_TOOLS "Build CLI tools" OFF)
+# Opt-in accelerator backends (OFF by default so Linux/Windows CI stays green).
+# These enable real reference-compute implementations of the Metal and
+# oneAPI/SYCL drivers. When OFF, the drivers compile as UNSUPPORTED stubs.
+option(SNEPPX_BUILD_METAL "Build the Apple Metal backend (requires Apple SDK)" OFF)
+option(SNEPPX_BUILD_ONEAPI "Build the Intel oneAPI/SYCL backend (requires DPC++)" OFF)
+# Additional opt-in subsystems (v0.9.7.x). All OFF by default.
+option(SNEPPX_BUILD_VULKAN "Build the Vulkan backend (requires volk)" OFF)
+option(SNEPPX_BUILD_TPU "Build the TPU/PjRt backend (requires PJRT C API)" OFF)
+option(SNEPPX_BUILD_HTTP "Build the HTTP inference server" OFF)
+option(SNEPPX_BUILD_ZK "Build ZK proof primitives" OFF)
 option(SNEPPX_USE_ASAN "Enable AddressSanitizer (GCC/Clang only)" OFF)
 option(SNEPPX_USE_UBSAN "Enable UndefinedBehaviorSanitizer (GCC/Clang only)" OFF)
 option(SNEPPX_USE_LTO "Enable Link-Time Optimization (Release only)" OFF)
@@ -85,14 +95,40 @@ file(GLOB_RECURSE FS_SNAPSHOT_SRC fs/*.c)
 
 add_library(neural_core_kernel STATIC ${CORE_KERNEL_SRC} ${FS_SNAPSHOT_SRC})
 target_include_directories(neural_core_kernel PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/fs/format>
+    $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/neural_core/kernel>
     $<INSTALL_INTERFACE:include/neural_core/security>
     $<INSTALL_INTERFACE:include/neural_core/architecture>
 )
+
+if(SNEPPX_BUILD_METAL)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_METAL)
+endif()
+if(SNEPPX_BUILD_ONEAPI)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_ONEAPI)
+endif()
+if(SNEPPX_BUILD_VULKAN)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_VULKAN)
+endif()
+if(SNEPPX_BUILD_TPU)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_TPU)
+endif()
+if(SNEPPX_BUILD_HTTP)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_HTTP)
+endif()
+if(SNEPPX_BUILD_ZK)
+    target_compile_definitions(neural_core_kernel PRIVATE SNEPPX_BUILD_ZK)
+endif()
+if(SNEPPX_BUILD_HTTP)
+    if(MSVC)
+        target_link_libraries(neural_core_kernel PRIVATE ws2_32)
+    endif()
+endif()
 if(NOT MSVC)
     target_link_libraries(neural_core_kernel PUBLIC m)
 endif()

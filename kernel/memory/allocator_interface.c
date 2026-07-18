@@ -1,24 +1,16 @@
 #include "polymorphic_memory_allocator.h"
 #include <stdlib.h>
 
-void* SNEPPX_malloc(size_t size, size_t alignment) {
-    (void)alignment;
-    return malloc(size);
-}
-
-void SNEPPX_free(void* ptr, size_t size) {
-    (void)size;
-    free(ptr);
-}
+/* NOTE: SNEPPX_malloc / SNEPPX_free / SNEPPX_realloc are intentionally NOT
+ * defined here. The real, security-hardened implementations (aligned +
+ * zeroing + SNEPPX_secure_zero on free) live in `allocator.c` and are linked
+ * into the same library. Defining stub versions here would cause the linker
+ * to discard the real ones. Only the helpers unique to this interface layer
+ * are kept below. */
 
 void* SNEPPX_calloc(size_t count, size_t size, size_t alignment) {
     (void)alignment;
     return calloc(count, size);
-}
-
-void* SNEPPX_realloc(void* ptr, size_t old_size, size_t new_size, size_t alignment) {
-    (void)old_size; (void)alignment;
-    return realloc(ptr, new_size);
 }
 
 size_t SNEPPX_allocated_size(const void* ptr) {

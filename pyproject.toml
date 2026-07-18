@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sneppx-alg"
-version = "0.9.5.748"
+version = "0.9.7.890"
 description = "Next-generation AI architecture with security built into the foundation"
 readme = "README.md"
 requires-python = ">=3.9"

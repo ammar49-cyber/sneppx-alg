@@ -1,13 +1,15 @@
 #include "concurrent_workload_dispatch.h"
 #include <stdlib.h>
 
-struct SNEPPXWorkload {
-    int dummy;
-};
+typedef void (*SNEPPXTaskFn)(void* arg);
 
-struct SNEPPXTaskGroup {
+typedef struct SNEPPXWorkload {
     int dummy;
-};
+} SNEPPXWorkload;
+
+typedef struct SNEPPXTaskGroup {
+    int dummy;
+} SNEPPXTaskGroup;
 
 SNEPPXWorkload* SNEPPX_workload_create(size_t max_tasks) {
     (void)max_tasks;

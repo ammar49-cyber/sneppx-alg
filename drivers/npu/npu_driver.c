@@ -1,8 +1,9 @@
 #include "npu_driver.h"
+#include "neural_core/drivers/driver_status.h"
 #include <stdlib.h>
 
-int SNEPPX_npu_register_driver(void) { return 0; }
-int SNEPPX_npu_get_device_count(int* count) { if (count) *count = 0; return 0; }
+int SNEPPX_npu_register_driver(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+int SNEPPX_npu_get_device_count(int* count) { if (count) *count = 0; return SNEPPX_DRIVER_UNSUPPORTED; }
 int SNEPPX_npu_get_device_props(int dev_id, void* props) { (void)dev_id; if (props) __builtin_memset(props, 0, 128); return 0; }
 void* SNEPPX_npu_create_context(int device_id) { (void)device_id; return calloc(1, 64); }
 void SNEPPX_npu_destroy_context(void* ctx) { free(ctx); }

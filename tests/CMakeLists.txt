@@ -15,6 +15,7 @@ macro(add_neural_test test_src link_libs)
     add_executable(${test_name} ${test_src})
     target_link_libraries(${test_name} ${link_libs})
     target_include_directories(${test_name} PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
         ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
         ${CMAKE_SOURCE_DIR}/include/neural_core/security
@@ -34,6 +35,10 @@ macro(add_neural_test test_src link_libs)
         ${CMAKE_SOURCE_DIR}/security/pentest
         ${CMAKE_SOURCE_DIR}/security/ai
         ${CMAKE_SOURCE_DIR}/security/ui
+        ${CMAKE_SOURCE_DIR}/drivers/vulkan
+        ${CMAKE_SOURCE_DIR}/drivers/tpu
+        ${CMAKE_SOURCE_DIR}/drivers/http
+        ${CMAKE_SOURCE_DIR}/drivers/zk
     )
     add_test(NAME ${test_name} COMMAND ${test_name})
     endif()

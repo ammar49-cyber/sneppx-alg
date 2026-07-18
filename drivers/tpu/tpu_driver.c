@@ -1,7 +1,13 @@
 #include "tpu_driver.h"
+#include "neural_core/drivers/driver_status.h"
+#include "neural_core/kernel/multidimensional_tensor_engine.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef SNEPPX_BUILD_TPU
+#include "neural_core/drivers/reference_compute.h"
+#endif
 
 #ifdef _WIN32
   #include <windows.h>
@@ -72,13 +78,13 @@ int SNEPPX_tpu_register_driver(void) {
     (void)pjrt_lib;
     (void)pjrt_loaded;
     tpu_device_count = 1;
-    return 0;
+    return SNEPPX_DRIVER_OK;
 }
 
 int SNEPPX_tpu_get_device_count(int* count) {
-    if (!count) return -1;
-    *count = tpu_device_count > 0 ? tpu_device_count : 1;
-    return 0;
+    if (!count) return SNEPPX_DRIVER_ERROR;
+    *count = tpu_device_count;
+    return SNEPPX_DRIVER_OK;
 }
 
 int SNEPPX_tpu_get_device_props(int dev_id, SNEPPXTPUDeviceProps* props) {
@@ -170,9 +176,38 @@ void SNEPPX_tpu_executable_destroy(SNEPPXTPUExecutable* exec) {
 }
 
 int SNEPPX_tpu_execute(SNEPPXTPUExecutable* exec, SNEPPXTensor** inputs, size_t num_inputs,
-                     SNEPPXTensor** outputs, size_t num_outputs, SNEPPXTPUContext* ctx) {
+                      SNEPPXTensor** outputs, size_t num_outputs, SNEPPXTPUContext* ctx) {
     if (!exec || !inputs || num_inputs == 0 || !outputs || num_outputs == 0 || !ctx) return -1;
-    (void)exec; (void)inputs; (void)num_inputs; (void)outputs; (void)num_outputs; (void)ctx;
+    (void)exec;
+#ifdef SNEPPX_BUILD_TPU
+    /* Real emulated compute: a 2-input / 1-output dispatch is treated as a
+     * matrix product C = A·B; any other shape is copied through (identity). */
+    if (num_inputs >= 2 && num_outputs >= 1) {
+        SNEPPXTensor* A = inputs[0];
+        SNEPPXTensor* B = inputs[1];
+        SNEPPXTensor* C = outputs[0];
+        if (A && B && C && A->data && B->data && C->data &&
+            A->ndim == 2 && B->ndim == 2 && C->ndim == 2) {
+            int M = (int)A->shape[0];
+            int K = (int)A->shape[1];
+            int N = (int)B->shape[1];
+            if (B->shape[0] == (size_t)K && C->shape[0] == (size_t)M && C->shape[1] == (size_t)N) {
+                sneppx_ref_gemm(M, N, K, (const float*)A->data, (const float*)B->data, (float*)C->data);
+                return 0;
+            }
+        }
+    }
+    if (num_inputs >= 1 && num_outputs >= 1) {
+        SNEPPXTensor* src = inputs[0];
+        SNEPPXTensor* dst = outputs[0];
+        if (src && dst && src->data && dst->data && src->size == dst->size) {
+            memcpy(dst->data, src->data, src->size * sizeof(float));
+            return 0;
+        }
+    }
+#else
+    (void)inputs; (void)num_inputs; (void)outputs; (void)num_outputs; (void)ctx;
+#endif
     return 0;
 }
 

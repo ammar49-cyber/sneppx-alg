@@ -56,7 +56,7 @@ int main(void) {
     for (int i = 0; i < 10000; i++) {
         if (!ptrs[i]) continue;
         uint64_t t0 = SNEPPX_timing_start();
-        SNEPPX_secure_free(pool, ptrs[i], sizes[i]);
+        SNEPPX_secure_pool_free(pool, ptrs[i], sizes[i]);
         uint64_t t1 = SNEPPX_timing_end();
         total_free_time += (t1 - t0);
     }

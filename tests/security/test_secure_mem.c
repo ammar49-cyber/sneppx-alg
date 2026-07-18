@@ -38,7 +38,7 @@ void test_malloc_free(void) {
     }
     TEST("100 allocations", ok);
     for (int i = 0; i < 100; i++) {
-        SNEPPX_secure_free(pool, ptrs[i], 64);
+        SNEPPX_secure_pool_free(pool, ptrs[i], 64);
     }
     TEST("100 frees", 1);
     SNEPPX_secure_pool_destroy(pool);
@@ -65,7 +65,7 @@ void test_overflow_detection(void) {
     TEST("pool created", pool != NULL);
     void* ptr = SNEPPX_secure_malloc(pool, 64, 16);
     TEST("alloc succeeded", ptr != NULL);
-    SNEPPX_secure_free(pool, ptr, 64);
+    SNEPPX_secure_pool_free(pool, ptr, 64);
     TEST("normal free ok", 1);
     SNEPPX_secure_pool_destroy(pool);
 }

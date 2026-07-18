@@ -1117,22 +1117,77 @@ float SNEPPX_tensor_dot(const SNEPPXTensor* a, const SNEPPXTensor* b) {
 }
 
 SNEPPXTensor* SNEPPX_tensor_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b) {
-    if (!a || !b || a->ndim != 2 || b->ndim != 2) return NULL;
+    if (!a || !b || a->ndim < 1 || a->ndim > 8 || b->ndim < 1 || b->ndim > 8) return NULL;
     SNEPPXTensor* ta = NULL, *tb = NULL;
     a = tensor_prep_contiguous(a, &ta);
     b = tensor_prep_contiguous(b, &tb);
-    size_t m = a->shape[0], k = a->shape[1], n = b->shape[1];
-    if (k != b->shape[0]) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
-    size_t shape_c[] = {m, n};
-    SNEPPXTensor* result = SNEPPX_tensor_zeros(shape_c, 2, SNEPPX_FLOAT32);
+
+    int a1 = (a->ndim == 1), b1 = (b->ndim == 1);
+    size_t a_m = a1 ? 1 : a->shape[a->ndim - 2];
+    size_t a_k = a1 ? a->shape[0] : a->shape[a->ndim - 1];
+    size_t b_k = b1 ? b->shape[0] : b->shape[b->ndim - 2];
+    size_t b_n = b1 ? 1 : b->shape[b->ndim - 1];
+    if (a_k != b_k) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
+
+    size_t a_lead_ndim = a1 ? 0 : a->ndim - 2;
+    size_t b_lead_ndim = b1 ? 0 : b->ndim - 2;
+    size_t a_lead[8], b_lead[8];
+    for (size_t i = 0; i < a_lead_ndim; i++) a_lead[i] = a->shape[i];
+    for (size_t i = 0; i < b_lead_ndim; i++) b_lead[i] = b->shape[i];
+    size_t out_lead_ndim = a_lead_ndim > b_lead_ndim ? a_lead_ndim : b_lead_ndim;
+    size_t out_lead[8];
+    for (size_t i = 0; i < out_lead_ndim; i++) {
+        long ai = (long)i - (long)(out_lead_ndim - a_lead_ndim);
+        long bi = (long)i - (long)(out_lead_ndim - b_lead_ndim);
+        size_t av = ai >= 0 ? a_lead[ai] : 1;
+        size_t bv = bi >= 0 ? b_lead[bi] : 1;
+        if (av != bv && av != 1 && bv != 1) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
+        out_lead[i] = av > bv ? av : bv;
+    }
+    size_t out_ndim = out_lead_ndim + (a1 ? 0 : 1) + (b1 ? 0 : 1);
+    size_t out_shape[8];
+    for (size_t i = 0; i < out_lead_ndim; i++) out_shape[i] = out_lead[i];
+    if (!a1) out_shape[out_lead_ndim] = a_m;
+    if (!b1) out_shape[out_lead_ndim + (a1 ? 0 : 1)] = b_n;
+    SNEPPXTensor* result = SNEPPX_tensor_zeros(out_shape, out_ndim, SNEPPX_FLOAT32);
     if (!result) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
+
     float* ad = (float*)a->data;
     float* bd = (float*)b->data;
     float* rd = (float*)result->data;
-    for (size_t i = 0; i < m; i++)
-        for (size_t j = 0; j < n; j++)
-            for (size_t l = 0; l < k; l++)
-                rd[i * n + j] += ad[i * k + l] * bd[l * n + j];
+    size_t batches = 1; for (size_t i = 0; i < out_lead_ndim; i++) batches *= out_lead[i];
+    if (batches == 0) batches = 1;
+
+    for (size_t batch = 0; batch < batches; batch++) {
+        /* decompose batch into out_lead coords */
+        size_t rem = batch, coords[8];
+        for (long i = (long)out_lead_ndim - 1; i >= 0; i--) { coords[i] = rem % out_lead[i]; rem /= out_lead[i]; }
+        long aoff = 0, boff = 0;
+        for (size_t i = 0; i < out_lead_ndim; i++) {
+            long ai = (long)i - (long)(out_lead_ndim - a_lead_ndim);
+            long bi = (long)i - (long)(out_lead_ndim - b_lead_ndim);
+            size_t ac = ai >= 0 ? (a_lead[ai] == 1 ? 0 : coords[i]) : 0;
+            size_t bc = bi >= 0 ? (b_lead[bi] == 1 ? 0 : coords[i]) : 0;
+            if (ai >= 0) { size_t pre = 1; for (long k = 0; k < ai; k++) pre *= a_lead[k]; aoff += (long)(ac * pre); }
+            if (bi >= 0) { size_t pre = 1; for (long k = 0; k < bi; k++) pre *= b_lead[k]; boff += (long)(bc * pre); }
+        }
+        size_t Abase = (size_t)aoff * (a1 ? a_k : a_m * a_k);
+        size_t Bbase = (size_t)boff * (b1 ? b_k : b_k * b_n);
+        size_t Cbase = batch * (a1 ? 0 : a_m) * (b1 ? 0 : b_n) + 0;
+        if (a1 && b1) {
+            float s = 0.0f; for (size_t l = 0; l < a_k; l++) s += ad[Abase + l] * bd[Bbase + l];
+            rd[batch] = s;
+        } else if (a1) {
+            for (size_t j = 0; j < b_n; j++) { float s = 0.0f; for (size_t l = 0; l < a_k; l++) s += ad[Abase + l] * bd[Bbase + l * b_n + j]; rd[Cbase + j] = s; }
+        } else if (b1) {
+            for (size_t i = 0; i < a_m; i++) { float s = 0.0f; for (size_t l = 0; l < a_k; l++) s += ad[Abase + i * a_k + l] * bd[Bbase + l]; rd[Cbase + i] = s; }
+        } else {
+            for (size_t i = 0; i < a_m; i++) for (size_t j = 0; j < b_n; j++) {
+                float s = 0.0f; for (size_t l = 0; l < a_k; l++) s += ad[Abase + i * a_k + l] * bd[Bbase + l * b_n + j];
+                rd[Cbase + i * b_n + j] = s;
+            }
+        }
+    }
     if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb);
     return result;
 }

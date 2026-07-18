@@ -101,3 +101,41 @@ jobs:
           name: python-wheel
           path: bindings/python/dist/*.whl
           retention-days: 90
+
+      # Publish to PyPI when a version tag is pushed and PYPI_API_TOKEN is set.
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/v') && env.PYPI_API_TOKEN != ''
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          pip install --no-cache-dir twine
+          cd bindings/python
+          python -m build --sdist --wheel --no-isolation
+          twine upload --non-interactive -u __token__ -p "$PYPI_API_TOKEN" dist/*
+
+  # =====================================================================
+  # Rust — Publish crates to crates.io (requires CRATES_IO_TOKEN secret)
+  # =====================================================================
+  rust-publish:
+    name: Rust (crates.io)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Package crates
+        run: |
+          cargo package -p neural-core-distributed --allow-dirty
+          cargo package -p neural-core-algo --allow-dirty
+
+      - name: Publish to crates.io
+        if: startsWith(github.ref, 'refs/tags/v') && env.CRATES_IO_TOKEN != ''
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          cargo publish -p neural-core-algo --allow-dirty --token "$CRATES_IO_TOKEN" || true
+          cargo publish -p neural-core-distributed --allow-dirty --token "$CRATES_IO_TOKEN" || true

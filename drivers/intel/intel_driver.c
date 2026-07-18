@@ -1,8 +1,9 @@
 #include "intel_driver.h"
+#include "neural_core/drivers/driver_status.h"
 #include <stdlib.h>
 
-int SNEPPX_intel_register(void) { return 0; }
-int SNEPPX_intel_get_device_count(int* count) { if (count) *count = 0; return 0; }
+int SNEPPX_intel_register(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+int SNEPPX_intel_get_device_count(int* count) { if (count) *count = 0; return SNEPPX_DRIVER_UNSUPPORTED; }
 int SNEPPX_intel_get_device_props(int dev_id, char* name, size_t name_max, size_t* global_mem, int* eu_count) { (void)dev_id; if (name) snprintf(name, name_max, "Intel Device %d", dev_id); if (global_mem) *global_mem = 8ULL*1024*1024*1024; if (eu_count) *eu_count = 96; return 0; }
 void* SNEPPX_intel_create_context(int device_id) { (void)device_id; return calloc(1, 8); }
 void SNEPPX_intel_destroy_context(void* ctx) { free(ctx); }

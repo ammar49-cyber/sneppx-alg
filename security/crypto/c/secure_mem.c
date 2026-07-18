@@ -16,7 +16,9 @@
 
 struct SNEPPXSecurePool {
     uint8_t* base;
+    uint8_t* raw_base;   /* original allocation (before guard/ASLR offset) */
     size_t capacity;
+    size_t raw_len;      /* full mapping length for munmap/VirtualFree */
     size_t used;
     size_t peak;
     int has_guards;
@@ -80,6 +82,9 @@ SNEPPXSecurePool* SNEPPX_secure_pool_create(size_t size, const SNEPPXSecureAlloc
     uint8_t* usable = base + (config && config->guard_pages ? page : 0);
     size_t usable_size = size;
 
+    pool->raw_base = base;
+    pool->raw_len = alloc_size;
+
     if (config && config->randomize_layout) {
         size_t max_off = usable_size / 4;
         if (max_off > page) max_off = page;
@@ -107,13 +112,10 @@ void SNEPPX_secure_pool_destroy(SNEPPXSecurePool* pool) {
     if (!pool) return;
     SNEPPX_secure_zero(pool->base, pool->capacity);
     SNEPPX_munlock(pool->base, pool->capacity);
-    size_t page = get_page_size();
-    uint8_t* raw_base = pool->base - (pool->has_guards ? page : 0);
-    size_t total = pool->capacity + (pool->has_guards ? 2 * page : 0);
 #if defined(_WIN32)
-    VirtualFree(raw_base, 0, MEM_RELEASE);
+    VirtualFree(pool->raw_base, 0, MEM_RELEASE);
 #else
-    munmap(raw_base, total);
+    munmap(pool->raw_base, pool->raw_len);
 #endif
     SNEPPX_secure_zero((void*)pool, sizeof(SNEPPXSecurePool));
     free(pool);
@@ -139,7 +141,7 @@ void* SNEPPX_secure_malloc(SNEPPXSecurePool* pool, size_t size, size_t alignment
     return ptr;
 }
 
-void SNEPPX_secure_free(SNEPPXSecurePool* pool, void* ptr, size_t size) {
+void SNEPPX_secure_pool_free(SNEPPXSecurePool* pool, void* ptr, size_t size) {
     if (!pool || !ptr) return;
     if (pool->use_canaries) {
         uint8_t* mem = (uint8_t*)ptr;
@@ -164,7 +166,7 @@ void* SNEPPX_secure_realloc(SNEPPXSecurePool* pool, void* ptr, size_t old_size, 
     if (!new_ptr) return NULL;
     size_t copy = old_size < new_size ? old_size : new_size;
     memcpy(new_ptr, ptr, copy);
-    SNEPPX_secure_free(pool, ptr, old_size);
+    SNEPPX_secure_pool_free(pool, ptr, old_size);
     return new_ptr;
 }
 

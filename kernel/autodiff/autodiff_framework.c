@@ -1,9 +1,9 @@
 #include "automatic_differentiation_framework.h"
 #include <stdlib.h>
 
-struct SNEPPXAutogradEngine {
+typedef struct SNEPPXAutogradEngine {
     int dummy;
-};
+} SNEPPXAutogradEngine;
 
 SNEPPXAutogradEngine* SNEPPX_autograd_create(void) {
     return (SNEPPXAutogradEngine*)calloc(1, sizeof(SNEPPXAutogradEngine));

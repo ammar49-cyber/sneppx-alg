@@ -1,6 +1,6 @@
 [package]
 name = "neural-core-algo"
-version = "0.5.4"
+version = "0.9.7.890"
 edition = "2021"
 authors = ["Ammar [SNEPPX] <algoSNEPPX@gmail.com>"]
 description = "Rust bindings for SNEPPX-ALG tensor library — tensor ops, model building, training loop"

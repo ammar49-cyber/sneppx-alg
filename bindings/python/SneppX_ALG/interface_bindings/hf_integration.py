@@ -169,3 +169,136 @@ def save_hf_model(model: Module, save_dir: str, model_id: str = "sneppx-model"):
 def load_config(config_path: str) -> Dict:
     with open(config_path, "r") as f:
         return json.load(f)
+
+
+# Model-id -> (family, size) patterns supported by from_pretrained().
+_MODEL_ID_PATTERNS = [
+    ("llama-2-7b", "llama2", "7B"),
+    ("llama-2-13b", "llama2", "13B"),
+    ("llama-2-70b", "llama2", "70B"),
+    ("llama-3-8b", "llama3", "8B"),
+    ("llama-3-70b", "llama3", "70B"),
+    ("mistral-7b", "mistral", "7B"),
+    ("qwen2-7b", "qwen2", "7B"),
+    ("qwen2-72b", "qwen2", "72B"),
+    ("deepseek-v2-lite", "deepseek_v2", "lite"),
+    ("deepseek-v2", "deepseek_v2", "full"),
+]
+
+
+def _resolve_family_size(model_id: str):
+    lower = model_id.lower()
+    for pattern, family, size in _MODEL_ID_PATTERNS:
+        if pattern in lower:
+            return family, size
+    raise ValueError(
+        f"Unknown model_id '{model_id}'. "
+        f"Supported: {[p[0] for p in _MODEL_ID_PATTERNS]}"
+    )
+
+
+def _find_snapshot(model_id: str, cache_dir: Optional[str]) -> Optional[str]:
+    """Locate an existing snapshot directory, downloading it if possible.
+
+    Returns the snapshot path or None if no local weights are available.
+    """
+    if cache_dir is None:
+        cache_dir = os.path.expanduser(
+            f"~/.cache/huggingface/hub/models--{model_id.replace('/', '--')}/snapshots"
+        )
+    if os.path.isdir(cache_dir) and os.listdir(cache_dir):
+        return cache_dir if os.listdir(cache_dir)[0] else cache_dir
+
+    # Try to download via huggingface_hub if available.
+    try:
+        from huggingface_hub import snapshot_download  # type: ignore
+
+        local = snapshot_download(model_id, cache_dir=cache_dir)
+        return local
+    except Exception as e:  # network/unavailable — fall back to None
+        print(f"[SNEPPX from_pretrained] could not download '{model_id}': {e}")
+        return None
+
+
+def from_pretrained(
+    model_id: str,
+    cache_dir: Optional[str] = None,
+    force_download: bool = False,
+    verbose: bool = True,
+):
+    """Load a pretrained LLM from HuggingFace and build a SneppX model.
+
+    Supported families: LLaMA-2/3, Mistral, Qwen2, DeepSeek-V2.
+
+    Args:
+        model_id: HF-style model ID (e.g. ``meta-llama/Llama-2-7b-hf``).
+        cache_dir: Local snapshot/cache directory. If omitted, the canonical
+            HuggingFace cache location is used and a download is attempted.
+        force_download: Re-download even if a local snapshot exists.
+        verbose: Print progress.
+
+    Returns:
+        A :class:`~SneppX_ALG.interface_bindings.nn.Transformer` with weights
+        loaded from the HF checkpoint (or an uninitialized model if no weights
+        could be located).
+    """
+    from .model_zoo import (
+        get_model_config,
+        build_transformer_from_config,
+        _remap_hf_weight_name,
+    )
+
+    family, size = _resolve_family_size(model_id)
+    config = get_model_config(family, size)
+    model = build_transformer_from_config(config)
+
+    if force_download:
+        cache_dir = None
+    snapshot = _find_snapshot(model_id, cache_dir)
+    if snapshot is None or not os.listdir(snapshot):
+        if verbose:
+            print(
+                f"[SNEPPX from_pretrained] no local weights for '{model_id}'; "
+                "returning uninitialized model."
+            )
+        return model
+
+    # Gather weights from every safetensors/bin file in the snapshot.
+    state: Dict[str, np.ndarray] = {}
+    for fname in sorted(os.listdir(snapshot)):
+        path = os.path.join(snapshot, fname)
+        try:
+            if fname.endswith(".safetensors"):
+                state.update(_load_safetensors(path))
+            elif fname.endswith(".bin"):
+                state.update(_load_pytorch_bin(path))
+        except Exception as e:
+            if verbose:
+                print(f"  Warning: could not load {fname}: {e}")
+
+    if not state:
+        if verbose:
+            print(f"[SNEPPX from_pretrained] no weight files in {snapshot}")
+        return model
+
+    params = dict(model.named_parameters())
+    loaded = 0
+    for hf_name, arr in state.items():
+        sneppx_name = _remap_hf_weight_name(hf_name, family)
+        if sneppx_name and sneppx_name in params:
+            param = params[sneppx_name]
+            if param.shape == arr.shape:
+                param.data = np.ascontiguousarray(arr, dtype=param.data.dtype)
+                loaded += 1
+            elif verbose:
+                print(
+                    f"  shape mismatch {sneppx_name}: "
+                    f"model {param.shape} vs weight {arr.shape}"
+                )
+    if verbose:
+        print(
+            f"[SNEPPX from_pretrained] loaded {loaded}/"
+            f"{len(params)} params from {model_id} ({family}/{size})"
+        )
+    return model
+

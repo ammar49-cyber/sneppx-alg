@@ -1,13 +1,13 @@
 #include "multi_head_attention_module.h"
 #include <stdlib.h>
 
-struct SNEPPXMultiHeadAttention {
+typedef struct SNEPPXMultiHeadAttention {
     int num_heads;
     int head_dim;
     int hidden_dim;
     int dropout;
     int is_causal;
-};
+} SNEPPXMultiHeadAttention;
 
 SNEPPXMultiHeadAttention* SNEPPX_mha_create(int num_heads, int head_dim, int hidden_dim, int dropout, int is_causal, int use_flash) {
     (void)use_flash;

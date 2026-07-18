@@ -41,6 +41,28 @@ jobs:
           cd build_py
           ctest -C ${{ matrix.config }} -R "py_" --output-on-failure --timeout 120
 
+  backends:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake (opt-in backends)
+        run: cmake -B build_be -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_TOOLS=ON -DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON -DSNEPPX_BUILD_ZK=ON
+
+      - name: Build
+        run: cmake --build build_be --config Release --parallel
+
+      - name: Run C tests
+        working-directory: build_be
+        run: ctest -C Release --output-on-failure --timeout 120
+
   sanitizer:
     runs-on: ubuntu-latest
     steps:

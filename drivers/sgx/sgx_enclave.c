@@ -1,7 +1,8 @@
 #include "sgx_enclave.h"
+#include "neural_core/drivers/driver_status.h"
 #include <stdlib.h>
 
-int SNEPPX_sgx_init(const char* enclave_path) { (void)enclave_path; return 0; }
+int SNEPPX_sgx_init(const char* enclave_path) { (void)enclave_path; return SNEPPX_DRIVER_UNSUPPORTED; }
 void SNEPPX_sgx_destroy(void) {}
 int SNEPPX_sgx_create_enclave(const char* name, size_t heap_size, size_t stack_size) { (void)name; (void)heap_size; (void)stack_size; return 0; }
 int SNEPPX_sgx_destroy_enclave(void) { return 0; }
