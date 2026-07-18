@@ -1,7 +1,7 @@
 SneppX-ALG algo0.9.7.890
 Release Date: 2026-07-18
 Status: Feature Complete — Unified Python Bindings (Phases 1-7), CLI Entry Points, Dispatch Layer, Crypto/Security/Algo/Kernel/Infra/ASM Interface
-Security: S0-S9 Complete — 21,809+ lines of C security + 31 Python test suites (300+ tests) + 4-ring firewall
+Security: S0-S9 Complete — 21,984+ lines of C security code + 123 C test executables + 66 Python test files (796+ test functions) + 4-ring firewall
 Build: cmake 3.16+, C11/C20, Python 3.11+, macOS/Linux/Windows + MASM x64 (Windows)
-Total Codebase: ~117,000+ lines across 630+ files
-New in 0.9.7.890: v0.9.7 development cycle — build unblocked, fs/format readers made real, new opt-in backend flags (Vulkan/TPU/HTTP/ZK), 7 classic-NN architectures deferred to P3 real implementations
+Total Codebase: 163,658 lines across 1,011 text files (246 directories)
+New in 0.9.7.890: real weights I/O (safetensors/npy/npz/pth/onnx), real kernel tensor engine + gradient descent, 7 real neural architectures (Transformer/ViT/GCN/RNN/GAN/Diffusion/RL), hardened S0-S9 security (symbol-collision + mapping-leak fixes), opt-in Vulkan/TPU/HTTP/ZK backends + CI coverage
