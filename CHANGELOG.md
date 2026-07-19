@@ -4,6 +4,19 @@ All notable changes to SNEPPX-Algo.
 
 ## [0.9.7.890] — 2026-07-18
 
+### Phase B — Populate 4 kernel directories
+- **`kernel/activations/`**: `activations.c` (ReLU, LeakyReLU, PReLU, ELU, SELU, GELU
+  tanh+erf, SiLU, Sigmoid, Tanh, Softmax, LogSoftmax + backward); `gated_activations.c`
+  (SwiGLU, GeGLU, ReGLU with backward + gated FFN).
+- **`kernel/position/`**: `rope.c` (precompute freqs, apply freqs); `alibi.c` (slope
+  computation, bias application); `yarn.c` (NTK-aware precompute + apply).
+- **`kernel/algorithms/`**: `flash_attention.c` (tiled online-softmax); `sparse_attention.c`
+  (top-k/strided/random/block-local patterns); `swa.c` (sliding window attention).
+- **`kernel/drivers/`**: `driver_registry.c` (central register/get/unregister with
+  dynamic library loading for Windows/POSIX).
+- 13 new files across 4 directories, auto-discovered by CMake `file(GLOB_RECURSE)`.
+- Build green — no new warnings or errors beyond 4 pre-existing linker failures.
+
 ### Phase A — Eliminate last C stubs
 - **`mm/internal/vmem.c`**: `SNEPPX_vmem_register_evict_strategy` now stores the strategy
   in the allocator (new field `evict_strategy`); `evict_page` delegates to the strategy's
