@@ -115,7 +115,7 @@ int SNEPPX_vulkan_dispatch(void* pipeline, void** buffers, size_t num_buffers,
                            unsigned int group_x, unsigned int group_y, unsigned int group_z,
                            const char* entry_point) {
     (void)pipeline; (void)buffers; (void)num_buffers;
-    (void)group_x; (void)group_y; (void)grid_z; (void)entry_point;
+    (void)group_x; (void)group_y; (void)group_z; (void)entry_point;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
 

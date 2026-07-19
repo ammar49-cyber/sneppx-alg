@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 
 
 SNEPPXTape* SNEPPX_tape_create(void) {
@@ -55,6 +56,7 @@ void SNEPPX_tape_checkpoint_end(SNEPPXTape* tape) {
 static void tape_topological_sort(SNEPPXTape* tape, SNEPPXVariable** sorted, size_t* num_sorted) {
     if (!tape || !sorted) return;
     size_t n = tape->num_vars;
+    if (n == 0) return;
     int* visited = (int*)SNEPPX_malloc(n * sizeof(int), 64);
     if (!visited) return;
     memset(visited, 0, n * sizeof(int));
@@ -73,7 +75,9 @@ static void tape_topological_sort(SNEPPXTape* tape, SNEPPXVariable** sorted, siz
         stack[sp++] = i;
         on_stack[i] = 1;
 
+        size_t loop_guard = 0;
         while (sp > 0) {
+            if (++loop_guard > 1000000) { fprintf(stderr, "ERROR: tape_topological_sort infinite loop at i=%zu sp=%zu n=%zu\n", i, sp, n); break; }
             size_t idx = stack[sp - 1];
             SNEPPXVariable* var = tape->vars[idx];
             int all_parents_visited = 1;
@@ -82,25 +86,31 @@ static void tape_topological_sort(SNEPPXTape* tape, SNEPPXVariable** sorted, siz
                     SNEPPXVariable* parent = var->parents[p];
                     if (!parent) continue;
                     /* Find parent index in tape vars */
+                    int found = 0;
                     for (size_t pi = 0; pi < n; pi++) {
-                        if (tape->vars[pi] == parent && !visited[pi]) {
-                            if (!on_stack[pi]) {
-                                /* Grow stack if needed */
-                                if (sp >= stack_cap) {
-                                    stack_cap *= 2;
-                                    size_t* ns = (size_t*)SNEPPX_malloc(stack_cap * sizeof(size_t), 64);
-                                    if (!ns) break;
-                                    memcpy(ns, stack, sp * sizeof(size_t));
-                                    SNEPPX_free(stack, stack_cap/2 * sizeof(size_t));
-                                    stack = ns;
+                        if (tape->vars[pi] == parent) {
+                            found = 1;
+                            if (!visited[pi]) {
+                                if (!on_stack[pi]) {
+                                    /* Grow stack if needed */
+                                    if (sp >= stack_cap) {
+                                        stack_cap *= 2;
+                                        size_t* ns = (size_t*)SNEPPX_malloc(stack_cap * sizeof(size_t), 64);
+                                        if (!ns) break;
+                                        memcpy(ns, stack, sp * sizeof(size_t));
+                                        SNEPPX_free(stack, stack_cap/2 * sizeof(size_t));
+                                        stack = ns;
+                                    }
+                                    stack[sp++] = pi;
+                                    on_stack[pi] = 1;
+                                    all_parents_visited = 0;
                                 }
-                                stack[sp++] = pi;
-                                on_stack[pi] = 1;
-                                all_parents_visited = 0;
                             }
                             break;
                         }
                     }
+                    /* If parent not found on tape, treat as visited (no backward needed) */
+                    if (!found) continue;
                     if (!all_parents_visited) break;
                 }
             }

@@ -64,7 +64,10 @@ jobs:
         run: ctest -C Release --output-on-failure --timeout 120
 
   l0-validation:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,7 +78,7 @@ jobs:
         run: cmake --build build_l0 --config Release --parallel
       - name: Run L0 smoke tests
         working-directory: build_l0
-        run: ctest -C Release -R "test_e2e_training_loop|test_gradient_flow|test_backend_full|test_cognitive_memory" --output-on-failure --timeout 60
+        run: ctest -C Release -R "test_e2e_training_loop|test_gradient_flow|test_backend_full|test_cognitive_memory|test_hashtable|test_pqueue|test_rbtree|test_strutil" --output-on-failure --timeout 120
 
   sanitizer:
     runs-on: ubuntu-latest

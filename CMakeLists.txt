@@ -96,15 +96,17 @@ if(SNEPPX_USE_LTO)
 endif()
 
 file(GLOB_RECURSE CORE_KERNEL_SRC kernel/*.c drivers/*.c)
+file(GLOB_RECURSE CORE_LIB_SRC lib/internal/*.c)
 file(GLOB_RECURSE CORE_SECURITY_C_SRC security/crypto/c/*.c)
 file(GLOB_RECURSE FS_SNAPSHOT_SRC fs/*.c)
 
-add_library(neural_core_kernel STATIC ${CORE_KERNEL_SRC} ${FS_SNAPSHOT_SRC})
+add_library(neural_core_kernel STATIC ${CORE_KERNEL_SRC} ${CORE_LIB_SRC} ${FS_SNAPSHOT_SRC})
 target_include_directories(neural_core_kernel PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/kernel>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/security>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/neural_core/architecture>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/internal>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/fs/format>
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/neural_core/kernel>
