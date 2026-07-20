@@ -117,7 +117,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=ON
 # Build with all security layers
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_SECURITY=ON
 
-# Build opt-in reference backends (real computation; OFF by default so CI stays green)
+# Build opt-in reference backends (real computation; OFF by default)
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_VULKAN=ON
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TPU=ON
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_HTTP=ON

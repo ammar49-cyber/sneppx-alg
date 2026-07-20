@@ -30,6 +30,5 @@ prune build_py
 prune build_test
 prune target
 prune .git
-prune .github
 prune .pytest_cache
 prune __pycache__

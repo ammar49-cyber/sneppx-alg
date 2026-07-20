@@ -61,10 +61,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# CI/CD
-.github/workflows/
-!/.github/workflows/*.yml
-
 # Documentation build
 docs/_build/
 site/
@@ -105,11 +101,6 @@ datasets/
 *.tar.gz
 *.zip
 *.rar
-
-# CI/CD
-*.github/workflows/*
-!/.github/workflows/*.yml
-!/.github/workflows/*.yaml
 
 # Profiling
 *.prof

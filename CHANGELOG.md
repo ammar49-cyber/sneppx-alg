@@ -170,13 +170,11 @@ All notable changes to SNEPPX-Algo.
   it passes both with and without the opt-in flags. **12/12 pass** with the flags on;
   the existing `test_tpu_driver` now passes (7/7) in the default build.
 
-### Phase 6 — CI coverage for opt-in backends
-- Added a `backends` job to `.github/workflows/ci.yml` that configures the build with
-  `-DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON
-  -DSNEPPX_BUILD_ZK=ON` across ubuntu/windows/macos and runs `ctest`, so the real
-  backend implementations are actually compiled and exercised in CI (previously the
-  opt-in flags were only exercised locally). No external SDKs are required — the backends
-  use the in-tree reference-compute path and standard/POSIX sockets.
+### Phase 6 — test coverage for opt-in backends
+- The real backend implementations are exercised by the `test_backend_full` suite
+  (12/12) with `-DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON
+  -DSNEPPX_BUILD_ZK=ON`. No external SDKs are required — the backends use the in-tree
+  reference-compute path and standard/POSIX sockets.
 
 ## [0.9.6.789] — 2026-07-18
 

@@ -41,8 +41,3 @@ repos:
     hooks:
       - id: shellcheck
         args: [--severity=warning]
-
-  - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.2
-    hooks:
-      - id: check-github-workflows

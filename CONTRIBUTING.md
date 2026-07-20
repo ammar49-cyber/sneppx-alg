@@ -25,8 +25,6 @@ cmake --build build --config Release
 
 # Run all tests
 cd build && ctest -C Release --output-on-failure
-
-# Tests run automatically on CI (GitHub Actions)
 ```
 
 ### 3. Verify Changes
@@ -60,7 +58,6 @@ git commit -m "feat(module): add new functionality"
 - [ ] Test files updated and passing
 - [ ] Documentation updated where relevant
 - [ ] Code reviews complete (if applicable)
-- [ ] All CI checks passing before merge
 
 ### Code Quality Requirements
 

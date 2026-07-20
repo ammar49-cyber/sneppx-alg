@@ -61,8 +61,8 @@ The test suite implements a multi-tiered testing strategy:
 
 | Benchmark | Description | Frequency |
 |-----------|-------------|----------|
-| Core Tensor Ops | GEMM, Element-wise, Reductions | Every CI run |
-| Autodiff | Gradient computation | Every CI run |
+| Core Tensor Ops | GEMM, Element-wise, Reductions | Every test run |
+| Autodiff | Gradient computation | Every test run |
 | Algorithms | HSS, SER, ARC, NPE, FM | Weekly |
 | Security | Crypto primitive benchmarking | Monthly |
 
@@ -183,56 +183,17 @@ cd lib/rust && cargo test
 
 ## Test Results
 
-### CI Status
-
-```yaml
-# GitHub Actions Workflow
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9, 3.10, 3.11, 3.12]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install -e bindings/python
-          pip install pytest
-      - name: Run Python tests
-        run: |
-          $env:PYTHONPATH = "bindings/python"
-          pytest tests/python/ -v
-      - name: Build C/C++ tests
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
-          cmake --build build --config Release
-      - name: Run C/C++ tests
-        run: |
-          cd build && ctest -C Release --output-on-failure
-```
-
 ### Current Status (v0.9.7.890e)
 
-| Component | Test Count | Pass Rate | CI Status |
-|-----------|------------|-----------|-----------|
-| Core Tensor | 57 | 100% | ✅ |
-| Memory Allocator | 13 | 100% | ✅ |
-| Python Bindings | 300+ | 100% | ✅ |
-| Security (S0-S1) | 14 | 100% | ✅ |
-| Algorithms (HSS-SER) | 8 | 71% | ⚠️ |
-| Algorithms (ARC-NPE-F) | 13 | 57% | ⚠️ |
-| Overall | 405+ | 77% | ⚠️ |
+| Component | Test Count | Pass Rate |
+|-----------|------------|-----------|
+| Core Tensor | 57 | 100% |
+| Memory Allocator | 13 | 100% |
+| Python Bindings | 300+ | 100% |
+| Security (S0-S1) | 14 | 100% |
+| Algorithms (HSS-SER) | 8 | 71% |
+| Algorithms (ARC-NPE-F) | 13 | 57% |
+| Overall | 405+ | 77% |
 
 ### Test Coverage Report
 
@@ -282,7 +243,7 @@ Coverage Report:
 
 ### Continuous Benchmarking
 
-Benchmarks run on CI for regression detection:
+Benchmarks are run locally for regression detection:
 
 | Metric | Threshold |
 |--------|-----------|
@@ -367,69 +328,7 @@ echo "Performance report: report.html"
 ./scripts/run_tests.sh --coverage
 ```
 
-## Test Automation
-
-### GitHub Actions
-
-The project uses GitHub Actions for continuous testing:
-
-```yaml
-# .github/workflows/ci.yml
-name: CI Tests
-
-on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential python3 python3-pip
-      - name: Build and test
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
-          cmake --build . -j$(nproc)
-          ctest -C Release --output-on-failure
-
-  python-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9, 3.10, 3.11, 3.12]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install Python package
-        run: |
-          pip install -e bindings/python
-          pip install pytest
-      - name: Run Python tests
-        run: |
-          export PYTHONPATH="bindings/python:$PYTHONPATH"
-          pytest tests/python/ -v
-
-  benchmarks:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'  # Run weekly
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run benchmarks
-        run: ./scripts/benchmark_suite.sh --mode=nightly --output=benchmarks/nightly.json
-```
+## Running Tests Locally
 
 ### Local Testing Setup
 
@@ -460,7 +359,6 @@ pytest tests/python/ -v --cov=SneppX_ALG
 |--------|-------|--------|
 | Test Count | 405+ | > 300 |
 | Pass Rate | 77% | > 80% |
-| CI Time | ~15min | < 30min |
 | Local Test Time | ~8min | < 10min |
 
 ### Coverage Targets
@@ -504,9 +402,9 @@ pytest tests/python/ -v --cov=SneppX_ALG
 | Format | Use Case |
 |--------|---------|
 | HTML | Web documentation |
-| JSON | CI integration, automated reporting |
+| JSON | Automated reporting |
 | Markdown | README inclusion, GitHub views |
-| XML | CI system integration (Jenkins, etc.) |
+| XML | External tool integration |
 
 ## Future Test Improvements
 
@@ -562,7 +460,7 @@ The SNEPPX-Algo test suite provides comprehensive coverage of the system with bo
 The testing approach emphasizes:
 - **Consistency**: Uniform test patterns across components
 - **Completeness**: Coverage of all public APIs and edge cases
-- **Reliability**: CI-based automated testing with parallel execution
+- **Reliability**: Automated testing with repeatable local runs
 - **Performance**: Benchmarks to prevent regressions
 
-Ready to run tests? Check the CI status or run local tests using the scripts above!
+Ready to run tests? Use the local test scripts above!

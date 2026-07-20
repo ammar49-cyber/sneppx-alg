@@ -4,4 +4,4 @@ Status: Feature Complete — Unified Python Bindings (Phases 1-7), CLI Entry Poi
 Security: S0-S9 Complete — 21,984+ lines of C security code + 123 C test executables + 66 Python test files (796+ test functions) + 4-ring firewall
 Build: cmake 3.16+, C11/C20, Python 3.11+, macOS/Linux/Windows + MASM x64 (Windows)
 Total Codebase: 163,658 lines across 1,011 text files (246 directories)
-New in 0.9.7.890e: real weights I/O (safetensors/npy/npz/pth/onnx), real kernel tensor engine + gradient descent, 7 real neural architectures (Transformer/ViT/GCN/RNN/GAN/Diffusion/RL), hardened S0-S9 security (symbol-collision + mapping-leak fixes), opt-in Vulkan/TPU/HTTP/ZK backends + CI coverage
+New in 0.9.7.890e: real weights I/O (safetensors/npy/npz/pth/onnx), real kernel tensor engine + gradient descent, 7 real neural architectures (Transformer/ViT/GCN/RNN/GAN/Diffusion/RL), hardened S0-S9 security (symbol-collision + mapping-leak fixes), opt-in Vulkan/TPU/HTTP/ZK backends

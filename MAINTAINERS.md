@@ -8,7 +8,7 @@
 ## Maintainer Responsibilities
 
 - Review and apply patches sent via email
-- Maintain CI/CD pipeline and test suite
+- Maintain the test suite
 - Manage releases and versioning
 - Respond to security reports
 - Update documentation and roadmap

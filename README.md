@@ -24,8 +24,8 @@ S0–S9 security model.
 - **Hardened security** — fixed a `SNEPPX_secure_free` symbol collision and a
   secure-memory mapping-release leak in the S0–S9 layer.
 - **Opt-in backends are now real** — Vulkan, TPU, HTTP, and ZK perform genuine
-  reference computation (gated by `SNEPPX_BUILD_*` flags, OFF by default so CI
-  stays green) and are exercised by a new `test_backend_full` suite (12/12).
+  reference computation (gated by `SNEPPX_BUILD_*` flags, OFF by default) and are
+  exercised by a new `test_backend_full` suite (12/12).
 
 ## Quick build
 
@@ -35,9 +35,9 @@ cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure
 ```
 
-Opt-in backends — real reference implementations, **OFF by default** so CI stays
-green. Each performs genuine computation via the shared reference-compute path and
-reports `DRIVER_UNSUPPORTED` when its flag is off:
+Opt-in backends — real reference implementations, **OFF by default**. Each performs
+genuine computation via the shared reference-compute path and reports
+`DRIVER_UNSUPPORTED` when its flag is off:
 
 ```powershell
 cmake -B build -DSNEPPX_BUILD_VULKAN=ON   # Vulkan — real GEMM / elementwise reference compute

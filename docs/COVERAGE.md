@@ -27,7 +27,7 @@ genhtml coverage_filtered.info --output-directory coverage_report
 
 ## Current Status
 
-Coverage reporting is not yet integrated into the CI pipeline. The above commands work on Linux with GCC.
+Coverage reporting is not yet automated. The above commands work on Linux with GCC.
 
 ## Requirements
 

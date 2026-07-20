@@ -11,7 +11,7 @@ option(SNEPPX_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(SNEPPX_BUILD_PYTHON "Build Python bindings" OFF)
 option(SNEPPX_BUILD_CUDA "Build CUDA kernels" OFF)
 option(SNEPPX_BUILD_TOOLS "Build CLI tools" OFF)
-# Opt-in accelerator backends (OFF by default so Linux/Windows CI stays green).
+# Opt-in accelerator backends (OFF by default).
 # These enable real reference-compute implementations of the Metal and
 # oneAPI/SYCL drivers. When OFF, the drivers compile as UNSUPPORTED stubs.
 option(SNEPPX_BUILD_METAL "Build the Apple Metal backend (requires Apple SDK)" OFF)

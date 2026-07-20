@@ -124,7 +124,7 @@ Checkpoint format, heartbeat, elastic training, and fault tolerance:
 - **tests/python/test_checkpoint.py**: 23 tests (all pass)
 
 ## Phase 7 Completed (Profiling & Debugging)
-Profiling infrastructure, NVTX markers, structured logging, and sanitizer CI:
+Profiling infrastructure, NVTX markers, structured logging, and sanitizer scripts:
 
 - **include/neural_core/kernel/profiler.h**: `SNEPPX_Profiler` with named entry aggregation, `SNEPPX_KernelTimer`, `SNEPPX_PROFILE_KERNEL` macro, range push/pop
 - **kernel/profiler.c**: Profiler implementation with JSON export, range stack, kernel timing
