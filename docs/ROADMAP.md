@@ -6,7 +6,7 @@
 - Inference engine: autoregressive generation, top-k/top-p/temperature, token streaming
 - Data pipeline: TextDataset, BPE tokenization, sequence batching
 - Model architecture: modular pipeline with per-module enable/disable flags
-- Infrastructure: CI/CD, linting configs, style guide, maintainers docs
+- Infrastructure: linting configs, style guide, maintainers docs
 
 ## v0.5.0 — Trainable on CPU (6 months)
 
