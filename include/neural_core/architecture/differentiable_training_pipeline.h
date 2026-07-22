@@ -14,6 +14,7 @@ typedef struct {
     size_t log_interval;
     size_t save_interval;
     SNEPPXDevice device;
+    int use_cuda_optimizer;
 } SNEPPXTrainConfig;
 
 typedef struct {

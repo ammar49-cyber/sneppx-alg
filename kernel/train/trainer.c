@@ -3,6 +3,7 @@
 #include "polymorphic_memory_allocator.h"
 #include "system_architecture_definitions.h"
 #include "multi_head_attention_module.h"
+#include "trainer_cuda.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -18,6 +19,7 @@ SNEPPXTrainConfig SNEPPX_train_config_default(void) {
     cfg.log_interval = 10;
     cfg.save_interval = 100;
     cfg.device = SNEPPX_DEVICE_CPU;
+    cfg.use_cuda_optimizer = 0;
     return cfg;
 }
 
@@ -43,6 +45,21 @@ SNEPPXTrainer* SNEPPX_trainer_create(SNEPPXModel* model, const SNEPPXTrainConfig
     }
 
     trainer->step_count = 0;
+
+    if (config->use_cuda_optimizer && SNEPPX_trainer_cuda_available()) {
+        size_t nw = SNEPPX_model_get_params(trainer->model, NULL, 0);
+        if (nw > 0) {
+            SNEPPXTensor** params = (SNEPPXTensor**)SNEPPX_malloc(nw * sizeof(SNEPPXTensor*), 64);
+            if (params) {
+                SNEPPX_model_get_params(trainer->model, params, nw);
+                if (SNEPPX_trainer_cuda_init(params, nw) != 0) {
+                    printf("Warning: CUDA optimizer init failed, falling back to CPU\n");
+                }
+                SNEPPX_free(params, nw * sizeof(SNEPPXTensor*));
+            }
+        }
+    }
+
     return trainer;
 }
 
@@ -50,6 +67,7 @@ void SNEPPX_trainer_destroy(SNEPPXTrainer* trainer) {
     if (!trainer) return;
     if (trainer->optimizer) SNEPPX_optimizer_destroy(trainer->optimizer);
     if (trainer->loss_history) SNEPPX_tensor_destroy(trainer->loss_history);
+    SNEPPX_trainer_cuda_shutdown();
     SNEPPX_free(trainer, sizeof(SNEPPXTrainer));
 }
 
@@ -139,7 +157,11 @@ float SNEPPX_trainer_train_step(SNEPPXTrainer* trainer, const SNEPPXTensor* batc
                 for (size_t i = 0; i < nw; i++) {
                     grads[i] = wv[i]->grad;
                 }
-                SNEPPX_optimizer_step(trainer->optimizer, params, grads, nw);
+                if (trainer->config.use_cuda_optimizer) {
+                    SNEPPX_trainer_cuda_optimizer_step(trainer->optimizer, params, grads, nw);
+                } else {
+                    SNEPPX_optimizer_step(trainer->optimizer, params, grads, nw);
+                }
                 SNEPPX_free(grads, nw * sizeof(SNEPPXTensor*));
             }
         }
