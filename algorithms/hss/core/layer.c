@@ -14,7 +14,7 @@ SNEPPXHSSConfig SNEPPX_hss_config_default(void) {
     cfg.dt_min = 0.001f;
     cfg.dt_max = 0.1f;
     cfg.use_hierarchical = 1;
-    cfg.use_parallel_scan = 0;
+    cfg.use_parallel_scan = 1;
     return cfg;
 }
 

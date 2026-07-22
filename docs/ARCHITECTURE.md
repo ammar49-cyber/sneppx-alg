@@ -62,7 +62,7 @@ Merge multi-layer outputs:
 y_k = Σ_{l} W^{l} · y^{l}_k + x_k     (residual connection)
 ```
 
-The sequential scan processes timesteps sequentially. A parallel scan over the state dimension is planned for PyTorch/CUDA integration.
+The sequential scan processes timesteps sequentially. The Blelloch tree-based parallel scan over time is enabled by default on CPU (set `use_parallel_scan=0` in config to disable). A CUDA parallel scan over time is pending.
 
 #### Code Structure
 
