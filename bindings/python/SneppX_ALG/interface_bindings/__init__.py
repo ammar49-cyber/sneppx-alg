@@ -125,8 +125,8 @@ from .audit_logger import (
 )
 
 # Phase 4 — Algorithm bindings (ARC/FM/HSS/NPE/SER)
-from .algo_arc import ARCAttackSim, ARCFForward, ARCGradientObfuscator, ARCInputGuard, ARCOutputVerifier
-from .algo_fm import FMController, FMMemoryBank, FMNode, FMSync
+from .algo_arc import ARCAttackSim, ARCFForward, ARCGradientObfuscator, ARCInputGuard, ARCOutputVerifier, ARCAdversarialTrainGraph
+from .algo_fm import FMController, FMMemoryBank, FMNode, FMSync, FMSyncNCCL
 from .algo_hss import HSSDiscretize, HSSScan, HSSStep
 from .algo_hss import HSSModel as AlgoHSSModel
 from .algo_npe import NPEInstruction, NPEProgram, NPECompiler, NPEVM, NPEVerify

@@ -3,7 +3,7 @@
 Wraps C implementations in ``algorithms/arc/core/`` with pure-Python fallback.
 """
 
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, List
 
 import numpy as np
 
@@ -106,3 +106,33 @@ class ARCOutputVerifier:
     @staticmethod
     def worst_case(logits: np.ndarray, eps: float) -> np.ndarray:
         return logits - eps
+
+
+class ARCAdversarialTrainGraph:
+    """Adversarial training graph builder — constructs clean + adversarial forward paths.
+
+    Wraps the C-level ``SNEPPX_arc_build_adversarial_train_graph`` when available.
+    """
+
+    def __init__(self, attack_epsilon: float = 0.01):
+        self.attack_epsilon = attack_epsilon
+        self._has_c = _HAS_C
+
+    def build(self, weights: List[np.ndarray], x_clean: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """Build forward graph returns (clean_output, adv_output).
+
+        Pure Python fallback: applies FGSM perturbation, then runs a simple
+        linear network on both clean and perturbed inputs sharing weights.
+        """
+        adv = x_clean + self.attack_epsilon * np.sign(np.random.randn(*x_clean.shape))
+        adv = np.clip(adv, 0, 1)
+
+        def fwd(x, w):
+            h = x
+            for wi in w:
+                h = h @ wi
+            return h
+
+        clean_out = fwd(x_clean, weights)
+        adv_out = fwd(adv, weights)
+        return clean_out, adv_out

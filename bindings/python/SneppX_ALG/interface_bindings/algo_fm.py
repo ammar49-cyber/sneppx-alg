@@ -3,7 +3,7 @@
 Wraps C implementations in ``algorithms/fm/core/`` with pure-Python fallback.
 """
 
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Callable
 
 import numpy as np
 
@@ -98,3 +98,23 @@ class FMSync:
         for t in local_tensors:
             result += t
         return result / len(local_tensors)
+
+
+class FMSyncNCCL:
+    """NCCL-based distributed synchronization with callback pattern.
+
+    Wraps the C-level ``SNEPPX_fm_sync_nccl`` when available.
+    """
+
+    def __init__(self):
+        self._has_c = _HAS_C
+
+    def sync(self, data: np.ndarray, callback: Optional[Callable] = None) -> np.ndarray:
+        """Synchronize data across distributed nodes.
+
+        Pure Python fallback: if callback is provided, invokes it with the data.
+        """
+        result = data.copy()
+        if callback is not None:
+            callback(result)
+        return result

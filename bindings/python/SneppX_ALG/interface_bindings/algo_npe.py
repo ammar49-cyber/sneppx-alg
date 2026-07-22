@@ -59,6 +59,31 @@ class NPECompiler:
             prog.add(instr)
         return prog
 
+    def jit_optimize(self, program: NPEProgram, profile: Optional[dict] = None) -> NPEProgram:
+        """Run JIT optimization pipeline: DCE → constant fold → fuse → specialize.
+
+        Pure Python fallback: removes NOPs and fuses consecutive matmul+relu pairs.
+        """
+        opt = NPEProgram(program.name + "_opt")
+
+        i = 0
+        while i < len(program.instructions):
+            inst = program[i]
+            if inst.opcode == "nop":
+                i += 1
+                continue
+            if (inst.opcode == "matmul" and i + 1 < len(program) and
+                    program[i + 1].opcode == "relu" and
+                    program[i + 1].args[0] == inst.dest):
+                fused = NPEInstruction("matmul_relu", inst.args, inst.dest)
+                opt.add(fused)
+                i += 2
+                continue
+            opt.add(inst)
+            i += 1
+
+        return opt
+
 
 class NPEVM:
     """Neural virtual machine — executes compiled neural programs."""

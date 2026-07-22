@@ -89,6 +89,21 @@ class TrainConfig:
         else:
             self._data["device"] = v if isinstance(v, int) else 0
 
+    @property
+    def use_cuda_optimizer(self):
+        if _HAS_C_BACKEND:
+            return getattr(self._c, 'use_cuda_optimizer', 0)
+        return self._data.get("use_cuda_optimizer", 0)
+
+    @use_cuda_optimizer.setter
+    def use_cuda_optimizer(self, v):
+        val = 1 if v else 0
+        if _HAS_C_BACKEND:
+            if hasattr(self._c, 'use_cuda_optimizer'):
+                self._c.use_cuda_optimizer = val
+        else:
+            self._data["use_cuda_optimizer"] = val
+
 
 class Optimizer:
     def __init__(self, params: List[Tensor], lr: float = 0.01):
