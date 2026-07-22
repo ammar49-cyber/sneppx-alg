@@ -65,12 +65,15 @@ typedef struct {
     SNEPPXTensor* param_b2;
 } SNEPPXNPEProgram;
 
+typedef struct SNEPPXNPEJITProfile SNEPPXNPEJITProfile;
+
 typedef struct {
     SNEPPXNPEProgram* program;
     SNEPPXNPEInstruction* execution_trace;
     size_t trace_length;
     size_t max_trace;
     size_t step_limit;
+    SNEPPXNPEJITProfile* jit_profile;
 } SNEPPXNPEVM;
 
 typedef struct {
@@ -79,6 +82,8 @@ typedef struct {
     size_t step_limit;
     int verification_mode;
     int trace_execution;
+    int jit_enabled;
+    size_t jit_hot_threshold;
 } SNEPPXNPEConfig;
 
 SNEPPXNPEConfig SNEPPX_npe_config_default(void);
@@ -118,5 +123,7 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_specialize(const SNEPPXNPEProgram* prog, size_t
 SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog);
 SNEPPXNPEProgram* SNEPPX_npe_jit_constant_fold(const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory);
 SNEPPXNPEProgram* SNEPPX_npe_jit_dce(const SNEPPXNPEProgram* prog);
+SNEPPXNPEProgram* SNEPPX_npe_jit_optimize(SNEPPXNPEJITProfile* profile, const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory);
+int SNEPPX_npe_vm_optimize(SNEPPXNPEVM* vm);
 
 #endif /* SNEPPX_NPE_H */

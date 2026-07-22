@@ -10,6 +10,8 @@ SNEPPXNPEConfig SNEPPX_npe_config_default(void) {
     cfg.step_limit = 1024;
     cfg.verification_mode = 1;
     cfg.trace_execution = 1;
+    cfg.jit_enabled = 0;
+    cfg.jit_hot_threshold = 100;
     return cfg;
 }
 

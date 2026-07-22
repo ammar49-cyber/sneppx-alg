@@ -304,9 +304,9 @@ static SNEPPXTensor* tensor_split_half(const SNEPPXTensor* a) {
 }
 
 SNEPPXNPEVM* SNEPPX_npe_vm_create(const SNEPPXNPEConfig* config) {
+    if (!config) return NULL;
     SNEPPXNPEVM* vm = (SNEPPXNPEVM*)SNEPPX_malloc(sizeof(SNEPPXNPEVM), 64);
     if (!vm) return NULL;
-    memset(vm, 0, sizeof(SNEPPXNPEVM));
     vm->step_limit = config->step_limit;
     vm->max_trace = config->max_program_length * 2;
     vm->execution_trace = (SNEPPXNPEInstruction*)SNEPPX_malloc(vm->max_trace * sizeof(SNEPPXNPEInstruction), 64);
@@ -314,12 +314,17 @@ SNEPPXNPEVM* SNEPPX_npe_vm_create(const SNEPPXNPEConfig* config) {
     memset(vm->execution_trace, 0, vm->max_trace * sizeof(SNEPPXNPEInstruction));
     vm->program = NULL;
     vm->trace_length = 0;
+    vm->jit_profile = NULL;
+    if (config->jit_enabled) {
+        vm->jit_profile = SNEPPX_npe_jit_profile_create(config->jit_hot_threshold);
+    }
     return vm;
 }
 
 void SNEPPX_npe_vm_destroy(SNEPPXNPEVM* vm) {
     if (!vm) return;
     SNEPPX_free(vm->execution_trace, vm->max_trace * sizeof(SNEPPXNPEInstruction));
+    if (vm->jit_profile) SNEPPX_npe_jit_profile_destroy(vm->jit_profile);
     SNEPPX_free(vm, sizeof(SNEPPXNPEVM));
 }
 
@@ -337,6 +342,10 @@ int SNEPPX_npe_vm_step(SNEPPXNPEVM* vm) {
     SNEPPXNPEInstruction inst = prog->instructions[prog->pc];
     if (vm->trace_length < vm->max_trace) {
         vm->execution_trace[vm->trace_length++] = inst;
+    }
+
+    if (vm->jit_profile) {
+        SNEPPX_npe_jit_record(vm->jit_profile, inst.opcode, 0.0f);
     }
 
     int d = inst.dest_reg;
@@ -404,14 +413,37 @@ int SNEPPX_npe_vm_step(SNEPPXNPEVM* vm) {
             prog->pc++;
             break;
 
-        case SNEPPX_MATMUL:
+        case SNEPPX_MATMUL: {
+            SNEPPXTensor* mm = NULL;
             if (d >= 0 && d < 16 && sa >= 0 && sa < 16 && sb >= 0 && sb < 16 &&
                 prog->registers[sa] && prog->registers[sb]) {
+                mm = tensor_matmul(prog->registers[sa], prog->registers[sb]);
+                if ((inst.immediate & 0x20000000) && mm) {
+                    int bias_reg = inst.immediate & 0xFF;
+                    if (bias_reg >= 0 && bias_reg < 16 && prog->registers[bias_reg]) {
+                        SNEPPXTensor* biased = tensor_add(mm, prog->registers[bias_reg]);
+                        SNEPPX_tensor_destroy(mm); mm = biased;
+                    }
+                    if (mm) {
+                        SNEPPXTensor* activ = tensor_relu(mm);
+                        SNEPPX_tensor_destroy(mm); mm = activ;
+                    }
+                } else if ((inst.immediate & 0x80000000) && mm) {
+                    SNEPPXTensor* activ = tensor_relu(mm);
+                    SNEPPX_tensor_destroy(mm); mm = activ;
+                } else if ((inst.immediate & 0x40000000) && mm) {
+                    int bias_reg = inst.immediate & 0xFF;
+                    if (bias_reg >= 0 && bias_reg < 16 && prog->registers[bias_reg]) {
+                        SNEPPXTensor* biased = tensor_add(mm, prog->registers[bias_reg]);
+                        SNEPPX_tensor_destroy(mm); mm = biased;
+                    }
+                }
                 if (prog->registers[d]) SNEPPX_tensor_destroy(prog->registers[d]);
-                prog->registers[d] = tensor_matmul(prog->registers[sa], prog->registers[sb]);
+                prog->registers[d] = mm;
             }
             prog->pc++;
             break;
+        }
 
         case SNEPPX_RELU:
             if (d >= 0 && d < 16 && sa >= 0 && sa < 16 && prog->registers[sa]) {
@@ -638,5 +670,25 @@ int SNEPPX_npe_vm_run(SNEPPXNPEVM* vm, SNEPPXTensor* input, SNEPPXTensor** outpu
                prog->registers[last_reg]->size * sizeof(float));
     }
 
+    if (vm->jit_profile && vm->jit_profile->total_instructions >= vm->jit_profile->hot_threshold) {
+        SNEPPX_npe_vm_optimize(vm);
+    }
+
     return steps >= vm->step_limit ? 2 : 0;
+}
+
+int SNEPPX_npe_vm_optimize(SNEPPXNPEVM* vm) {
+    if (!vm || !vm->program) return -1;
+    if (!vm->jit_profile) return -1;
+
+    SNEPPXNPEProgram* optimized = SNEPPX_npe_jit_optimize(vm->jit_profile, vm->program, vm->program->memory);
+    if (!optimized) return -1;
+
+    SNEPPX_npe_program_destroy(vm->program);
+    vm->program = optimized;
+    vm->program->pc = 0;
+    vm->trace_length = 0;
+
+    vm->jit_profile->is_profiling = 0;
+    return 0;
 }

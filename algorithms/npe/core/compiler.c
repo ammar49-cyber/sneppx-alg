@@ -194,6 +194,20 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog) {
     for (size_t i = 0; i < prog->num_instructions; i++) {
         SNEPPXNPEInstruction inst = prog->instructions[i];
 
+        // Triple fusion: MATMUL + ADD + RELU (0x20000000)
+        if (inst.opcode == SNEPPX_MATMUL && i + 2 < prog->num_instructions) {
+            SNEPPXNPEInstruction next = prog->instructions[i + 1];
+            SNEPPXNPEInstruction next2 = prog->instructions[i + 2];
+            if (next.opcode == SNEPPX_ADD && next.src_reg_a == inst.dest_reg &&
+                next2.opcode == SNEPPX_RELU && next2.src_reg_a == next.dest_reg) {
+                inst.immediate |= 0x20000000;
+                inst.immediate = (inst.immediate & ~0xFF) | (next.src_reg_b & 0xFF);
+                SNEPPX_npe_program_append(fused, inst);
+                i += 2;
+                continue;
+            }
+        }
+
         if (inst.opcode == SNEPPX_MATMUL && i + 1 < prog->num_instructions) {
             SNEPPXNPEInstruction next = prog->instructions[i + 1];
             if (next.opcode == SNEPPX_RELU && next.src_reg_a == inst.dest_reg) {
@@ -218,6 +232,7 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog) {
             SNEPPXNPEInstruction next = prog->instructions[i + 1];
             if (next.opcode == SNEPPX_ADD && next.src_reg_a == inst.dest_reg) {
                 inst.immediate |= 0x40000000;
+                inst.immediate = (inst.immediate & ~0xFF) | (next.src_reg_b & 0xFF);
                 SNEPPX_npe_program_append(fused, inst);
                 i++;
                 continue;
