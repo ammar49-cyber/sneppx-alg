@@ -1,13 +1,256 @@
 import json
 import os
 import struct
-from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Tuple, Callable
+from dataclasses import dataclass, field, asdict
+from typing import Optional, Dict, List, Tuple, Callable, Any
 from enum import IntEnum
 
 from .tensor import Tensor, _HAS_C_BACKEND
 
 
+# =========================================================================
+# ModelConfig - Unified config dataclass (Phase 1)
+# =========================================================================
+
+@dataclass
+class ModelConfig:
+    """Unified model configuration matching C ModelConfig schema.
+    
+    Supports JSON serialization, validation, and conversion to/from C config.
+    """
+    # Identity
+    name: str = ""
+    version: str = "0.1.0"
+    description: str = ""
+    author: str = ""
+    license: str = ""
+    repository: str = ""
+    homepage: str = ""
+    
+    # Architecture
+    architecture: str = "transformer"
+    model_type: str = "causal-lm"  # e.g., "causal-lm", "seq2seq", "vision"
+    framework: str = "sneppx"
+    
+    # Model details
+    num_parameters: int = 0
+    num_layers: int = 0
+    num_hidden_layers: int = 0
+    hidden_size: int = 0
+    num_attention_heads: int = 0
+    num_key_value_heads: int = 0
+    intermediate_size: int = 0
+    vocab_size: int = 0
+    max_seq_len: int = 0
+    
+    # Normalization
+    layer_norm_eps: float = 1e-5
+    rms_norm_eps: float = 1e-6
+    use_rms_norm: bool = True
+    
+    # Activations
+    hidden_act: str = "silu"
+    ffn_act: str = "silu"
+    gated_ffn: bool = True
+    
+    # Attention
+    attention_type: str = "causal"
+    attention_dropout: float = 0.0
+    hidden_dropout: float = 0.0
+    use_flash_attention: bool = True
+    sliding_window: int = 0
+    
+    # Position encoding
+    pos_encoding: str = "rope"
+    rope_theta: float = 10000.0
+    rope_scaling: int = 0
+    
+    # Initialization
+    initializer_range: float = 0.02
+    tie_word_embeddings: bool = False
+    
+    # Quantization
+    quantize: bool = False
+    quant_bits: int = 0
+    quant_group_size: int = 128
+    
+    # Distributed
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    sequence_parallel: bool = False
+    
+    # Training
+    learning_rate: float = 2e-4
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    warmup_steps: int = 0
+    max_steps: int = 0
+    gradient_accumulation_steps: int = 1
+    mixed_precision: bool = True
+    
+    # MoE
+    num_experts: int = 0
+    num_experts_per_token: int = 0
+    router_aux_loss_coef: float = 0.0
+    
+    # Custom fields (key-value pairs)
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary, excluding empty/zero values."""
+        return {k: v for k, v in asdict(self).items() if v not in ("", 0, 0.0, False, None, {})}
+    
+    def to_json(self, pretty: bool = True) -> str:
+        """Serialize to JSON string."""
+        return json.dumps(self.to_dict(), indent=2 if pretty else None)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ModelConfig":
+        """Create from dictionary, ignoring unknown fields."""
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "ModelConfig":
+        """Create from JSON string."""
+        return cls.from_dict(json.loads(json_str))
+    
+    def save(self, path: str) -> None:
+        """Save to JSON file."""
+        with open(path, "w") as f:
+            f.write(self.to_json(pretty=True))
+    
+    @classmethod
+    def load(cls, path: str) -> "ModelConfig":
+        """Load from JSON file."""
+        with open(path) as f:
+            return cls.from_json(f.read())
+    
+    def validate(self) -> List[str]:
+        """Validate config, return list of errors (empty if valid)."""
+        errors = []
+        if not self.name:
+            errors.append("name is required")
+        if self.hidden_size <= 0:
+            errors.append("hidden_size must be positive")
+        if self.num_layers <= 0 and self.num_hidden_layers <= 0:
+            errors.append("num_layers or num_hidden_layers must be positive")
+        if self.num_attention_heads <= 0:
+            errors.append("num_attention_heads must be positive")
+        elif self.hidden_size % self.num_attention_heads != 0:
+            errors.append("hidden_size must be divisible by num_attention_heads")
+        if self.vocab_size <= 0:
+            errors.append("vocab_size must be positive")
+        if self.learning_rate <= 0:
+            errors.append("learning_rate must be positive")
+        return errors
+    
+    def to_c_config(self) -> Dict[str, Any]:
+        """Convert to dict suitable for C ModelConfig."""
+        return {
+            "name": self.name,
+            "version": self.version,
+            "description": self.description,
+            "author": self.author,
+            "license": self.license,
+            "architecture": self.architecture,
+            "vocab_size": self.vocab_size,
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "num_heads": self.num_attention_heads,
+            "num_kv_heads": self.num_key_value_heads,
+            "intermediate_size": self.intermediate_size,
+            "max_position_embeddings": self.max_position_embeddings,
+            "max_seq_len": self.max_seq_len,
+            "layer_norm_eps": self.layer_norm_eps,
+            "rms_norm_eps": self.rms_norm_eps,
+            "use_rms_norm": self.use_rms_norm,
+            "hidden_act": self.hidden_act,
+            "ffn_act": self.ffn_act,
+            "gated_ffn": self.gated_ffn,
+            "attention_type": self.attention_type,
+            "attention_dropout": self.attention_dropout,
+            "hidden_dropout": self.hidden_dropout,
+            "use_flash_attention": self.use_flash_attention,
+            "sliding_window": self.sliding_window,
+            "pos_encoding": self.pos_encoding,
+            "rope_theta": self.rope_theta,
+            "rope_scaling": self.rope_scaling,
+            "initializer_range": self.initializer_range,
+            "tie_word_embeddings": self.tie_word_embeddings,
+            "quantize": self.quantize,
+            "quant_bits": self.quant_bits,
+            "quant_group_size": self.quant_group_size,
+            "tensor_parallel_size": self.tensor_parallel_size,
+            "pipeline_parallel_size": self.pipeline_parallel_size,
+            "sequence_parallel": self.sequence_parallel,
+            "learning_rate": self.learning_rate,
+            "weight_decay": self.weight_decay,
+            "max_grad_norm": self.max_grad_norm,
+            "warmup_steps": self.warmup_steps,
+            "max_steps": self.max_steps,
+            "gradient_accumulation_steps": self.gradient_accumulation_steps,
+            "mixed_precision": self.mixed_precision,
+            "num_experts": self.num_experts,
+            "num_experts_per_token": self.num_experts_per_token,
+            "router_aux_loss_coef": self.router_aux_loss_coef,
+        }
+    
+    @classmethod
+    def from_c_config(cls, c_config: Dict[str, Any]) -> "ModelConfig":
+        """Create from C ModelConfig dict."""
+        return cls(
+            name=c_config.get("name", ""),
+            version=c_config.get("version", "0.1.0"),
+            description=c_config.get("description", ""),
+            author=c_config.get("author", ""),
+            license=c_config.get("license", ""),
+            architecture=c_config.get("architecture", "transformer"),
+            vocab_size=c_config.get("vocab_size", 32000),
+            hidden_size=c_config.get("hidden_size", 4096),
+            num_layers=c_config.get("num_layers", 32),
+            num_attention_heads=c_config.get("num_heads", 32),
+            num_key_value_heads=c_config.get("num_kv_heads", c_config.get("num_heads", 32)),
+            intermediate_size=c_config.get("intermediate_size", 11008),
+            max_position_embeddings=c_config.get("max_position_embeddings", 2048),
+            max_seq_len=c_config.get("max_seq_len", 2048),
+            layer_norm_eps=c_config.get("layer_norm_eps", 1e-5),
+            rms_norm_eps=c_config.get("rms_norm_eps", 1e-6),
+            use_rms_norm=c_config.get("use_rms_norm", True),
+            hidden_act=c_config.get("hidden_act", "silu"),
+            ffn_act=c_config.get("ffn_act", "silu"),
+            gated_ffn=c_config.get("gated_ffn", True),
+            attention_type=c_config.get("attention_type", "causal"),
+            attention_dropout=c_config.get("attention_dropout", 0.0),
+            hidden_dropout=c_config.get("hidden_dropout", 0.0),
+            use_flash_attention=c_config.get("use_flash_attention", True),
+            sliding_window=c_config.get("sliding_window", 0),
+            pos_encoding=c_config.get("pos_encoding", "rope"),
+            rope_theta=c_config.get("rope_theta", 10000.0),
+            rope_scaling=c_config.get("rope_scaling", 0),
+            initializer_range=c_config.get("initializer_range", 0.02),
+            tie_word_embeddings=c_config.get("tie_word_embeddings", False),
+            quantize=c_config.get("quantize", False),
+            quant_bits=c_config.get("quant_bits", 0),
+            quant_group_size=c_config.get("quant_group_size", 128),
+            tensor_parallel_size=c_config.get("tensor_parallel_size", 1),
+            pipeline_parallel_size=c_config.get("pipeline_parallel_size", 1),
+            sequence_parallel=c_config.get("sequence_parallel", False),
+            learning_rate=c_config.get("learning_rate", 2e-4),
+            weight_decay=c_config.get("weight_decay", 0.01),
+            max_grad_norm=c_config.get("max_grad_norm", 1.0),
+            warmup_steps=c_config.get("warmup_steps", 0),
+            max_steps=c_config.get("max_steps", 0),
+            gradient_accumulation_steps=c_config.get("gradient_accumulation_steps", 1),
+            mixed_precision=c_config.get("mixed_precision", True),
+            num_experts=c_config.get("num_experts", 0),
+            num_experts_per_token=c_config.get("num_experts_per_token", 0),
+            router_aux_loss_coef=c_config.get("router_aux_loss_coef", 0.0),
+        )
+
+
+# Existing code continues below...
 class ModelFamily(IntEnum):
     LLAMA_2 = 0
     LLAMA_3 = 1
@@ -37,14 +280,132 @@ class LlamaConfig:
     hidden_dropout: float = 0.0
     num_experts: int = 0
     num_experts_per_tok: int = 0
-
+    router_aux_loss_coef: float = 0.0
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+    # Additional fields for ModelConfig compatibility
+    name: str = "llama"
+    version: str = "0.1.0"
+    description: str = ""
+    author: str = ""
+    license: str = ""
+    repository: str = ""
+    homepage: str = ""
+    architecture: str = "transformer"
+    model_type: str = "causal-lm"
+    framework: str = "sneppx"
+    num_parameters: int = 0
+    max_seq_len: int = 4096
+    layer_norm_eps: float = 1e-5
+    rms_norm_eps: float = 1e-6
+    use_rms_norm: bool = True
+    ffn_act: str = "silu"
+    gated_ffn: bool = True
+    attention_type: str = "causal"
+    use_flash_attention: bool = True
+    sliding_window: int = 0
+    pos_encoding: str = "rope"
+    rope_scaling: int = 0
+    initializer_range: float = 0.02
+    tie_word_embeddings: bool = False
+    quantize: bool = False
+    quant_bits: int = 0
+    quant_group_size: int = 128
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    sequence_parallel: bool = False
+    learning_rate: float = 2e-4
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    warmup_steps: int = 0
+    max_steps: int = 0
+    gradient_accumulation_steps: int = 1
+    mixed_precision: bool = True
+    num_experts_per_token: int = 0
+    router_aux_loss_coef: float = 0.0
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+# Property aliases for backward compatibility
     @property
     def num_head_dim(self) -> int:
         return self.head_dim
-
+    
     @property
     def num_kv_heads(self) -> int:
         return self.num_key_value_heads
+    
+    @property
+    def num_layers(self) -> int:
+        return self.num_hidden_layers
+    
+    def to_model_config(self) -> "ModelConfig":
+        """Convert to unified ModelConfig."""
+        return ModelConfig(
+            name=self.name,
+            version=self.version,
+            description=self.description,
+            author=self.author,
+            license=self.license,
+            repository=self.repository,
+            architecture=self.architecture,
+            model_type=self.model_type,
+            framework=self.framework,
+            num_parameters=self.num_parameters,
+            num_layers=self.num_hidden_layers,
+            hidden_size=self.hidden_size,
+            num_attention_heads=self.num_attention_heads,
+            num_key_value_heads=self.num_key_value_heads,
+            vocab_size=self.vocab_size,
+            max_seq_len=self.max_position_embeddings,
+            layer_norm_eps=self.rms_norm_eps,
+            rms_norm_eps=self.rms_norm_eps,
+            use_rms_norm=True,
+            hidden_act=self.hidden_act,
+            ffn_act=self.ffn_act,
+            gated_ffn=True,
+            attention_type=self.attention_type,
+            attention_dropout=self.attention_dropout,
+            hidden_dropout=self.hidden_dropout,
+            use_flash_attention=True,
+            sliding_window=self.sliding_window,
+            pos_encoding="rope",
+            rope_theta=self.rope_theta,
+            rope_scaling=0,
+            initializer_range=0.02,
+            tie_word_embeddings=self.tie_word_embeddings,
+            quantize=False,
+            tensor_parallel_size=1,
+            pipeline_parallel_size=1,
+            sequence_parallel=False,
+            learning_rate=2e-4,
+            weight_decay=0.01,
+            max_grad_norm=1.0,
+            num_experts=self.num_experts,
+            num_experts_per_token=self.num_experts_per_tok,
+            router_aux_loss_coef=0.0,
+        )
+    
+    @classmethod
+    def from_model_config(cls, config: "ModelConfig") -> "LlamaConfig":
+        """Create LlamaConfig from unified ModelConfig."""
+        return cls(
+            hidden_size=config.hidden_size,
+            intermediate_size=config.intermediate_size,
+            num_hidden_layers=config.num_layers,
+            num_attention_heads=config.num_attention_heads,
+            num_key_value_heads=config.num_key_value_heads,
+            vocab_size=config.vocab_size,
+            max_position_embeddings=config.max_seq_len,
+            rms_norm_eps=config.layer_norm_eps,
+            rope_theta=config.rope_theta,
+            use_scaled_rope=config.rope_scaling > 0,
+            tie_word_embeddings=config.tie_word_embeddings,
+            hidden_act=config.hidden_act,
+            attention_dropout=config.attention_dropout,
+            hidden_dropout=config.hidden_dropout,
+            num_experts=config.num_experts,
+            num_experts_per_tok=config.num_experts_per_token,
+        )
 
 
 @dataclass
@@ -63,6 +424,123 @@ class MistralConfig:
     head_dim: int = 128
     attention_dropout: float = 0.0
     hidden_dropout: float = 0.0
+    
+    # Additional fields for ModelConfig compatibility
+    name: str = "mistral"
+    version: str = "0.1.0"
+    description: str = ""
+    author: str = ""
+    license: str = ""
+    architecture: str = "transformer"
+    num_parameters: int = 0
+    max_seq_len: int = 32768
+    layer_norm_eps: float = 1e-5
+    rms_norm_eps: float = 1e-6
+    use_rms_norm: bool = True
+    ffn_act: str = "silu"
+    gated_ffn: bool = True
+    attention_type: str = "causal"
+    attention_dropout: float = 0.0
+    hidden_dropout: float = 0.0
+    use_flash_attention: bool = True
+    sliding_window: int = 4096
+    pos_encoding: str = "rope"
+    rope_theta: float = 10000.0
+    rope_scaling: int = 0
+    initializer_range: float = 0.02
+    tie_word_embeddings: bool = False
+    quantize: bool = False
+    quant_bits: int = 0
+    quant_group_size: int = 128
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    sequence_parallel: bool = False
+    learning_rate: float = 2e-4
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    warmup_steps: int = 0
+    max_steps: int = 0
+    gradient_accumulation_steps: int = 1
+    mixed_precision: bool = True
+    num_experts: int = 0
+    num_experts_per_token: int = 0
+    router_aux_loss_coef: float = 0.0
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+    # Property aliases for backward compatibility
+    @property
+    def num_head_dim(self) -> int:
+        return self.head_dim
+    
+    @property
+    def num_kv_heads(self) -> int:
+        return self.num_key_value_heads
+    
+    @property
+    def num_layers(self) -> int:
+        return self.num_hidden_layers
+    
+    def to_model_config(self) -> "ModelConfig":
+        """Convert to unified ModelConfig."""
+        return ModelConfig(
+            name=self.name,
+            version=self.version,
+            description="",
+            author="",
+            license="",
+            architecture=self.architecture,
+            model_type="causal-lm",
+            framework="sneppx",
+            num_parameters=self.num_parameters,
+            num_layers=self.num_hidden_layers,
+            hidden_size=self.hidden_size,
+            num_attention_heads=self.num_attention_heads,
+            num_key_value_heads=self.num_key_value_heads,
+            vocab_size=self.vocab_size,
+            max_seq_len=self.max_position_embeddings,
+            layer_norm_eps=self.rms_norm_eps,
+            rms_norm_eps=self.rms_norm_eps,
+            use_rms_norm=True,
+            hidden_act="silu",
+            ffn_act="silu",
+            gated_ffn=True,
+            attention_type="causal",
+            attention_dropout=self.attention_dropout,
+            hidden_dropout=self.hidden_dropout,
+            use_flash_attention=True,
+            sliding_window=self.sliding_window,
+            pos_encoding="rope",
+            rope_theta=self.rope_theta,
+            rope_scaling=0,
+            initializer_range=0.02,
+            tie_word_embeddings=False,
+            quantize=False,
+            tensor_parallel_size=1,
+            pipeline_parallel_size=1,
+            sequence_parallel=False,
+            learning_rate=2e-4,
+            weight_decay=0.01,
+            max_grad_norm=1.0,
+            num_experts=0,
+            num_experts_per_token=0,
+            router_aux_loss_coef=0.0,
+        )
+    
+    @classmethod
+    def from_model_config(cls, config: "ModelConfig") -> "MistralConfig":
+        """Create MistralConfig from unified ModelConfig."""
+        return cls(
+            hidden_size=config.hidden_size,
+            intermediate_size=config.intermediate_size,
+            num_hidden_layers=config.num_layers,
+            num_attention_heads=config.num_attention_heads,
+            num_key_value_heads=config.num_key_value_heads,
+            vocab_size=config.vocab_size,
+            max_position_embeddings=config.max_seq_len,
+            rms_norm_eps=config.layer_norm_eps,
+            rope_theta=config.rope_theta,
+            sliding_window=config.sliding_window,
+        )
 
 
 @dataclass
@@ -82,6 +560,126 @@ class Qwen2Config:
     head_dim: int = 128
     attention_dropout: float = 0.0
     hidden_dropout: float = 0.0
+    
+    # Additional fields for ModelConfig compatibility
+    name: str = "qwen2"
+    version: str = "0.1.0"
+    description: str = ""
+    author: str = ""
+    license: str = ""
+    architecture: str = "transformer"
+    num_parameters: int = 0
+    max_seq_len: int = 32768
+    layer_norm_eps: float = 1e-6
+    rms_norm_eps: float = 1e-6
+    use_rms_norm: bool = True
+    ffn_act: str = "silu"
+    gated_ffn: bool = True
+    attention_type: str = "causal"
+    attention_dropout: float = 0.0
+    hidden_dropout: float = 0.0
+    use_flash_attention: bool = True
+    sliding_window: int = 0
+    pos_encoding: str = "rope"
+    rope_theta: float = 1000000.0
+    rope_scaling: int = 0
+    initializer_range: float = 0.02
+    tie_word_embeddings: bool = False
+    quantize: bool = False
+    quant_bits: int = 0
+    quant_group_size: int = 128
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    sequence_parallel: bool = False
+    learning_rate: float = 2e-4
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    warmup_steps: int = 0
+    max_steps: int = 0
+    gradient_accumulation_steps: int = 1
+    mixed_precision: bool = True
+    num_experts: int = 0
+    num_experts_per_token: int = 0
+    router_aux_loss_coef: float = 0.0
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+    # Property aliases for backward compatibility
+    @property
+    def num_head_dim(self) -> int:
+        return self.head_dim
+    
+    @property
+    def num_kv_heads(self) -> int:
+        return self.num_key_value_heads
+    
+    @property
+    def num_layers(self) -> int:
+        return self.num_hidden_layers
+    
+    @property
+    def max_seq_len(self) -> int:
+        return self.max_position_embeddings
+    
+    def to_model_config(self) -> "ModelConfig":
+        """Convert to unified ModelConfig."""
+        return ModelConfig(
+            name=self.name,
+            version=self.version,
+            description="",
+            author="",
+            license="",
+            architecture=self.architecture,
+            model_type="causal-lm",
+            framework="sneppx",
+            num_parameters=self.num_parameters,
+            num_layers=self.num_hidden_layers,
+            hidden_size=self.hidden_size,
+            num_attention_heads=self.num_attention_heads,
+            num_key_value_heads=self.num_key_value_heads,
+            vocab_size=self.vocab_size,
+            max_seq_len=self.max_position_embeddings,
+            layer_norm_eps=self.rms_norm_eps,
+            rms_norm_eps=self.rms_norm_eps,
+            use_rms_norm=True,
+            hidden_act="silu",
+            ffn_act="silu",
+            gated_ffn=True,
+            attention_type="causal",
+            attention_dropout=self.attention_dropout,
+            hidden_dropout=self.hidden_dropout,
+            use_flash_attention=True,
+            sliding_window=self.sliding_window,
+            pos_encoding="rope",
+            rope_theta=self.rope_theta,
+            rope_scaling=1 if self.use_rope_scaling else 0,
+            initializer_range=0.02,
+            tie_word_embeddings=False,
+            quantize=False,
+            tensor_parallel_size=1,
+            pipeline_parallel_size=1,
+            sequence_parallel=False,
+            learning_rate=2e-4,
+            weight_decay=0.01,
+            max_grad_norm=1.0,
+            num_experts=self.num_experts,
+            num_experts_per_token=self.num_experts_per_token,
+            router_aux_loss_coef=0.0,
+        )
+    
+    @classmethod
+    def from_model_config(cls, config: "ModelConfig") -> "Qwen2Config":
+        """Create Qwen2Config from unified ModelConfig."""
+        return cls(
+            hidden_size=config.hidden_size,
+            intermediate_size=config.intermediate_size,
+            num_hidden_layers=config.num_layers,
+            num_attention_heads=config.num_attention_heads,
+            num_key_value_heads=config.num_key_value_heads,
+            vocab_size=config.vocab_size,
+            max_position_embeddings=config.max_seq_len,
+            rms_norm_eps=config.layer_norm_eps,
+            rope_theta=config.rope_theta,
+        )
 
 
 @dataclass
@@ -101,6 +699,126 @@ class DeepSeekV2Config:
     head_dim: int = 128
     attention_dropout: float = 0.0
     hidden_dropout: float = 0.0
+    
+    # Additional fields for ModelConfig compatibility
+    name: str = "deepseek_v2"
+    version: str = "0.1.0"
+    description: str = ""
+    author: str = ""
+    license: str = ""
+    architecture: str = "transformer"
+    num_parameters: int = 0
+    max_seq_len: int = 4096
+    layer_norm_eps: float = 1e-6
+    rms_norm_eps: float = 1e-6
+    use_rms_norm: bool = True
+    ffn_act: str = "silu"
+    gated_ffn: bool = True
+    attention_type: str = "causal"
+    attention_dropout: float = 0.0
+    hidden_dropout: float = 0.0
+    use_flash_attention: bool = True
+    sliding_window: int = 0
+    pos_encoding: str = "rope"
+    rope_theta: float = 10000.0
+    rope_scaling: int = 0
+    initializer_range: float = 0.02
+    tie_word_embeddings: bool = False
+    quantize: bool = False
+    quant_bits: int = 0
+    quant_group_size: int = 128
+    tensor_parallel_size: int = 1
+    pipeline_parallel_size: int = 1
+    sequence_parallel: bool = False
+    learning_rate: float = 2e-4
+    weight_decay: float = 0.01
+    max_grad_norm: float = 1.0
+    warmup_steps: int = 0
+    max_steps: int = 0
+    gradient_accumulation_steps: int = 1
+    mixed_precision: bool = True
+    num_experts: int = 0
+    num_experts_per_token: int = 0
+    router_aux_loss_coef: float = 0.0
+    custom: Dict[str, Any] = field(default_factory=dict)
+    
+    # Property aliases for backward compatibility
+    @property
+    def num_head_dim(self) -> int:
+        return self.head_dim
+    
+    @property
+    def num_kv_heads(self) -> int:
+        return self.num_key_value_heads
+    
+    @property
+    def num_layers(self) -> int:
+        return self.num_hidden_layers
+    
+    @property
+    def max_seq_len(self) -> int:
+        return self.max_position_embeddings
+    
+    def to_model_config(self) -> "ModelConfig":
+        """Convert to unified ModelConfig."""
+        return ModelConfig(
+            name=self.name,
+            version=self.version,
+            description="",
+            author="",
+            license="",
+            architecture=self.architecture,
+            model_type="causal-lm",
+            framework="sneppx",
+            num_parameters=self.num_parameters,
+            num_layers=self.num_hidden_layers,
+            hidden_size=self.hidden_size,
+            num_attention_heads=self.num_attention_heads,
+            num_key_value_heads=self.num_key_value_heads,
+            vocab_size=self.vocab_size,
+            max_seq_len=self.max_position_embeddings,
+            layer_norm_eps=self.rms_norm_eps,
+            rms_norm_eps=self.rms_norm_eps,
+            use_rms_norm=True,
+            hidden_act="silu",
+            ffn_act="silu",
+            gated_ffn=True,
+            attention_type="causal",
+            attention_dropout=self.attention_dropout,
+            hidden_dropout=self.hidden_dropout,
+            use_flash_attention=True,
+            sliding_window=self.sliding_window,
+            pos_encoding="rope",
+            rope_theta=self.rope_theta,
+            rope_scaling=0,
+            initializer_range=0.02,
+            tie_word_embeddings=False,
+            quantize=False,
+            tensor_parallel_size=1,
+            pipeline_parallel_size=1,
+            sequence_parallel=False,
+            learning_rate=2e-4,
+            weight_decay=0.01,
+            max_grad_norm=1.0,
+            num_experts=self.num_experts,
+            num_experts_per_token=self.num_experts_per_tok,
+            router_aux_loss_coef=0.0,
+        )
+    
+    @classmethod
+    def from_model_config(cls, config: "ModelConfig") -> "DeepSeekV2Config":
+        """Create DeepSeekV2Config from unified ModelConfig."""
+        return cls(
+            hidden_size=config.hidden_size,
+            intermediate_size=config.intermediate_size,
+            num_hidden_layers=config.num_layers,
+            num_attention_heads=config.num_attention_heads,
+            num_key_value_heads=config.num_key_value_heads,
+            vocab_size=config.vocab_size,
+            max_position_embeddings=config.max_seq_len,
+            rms_norm_eps=config.layer_norm_eps,
+            rope_theta=config.rope_theta,
+        )
 
 
 # Registry of known model architectures
@@ -235,6 +953,29 @@ def get_model_config(family: str, size: str) -> dict:
             f"Available: {list(_MODEL_REGISTRY[family].keys())}"
         )
     return dict(_MODEL_REGISTRY[family][size])
+
+
+def get_model_config_obj(family: str, size: str) -> "ModelConfig":
+    """Get a ModelConfig object by family and size name.
+    
+    Creates a unified ModelConfig from the registry data.
+    """
+    config_dict = get_model_config(family, size)
+    config_dict["name"] = f"{family}-{size}"
+    config_dict["version"] = "0.1.0"
+    config_dict["description"] = f"{family.upper()} {size} model"
+    
+    # Map registry keys to ModelConfig fields
+    if "num_hidden_layers" in config_dict:
+        config_dict["num_layers"] = config_dict.pop("num_hidden_layers")
+    if "max_position_embeddings" in config_dict:
+        config_dict["max_seq_len"] = config_dict.pop("max_position_embeddings")
+    if "num_attention_heads" in config_dict:
+        config_dict["num_attention_heads"] = config_dict["num_attention_heads"]
+    if "num_key_value_heads" in config_dict:
+        config_dict["num_key_value_heads"] = config_dict["num_key_value_heads"]
+    
+    return ModelConfig.from_dict(config_dict)
 
 
 def config_from_json(path: str) -> dict:
