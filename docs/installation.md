@@ -167,7 +167,7 @@ Pre-existing S0 edge case failures (2/306 Ed25519 vectors, 1/4 Argon2 timing). N
 
 ### CMake 4.x version error
 
-If CMake fails with `invalid version string '0.9.7.890e'`, ensure you have the latest commit with the fixed `CMakeLists.txt` version `0.9.7`.
+If CMake fails with `invalid version string`, ensure you have the v1.0.0 tag checked out.
 
 ### Python import fails
 

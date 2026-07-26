@@ -23,6 +23,7 @@ genhtml coverage_filtered.info --output-directory coverage_report
 - **Kernel core** (include/kernel/, kernel/): >= 90%
 - **Architecture** (include/arch/, arch/): >= 80%
 - **Security** (include/security/, security/): >= 95%
+- **Model Zoo** (algorithms/model_zoo/): >= 70%
 - **Tests**: not counted
 
 ## Current Status

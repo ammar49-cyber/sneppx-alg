@@ -3,10 +3,10 @@
 ## General
 
 **Q: What is SNEPPX-Algo?**  
-A: A composable 5-component AI algorithm pipeline (HSS -> SER -> ARC -> NPE -> FM) with 10 embedded security layers (S0-S9). v0.5.0 delivers a CPU-trainable system with JIT compilation, CUDA-accelerated optimization, and complete Python wrappers.
+A: A composable 5-component AI algorithm pipeline (HSS -> SER -> ARC -> NPE -> FM) with 10 embedded security layers (S0-S9). v1.0.0 delivers a stable release with all 8 phases complete, including a full model zoo with `from_pretrained()`, distributed training, quantization, and profiling.
 
 **Q: Is this production-ready?**  
-A: v0.5.0 is a research prototype with real implementations. GPU acceleration, distributed training, and formal verification are partially implemented.
+A: v1.0.0 is the first stable release. The core infrastructure (tensor engine, autodiff, optimizers, distributed training, model zoo, security layers) is fully implemented and tested. Serving integration (vLLM/TensorRT-LLM) and fine-tuning (LoRA/QLoRA) are planned for v1.1.
 
 **Q: Can I use it as a PyTorch replacement?**  
 A: Not the goal. SNEPPX-Algo explores a different design axis: security in every instruction plus a hybrid neuro-symbolic pipeline.

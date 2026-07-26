@@ -71,6 +71,11 @@ config/                   # Model zoo configs
 | `neural_security_c` | C security library (S0-S1) |
 | `neural_security_cpp` | C++ security library (S2-S3) |
 | `neural_cuda_kernels` | CUDA kernels (conditional, `SNEPPX_BUILD_CUDA=ON`) |
+| `neural_model_config` | Model config schema (C) |
+| `neural_model_registry` | Model registry (C) |
+| `neural_model_weights` | Weight collection and quantization (C) |
+| `neural_model_card` | Model card metadata (C) |
+| `neural_model_factory` | C++ RAII wrappers |
 
 ## Adding a New Algorithm Pipeline Component
 

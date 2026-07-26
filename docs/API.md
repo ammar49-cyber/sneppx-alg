@@ -356,3 +356,84 @@ net = Sequential(
 )
 out = net(np.random.randn(4, 8))
 ```
+
+### Model Zoo
+
+#### C Config (`neural_core/model_zoo/model_config.h`)
+
+```c
+// Preset constructors
+ModelConfig* model_config_llama2_7b(void);
+ModelConfig* model_config_llama3_8b(void);
+ModelConfig* model_config_mistral_7b(void);
+ModelConfig* model_config_qwen2_7b(void);
+ModelConfig* model_config_deepseek_v2_lite(void);
+
+// Serialization
+char* model_config_to_json(const ModelConfig *cfg, int pretty);
+ModelConfig* model_config_from_json(const char *json);
+
+// Lifecycle
+void model_config_destroy(ModelConfig *cfg);
+int model_config_validate(const ModelConfig *cfg, char **error_out);
+```
+
+#### C Registry (`neural_core/model_zoo/registry.h`)
+
+```c
+ModelRegistry* model_registry_create(void);
+int model_registry_register(ModelRegistry *reg, const char *name, const char *version,
+                            const char *architecture, const char *description,
+                            const char *author, const char *license, ...);
+ModelRegistryEntry* model_registry_get(ModelRegistry *reg, const char *name, const char *version);
+ModelRegistryEntry** model_registry_search(ModelRegistry *reg, const char *query, int *count);
+ModelRegistry* model_registry_global(void);
+```
+
+#### C Weights (`neural_core/model_zoo/weights.h`)
+
+```c
+WeightCollection* weight_collection_create(void);
+int weight_collection_add(WeightCollection *wc, const char *name, const int64_t *shape,
+                          int ndim, const char *dtype, const void *data, size_t data_size, int owns_data);
+WeightTensor* weight_collection_get(WeightCollection *wc, const char *name);
+int weight_tensor_quantize_int8(WeightTensor *t);
+int weight_tensor_convert_dtype(WeightTensor *t, const char *target_dtype);
+```
+
+#### C Model Card (`neural_core/model_zoo/model_card.h`)
+
+```c
+ModelCard* model_card_create(void);
+void model_card_destroy(ModelCard *card);
+char* model_card_to_json(const ModelCard *card, int pretty);
+int model_card_save(const ModelCard *card, const char *path);
+int model_card_validate(const ModelCard *card, char **error_out);
+void model_card_set_name(ModelCard *card, const char *name);
+void model_card_set_version(ModelCard *card, const char *version);
+void model_card_set_architecture(ModelCard *card, const char *arch);
+void model_card_set_num_parameters(ModelCard *card, int64_t params);
+void model_card_add_tag(ModelCard *card, const char *tag);
+```
+
+#### C++ Model Factory
+
+```cpp
+#include "model_factory.hpp"
+ModelFactory factory;
+factory.register_model("my-model", Model(config, card, weights));
+factory.save_model("my-model", "model.sneppx");
+factory.load_model("model.sneppx");
+```
+
+#### Python
+
+```python
+from SneppX_ALG.interface_bindings.model_zoo import (
+    ModelConfig, ModelFamily, LlamaConfig, MistralConfig,
+    Qwen2Config, DeepSeekV2Config,
+    get_model_config, build_model_from_config,
+    from_pretrained, ModelHub,
+    convert_hf_to_sneppx,
+)
+```

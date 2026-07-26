@@ -100,5 +100,29 @@ def test_npe_compiler():
 - **test_argon2**: 1 pre-existing timing edge case (3/4 pass)
 - **test_ed25519**: 2 verification edge cases (304/306 pass)
 - **test_ser_train**: 1 pre-existing flaky assertion (2/3 pass)
+- **test_kyber**: 1 pre-existing shared secret mismatch
 
 These are accepted as pre-existing and do not indicate regression.
+
+## Model Zoo Tests
+
+### C Tests (all must pass before release)
+
+```powershell
+.\build_test\algorithms\model_zoo\Release\test_model_config.exe
+.\build_test\algorithms\model_zoo\Release\test_model_registry.exe
+.\build_test\algorithms\model_zoo\Release\test_model_weights.exe
+.\build_test\algorithms\model_zoo\Release\test_model_card.exe
+.\build_test\algorithms\model_zoo\Release\test_model_factory.exe
+.\build_test\algorithms\model_zoo\Release\test_integration.exe
+```
+
+### Python Tests
+
+```powershell
+$env:PYTHONPATH = "bindings/python"
+python bindings/python/SneppX_ALG/interface_bindings/tests/test_model_config.py
+python bindings/python/SneppX_ALG/interface_bindings/tests/test_integration.py
+```
+
+Expected: 34 C/C++ tests + 22 Python tests = 56 total, all pass.

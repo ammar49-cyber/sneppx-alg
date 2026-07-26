@@ -1,6 +1,6 @@
-# SNEPPX-Alg Project Documentation
+# SNEPPX-Algo Project Documentation (v1.0.0)
 
-This file contains practical documentation and quick start guides for working with the SNEPPX-Alg project.
+This file contains practical documentation and quick start guides for working with the SNEPPX-Algo project.
 
 ## Quick Start Guide
 
@@ -47,6 +47,27 @@ trainer.fit(x, y)
 output = model(x)
 ```
 
+### Model Zoo — from_pretrained
+
+```python
+from SneppX_ALG.interface_bindings.model_zoo import (
+    get_model_config, from_pretrained, build_model_from_config, ModelHub
+)
+
+# Look up a preset
+config = get_model_config("llama3", "8B")
+print(config.hidden_size)  # 4096
+
+# Get model info
+model_info = build_model_from_config(config)
+print(model_info["layers"])        # 32
+print(model_info["param_str"])     # "8.0B"
+
+# Use ModelHub for full lifecycle
+hub = ModelHub()
+hub.save_pretrained("llama-2-7b", "./my_model")
+```
+
 ### C/C++ Integration
 
 ```c
@@ -67,6 +88,46 @@ int main() {
     sneppX_tensor_free(t);
     return 0;
 }
+```
+
+### Model Zoo C API
+
+```c
+#include <neural_core/model_zoo/model_config.h>
+#include <neural_core/model_zoo/registry.h>
+#include <neural_core/model_zoo/weights.h>
+#include <neural_core/model_zoo/model_card.h>
+
+// Create config from preset
+ModelConfig *cfg = model_config_llama2_7b();
+printf("Hidden size: %ld\n", cfg->hidden_size);
+
+// Serialize to JSON
+char *json = model_config_to_json(cfg, 1);
+
+// Register model
+ModelRegistry *reg = model_registry_create();
+model_registry_register(reg, "my-model", "1.0", "transformer",
+                        "desc", "author", "MIT", "", "", "", 1);
+
+// Create weights
+WeightCollection *wc = weight_collection_create();
+int64_t shape[] = {4096, 4096};
+float data[1] = {0.0f};
+weight_collection_add(wc, "weight", shape, 2, "f32", data, sizeof(data), 0);
+
+// Create model card
+ModelCard *card = model_card_create();
+model_card_set_name(card, "my-model");
+model_card_set_version(card, "1.0");
+model_card_add_tag(card, "nlp");
+
+// Cleanup
+model_config_destroy(cfg);
+model_registry_destroy(reg);
+weight_collection_destroy(wc);
+model_card_destroy(card);
+free(json);
 ```
 
 ### Rust Bindings
@@ -130,71 +191,9 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_ZK=ON
 -DSNEPPX_BUILD_BENCHMARKS=ON
 ```
 
-## Command Line Tools
-
-### Core CLI
-
-The project comes with several CLI tools pre-installed:
-
-#### sneppx-train
-
-```bash
-# Training command
-sneppx-train --help
-```
-
-#### sneppx-serve
-
-```bash
-# Inference server
-sneppx-serve --help
-```
-
-#### sneppx-experiment
-
-```bash
-# Run experiments
-sneppx-experiment --help
-```
-
-### Usage Examples
-
-#### Train a Model
-
-```bash
-# Train on MNIST dataset
-sneppx-train \
-  --model resnet \
-  --dataset mnist \
-  --epochs 10 \
-  --output-dir ./experiments/resnet-mnist
-```
-
-#### Serve a Model
-
-```bash
-# Start inference server with a trained model
-sneppx-serve \
-  --model-path ./experiments/resnet-mnist/best.pth \
-  --host 0.0.0.0 \
-  --port 8000 \
-  --workers 4
-```
-
-#### Run Experiment
-
-```bash
-# Run a hyperparameter experiment
-sneppx-experiment \
-  --config ./experiments/lr-tuning.yaml \
-  --output ./experiments/lr-tuning \
-  --resume \
-  --continue
-```
-
 ## Python Module Structure
 
-### Core Modules (37 modules across 7 phases)
+### Core Modules (8 phases)
 
 #### Phase 1: Tensor Engine & Autodiff
 
@@ -203,7 +202,6 @@ sneppx-experiment \
 | `tensor.py` | Tensor creation, manipulation, operations |
 | `autograd.py` | Automatic differentiation |
 | `autograd_ops.py` | Differentiable operations |
-| `advdat` | Advanced tensor operations |
 
 #### Phase 2: Neural Network Building Blocks
 
@@ -241,7 +239,7 @@ sneppx-experiment \
 
 | Module | Purpose |
 |--------|---------|
-| `quantization.py` | Model quantization |
+| `quantization.py` | Model quantization (INT8, FP8, AWQ, GPTQ) |
 | `pruning.py` | Model pruning |
 | `distillation.py` | Knowledge distillation |
 
@@ -249,10 +247,16 @@ sneppx-experiment \
 
 | Module | Purpose |
 |--------|---------|
-| `profiler.py` | Performance profiling |
+| `profiler.py` | Performance profiling with NVTX markers |
 | `benchmark.py` | Benchmarking |
 | `serve_cli.py` | CLI for serving models |
 | `train_cli.py` | CLI for training |
+
+#### Phase 8: Model Zoo
+
+| Module | Purpose |
+|--------|---------|
+| `model_zoo.py` | Model presets, from_pretrained, ModelHub, weight converters |
 
 ### Advanced Interfaces
 
@@ -308,23 +312,31 @@ zero_optimizer = zero.ZeroOptimizer(model.parameters())
    - Autodiff engine
    - Optimizers
    - Training loop
+   - CUDA backend (GEMM, attention, memory pool, RNG)
 
 2. **Algorithm Layer** (`algorithms/`)
-   - HSS (Hierarchical State Spaces)
-   - SER (Sparse Expert Routing)
+   - HSS (Hierarchical State Spaces / Mamba-2)
+   - SER (Sparse Expert Routing / MoE)
    - ARC (Adversarial Robustness Certification)
    - NPE (Neural Program Engine)
-   - FM (Factorized Manifolds)
+   - FM (Factorized Manifolds / Federated Memory)
 
 3. **Security Layer** (`security/`)
-   - S0-S9 security layers
-   - Post-quantum crypto
+   - S0-S9 security layers (21,984+ LOC)
+   - Post-quantum crypto (Kyber, Dilithium, SPHINCS+)
    - Code obfuscation
+   - Behavioral monitoring, RLHF safety
 
 4. **Network Layer** (`net/`)
    - Distributed training (NCCL)
-   - Communication protocols
-   - Checkpointing
+   - ZeRO-1/2/3, pipeline/tensor/expert parallelism
+   - Elastic training with fault tolerance
+   - Checkpoint coordinator
+
+5. **Model Zoo** (`algorithms/model_zoo/`)
+   - Model configs, registry, weights, cards
+   - C/C++ RAII wrappers
+   - Python ModelHub
 
 ### Supported Architectures
 
@@ -335,23 +347,33 @@ zero_optimizer = zero.ZeroOptimizer(model.parameters())
 - Qwen2 (7B, 72B)
 - DeepSeek V2 (Lite, Full)
 
-#### Custom Architectures
+#### Advanced Architectures
+
+- **Differential Attention** — λ-scaled subtracted QK pairs
+- **Multi-head Latent Attention (MLA)** — DeepSeek-style absorbed KV projection
+- **FlexAttention** — Block-sparse with mask modulation
+- **Mamba-2** — Selective SSM with HiPPO initialization
+- **Mixture of Depth** — Token-level expert routing
+- **YaRN** — NTK-aware RoPE scaling with ramp interpolation
+- **ALiBi** — Attenuated linear bias position encoding
+
+#### Custom Pipeline Algorithms
 
 - HSS/Mamba: Hierarchical state spaces
 - SER/MoE: Sparse expert routing
-- ARC: Adversarial robustness
-- NPE: Neural program extraction
-- FM: Fractal memory
+- ARC: Adversarial robustness training (FGSM, PGD, CW)
+- NPE: Neural program extraction with JIT pipeline
+- FM: Fractal memory / federated averaging
 
 ### Hardware Support
 
 #### Current
 - x86-64 (AVX2, AVX-512)
-- CUDA (NVIDIA GPUs)
+- CUDA 12.x (NVIDIA GPUs, tensor-core GEMM, Flash Attention)
 - ROCm (AMD GPUs)
-- Vulkan, TPU — opt-in reference backends (`SNEPPX_BUILD_VULKAN` / `SNEPPX_BUILD_TPU`)
-- HTTP, ZK — opt-in reference backends (`SNEPPX_BUILD_HTTP` / `SNEPPX_BUILD_ZK`)
-- Metal, oneAPI — reference backends (`SNEPPX_BUILD_METAL` / `SNEPPX_BUILD_ONEAPI`)
+- Vulkan, TPU — opt-in reference backends
+- HTTP, ZK — opt-in reference backends
+- Metal, oneAPI — reference backends
 
 #### Planned
 - ARMv8-A (NEON)
@@ -370,6 +392,8 @@ zero_optimizer = zero.ZeroOptimizer(model.parameters())
 | `Model` | Base neural network class |
 | `Optimizer` | Base optimizer |
 | `Trainer` | Training loop wrapper |
+| `ModelConfig` | Unified model config dataclass |
+| `ModelHub` | Model download/cache/save manager |
 
 #### Key Functions
 
@@ -382,6 +406,10 @@ zero_optimizer = zero.ZeroOptimizer(model.parameters())
 | `optim.SGD()` | SGD optimizer |
 | `optim.Adam()` | Adam optimizer |
 | `optim.AdamW()` | AdamW optimizer |
+| `get_model_config()` | Look up model config by name/size |
+| `from_pretrained()` | Download/cache model weights |
+| `build_model_from_config()` | Build model info dict from config |
+| `convert_hf_to_sneppx()` | Convert HF weights to SNEPPX format |
 
 ### C API
 
@@ -393,6 +421,24 @@ Key C functions (from `include/neural_core/`):
 - `sneppx_tensor_print()` - Print tensor
 - `sneppx_tensor_add()` - Add tensors
 - `sneppx_tensor_multiply()` - Multiply tensors
+
+#### Model Zoo C API
+
+| Function | Header | Purpose |
+|----------|--------|---------|
+| `model_config_llama2_7b()` | `model_config.h` | Create LLaMA-2 7B config |
+| `model_config_to_json()` | `model_config.h` | Serialize config to JSON |
+| `model_config_from_json()` | `model_config.h` | Parse JSON to config |
+| `model_registry_create()` | `registry.h` | Create model registry |
+| `model_registry_register()` | `registry.h` | Register a model |
+| `model_registry_search()` | `registry.h` | Search models by name |
+| `weight_collection_create()` | `weights.h` | Create weight collection |
+| `weight_collection_add()` | `weights.h` | Add weight tensor |
+| `weight_tensor_quantize_int8()` | `weights.h` | Quantize to INT8 |
+| `model_card_create()` | `model_card.h` | Create model card |
+| `model_card_to_json()` | `model_card.h` | Serialize card to JSON |
+| `model_card_save()` | `model_card.h` | Save card to file |
+| `model_card_validate()` | `model_card.h` | Validate card fields |
 
 ### Rust API
 
@@ -450,16 +496,27 @@ rustup toolchain install nightly
 ```bash
 # Run Python tests
 $env:PYTHONPATH = "bindings/python"
-pytest tests/python/ -v
+python -m pytest tests/python/ -v
+
+# Model Zoo Python tests
+python bindings/python/SneppX_ALG/interface_bindings/tests/test_model_config.py
+python bindings/python/SneppX_ALG/interface_bindings/tests/test_integration.py
 
 # Quick test
-pytest tests/python/test_tensor.py -v
+python -m pytest tests/python/test_tensor.py -v
+
+# Model Zoo C tests
+.\build_test\algorithms\model_zoo\Release\test_model_config.exe
+.\build_test\algorithms\model_zoo\Release\test_model_registry.exe
+.\build_test\algorithms\model_zoo\Release\test_model_weights.exe
+.\build_test\algorithms\model_zoo\Release\test_model_card.exe
+.\build_test\algorithms\model_zoo\Release\test_model_factory.exe
+.\build_test\algorithms\model_zoo\Release\test_integration.exe
 ```
 
 #### C/C++ Tests
 
 ```bash
-# Run C/C++ tests
 cd build && ctest -C Release --output-on-failure
 
 # Individual test
@@ -469,7 +526,6 @@ ctest -C Release -R test_tensor -v
 #### Rust Tests
 
 ```bash
-# Run Rust tests
 cd net/distributed && cargo test
 cd lib/rust && cargo test
 ```
@@ -477,36 +533,8 @@ cd lib/rust && cargo test
 #### Performance Benchmarks
 
 ```bash
-# Run benchmarks
 cd build && ./benchmarks/benchmark_suite --mode=full
 ```
-
-## Examples
-
-### Python Examples
-
-See `examples/python/` for detailed examples:
-
-1. **Simple Neural Network**
-2. **Distributed Training**
-3. **Quantization**
-4. **Model Persistence**
-
-### C/C++ Examples
-
-See `examples/c/` for:
-
-1. **Tensor Basics**
-2. **Autodiff**
-3. **Custom Operations**
-
-### Rust Examples
-
-See `examples/rust/` for:
-
-1. **Tensor Operations**
-2. **Neural Network Building**
-3. **Integration Patterns**
 
 ## Troubleshooting
 
@@ -515,8 +543,8 @@ See `examples/rust/` for:
 #### Import Errors
 
 ```bash
-# Error: Could not import 'SnepX_ALG'
-$ pip install SneppX_ALG==0.9.7.890e
+# Error: Could not import 'SneppX_ALG'
+$ pip install sneppx-alg==1.0.0
 ```
 
 #### Build Failures
@@ -546,36 +574,31 @@ If you run into issues:
    - Environment info
    - Code snippets
 
-## Future Roadmap
+## Roadmap
 
-### Short-term (1-3 months)
+### Completed (v1.0.0)
 
-- [ ] ARMv8-A support
-- [ ] More LLM model support
-- [ ] Improved quantization pipelines
-- [ ] Enhanced error messages
+- [x] All 8 phases: Tensor Engine, Neural Networks, Optimization, Data Pipeline, Checkpointing, Quantization, Profiling, Model Zoo
+- [x] Distributed training: ZeRO-1/2/3, Pipeline, Tensor/Expert Parallel, Elastic Training, Fault Tolerance
+- [x] Advanced architectures: Differential Attention, MLA, FlexAttention, Mamba-2, MoD, YaRN, ALiBi
+- [x] CUDA backend: Tensor-core GEMM, Flash Attention v2/v3, Autodiff, Memory Pool, RNG
+- [x] Security: S0-S9 complete (21,984+ LOC)
+- [x] from_pretrained: Model Hub with caching, presets for LLaMA/Mistral/Qwen2/DeepSeek V2
+- [x] Quantization: INT8, FP8, AWQ, GPTQ (C + CUDA + Python)
 
-### Medium-term (3-9 months)
+### Next (v1.1+)
 
-- [x] TPU integration — opt-in reference backend (`SNEPPX_BUILD_TPU`); NPU planned
+- [ ] Model serving: vLLM/TensorRT-LLM integration
+- [ ] LoRA/QLoRA fine-tuning
+- [ ] LM Evaluation Harness integration
+- [ ] pip-installable wheel
+- [ ] ARMv8-A (NEON) support
+- [ ] NPU (Qualcomm, etc.) support
 - [ ] Federated learning
-- [ ] Formal verification for security
+- [ ] Security formal verification
 - [ ] Production-ready tooling
 
-### Long-term (9-24 months)
-
-- [ ] Edge deployment
-- [ ] Quantum-resistant networking
-- [ ] Trusted execution environments
-- [ ] Full hardware acceleration
-
 ## References
-
-### Academic Papers
-
-- "Hierarchical State Spaces for Sequence Modeling" - https://arxiv.org/abs/xxxx.xxxxx
-- "Mixture of Experts with Dynamic Routing" - https://arxiv.org/abs/yyyy.yyyyy
-- "Post-Quantum Cryptography for ML" - https://arxiv.org/abs/zzzz.zzzzz
 
 ### Tools & Libraries
 
@@ -583,8 +606,6 @@ If you run into issues:
 - **pybind11** - Python bindings
 - **tokio** - Asynchronous runtime
 - **serde** - Serialization
-- **tokio-retry** - Retry logic
-- **anyhow** - Error handling
 - **tracing** - Logging
 - **clap** - CLI argument parsing
 
@@ -594,8 +615,8 @@ MIT License
 
 ## Copyright
 
-© 2024 Ammar [SNEPPX] - algoSNEPPX@gmail.com
+© 2024-2026 Ammar [SNEPPX] - algoSNEPPX@gmail.com
 
 ---
 
-_Generated with SNEPPX-Alg v0.9.7.890e_
+_Generated with SNEPPX-Alg v1.0.0_
