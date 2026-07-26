@@ -38,6 +38,11 @@ classifiers = [
     "Topic :: Security :: Cryptography",
 ]
 
+dependencies = [
+    "numpy>=1.21.0",
+    "pyyaml>=5.1",
+]
+
 [project.urls]
 Homepage = "https://github.com/ammar49-cyber/sneppx-alg"
 Repository = "https://github.com/ammar49-cyber/sneppx-alg"
@@ -54,10 +59,6 @@ sneppx-experiment = "SneppX_ALG.interface_bindings.experiment_cli:main"
 dev = ["pytest>=7.0", "scipy>=1.7"]
 hf = ["huggingface_hub>=0.16.0"]
 serve = ["uvicorn>=0.22.0"]
-
-[project.dependencies]
-numpy = ">=1.21.0"
-pyyaml = ">=5.1"
 
 [tool.setuptools.packages.find]
 where = ["bindings/python"]
