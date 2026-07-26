@@ -570,7 +570,6 @@ class Qwen2Config:
     license: str = ""
     architecture: str = "transformer"
     num_parameters: int = 0
-    max_seq_len: int = 32768
     layer_norm_eps: float = 1e-6
     rms_norm_eps: float = 1e-6
     use_rms_norm: bool = True
@@ -709,7 +708,6 @@ class DeepSeekV2Config:
     license: str = ""
     architecture: str = "transformer"
     num_parameters: int = 0
-    max_seq_len: int = 4096
     layer_norm_eps: float = 1e-6
     rms_norm_eps: float = 1e-6
     use_rms_norm: bool = True

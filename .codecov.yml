@@ -3,15 +3,15 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: "50...90"
+  range: "60...95"
   status:
     project:
       default:
-        target: 50%
+        target: 70%
         threshold: 5%
     patch:
       default:
-        target: 50%
+        target: 70%
 comment:
   layout: "diff, files"
   behavior: default

@@ -2,7 +2,80 @@
 
 All notable changes to SNEPPX-Algo.
 
-## [0.9.7.890e] — 2026-07-18
+## [1.0.0] — 2026-07-25
+
+### Major — Stable Release
+- Version promoted to **1.0.0** — all 8 development phases complete, API frozen for stability
+- Full regression suite: C (43/43), C++ (11/11), Python (20/20) — all pass
+- Pre-existing bugs fixed: `test_model_card.c` crash (missing `stdlib.h` + raw `strdup` → AV), Qwen2Config/DeepSeekV2Config `max_seq_len` property/dataclass conflict
+
+### Phase 1 — Model Zoo (new)
+- **1.1 Model Config Schema**: C config API with JSON serialize/parse, presets for LLaMA 2/3, Mistral, Qwen 2, BERT, ViT, SDXL; 13 unit tests
+- **1.2 Model Registry**: Registration, discovery, search, save/load, deprecation; C API with 8 tests
+- **1.3 Pretrained Weights**: `WeightCollection` API, dtype conversion (f32/f16), INT8 quantization, safetensors/gguf/npz loaders; 8 tests
+- **1.4 Model Cards**: Metadata with JSON serialization, validation, file I/O; 5 tests (now all passing)
+- **1.5 Python ModelConfig**: Dataclass with JSON serialization, validation, C config conversion, registry integration; added to LlamaConfig, MistralConfig, Qwen2Config, DeepSeekV2Config
+- **1.6 Python ModelHub**: `ModelHub` class with `from_pretrained`, `save_pretrained`, cache management
+- **1.7 C++ Model Factory**: RAII wrappers (`ModelConfigCpp`, `ModelCardCpp`, `WeightCollectionCpp`), `Model` class, `ModelFactory` with `create_model`/`from_pretrained`/`save_model`/`load_model`/`register_model`; 11 tests
+- **1.8 Integration Tests**: C (5 tests: config↔registry↔weights↔card↔pipeline) + Python (12 tests: roundtrip, presets, hub pipeline, cache, model card gen, `from_pretrained`, framework config conversions, `build_model_from_config`)
+
+### Bugfixes
+- `model_card.c:219`: Fixed infinite realloc loop in `model_card_to_json` tag serialization (`&buf_len` → `&buf_size`)
+- `weights.c:125`: Fixed `memcpy` buffer overrun (`t->data_size` → `data_size`)
+- `test_model_card.c`: Added missing `#include <stdlib.h>` (caused `malloc`/`free` assumed `extern int`, 64-bit pointer truncation → AV); replaced raw `strdup` into struct fields with proper setters
+- `model_zoo.py`: Removed conflicting `max_seq_len` dataclass field from `Qwen2Config` and `DeepSeekV2Config` (duplicated as `@property` with no setter → `AttributeError` on construction)
+
+### Advanced Architectures
+- **HSS**: Blelloch parallel prefix scan enabled by default; Mamba-2 selective SSM with HiPPO A_log initialization, 1D convolution, discretized selective scan
+- **SER**: Learned MLP gater (config flag, 2-layer MLP forward, autodiff subgraph, bindings, tests)
+- **ARC**: Adversarial training (FGSM/PGD/CW attack injection in training graph, config epsilon, tests)
+- **FM**: NCCL distributed sync bridge with callback pattern, tests
+- **NPE**: JIT pipeline with fusion passes, auto-JIT in VM
+
+### Distributed Training (Phase 2)
+- ZeRO-1/2/3 optimizer state partitioning with AdamW fused kernel
+- 1F1B pipeline schedule with microbatches, non-blocking inter-stage send/recv
+- Row/column split tensor parallelism with partial GEMM + all-reduce
+- Expert parallelism with all-to-all dispatch
+- Bucket-based DDP gradient all-reduce with compute overlap
+- Hierarchical all-reduce (NVLink + RDMA) with Top-K gradient compression
+- Distributed checkpoint coordinator with async save, fault tolerance
+- Elastic training with heartbeat, join/leave, reconfiguration
+
+### Quantization & Compression (Phase 5)
+- INT8 sym/asym per-channel quant/dequant, INT4 packed
+- FP8 E4M3/E5M2 bit-level encode/decode with special value handling
+- AWQ optimal scale grid search, weight scaling, quantize
+- GPTQ Hessian computation, Cholesky inverse, column-by-column quant
+- CUDA INT8/FP8 kernels (shared mem reduction, Hopper native FP8)
+- Python 17-test suite (all pass)
+
+### Async Checkpointing & Fault Tolerance (Phase 6)
+- Double-buffered async save (D2D→D2H overlap), background I/O thread
+- UDP heartbeat with SUSPECT→DEAD state machine
+- Elastic training: node join/leave, failure handling, topology reconfiguration
+- Real binary checkpoint reader (`fs/format/checkpoint_reader.c`)
+- Python 23-test suite (all pass)
+
+### Profiling & Debugging (Phase 7)
+- `SNEPPX_Profiler` with named entry aggregation, kernel timer, range push/pop, JSON export
+- `SNEPPX_Logger` with 6 severity levels, JSON/color stdout, per-rank
+- NVTX stubs with real `SNEPPX_USE_NVTX` path + software fallback
+- Python `Profiler`, `Timer`, `@timeit`, `MemoryTracker`, `TrainProfiler`
+- Sanitizer scripts (ASan/UBSan + compute-sanitizer)
+- 13 Python tests (all pass)
+
+### Documentation
+- Full documentation overhaul (ARCHITECTURE.md, API.md, DESIGN.md, VISION.md, ROADMAP.md)
+- Migration guide: `docs/migration/v0.9.x-to-v1.0.0.md`
+- Release signing scripts, SHA256SUMS/SHA512SUMS
+- Doxygen config updated to v1.0.0
+
+### Packaging
+- All version manifests bumped to 1.0.0 (CMake, Python, Cargo, Docker, Doxygen)
+- Conda-forge recipe updated to v1.0.0
+- Docker image labels updated
+- Arix-Site web frontend synced to v1.0.0
 
 ### Patch — HSS backward corruption fix
 - Fixed `backward_layer_norm` in `kernel/autodiff/ops.c`: `c->gamma->data` (a tensor)

@@ -7,25 +7,17 @@ See the [top-level README](https://github.com/ammar49-cyber/sneppx-alg) and
 [`Docs.md`](./Docs.md) for the full overview, build instructions, and the
 S0–S9 security model.
 
-## What's new in v0.9.7.890e
+## What's new in v1.0.0
 
-- **HSS training backward fixed** — corrected the layer-norm gamma/beta gradient
-  pointer dereference in `backward_layer_norm` (`c->gamma->data` was cast to `float*`
-  instead of `c->gamma->data->data`) and added the missing `#include <math.h>` in
-  `ops.c` (an implicitly-declared `sqrt` was returning a constant, poisoning every
-  layer-norm gradient). `test_train_integration` now converges deterministically
-  (loss drops >90% over 10 Adam steps).
-- **Real format readers** — safetensors, NumPy (`.npy`/`.npz`), PyTorch (`.pth`),
-  and ONNX loaders read and write real bytes into the tensor engine.
-- **Real kernel** — N-D matrix multiplication and a gradient-descent optimizer on
-  the autodiff tape; the kernel no longer shadows real code with stubs.
-- **Seven neural architectures** — Transformer, ViT, GCN, RNN, GAN, Diffusion, and
-  Reinforcement Learning, plus the ARC / SER / HSS / NPE / FM modules.
-- **Hardened security** — fixed a `SNEPPX_secure_free` symbol collision and a
-  secure-memory mapping-release leak in the S0–S9 layer.
-- **Opt-in backends are now real** — Vulkan, TPU, HTTP, and ZK perform genuine
-  reference computation (gated by `SNEPPX_BUILD_*` flags, OFF by default) and are
-  exercised by a new `test_backend_full` suite (12/12).
+- **Stable Release** — All 8 development phases complete, API frozen, full regression suite passes
+- **Phase 1 — Model Zoo**: `from_pretrained()` API, ModelHub, C/C++/Python model configs, model cards, weight management, integration tests
+- **Phase 2 — Distributed Training**: ZeRO-1/2/3, pipeline parallelism, tensor parallelism, expert parallelism, elastic training, fault tolerance
+- **Phase 3 — Advanced Architectures**: Differential Attention, Mamba-2 selective SSM, FlexAttention with block-sparse kernels, Mixture of Depth
+- **Phase 4 — Security Audit**: S0-S9 hardened (symbol-collision fixes, mapping-leak fixes, behavioral monitoring)
+- **Phase 5 — Quantization**: INT8 sym/asym, INT4 packed, FP8 E4M3/E5M2, AWQ, GPTQ
+- **Phase 6 — Async Checkpointing**: Double-buffered async save, heartbeat, elastic node join/leave
+- **Phase 7 — Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
+- **Phase 8 — Weight Converters**: HF integration, safetensors reader, presets for LLaMA 2/3, Mistral, Qwen 2, DeepSeek V2
 
 ## Quick build
 

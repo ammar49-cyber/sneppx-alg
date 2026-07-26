@@ -260,8 +260,10 @@ def main():
     test("from_pretrained_standalone"); test_from_pretrained_standalone(); pass_()
     test("from_pretrained_unknown_model"); test_from_pretrained_unknown_model(); pass_()
 
-    # FrameworkConfig conversions (skip Qwen2Config which has known @property conflict)
+    # FrameworkConfig conversions
     test("mistral_config_conversion"); test_mistral_config_conversion(); pass_()
+    test("qwen2_config_conversion"); test_qwen2_config_conversion(); pass_()
+    test("deepseek_config_conversion"); test_deepseek_config_conversion(); pass_()
 
     # build_model_from_config
     test("build_model_from_config"); test_build_model_from_config(); pass_()

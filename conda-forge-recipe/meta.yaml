@@ -1,7 +1,7 @@
 # Conda-forge recipe for sneppx-alg
 # This goes in a separate conda-forge feedstock repository
 
-{% set version = "0.9.0" %}
+{% set version = "1.0.0" %}
 
 package:
   name: sneppx-alg

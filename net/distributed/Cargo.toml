@@ -1,6 +1,6 @@
 [package]
 name = "neural-core-distributed"
-version = "0.9.7.890e"
+version = "1.0.0"
 edition = "2021"
 authors = ["Ammar [SNEPPX] <algoSNEPPX@gmail.com>"]
 description = "Distributed training coordination for SNEPPX-ALG: node discovery, ring all-reduce, parameter sync, fault tolerance, differential privacy"

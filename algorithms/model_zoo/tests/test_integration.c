@@ -229,7 +229,6 @@ void test_full_pipeline(void) {
 
 int main(void) {
     printf("\n=== Phase 1.8 C Integration Tests ===\n\n");
-    printf("Starting...\n"); fflush(stdout);
 
     test_config_registry_integration();
     test_weights_config_integration();
