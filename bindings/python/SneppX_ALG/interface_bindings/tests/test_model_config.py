@@ -1,6 +1,6 @@
 """Test for ModelConfig dataclass."""
 import json
-from SneppX_ALG.interface_bindings.model_zoo import ModelConfig, LlamaConfig, MistralConfig, get_model_config_obj
+from SneppX_ALG.interface_bindings.model_zoo import ModelConfig, LlamaConfig, MistralConfig, get_model_config_obj, ModelHub
 
 
 def test_model_config_creation():
@@ -225,6 +225,59 @@ def test_mistral_config_from_model_config():
     print("test_mistral_config_from_model_config: PASS")
 
 
+def test_mistral_config_from_model_config():
+    """Test MistralConfig from ModelConfig conversion."""
+    model_config = ModelConfig(
+        hidden_size=5120,
+        intermediate_size=13824,
+        num_layers=40,
+        num_attention_heads=40,
+        num_key_value_heads=40,
+        vocab_size=32000,
+        max_seq_len=4096,
+        rope_theta=10000.0,
+        sliding_window=4096,
+        learning_rate=2e-4,
+    )
+    
+    mistral_config = MistralConfig.from_model_config(model_config)
+    
+    assert mistral_config.hidden_size == 5120
+    assert mistral_config.intermediate_size == 13824
+    assert mistral_config.num_hidden_layers == 40
+    assert mistral_config.num_attention_heads == 40
+    assert mistral_config.num_key_value_heads == 40
+    assert mistral_config.vocab_size == 32000
+    assert mistral_config.max_position_embeddings == 4096
+    assert mistral_config.rope_theta == 10000.0
+    assert mistral_config.sliding_window == 4096
+    print("test_mistral_config_from_model_config: PASS")
+
+
+def test_model_hub():
+    """Test ModelHub class."""
+    hub = ModelHub()
+    
+    # Test initialization
+    assert hub.cache_dir.exists()
+    
+    # Test from_pretrained (stub)
+    model = hub.from_pretrained("llama-2-7b")
+    assert "model_id" in model
+    assert model["model_id"] == "llama-2-7b"
+    
+    # Test save_pretrained
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model = {"model_id": "test-model", "config": {"hidden_size": 512}}
+        hub.save_pretrained(model, tmpdir)
+        import os
+        assert os.path.exists(os.path.join(tmpdir, "config.json"))
+        assert os.path.exists(os.path.join(tmpdir, "README.md"))
+    
+    print("test_model_hub: PASS")
+
+
 def main():
     """Run all tests."""
     print("Running ModelConfig tests...\n")
@@ -238,6 +291,7 @@ def main():
     test_model_config_file_io()
     test_llama_config_from_model_config()
     test_mistral_config_from_model_config()
+    test_model_hub()
     
     print("\n=== All tests passed! ===")
 

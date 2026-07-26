@@ -216,7 +216,7 @@ char *model_card_to_json(const ModelCard *card, int pretty) {
         while (buf_len + 10 + card->num_tags * 32 >= buf_size) { buf_size *= 2; buf = (char *)realloc(buf, buf_size); }
         memcpy(buf + buf_len, "\"tags\": [", 9); buf_len += 9;
         for (int i = 0; i < card->num_tags; i++) {
-            json_escape_append(card->tags[i], &buf, &buf_len, &buf_len);
+            json_escape_append(card->tags[i], &buf, &buf_size, &buf_len);
             if (i < card->num_tags - 1) { buf[buf_len++] = ','; if (pretty) buf[buf_len++] = ' '; }
         }
         buf[buf_len++] = ']';

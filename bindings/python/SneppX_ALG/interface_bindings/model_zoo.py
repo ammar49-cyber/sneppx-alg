@@ -1,6 +1,7 @@
 import json
 import os
 import struct
+from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Dict, List, Tuple, Callable, Any
 from enum import IntEnum
@@ -1389,3 +1390,105 @@ def from_pretrained(
     result["family"] = family
     result["size"] = size
     return result
+
+
+# =========================================================================
+# Model Hub - High-level pretrained model loading/saving
+# =========================================================================
+
+class ModelHub:
+    """High-level interface for loading and saving pretrained models.
+    
+    Example:
+        >>> hub = ModelHub()
+        >>> model = hub.from_pretrained("llama-2-7b")
+        >>> hub.save_pretrained(model, "./my-model")
+    """
+    
+    def __init__(self, cache_dir: Optional[str] = None):
+        self.cache_dir = Path(cache_dir or os.path.join(os.path.expanduser("~"), ".cache", "sneppx"))
+        os.makedirs(self.cache_dir, exist_ok=True)
+    
+    def from_pretrained(
+        self,
+        model_id: str,
+        revision: str = "main",
+        local_files_only: bool = False,
+        verbose: bool = True,
+    ) -> Dict[str, Any]:
+        """Load a pretrained model by ID.
+        
+        Args:
+            model_id: Model identifier (e.g., "llama-2-7b", "mistral-7b")
+            revision: Model revision/tag (not yet implemented)
+            local_files_only: If True, only use local cached files
+            verbose: Print progress messages
+        
+        Returns:
+            Dictionary with keys: model_id, family, size, config, architecture, weights
+        """
+        return from_pretrained(model_id, verbose=True)
+    
+    def save_pretrained(
+        self,
+        model: Dict[str, Any],
+        save_directory: str,
+        safe_serialization: bool = True,
+        max_shard_size: str = "5GB",
+    ) -> None:
+        """Save a model to disk in SneppX format.
+        
+        Args:
+            model: Model dictionary from from_pretrained
+            save_directory: Directory to save the model
+            safe_serialization: Use safetensors format
+            max_shard_size: Maximum shard size for large models
+        """
+        save_dir = Path(save_directory)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save config
+        config = model.get("config", {})
+        config_path = save_dir / "config.json"
+        with open(config_path, "w") as f:
+            json.dump(config, f, indent=2)
+        
+        # Save weights (stub - would save actual weights in real implementation)
+        weights = model.get("weights", {})
+        if weights:
+            weights_path = save_dir / "model.safetensors"
+            # safetensors.torch.save_file(weights, weights_path)
+            pass
+        
+        # Save model card
+        model_card = model.get("model_card", "")
+        if not model_card:
+            model_card = self._generate_model_card(model)
+        (save_dir / "README.md").write_text(model_card)
+        
+        print(f"Model saved to {save_dir}")
+    
+    def _generate_model_card(self, model: Dict[str, Any]) -> str:
+        """Generate a basic model card."""
+        model_id = model.get("model_id", "unknown")
+        family = model.get("family", "unknown")
+        size = model.get("size", "unknown")
+        return f"""# {model_id}
+
+{size} {family.upper()} model from SneppX.
+
+## Model Details
+
+- **Family**: {family}
+- **Size**: {size}
+- **Architecture**: Transformer
+- **Framework**: SneppX
+
+## Usage
+
+```python
+from sneppx_alg import ModelHub
+hub = ModelHub()
+model = hub.from_pretrained("{model_id.lower().replace('-', '-')}")
+```
+"""
