@@ -42,7 +42,7 @@ setup(
         "serve": ["uvicorn>=0.22.0"],
     },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
@@ -51,8 +51,9 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Security :: Cryptography",
     ],
-    keywords="ai, machine-learning, neural-networks, security, post-quantum, cryptography",
+    keywords="ai, machine-learning, deep-learning, neural-networks, security, post-quantum, cryptography, distributed-training, cuda, tensor, state-space, mixture-of-experts, adversarial, model-zoo, quantization, llama, mistral, attention, mamba, transformer, formal-verification, differential-privacy, npu, nccl",
     entry_points={
         "console_scripts": [
             "sneppx-train=SneppX_ALG.interface_bindings.train_cli:main",

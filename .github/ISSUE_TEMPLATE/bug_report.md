@@ -26,7 +26,7 @@ What actually happens. Include error messages, stack traces, or test failures.
 - Compiler: [e.g. GCC 12, Clang 15, MSVC 2022]
 - CMake version: [e.g. 3.25]
 - Build type: [Debug / Release]
-- ARIX-Algo version: [e.g. v0.1.0, commit hash]
+- ARIX-Algo version: [e.g. v1.0.0, commit hash]
 
 ## Additional Context
 Logs, screenshots, or relevant test output.

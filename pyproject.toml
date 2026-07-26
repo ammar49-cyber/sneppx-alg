@@ -12,10 +12,20 @@ license = {text = "MIT"}
 authors = [
     {name = "Ammar [SNEPPX]", email = "algoSNEPPX@gmail.com"},
 ]
-keywords = ["ai", "machine-learning", "deep-learning", "neural-networks", "security", "post-quantum", "cryptography", "distributed-training", "cuda", "tensor"]
+keywords = [
+    "ai", "machine-learning", "deep-learning", "neural-networks",
+    "security", "post-quantum", "cryptography",
+    "distributed-training", "cuda", "tensor",
+    "state-space", "mixture-of-experts", "adversarial",
+    "model-zoo", "quantization", "zero",
+    "llama", "mistral", "qwen", "deepseek",
+    "attention", "mamba", "transformer",
+    "formal-verification", "differential-privacy",
+    "npu", "nccl"
+]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",

@@ -2,7 +2,7 @@
 
 ## Overview
 
-SneppX-ALG is a composable 5-component AI algorithm pipeline wrapped in 10 security layers. v0.5.0 delivers a CPU-trainable pipeline with parallel scan, learned gating, adversarial training, JIT compilation, NCCL synchronization, CUDA-accelerated optimization, and complete Python wrappers.
+SneppX-ALG is a composable 5-component AI algorithm pipeline wrapped in 10 security layers. v1.0.0 delivers a production-stable pipeline with Model Zoo, distributed training (ZeRO-1/2/3, pipeline/tensor/expert parallelism), advanced architectures (Differential Attention, Mamba-2, FlexAttention, MoD), quantization (INT8/INT4/FP8/AWQ/GPTQ), async checkpointing, profiling & debugging tools, and weight converters for LLaMA 2/3, Mistral, Qwen 2, DeepSeek V2.
 
 ## Quickstart
 
@@ -124,6 +124,13 @@ CPU training loop with MSE loss, tape-based autodiff backward, and optimizer ste
 | Trainer (CPU) | ~500 | 3 | ✅ Real |
 | Trainer (CUDA) | ~400 | 4 | ✅ Real (device detection, async transfers) |
 | Python API | ~800 | 11 | ✅ Real (ARC/NPE/FM/Trainer wrappers) |
+| Model Zoo | ~1,200 | 49 | ✅ Real (from_pretrained, weight converters) |
+| Distributed | ~1,200 | 44 | ✅ Real (ZeRO-1/2/3, TP/PP/EP, elastic) |
+| Quantization | ~1,300 | 17 | ✅ Real (INT8/INT4/FP8/AWQ/GPTQ) |
+| Advanced Arch | ~500 | 20 | ✅ Real (DifferentialAttn, Mamba-2, FlexAttn, MoD) |
+| Async Checkpoint | ~500 | 23 | ✅ Real (fault tolerance, elastic) |
+| Profiling | ~300 | 13 | ✅ Real (profiler, logger, sanitizers) |
+| CUDA Backend | ~9,600 | 25 | ✅ Real (FlashAttn, fused optim, ZeRO) |
 | S0 Crypto | ~2,500 | 10 | ✅ Real |
 | S1 Secure Mem | ~800 | 3 | ✅ Real |
 | S2 Obfuscation | ~1,500 | 4 | ✅ Complete |
@@ -191,11 +198,24 @@ SneppX_ALG/
 - **Build time**: ~30s on modern hardware (Release, 8 cores)
 - **Dependencies**: None for C core. Python stdlib-only for Python wrappers
 
+## Model Zoo (v1.0.0)
+
+Load pre-trained models from Hugging Face with one call:
+
+```python
+from SneppX_ALG.model_zoo import from_pretrained
+
+model = from_pretrained("meta-llama/Llama-2-7b-hf")
+```
+
+Supported architectures: LLaMA 2 (7B/13B/70B), LLaMA 3 (8B/70B), Mistral (7B), Qwen 2 (7B/72B), DeepSeek V2 (Lite/Full). See [`docs/model_zoo.md`](model_zoo.md) for the full guide.
+
 ## Next Steps
 
 - Read [docs/ARCHITECTURE.md](ARCHITECTURE.md) for deep technical details
 - Read [docs/hss_training.md](hss_training.md) for an end-to-end HSS training walkthrough
 - Read [docs/API.md](API.md) for the full C and Python API reference
 - Read [docs/installation.md](installation.md) for platform-specific build guides
+- Read [docs/model_zoo.md](model_zoo.md) for model loading and weight conversion
 - Read [docs/ROADMAP.md](ROADMAP.md) for the project timeline
 - Read [docs/contributing.md](contributing.md) to learn how to contribute

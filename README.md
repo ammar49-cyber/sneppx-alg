@@ -1,11 +1,31 @@
 # SNEPPX-Alg: Secure Neural Architecture (ARIX_Algo)
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![C/C++](https://img.shields.io/badge/language-C%2FC%2B%2B-00599C.svg)]()
+[![Python](https://img.shields.io/badge/language-Python-3776AB.svg)]()
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
+[![PRs](https://img.shields.io/badge/PRs-email%20only-yellow.svg)](mailto:algoarix@gmail.com)
+
+> **ARIX_Algo** — Secure, composable, production-grade AI algorithm pipeline with 10 security layers (S0–S9), model zoo, distributed training, quantization, and advanced architectures.
+
 This directory contains the **SNEPPX-Alg** cognitive processing system — a
 next-generation AI framework with security built into the foundation.
 
 See the [top-level README](https://github.com/ammar49-cyber/sneppx-alg) and
 [`Docs.md`](./Docs.md) for the full overview, build instructions, and the
 S0–S9 security model.
+
+## Features
+
+- **5-component algorithm pipeline**: HSS (SSM), SER (MoE), ARC (Adversarial Guard), NPE (Neural VM), FM (Federated Memory)
+- **10 security layers (S0–S9)**: Crypto, Secure Memory, Obfuscation, Monitoring, Network, AI Sanitizer, Key Vault, Updates, Formal Verification, Penetration Testing
+- **Model Zoo**: `from_pretrained()` API with ModelHub, weight management, model cards, converter presets for LLaMA 2/3, Mistral, Qwen 2, DeepSeek V2
+- **Distributed Training**: ZeRO-1/2/3, pipeline/tensor/expert parallelism, elastic training, fault tolerance
+- **Quantization**: INT8/INT4/FP8, AWQ, GPTQ
+- **Advanced Architectures**: Differential Attention, Mamba-2 SSM, FlexAttention, Mixture of Depth
+- **Built-in Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
 
 ## What's new in v1.0.0
 
