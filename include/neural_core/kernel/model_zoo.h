@@ -144,6 +144,9 @@ char* SNEPPX_llm_config_to_json(const SNEPPXLLMConfig* cfg);
 /* Parse LLM config from JSON string */
 int SNEPPX_llm_config_from_json(const char* json, SNEPPXLLMConfig* out);
 
+/* Extend model context to target_len using NTK-aware/YaRN scaling */
+int SNEPPX_llm_config_extend_context(SNEPPXLLMConfig* cfg, size_t target_len);
+
 /* Weight name mapping helpers */
 const char* SNEPPX_llm_weight_prefix(SNEPPXModelFamily family);
 int SNEPPX_llm_num_weight_tensors(SNEPPXModelFamily family,

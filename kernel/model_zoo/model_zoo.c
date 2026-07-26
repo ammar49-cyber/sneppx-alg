@@ -459,6 +459,55 @@ int SNEPPX_llm_config_from_json(const char* json, SNEPPXLLMConfig* out) {
 }
 
 /* =========================================================================
+ * API: extend context with NTK-aware / YaRN RoPE scaling
+ * ========================================================================= */
+
+int SNEPPX_llm_config_extend_context(SNEPPXLLMConfig* cfg, size_t target_len) {
+    if (!cfg || target_len == 0) return -1;
+
+    switch (cfg->family) {
+        case SNEPPX_MODEL_LLAMA_2:
+        case SNEPPX_MODEL_LLAMA_3: {
+            SNEPPXLlamaConfig* l = &cfg->config.llama;
+            if (target_len <= l->max_position_embeddings) return 0;
+            float scale = (float)target_len / (float)l->max_position_embeddings;
+            l->rope_theta *= scale > 1.0f ? scale : 1.0f;
+            l->use_scaled_rope = 1;
+            l->max_position_embeddings = target_len;
+            return 0;
+        }
+        case SNEPPX_MODEL_MISTRAL: {
+            SNEPPXMistralConfig* m = &cfg->config.mistral;
+            if (target_len <= m->max_position_embeddings) return 0;
+            float scale = (float)target_len / (float)m->max_position_embeddings;
+            m->rope_theta *= scale > 1.0f ? scale : 1.0f;
+            m->max_position_embeddings = target_len;
+            return 0;
+        }
+        case SNEPPX_MODEL_QWEN_2: {
+            SNEPPXQwen2Config* q = &cfg->config.qwen2;
+            if (target_len <= q->max_position_embeddings) return 0;
+            float scale = (float)target_len / (float)q->max_position_embeddings;
+            q->rope_theta *= scale > 1.0f ? scale : 1.0f;
+            q->rope_scaling_factor = scale;
+            q->use_rope_scaling = 1;
+            q->max_position_embeddings = target_len;
+            return 0;
+        }
+        case SNEPPX_MODEL_DEEPSEEK_V2: {
+            SNEPPXDeepSeekV2Config* d = &cfg->config.deepseek_v2;
+            if (target_len <= d->max_position_embeddings) return 0;
+            float scale = (float)target_len / (float)d->max_position_embeddings;
+            d->rope_theta *= scale > 1.0f ? scale : 1.0f;
+            d->max_position_embeddings = target_len;
+            return 0;
+        }
+        default:
+            return -1;
+    }
+}
+
+/* =========================================================================
  * API: weight name prefix helpers
  * ========================================================================= */
 

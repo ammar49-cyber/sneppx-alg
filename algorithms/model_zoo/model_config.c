@@ -725,8 +725,8 @@ ModelConfig *model_config_llama2_7b(void) {
     cfg->num_heads = 32;
     cfg->num_kv_heads = 32;
     cfg->intermediate_size = 11008;
-    cfg->max_position_embeddings = 2048;
-    cfg->max_seq_len = 2048;
+    cfg->max_position_embeddings = 4096;
+    cfg->max_seq_len = 4096;
     cfg->layer_norm_eps = 1e-5f;
     cfg->rms_norm_eps = 1e-6f;
     cfg->use_rms_norm = 1;
@@ -736,6 +736,8 @@ ModelConfig *model_config_llama2_7b(void) {
     cfg->attention_type = ATTENTION_CAUSAL;
     cfg->pos_encoding = POS_ENCODING_ROPE;
     cfg->rope_theta = 10000.0f;
+    cfg->rope_scaling = 2;           /* NTK-aware scaling for 128K */
+    cfg->rope_scaling_factor = 32.0f; /* 128K / 4K = 32 */
     cfg->initializer_range = 0.02f;
     cfg->tie_word_embeddings = 0;
     cfg->learning_rate = 2e-4f;

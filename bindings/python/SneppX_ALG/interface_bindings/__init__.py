@@ -313,6 +313,7 @@ from .model_zoo import (
     build_model_from_config,
     build_transformer_from_config,
     from_pretrained,
+    extend_context,
     HF_WEIGHT_MAP,
 )
 from .model_implementations import (

@@ -92,7 +92,8 @@ struct ModelConfig {
     // Position encoding
     PositionEncodingType pos_encoding;
     float rope_theta;
-    int rope_scaling;          // 0=none, 1=linear, 2=dynamic
+    int rope_scaling;          // 0=none, 1=linear, 2=dynamic (NTK-aware/YaRN)
+    float rope_scaling_factor; // scaling factor for extended context
 
     // Initialization
     float initializer_range;

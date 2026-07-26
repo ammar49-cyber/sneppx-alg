@@ -831,6 +831,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "num_key_value_heads": 32,
             "vocab_size": 32000,
             "max_position_embeddings": 4096,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-5,
         },
         "13B": {
             "hidden_size": 5120,
@@ -840,6 +842,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "num_key_value_heads": 40,
             "vocab_size": 32000,
             "max_position_embeddings": 4096,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-5,
         },
         "70B": {
             "hidden_size": 8192,
@@ -849,6 +853,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "num_key_value_heads": 8,
             "vocab_size": 32000,
             "max_position_embeddings": 4096,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-5,
         },
     },
     "llama3": {
@@ -885,6 +891,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "vocab_size": 32000,
             "max_position_embeddings": 32768,
             "sliding_window": 4096,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-5,
         },
     },
     "qwen2": {
@@ -920,6 +928,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "max_position_embeddings": 4096,
             "kv_lora_rank": 512,
             "q_lora_rank": 1536,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-6,
         },
         "full": {
             "hidden_size": 5120,
@@ -931,6 +941,8 @@ _MODEL_REGISTRY: Dict[str, Dict[str, dict]] = {
             "max_position_embeddings": 4096,
             "kv_lora_rank": 512,
             "q_lora_rank": 1536,
+            "rope_theta": 10000.0,
+            "rms_norm_eps": 1e-6,
         },
     },
 }
@@ -981,6 +993,44 @@ def config_from_json(path: str) -> dict:
     """Load model config from a JSON file."""
     with open(path) as f:
         return json.load(f)
+
+
+def extend_context(
+    config: dict,
+    target_len: int = 131072,
+    scaling: str = "ntk",
+) -> dict:
+    """Extend a model config to support longer context via RoPE scaling.
+
+    Args:
+        config: Model config dict (from get_model_config).
+        target_len: Desired maximum sequence length (default 131072 for 128K).
+        scaling: Scaling method - "ntk" (NTK-aware), "linear", or "yarn".
+
+    Returns:
+        Updated config dict with extended max_position_embeddings and scaling.
+    """
+    config = dict(config)
+    orig_len = config.get("max_position_embeddings", 4096)
+    if target_len <= orig_len:
+        return config
+
+    scale = target_len / orig_len
+    rope_theta = config.get("rope_theta", 10000.0)
+
+    if scaling == "ntk":
+        rope_theta *= scale
+    elif scaling == "linear":
+        pass  # linear scaling uses theta unchanged
+    elif scaling == "yarn":
+        rope_theta *= scale ** 0.8  # YaRN: partial NTK interpolation
+
+    config["max_position_embeddings"] = target_len
+    config["rope_theta"] = rope_theta
+    config["rope_scaling"] = 2 if scaling == "ntk" else 1
+    config["rope_scaling_factor"] = scale
+    config["use_rope_scaling"] = 1
+    return config
 
 
 def list_available_models() -> List[str]:
