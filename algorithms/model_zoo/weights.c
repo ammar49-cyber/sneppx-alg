@@ -122,7 +122,10 @@ int weight_collection_add(WeightCollection *wc, const char *name, const int64_t 
         return -1;
     }
     
-    if (data) memcpy(t->data, data, t->data_size);
+    if (data) {
+        size_t copy_size = data_size < t->data_size ? data_size : t->data_size;
+        memcpy(t->data, data, copy_size);
+    }
     t->owns_data = owns_data;
     
     wc->tensors[wc->count++] = t;
