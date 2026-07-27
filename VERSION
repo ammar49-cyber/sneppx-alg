@@ -1,7 +1,4 @@
-SneppX-ALG algo1.0.0
-Release Date: 2026-07-25
-Status: Stable Release — All 8 Phases Complete, Model Zoo, Distributed Training, Quantization, Profiling, Advanced Architectures
-Security: S0-S9 Complete — 21,984+ lines of C security code + 123 C test executables + 66 Python test files (796+ test functions) + 4-ring firewall
-Build: cmake 3.16+, C11/C20, Python 3.11+, macOS/Linux/Windows + MASM x64 (Windows)
-Total Codebase: 165,000+ lines across 1,015+ text files (250+ directories)
-New in 1.0.0: Phase 1 Model Zoo (from_pretrained, ModelHub, C/C++/Python integration), Phase 2 Distributed Training (ZeRO, Pipeline, Tensor/Expert Parallel), Phase 3 Advanced Architectures (Differential Attention, Mamba2, FlexAttention, MoD), Phase 4 Security Audit, Phase 5 Quantization (INT8/FP8/AWQ/GPTQ), Phase 6 Async Checkpointing & Fault Tolerance, Phase 7 Profiling & Debugging, Phase 8 Model Zoo (presets, weight converters, HF integration)
+SneppX-ALG algo1.1.0
+Release Date: 2026-07-27
+Status: Pre-release — v1.1.0 in development
+Previous: v1.0.0 — Stable Release (2026-07-25)

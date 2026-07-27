@@ -2,6 +2,10 @@
 
 All notable changes to SNEPPX-Algo.
 
+## [1.1.0] — 2026-07-27
+
+
+
 ## [1.0.0] — 2026-07-25
 
 ### Major — Stable Release

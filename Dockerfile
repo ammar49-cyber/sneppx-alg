@@ -148,7 +148,7 @@ FROM cuda-runtime AS default
 
 LABEL org.opencontainers.image.title="SNEPPX-ALG"
 LABEL org.opencontainers.image.description="Next-generation AI architecture with security built into the foundation"
-LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.version="1.1.0"
 LABEL org.opencontainers.image.authors="Ammar [SNEPPX] <algoSNEPPX@gmail.com>"
 LABEL org.opencontainers.image.source="https://github.com/ammar49-cyber/sneppx-alg"
 LABEL org.opencontainers.image.licenses="MIT"
