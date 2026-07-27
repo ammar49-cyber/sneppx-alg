@@ -218,10 +218,25 @@ q_out = qlayer.forward(data)
 ### Model Zoo
 
 ```python
-from SneppX_ALG.interface_bindings.model_zoo import get_model_config, from_pretrained
+from SneppX_ALG.interface_bindings.model_zoo import (
+    get_model_config, from_pretrained, LLMConfig
+)
 
 cfg = get_model_config("llama2-7b")
 model = from_pretrained("meta-llama/Llama-2-7b")
+
+# LLMConfig constructors
+cfg = LLMConfig.from_name("llama3", "8B")
+cfg = LLMConfig.from_json('{"family": "llama3", ...}')
+
+# Serialize
+json_str = cfg.to_json()
+
+# Extend context to 128K
+cfg.extend_context(131072)
+
+# MHA forward pass
+output = cfg.forward_mha(hidden_states, attention_mask, position_ids)
 ```
 
 ## Running Tests

@@ -285,6 +285,38 @@ SNEPPXTensor* SNEPPX_fm_compress_gradients(const SNEPPXTensor* grad, float compr
 int SNEPPX_fm_forward(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* input, SNEPPXTensor** output);
 ```
 
+### Model Zoo
+
+**Header**: `#include "model_zoo.h"`
+
+```c
+typedef enum { SNEPPX_MODEL_LLAMA_2 = 0, SNEPPX_MODEL_LLAMA_3 = 1,
+               SNEPPX_MODEL_MISTRAL = 2, SNEPPX_MODEL_QWEN_2 = 3,
+               SNEPPX_MODEL_DEEPSEEK_V2 = 4, SNEPPX_MODEL_UNKNOWN = 255
+} SNEPPXModelFamily;
+
+// Config structs: SNEPPXLlamaConfig, SNEPPXMistralConfig,
+//                 SNEPPXQwen2Config, SNEPPXDeepSeekV2Config
+// Wrapper:        SNEPPXLLMConfig (tagged union)
+
+// Create preset config by family + size (e.g. "llama3", "8B")
+int SNEPPX_llm_config_from_name(const char* family, const char* size,
+                                 SNEPPXLLMConfig* out);
+
+// Serialize to JSON (caller must free)
+char* SNEPPX_llm_config_to_json(const SNEPPXLLMConfig* cfg);
+
+// Parse from JSON
+int SNEPPX_llm_config_from_json(const char* json, SNEPPXLLMConfig* out);
+
+// Extend context to target_len using NTK-aware/YaRN scaling
+int SNEPPX_llm_config_extend_context(SNEPPXLLMConfig* cfg, size_t target_len);
+
+// Weight name mapping
+const char* SNEPPX_llm_weight_prefix(SNEPPXModelFamily family);
+int SNEPPX_llm_num_weight_tensors(SNEPPXModelFamily family, size_t num_layers);
+```
+
 ### CUDA Trainer Bridge
 
 **Header**: `#include "trainer_cuda.h"`

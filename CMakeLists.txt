@@ -383,3 +383,22 @@ set(CPACK_SOURCE_IGNORE_FILES
     ".*.zip"
 )
 include(CPack)
+
+# ---------------------------------------------------------------------------
+# Documentation (Doxygen) — optional, requires `doxygen` on PATH
+# ---------------------------------------------------------------------------
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+    add_custom_target(docs
+        COMMAND ${CMAKE_COMMAND} -E echo
+            "Doxygen not found — install it or use docs/guide/*.md directly"
+    )
+endif()

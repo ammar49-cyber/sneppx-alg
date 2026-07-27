@@ -208,14 +208,35 @@ from SneppX_ALG.model_zoo import from_pretrained
 model = from_pretrained("meta-llama/Llama-2-7b-hf")
 ```
 
-Supported architectures: LLaMA 2 (7B/13B/70B), LLaMA 3 (8B/70B), Mistral (7B), Qwen 2 (7B/72B), DeepSeek V2 (Lite/Full). See [`docs/model_zoo.md`](model_zoo.md) for the full guide.
+Supported architectures: LLaMA 2 (7B/13B/70B), LLaMA 3 (8B/70B), Mistral (7B), Qwen 2 (7B/72B), DeepSeek V2 (Lite/Full). See [`docs/guide/model_zoo.md`](guide/model_zoo.md) for the full guide.
+
+## Context Extension (v1.0.0)
+
+Extend any supported model to 128K context via NTK-aware RoPE scaling:
+
+```python
+cfg = LLMConfig.from_name("llama3", "8B")
+cfg.extend_context(131072)
+```
+
+See [`docs/guide/128k_context_extension.md`](guide/128k_context_extension.md).
+
+## Multi-Head Attention Forward (v1.0.0)
+
+Full MHA forward pass with GQA, Flash Attention, RoPE, and MLA (DeepSeek V2):
+
+```python
+output = cfg.forward_mha(hidden_states, attention_mask, position_ids)
+```
+
+See [`docs/guide/mha_forward_pass.md`](guide/mha_forward_pass.md).
 
 ## Next Steps
 
+- Read [docs/guide/index.md](guide/index.md) for feature guides
 - Read [docs/ARCHITECTURE.md](ARCHITECTURE.md) for deep technical details
 - Read [docs/hss_training.md](hss_training.md) for an end-to-end HSS training walkthrough
 - Read [docs/API.md](API.md) for the full C and Python API reference
 - Read [docs/installation.md](installation.md) for platform-specific build guides
-- Read [docs/model_zoo.md](model_zoo.md) for model loading and weight conversion
 - Read [docs/ROADMAP.md](ROADMAP.md) for the project timeline
 - Read [docs/contributing.md](contributing.md) to learn how to contribute
