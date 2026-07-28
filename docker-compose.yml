@@ -38,3 +38,18 @@ services:
       && cmake --build . -j\"\$(nproc)\" && ctest --repeat until-fail:100 --output-on-failure"
     profiles:
       - fuzz
+
+  serve:
+    build:
+      context: .
+      target: py-runtime
+    ports:
+      - "8000:8000"
+    environment:
+      - SNEPPX_SERVE_HOST=0.0.0.0
+      - SNEPPX_SERVE_PORT=8000
+      - FIREWALL_CONFIG=${FIREWALL_CONFIG:-}
+    command: >
+      sh -c "pip install uvicorn && sneppx-serve --host 0.0.0.0 --port 8000"
+    profiles:
+      - serve
