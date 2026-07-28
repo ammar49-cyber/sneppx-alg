@@ -421,8 +421,8 @@ def distillation_loss(
 ) -> Tensor:
     """Knowledge distillation loss (KL divergence + CE)."""
     # Soft targets
-    soft_teacher = softmax(teacher_logits / temperature, axis=-1)
-    soft_student = log_softmax(student_logits / temperature, axis=-1)
+    soft_teacher = softmax((teacher_logits / temperature).data, axis=-1)
+    soft_student = log_softmax((student_logits / temperature).data, axis=-1)
 
     kl_loss = np.sum(
         soft_teacher * (np.log(soft_teacher + 1e-12) - soft_student), axis=-1

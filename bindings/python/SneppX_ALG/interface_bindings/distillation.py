@@ -44,7 +44,7 @@ def kd_loss(
 
     # KL divergence
     kl = np.sum(t_soft * (np.log(t_soft + 1e-12) - s_log_soft), axis=-1)
-    kl_loss = np.mean(kl_loss) * (temperature**2)
+    kl_loss = np.mean(kl) * (temperature**2)
 
     if labels is not None:
         # Hard target CE loss

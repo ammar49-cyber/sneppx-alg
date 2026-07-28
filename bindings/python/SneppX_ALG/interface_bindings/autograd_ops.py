@@ -21,6 +21,8 @@ class Add(Function):
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
             return Tensor(a.data + b, dtype=a.dtype)
+        if isinstance(a, (int, float)):
+            return Tensor(a + b.data, dtype=b.dtype)
         return Tensor(a.data + b.data, dtype=a.dtype)
 
     @staticmethod
@@ -33,6 +35,8 @@ class Sub(Function):
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
             return Tensor(a.data - b, dtype=a.dtype)
+        if isinstance(a, (int, float)):
+            return Tensor(a - b.data, dtype=b.dtype)
         return Tensor(a.data - b.data, dtype=a.dtype)
 
     @staticmethod
@@ -44,16 +48,23 @@ class Mul(Function):
     @staticmethod
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
-            ctx.save_attr(b_val=b)
+            ctx.save_attr(scalar_side=1, scalar=b)
             return Tensor(a.data * b, dtype=a.dtype)
+        if isinstance(a, (int, float)):
+            ctx.save_attr(scalar_side=0, scalar=a)
+            return Tensor(a * b.data, dtype=b.dtype)
         ctx.save_for_backward(a=a, b=b)
         return Tensor(a.data * b.data, dtype=a.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
-        b_val = ctx.get_attr("b_val")
-        if b_val is not None:
-            return [grad_output * b_val, None]
+        side = ctx.get_attr("scalar_side")
+        if side == 1:
+            scalar = ctx.get_attr("scalar")
+            return [grad_output * scalar, None]
+        if side == 0:
+            scalar = ctx.get_attr("scalar")
+            return [None, grad_output * scalar]
         a = ctx.get_saved_tensor("a")
         b = ctx.get_saved_tensor("b")
         return [grad_output * b.data, grad_output * a.data]
