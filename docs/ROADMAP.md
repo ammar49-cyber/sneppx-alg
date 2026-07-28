@@ -22,7 +22,7 @@ All 8 development phases complete, API frozen for stability, full regression sui
 |------|-------------|--------|
 | **Serving** | TensorRT-LLM / vLLM integration, OpenAI-compatible API | <5ms TTFT at 7B |
 | **Continuing Pre-training** | Distributed checkpoint resume, FSDP integration | 10k tokens/s/node |
-| **Fine-tuning** | LoRA/QLoRA adapters, DPO/GRPO trainers | 2x memory reduction |
+| **Fine-tuning** | LoRA/QLoRA adapters, DPO/GRPO trainers | 2x memory reduction — **Done (v1.1.0)** |
 | **Evaluation** | LM Eval Harness integration, standard benchmarks | MMLU/GSM8K/HumanEval |
 | **Deployment** | pip-installable wheel, Docker Compose for serving | One-command deploy |
 
@@ -66,7 +66,7 @@ All 8 development phases complete, API frozen for stability, full regression sui
 | Quarter | Milestone | Status |
 |---------|-----------|--------|
 | **2026 Q3-Q4** | Phase 1-8 complete, v1.0.0 release | **Done** |
-| **2027 Q1** | Model serving (vLLM/TensorRT-LLM), LoRA fine-tuning, LM Eval Harness | Pending |
+| **2027 Q1** | Model serving (vLLM/TensorRT-LLM), LoRA fine-tuning, LM Eval Harness, FSDP | ✅ Done |
 | **2027 Q2** | CUDA graph capture, PagedAttention v2, Prometheus monitoring | Pending |
 | **2027 Q3** | 7B model pre-training, distributed checkpoint resume | Pending |
 | **2027 Q4** | Multi-GPU training, FSDP, 13B model | Pending |
