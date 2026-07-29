@@ -3,6 +3,14 @@
 ## Project Overview
 SNEPPX Algo is a cognitive processing system implementing neural architecture search, hierarchical state spaces, mixture of experts, and a full S0–S9 security layer. Written in C11 + C++20, targeting x86-64 (MSVC 19.44, GCC, Clang).
 
+## 🚫 Machine Constraints (CRITICAL — Read Before Any LLM Work)
+- **No local LLM inference**: This machine has no GPU and limited RAM. NEVER run, test, or validate any LLM model tests (`test_llama_models.py`, `test_model_implementations.py`, `test_vision_transformers.py`, `test_inference_server.py`, `test_generation.py`) — they will hang or crash the machine.
+- **No CUDA**: CUDA tests (`test_cuda.py`, `test_cuda_kernels.py`) cannot run here. Skip them.
+- **No GPU-dependent ops**: Anything requiring a CUDA device or large model weights (>500MB) should not be executed.
+- **Python-only testing**: Only run Python-level unit tests that use NumPy/Tensor backends. All tests under `tests/python/` that don't import LLM or CUDA modules are safe.
+- **Safe test list** (always run these for regression): `test_tensor.py`, `test_nn.py`, `test_optim.py`, `test_data.py`, `test_quantization.py`, `test_checkpoint.py`, `test_profiler.py`, `test_model_zoo.py`, `test_autograd_ops.py`, `test_schedulers.py`, `test_amp.py`, `test_grad_checkpoint.py`, `test_tokenizer.py`, `test_data_loader.py`, `test_advanced_ops.py`, `test_augmentation.py`, `test_pruning.py`, `test_distillation.py`
+- **NEVER attempt**: `from transformers import ...`, `from llama_cpp import ...`, `torch.cuda.is_available()`, or any HuggingFace `from_pretrained()` call.
+
 ## Build Commands
 ```powershell
 # Configure (debug)
