@@ -164,8 +164,6 @@ def continuous_generate_loop(
             next_id = next_tokens[i][0] if isinstance(next_tokens[i], list) else next_tokens[i]
             req.generated_tokens.append(next_id)
 
-            if next_id in tokenizer_decode([next_id], skip_special=False):
-                pass
             if len(req.generated_tokens) >= req.max_new_tokens:
                 text = tokenizer_decode(req.generated_tokens)
                 scheduler.complete(req.id, req.generated_tokens, text)
