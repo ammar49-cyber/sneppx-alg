@@ -1,6 +1,6 @@
 """Tests for crypto_asm.py — ASM-accelerated crypto operations."""
 
-import sys, os
+import sys, os, hashlib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "bindings", "python"))
 
 from SneppX_ALG.interface_bindings.crypto_asm import (

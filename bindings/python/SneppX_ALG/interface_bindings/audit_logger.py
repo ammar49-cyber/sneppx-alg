@@ -284,7 +284,8 @@ class FileAuditBackend(AuditBackend):
         with self._lock:
             event.prev_hash = self._prev_hash
             entry_data = event.to_dict()
-            # Compute hash of entry + prev_hash
+            # Compute hash of entry without the hash field itself
+            entry_data.pop("hash", None)
             hash_input = json.dumps(entry_data, sort_keys=True, separators=(",", ":")).encode()
             event.hash = hashlib.sha256(hash_input).hexdigest()
             self._prev_hash = event.hash
@@ -691,6 +692,23 @@ class AuditLogger:
         """Log an audit event."""
         timestamp = time.time()
         
+        # Convert string action/result/severity to enums
+        if isinstance(action, str):
+            try:
+                action = AuditAction(action)
+            except ValueError:
+                action = AuditAction.CUSTOM
+        if isinstance(result, str):
+            try:
+                result = AuditResult(result)
+            except ValueError:
+                pass
+        if isinstance(severity, str):
+            try:
+                severity = AuditSeverity[severity.upper()]
+            except (KeyError, AttributeError):
+                severity = AuditSeverity.INFO
+        
         with self._lock:
             self._event_counter += 1
             event_id = f"evt_{int(timestamp * 1000000)}_{self._event_counter:06d}"
@@ -849,13 +867,22 @@ class AuditLogger:
         
         return unique[:limit]
     
+    def clear(self):
+        """Clear all events from all backends."""
+        for backend in self.backends:
+            try:
+                if hasattr(backend, 'clear'):
+                    backend.clear()
+            except Exception:
+                pass
+    
     def verify_chain(self) -> Tuple[bool, List[str]]:
         """Verify hash chain integrity across all backends."""
         errors = []
         all_events = self.query(limit=10000)
         
         prev_hash = "0" * 64
-        for event in reversed(all_events):  # Oldest first
+        for event in sorted(all_events, key=lambda e: e.timestamp):  # Oldest first
             if event.prev_hash != prev_hash:
                 errors.append(
                     f"Hash chain broken at {event.event_id}: "

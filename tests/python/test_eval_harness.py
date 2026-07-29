@@ -95,7 +95,8 @@ def test_harness_run_single():
 
     harness.run(dummy_model)
     assert "gsm8k" in harness.results
-    assert harness.results["gsm8k"].num_samples == 0  # no data file
+    # Falls back to synthetic data when no file exists
+    assert harness.results["gsm8k"].num_samples > 0
 
 
 def test_exact_match_task_evaluate():

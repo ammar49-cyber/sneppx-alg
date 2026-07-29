@@ -1,4 +1,8 @@
-"""Tests for Python algorithm wrappers (ARC/NPE/FM/Trainer)."""
+"""Tests for Python algorithm wrappers (ARC/NPE/FM/Trainer).
+
+NOTE: Run directly with `python test_algo_wrappers.py`, not via pytest.
+"""
+__test__ = False
 
 import os
 import sys

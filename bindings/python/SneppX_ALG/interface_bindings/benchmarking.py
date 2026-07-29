@@ -342,19 +342,25 @@ class BenchmarkSuite:
             if cfg["type"] == "lstm":
                 fn = lambda: lstm_cell(
                     x[:, 0, :], h0, c0,
-                    Tensor.from_numpy(np.random.randn(I + H, 4 * H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(4 * H, I).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(4 * H, H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(4 * H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(4 * H).astype(np.float32)),
                 )
             elif cfg["type"] == "gru":
                 fn = lambda: gru_cell(
                     x[:, 0, :], h0,
-                    Tensor.from_numpy(np.random.randn(I + H, 3 * H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(3 * H, I).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(3 * H, H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(3 * H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(3 * H).astype(np.float32)),
                 )
             else:
                 fn = lambda: rnn_cell(
                     x[:, 0, :], h0,
-                    Tensor.from_numpy(np.random.randn(I + H, H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(H, I).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(H, H).astype(np.float32)),
+                    Tensor.from_numpy(np.random.randn(H).astype(np.float32)),
                     Tensor.from_numpy(np.random.randn(H).astype(np.float32)),
                 )
 
@@ -398,25 +404,35 @@ class BenchmarkSuite:
                 },
             ]
 
-        from .advanced_ops import transformer_block
+        from .advanced_ops import transformer_block as _tf_block
 
         results = []
         for cfg in configs:
             B, L, D, H = cfg["batch"], cfg["seq"], cfg["dim"], cfg["heads"]
+            ff_dim = D * cfg.get("ff_mult", 4)
             x = Tensor.from_numpy(np.random.randn(B, L, D).astype(np.float32))
-            mask = Tensor.from_numpy(
-                np.triu(np.ones((L, L)) * -1e9, k=1).astype(np.float32)
-            )
+            attn_w = Tensor.from_numpy(np.random.randn(3 * D, D).astype(np.float32))
+            attn_b = Tensor.from_numpy(np.random.randn(3 * D).astype(np.float32))
+            ff1_w = Tensor.from_numpy(np.random.randn(ff_dim, D).astype(np.float32))
+            ff1_b = Tensor.from_numpy(np.random.randn(ff_dim).astype(np.float32))
+            ff2_w = Tensor.from_numpy(np.random.randn(D, ff_dim).astype(np.float32))
+            ff2_b = Tensor.from_numpy(np.random.randn(D).astype(np.float32))
+            ln1_w = Tensor.from_numpy(np.ones(D, dtype=np.float32))
+            ln1_b = Tensor.from_numpy(np.zeros(D, dtype=np.float32))
+            ln2_w = Tensor.from_numpy(np.ones(D, dtype=np.float32))
+            ln2_b = Tensor.from_numpy(np.zeros(D, dtype=np.float32))
 
             mem_mb = (
-                B * L * D * 4 + B * L * L * 4 + B * L * cfg["ff_mult"] * D * 4
+                B * L * D * 4 + B * L * L * 4 + B * L * ff_dim * 4
             ) / (1024 * 1024)
 
             result = self.benchmark(
                 f"transformer_B{B}_L{L}_D{D}_H{H}",
                 "transformer",
-                lambda: transformer_block(
-                    x, mask, num_heads=H, ff_mult=cfg["ff_mult"], dropout=cfg["dropout"]
+                lambda: _tf_block(
+                    x, attn_w, attn_b, ff1_w, ff1_b, ff2_w, ff2_b,
+                    ln1_w, ln1_b, ln2_w, ln2_b,
+                    num_heads=H, dropout=cfg.get("dropout", 0.1),
                 ),
                 memory_mb=mem_mb,
             )

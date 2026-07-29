@@ -3,44 +3,70 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "bindings", "python"))
 
-from SneppX_ALG.interface_bindings import DDoSMitigation, IdentityManager, TransportSecurity
+from SneppX_ALG.interface_bindings import DDoSMitigation, DDoSConfig, IdentityManager, TransportSecurity
 
 
 def test_ddos_allow():
-    d = DDoSMitigation(max_connections_per_ip=3)
+    cfg = DDoSConfig(max_connections_per_ip=3, max_connections_total=10,
+                     token_bucket_capacity=1000, max_requests_per_minute=9999)
+    d = DDoSMitigation(cfg)
     for _ in range(3):
-        assert d.allow_connection("1.2.3.4")
-    assert not d.allow_connection("1.2.3.4")
+        ok, _, _ = d.check_request("1.2.3.4")
+        assert ok
+    ok, _, _ = d.check_request("1.2.3.4")
+    assert not ok
 
 
 def test_ddos_different_ips():
-    d = DDoSMitigation(max_connections_per_ip=2)
-    assert d.allow_connection("1.1.1.1")
-    assert d.allow_connection("2.2.2.2")
-    assert d.allow_connection("1.1.1.1")
-    assert not d.allow_connection("1.1.1.1")
-    assert d.allow_connection("2.2.2.2")
+    cfg = DDoSConfig(max_connections_per_ip=2, max_connections_total=10,
+                     token_bucket_capacity=1000, max_requests_per_minute=9999)
+    d = DDoSMitigation(cfg)
+    ok, _, _ = d.check_request("1.1.1.1")
+    assert ok
+    ok, _, _ = d.check_request("2.2.2.2")
+    assert ok
+    ok, _, _ = d.check_request("1.1.1.1")
+    assert ok
+    ok, _, _ = d.check_request("1.1.1.1")
+    assert not ok
+    ok, _, _ = d.check_request("2.2.2.2")
+    assert ok
 
 
 def test_ddos_reset_ip():
-    d = DDoSMitigation(max_connections_per_ip=1)
-    d.allow_connection("1.2.3.4")
-    assert not d.allow_connection("1.2.3.4")
-    d.reset("1.2.3.4")
-    assert d.allow_connection("1.2.3.4")
+    cfg = DDoSConfig(max_connections_per_ip=1, max_connections_total=10,
+                     token_bucket_capacity=1000, max_requests_per_minute=9999)
+    d = DDoSMitigation(cfg)
+    d.check_request("1.2.3.4")
+    ok, _, _ = d.check_request("1.2.3.4")
+    assert not ok
+    d.release_connection("1.2.3.4")
+    ok, _, _ = d.check_request("1.2.3.4")
+    assert ok
 
 
 def test_ddos_reset_all():
-    d = DDoSMitigation(max_connections_per_ip=1)
-    d.allow_connection("1.2.3.4")
-    d.reset()
-    assert d.allow_connection("1.2.3.4")
+    cfg = DDoSConfig(max_connections_per_ip=1, max_connections_total=10,
+                     token_bucket_capacity=1000, max_requests_per_minute=9999)
+    d = DDoSMitigation(cfg)
+    d.check_request("1.2.3.4")
+    d.unban_ip("1.2.3.4")
+    d.release_connection("1.2.3.4")
+    ok, _, _ = d.check_request("1.2.3.4")
+    assert ok
 
 
 def test_ddos_syn_flood():
-    d = DDoSMitigation()
-    assert d.is_syn_flood("1.2.3.4", 1001)
-    assert not d.is_syn_flood("1.2.3.4", 999)
+    cfg = DDoSConfig(syn_flood_threshold=5, syn_flood_window_seconds=60,
+                     token_bucket_capacity=1000, max_requests_per_minute=9999)
+    d = DDoSMitigation(cfg)
+    # First 4 SYN packets should be allowed (< threshold)
+    for _ in range(4):
+        ok, _, _ = d.check_request("1.2.3.4", is_syn=True)
+        assert ok
+    # 5th SYN should trigger flood detection (>= threshold)
+    ok, action, _ = d.check_request("1.2.3.4", is_syn=True)
+    assert not ok
 
 
 def test_identity_register():
