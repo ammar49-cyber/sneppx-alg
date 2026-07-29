@@ -32,6 +32,8 @@ from .generation import (
 from .tokenizer import Tokenizer
 from .security_middleware import SecurityConfig, SecurityMiddleware
 from .firewall import create_firewall as _create_firewall
+from .continuous_batching import ContinuousBatchScheduler, SchedulerConfig, ScheduledRequest, continuous_generate_loop
+from .quantized_serve import QuantizedModelConfig, quantize_model_weights, dequantize_weights
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +152,32 @@ class ModelEntry:
 
 _models: Dict[str, ModelEntry] = {}
 _start_time: float = time.time()
+_scheduler: Optional[ContinuousBatchScheduler] = None
+
+
+def get_scheduler() -> ContinuousBatchScheduler:
+    global _scheduler
+    if _scheduler is None:
+        _scheduler = ContinuousBatchScheduler()
+    return _scheduler
+
+
+def _filter_prompt(prompt: str) -> Tuple[str, str]:
+    sec = get_security()
+    if sec is not None:
+        return sec.filter_prompt(prompt)
+    return "clean", prompt
+
+
+def _verify_output(text: str) -> Tuple[str, str]:
+    sec = get_security()
+    if sec is not None:
+        return sec.verify_output(text)
+    return "clean", text
+
+
+def create_firewall(**kwargs):
+    return _create_firewall(**kwargs)
 
 
 def register_model(
@@ -245,9 +273,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SneppX Inference API",
     version="0.9.5.748",
-        models_loaded=len(_models),
-        uptime_seconds=time.time() - _start_time,
-    )
+)
 
 
 @app.get("/v1/models", response_model=ModelListResponse)
@@ -372,6 +398,99 @@ async def batch_generate_endpoint(req: BatchGenerateRequest):
         model=entry.model_id,
         created=int(time.time()),
     )
+
+
+@app.post("/v1/generate/continuous-batch", response_model=BatchGenerateResponse)
+async def continuous_batch_endpoint(req: BatchGenerateRequest):
+    sanitized_prompts = []
+    for prompt in req.prompts:
+        filter_status, sanitized = _filter_prompt(prompt)
+        if filter_status == "injection":
+            raise HTTPException(400, "Prompt blocked by content filter")
+        sanitized_prompts.append(sanitized if filter_status == "sanitized" else prompt)
+
+    entry = get_model(req.model)
+    scheduler = get_scheduler()
+    req_ids = []
+    for prompt in sanitized_prompts:
+        if entry.tokenizer:
+            ids = entry.tokenizer.encode(prompt)
+        else:
+            ids = [ord(c) % entry.model.vocab_size for c in prompt]
+        req_id = scheduler.submit(
+            prompt=prompt, prompt_tokens=ids,
+            max_new_tokens=req.max_new_tokens,
+            temperature=req.temperature, top_k=req.top_k, top_p=req.top_p,
+        )
+        req_ids.append(req_id)
+
+    def model_fn(input_ids_list, positions):
+        gen_config = GenerationConfig(
+            max_new_tokens=1, do_sample=req.do_sample,
+            temperature=req.temperature, top_k=req.top_k, top_p=req.top_p,
+        )
+        batch_input = [np.array(ids, dtype=np.int64) for ids in input_ids_list]
+        result = batch_generate(entry.model, batch_input, generation_config=gen_config)
+        output_ids = result["output_ids"]
+        return output_ids, None
+
+    def decode_fn(token_ids):
+        if entry.tokenizer:
+            return entry.tokenizer.decode(token_ids)
+        return "".join(chr(t % 128) for t in token_ids)
+
+    for batch_result in continuous_generate_loop(model_fn, scheduler, decode_fn, max_steps=req.max_new_tokens * len(req.prompts)):
+        pass
+
+    results_list = []
+    for i, rid in enumerate(req_ids):
+        prompt_len = len(sanitized_prompts[i])
+        completed = [r for r in scheduler._completed if r.request_id == rid]
+        if completed:
+            row = completed[-1]
+            results_list.append(GenerateResponse(
+                generated_text=row.generated_text,
+                token_ids=row.token_ids,
+                prompt_tokens=row.prompt_tokens,
+                completion_tokens=row.completion_tokens,
+                total_tokens=row.prompt_tokens + row.completion_tokens,
+                model=entry.model_id,
+                created=int(time.time()),
+            ))
+    return BatchGenerateResponse(
+        results=results_list,
+        model=entry.model_id,
+        created=int(time.time()),
+    )
+
+
+@app.post("/v1/models/quantize")
+async def quantize_model_endpoint(model_id: str = Query(...), quant_mode: str = Query("int4")):
+    entry = get_model(model_id)
+    mode_map = {"int4": "INT4_ASYMMETRIC", "int8": "INT8_SYMMETRIC", "fp8": "FP8_E4M3"}
+    from .quantization import QuantMode
+    mode = getattr(QuantMode, mode_map.get(quant_mode, "INT4_ASYMMETRIC"), QuantMode.INT4_ASYMMETRIC)
+    cfg = QuantizedModelConfig(quant_mode=mode)
+    params = {}
+    for name, param in entry.model.named_parameters().items() if hasattr(entry.model, "named_parameters") else []:
+        from .tensor import Tensor
+        p = param.data if hasattr(param, "data") else param
+        params[name] = np.asarray(p, dtype=np.float32)
+    if not params:
+        return JSONResponse({"status": "skipped", "message": "No parameters to quantize"})
+    quantized = quantize_model_weights(params, cfg)
+    from .quantized_serve import estimate_model_size_mb
+    size_mb = estimate_model_size_mb(quantized)
+    entry.meta["quantized"] = True
+    entry.meta["quant_mode"] = quant_mode
+    entry.meta["quantized_size_mb"] = round(size_mb, 2)
+    return JSONResponse({
+        "status": "ok",
+        "model_id": model_id,
+        "quant_mode": quant_mode,
+        "layers_quantized": len(quantized),
+        "size_mb": round(size_mb, 2),
+    })
 
 
 @app.post("/v1/generate/stream")

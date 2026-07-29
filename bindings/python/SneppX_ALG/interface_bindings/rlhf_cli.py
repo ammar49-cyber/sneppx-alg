@@ -19,9 +19,9 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     from .lora import LoRAConfig, DPOTrainerConfig, DPOTrainer, GRPOTrainerConfig, GRPOTrainer
-    from .nn import Module
+    from .nn import Module, Linear
 
-    model = Module()
+    model = Linear(16, 16)
 
     if args.method == "dpo":
         trainer_config = DPOTrainerConfig(
