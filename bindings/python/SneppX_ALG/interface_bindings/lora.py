@@ -338,10 +338,15 @@ class DPOTrainer:
         self, input_ids, attention_mask=None, model: Optional[Module] = None
     ) -> np.ndarray:
         m = model or self.model
-        logits = m(input_ids).data if hasattr(m(input_ids), "data") else m(input_ids)
-        if isinstance(logits, np.ndarray):
-            return logits.mean()
-        return float(logits)
+        logits = m(input_ids)
+        logits_data = logits.data if hasattr(logits, "data") else np.asarray(logits)
+        if logits_data.ndim < 2:
+            return float(logits_data)
+        log_probs = logits_data - np.max(logits_data, axis=-1, keepdims=True)
+        log_probs = log_probs - np.log(np.sum(np.exp(log_probs), axis=-1, keepdims=True))
+        input_ids_np = np.asarray(input_ids.data if hasattr(input_ids, "data") else input_ids)
+        token_logps = log_probs[np.arange(len(input_ids_np)), input_ids_np]
+        return token_logps.mean()
 
 
 # =========================================================================
@@ -420,12 +425,34 @@ class GRPOTrainer:
         return float(loss_val)
 
     def _generate_and_logprob(self, prompts) -> tuple:
-        out = np.array([1, 2, 3])
-        logprob = -0.1
-        return out, logprob
+        if isinstance(prompts, list) and len(prompts) > 0:
+            prompt_tensor = prompts[0] if hasattr(prompts[0], "shape") else np.array(prompts)
+        else:
+            prompt_tensor = np.asarray(prompts)
+        out = self.model(prompt_tensor)
+        out_data = out.data if hasattr(out, "data") else np.asarray(out)
+        if out_data.ndim >= 2:
+            log_probs = out_data - np.max(out_data, axis=-1, keepdims=True)
+            log_probs = log_probs - np.log(np.sum(np.exp(log_probs), axis=-1, keepdims=True))
+            tokens = np.argmax(log_probs, axis=-1)
+            chosen_lp = log_probs[np.arange(len(tokens)), tokens].mean()
+        else:
+            tokens = np.array([int(np.argmax(out_data))])
+            chosen_lp = float(np.max(out_data))
+        return tokens, chosen_lp
 
     def _compute_logprob(self, prompts, response) -> float:
-        return -0.1
+        response_np = np.asarray(response.data if hasattr(response, "data") else response)
+        prompt_np = np.asarray(prompts.data if hasattr(prompts, "data") else prompts)
+        joint = np.concatenate([prompt_np.ravel(), response_np.ravel()])
+        out = self.model(joint)
+        out_data = out.data if hasattr(out, "data") else np.asarray(out)
+        if out_data.ndim >= 2:
+            log_probs = out_data - np.max(out_data, axis=-1, keepdims=True)
+            log_probs = log_probs - np.log(np.sum(np.exp(log_probs), axis=-1, keepdims=True))
+            tok_idx = len(prompt_np) - 1 if len(prompt_np) < len(joint) else -1
+            return float(log_probs[tok_idx, int(joint[tok_idx])])
+        return float(np.max(out_data))
 
 
 # =========================================================================
