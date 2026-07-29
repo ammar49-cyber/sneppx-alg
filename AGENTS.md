@@ -8,7 +8,7 @@ SNEPPX Algo is a cognitive processing system implementing neural architecture se
 - **No CUDA**: CUDA tests (`test_cuda.py`, `test_cuda_kernels.py`) cannot run here. Skip them.
 - **No GPU-dependent ops**: Anything requiring a CUDA device or large model weights (>500MB) should not be executed.
 - **Python-only testing**: Only run Python-level unit tests that use NumPy/Tensor backends. All tests under `tests/python/` that don't import LLM or CUDA modules are safe.
-- **Safe test list** (always run these for regression): `test_tensor.py`, `test_nn.py`, `test_optim.py`, `test_data.py`, `test_quantization.py`, `test_checkpoint.py`, `test_profiler.py`, `test_model_zoo.py`, `test_autograd_ops.py`, `test_schedulers.py`, `test_amp.py`, `test_grad_checkpoint.py`, `test_tokenizer.py`, `test_data_loader.py`, `test_advanced_ops.py`, `test_augmentation.py`, `test_pruning.py`, `test_distillation.py`
+- **Safe test list** (always run these for regression): `test_tensor.py`, `test_nn.py`, `test_optim.py`, `test_data.py`, `test_quantization.py`, `test_checkpoint.py`, `test_profiler.py`, `test_model_zoo.py`, `test_autograd_ops.py`, `test_schedulers.py`, `test_amp.py`, `test_grad_checkpoint.py`, `test_tokenizer.py`, `test_data_loader.py`, `test_advanced_ops.py`, `test_augmentation.py`, `test_pruning.py`, `test_distillation.py`, `test_hf_integration.py`, `test_continuous_batching.py`, `test_quantized_serve.py`, `test_cli.py`
 - **NEVER attempt**: `from transformers import ...`, `from llama_cpp import ...`, `torch.cuda.is_available()`, or any HuggingFace `from_pretrained()` call.
 
 ## Build Commands
@@ -142,6 +142,16 @@ Profiling infrastructure, NVTX markers, structured logging, and sanitizer script
 - **bindings/python/.../profiler.py**: `Profiler`, `Timer` (context/start-stop), `@timeit` decorator, `MemoryTracker`, `TrainProfiler`
 - **scripts/run_sanitizers.sh / .ps1**: ASan/UBSan builds + compute-sanitizer (memcheck/racecheck/initcheck) + ctest
 - **tests/python/test_profiler.py**: 13 tests (all pass)
+
+## Phase 9 Completed (v1.2–1.3: Serving, RLHF, CLI)
+Serving improvements, RLHF trainer fixes, eval harness expansion, and CLI tools:
+
+- **Continuous Batching**: `continuous_batching.py` — `ContinuousBatchScheduler` with dynamic request queue, FCFS/priority scheduling, token-by-token generation loop
+- **Quantized Serving**: `quantized_serve.py` — `QuantizedModelConfig`, `quantize_model_weights`, `dequantize_weights`, `estimate_model_size_mb`
+- **Server Integration**: `inference_server.py` — `/v1/generate/continuous-batch` endpoint, `/v1/models/quantize` endpoint, missing `_filter_prompt`/`_verify_output` helpers fixed
+- **RLHF Fixes**: `lora.py` — `DPOTrainer._forward_logps` rewritten with proper softmax + log-prob extraction; `GRPOTrainer._generate_and_logprob`/`_compute_logprob` stubs replaced with real model forward
+- **Eval Harness**: `eval_harness.py` — synthetic data generators for MMLU/GSM8K/HumanEval (`_synthetic_gsm8k`, `_synthetic_mmlu`, `_synthetic_humaneval`)
+- **CLI Entry Points**: `eval_cli.py` (sneppx-eval), `quantize_cli.py` (sneppx-quantize), `rlhf_cli.py` (sneppx-rlhf) registered in `setup.py`
 
 ## Phase 8 Completed (Model Zoo)
 Model configs, weight converters, and `from_pretrained()` for LLaMA 2/3, Mistral, Qwen 2, DeepSeek V2:
