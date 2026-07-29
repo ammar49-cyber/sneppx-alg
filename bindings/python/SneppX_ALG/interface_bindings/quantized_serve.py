@@ -12,23 +12,8 @@ from .nn import Module, Linear
 
 @dataclass
 class QuantizedModelConfig:
-    quant_mode: QuantMode = QuantMode.INT4_ASYMMETRIC
-    quant_granularity: QuantGranularity = QuantGranularity.PER_CHANNEL
+    quant_mode: int = QuantMode.INT4_SYM
     skip_layers: List[str] = field(default_factory=lambda: ["lm_head", "embed_tokens"])
-    use_fp8_for_embed: bool = False
-
-
-def quantize_linear_layer(
-    weight: np.ndarray,
-    mode: QuantMode = QuantMode.INT4_ASYMMETRIC,
-    granularity: QuantGranularity = QuantGranularity.PER_CHANNEL,
-) -> QuantizedLinear:
-    q = QuantizedLinear(
-        weight=weight,
-        quant_mode=mode,
-        granularity=granularity,
-    )
-    return q
 
 
 def quantize_model_weights(
@@ -42,12 +27,16 @@ def quantize_model_weights(
         if skip:
             quantized[name] = weight
             continue
-        if cfg.use_fp8_for_embed and "embed" in name:
-            mode = QuantMode.FP8_E4M3
+        w_t = Tensor.from_numpy(weight)
+        if cfg.quant_mode == QuantMode.INT4_SYM:
+            from .quantization import quantize_int4_sym
+            qw, scale = quantize_int4_sym(w_t)
+            ql = QuantizedLinear(qw, scale, mode=cfg.quant_mode)
         else:
-            mode = cfg.quant_mode
-        q = quantize_linear_layer(weight, mode=mode, granularity=cfg.quant_granularity)
-        quantized[name] = q
+            from .quantization import quantize_int8_sym
+            qw, scale = quantize_int8_sym(w_t)
+            ql = QuantizedLinear(qw, scale, mode=cfg.quant_mode)
+        quantized[name] = ql
     return quantized
 
 
@@ -57,7 +46,8 @@ def dequantize_weights(
     result = {}
     for name, item in quantized.items():
         if isinstance(item, QuantizedLinear):
-            result[name] = item.dequantize()
+            w = item.weight.data if hasattr(item.weight, "data") else item.weight
+            result[name] = np.asarray(w, dtype=np.float32)
         elif isinstance(item, np.ndarray):
             result[name] = item
     return result
@@ -70,12 +60,9 @@ def quantized_forward(
 ) -> np.ndarray:
     item = quantized_params.get(layer_name)
     if isinstance(item, QuantizedLinear):
-        q_weight = item.quantize_weight()
-        scale = item.scale
-        if item.quant_mode in (QuantMode.INT4_SYMMETRIC, QuantMode.INT4_ASYMMETRIC):
-            dequant = item.dequantize()
-            return x @ dequant.T
-        return x @ item.dequantize().T
+        x_t = Tensor.from_numpy(x)
+        out_t = item(x_t)
+        return out_t.data if hasattr(out_t, "data") else np.asarray(out_t)
     elif isinstance(item, np.ndarray):
         return x @ item.T
     return x
@@ -85,7 +72,8 @@ def estimate_model_size_mb(quantized: Dict[str, Any]) -> float:
     total_bytes = 0
     for name, item in quantized.items():
         if isinstance(item, QuantizedLinear):
-            total_bytes += item.weight.nbytes
+            w_data = item.weight.data if hasattr(item.weight, "data") else item.weight
+            total_bytes += np.asarray(w_data).nbytes
         elif isinstance(item, np.ndarray):
             total_bytes += item.nbytes
     return total_bytes / (1024 * 1024)

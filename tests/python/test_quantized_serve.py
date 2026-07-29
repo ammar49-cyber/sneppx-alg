@@ -7,7 +7,7 @@ from SneppX_ALG.interface_bindings.quantized_serve import (
     dequantize_weights,
     estimate_model_size_mb,
 )
-from SneppX_ALG.interface_bindings.quantization import QuantMode, QuantGranularity, QuantizedLinear
+from SneppX_ALG.interface_bindings.quantization import QuantMode, QuantizedLinear
 
 
 def _dummy_params():
@@ -54,20 +54,20 @@ def test_estimate_size():
     print("  test_estimate_size PASS")
 
 
-def test_quantize_fp8():
+def test_quantize_custom_mode():
     params = _dummy_params()
     cfg = QuantizedModelConfig(quant_mode=QuantMode.FP8_E4M3)
     quantized = quantize_model_weights(params, cfg)
     assert isinstance(quantized["layers.0.weights"], QuantizedLinear)
-    print("  test_quantize_fp8 PASS")
+    print("  test_quantize_custom_mode PASS")
 
 
-def test_quantize_per_tensor():
+def test_quantize_int8():
     params = _dummy_params()
-    cfg = QuantizedModelConfig(quant_granularity=QuantGranularity.PER_TENSOR)
+    cfg = QuantizedModelConfig(quant_mode=QuantMode.INT8_SYM)
     quantized = quantize_model_weights(params, cfg)
     assert isinstance(quantized["layers.0.weights"], QuantizedLinear)
-    print("  test_quantize_per_tensor PASS")
+    print("  test_quantize_int8 PASS")
 
 
 def test_empty_params():
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     test_skip_layers()
     test_dequantize()
     test_estimate_size()
-    test_quantize_fp8()
-    test_quantize_per_tensor()
+    test_quantize_custom_mode()
+    test_quantize_int8()
     test_empty_params()
     print("ALL quantized_serve TESTS PASS")

@@ -467,9 +467,9 @@ async def continuous_batch_endpoint(req: BatchGenerateRequest):
 @app.post("/v1/models/quantize")
 async def quantize_model_endpoint(model_id: str = Query(...), quant_mode: str = Query("int4")):
     entry = get_model(model_id)
-    mode_map = {"int4": "INT4_ASYMMETRIC", "int8": "INT8_SYMMETRIC", "fp8": "FP8_E4M3"}
+    mode_map = {"int4": "INT4_SYM", "int8": "INT8_SYM", "fp8": "INT4_SYM"}
     from .quantization import QuantMode
-    mode = getattr(QuantMode, mode_map.get(quant_mode, "INT4_ASYMMETRIC"), QuantMode.INT4_ASYMMETRIC)
+    mode = getattr(QuantMode, mode_map.get(quant_mode, "INT4_SYM"), QuantMode.INT4_SYM)
     cfg = QuantizedModelConfig(quant_mode=mode)
     params = {}
     for name, param in entry.model.named_parameters().items() if hasattr(entry.model, "named_parameters") else []:

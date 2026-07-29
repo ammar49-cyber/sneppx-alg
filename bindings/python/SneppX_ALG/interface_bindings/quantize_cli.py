@@ -23,8 +23,8 @@ def main():
     from .quantized_serve import QuantizedModelConfig, quantize_model_weights, estimate_model_size_mb
 
     mode_map = {
-        "int4": QuantMode.INT4_ASYMMETRIC,
-        "int8": QuantMode.INT8_SYMMETRIC,
+        "int4": QuantMode.INT4_SYM,
+        "int8": QuantMode.INT8_SYM,
         "fp8": QuantMode.FP8_E4M3,
         "awq": QuantMode.AWQ,
         "gptq": QuantMode.GPTQ,
