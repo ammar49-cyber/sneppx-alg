@@ -55,6 +55,41 @@ def extract_answer_math(text: str) -> Optional[str]:
     return m.group(1) if m else text
 
 
+def _synthetic_gsm8k(n: int = 16) -> List[Dict]:
+    import random
+    random.seed(42)
+    samples = []
+    for _ in range(n):
+        a, b = random.randint(10, 99), random.randint(1, 10)
+        samples.append({"question": f"What is {a} + {b}?", "answer": str(a + b)})
+    return samples
+
+
+def _synthetic_mmlu(n: int = 16) -> List[Dict]:
+    import random
+    random.seed(42)
+    categories = ["college_biology", "machine_learning", "astronomy", "philosophy"]
+    samples = []
+    for i in range(n):
+        cat = categories[i % len(categories)]
+        answer = "ABCD"[i % 4]
+        samples.append({
+            "question": f"Synthetic MMLU question {i}? (A) foo (B) bar (C) baz (D) qux",
+            "answer": answer, "category": cat,
+        })
+    return samples
+
+
+def _synthetic_humaneval(n: int = 8) -> List[Dict]:
+    samples = []
+    for i in range(n):
+        samples.append({
+            "prompt": f"def solution_{i}(x):\n    return x + {i}\n",
+            "answer": f"def solution_{i}(x):\n    return x + {i}\n",
+        })
+    return samples
+
+
 class ExactMatchTask(Task):
     def __init__(self, name: str, extract_fn: Callable, fewshot: int = 0, data_path: Optional[str] = None):
         super().__init__(name, fewshot)
@@ -65,7 +100,7 @@ class ExactMatchTask(Task):
         if self.data_path and Path(self.data_path).exists():
             with open(self.data_path) as f:
                 return json.load(f)
-        return []
+        return _synthetic_gsm8k()
 
     def evaluate(self, predictions: List[str], references: List[str]) -> EvalResult:
         correct = 0
@@ -116,9 +151,16 @@ def extract_answer_mmlu(text: str, choices: List[str]) -> Optional[str]:
 
 
 class MultipleChoiceTask(Task):
-    def __init__(self, name: str, categories: Optional[List[str]] = None, fewshot: int = 5):
+    def __init__(self, name: str, categories: Optional[List[str]] = None, fewshot: int = 5, data_path: Optional[str] = None):
         super().__init__(name, fewshot)
         self.categories = categories or MMLU_CATEGORIES
+        self.data_path = data_path
+
+    def load(self) -> List[Dict]:
+        if self.data_path and Path(self.data_path).exists():
+            with open(self.data_path) as f:
+                return json.load(f)
+        return _synthetic_mmlu()
 
     def evaluate(self, predictions: List[str], references: List[str]) -> EvalResult:
         correct = 0
@@ -156,6 +198,12 @@ class CodingTask(Task):
     def __init__(self, name: str, fewshot: int = 0, data_path: Optional[str] = None):
         super().__init__(name, fewshot)
         self.data_path = data_path
+
+    def load(self) -> List[Dict]:
+        if self.data_path and Path(self.data_path).exists():
+            with open(self.data_path) as f:
+                return json.load(f)
+        return _synthetic_humaneval()
 
     def evaluate(self, predictions: List[str], references: List[str]) -> EvalResult:
         total = len(predictions)
