@@ -104,8 +104,8 @@ For every PR, verify:
 
 ```
 1. Read the PR description and linked issue/design doc
-2. Check CI status (red CI = stop, request fixes)
-3. Clone branch locally for deep reviews (L2/L3)
+2. Clone branch locally for deep reviews (L2/L3)
+3. Build and test locally before approving
 4. Start with high-level architecture, then line-by-line
 5. Leave clear, actionable comments
 6. Approve only when all concerns are resolved

@@ -145,20 +145,19 @@ Track-specific roadmaps for progressing from Explorer to Senior Contributor. Eac
 
 ## Infrastructure Track
 
-*Prerequisites: CI/CD, Docker, packaging experience*
+*Prerequisites: Build systems (CMake), packaging experience*
 
 | Month | Goal | Deliverable |
 |-------|------|-------------|
 | 1 | Understand build system | Read `CMakeLists.txt`, understand presets and targets |
-| 2 | Improve CI pipeline | Add a new CI check (e.g., code coverage, static analysis) |
-| 3 | Optimize build times | Profile build, identify bottlenecks, implement ccache/distcc |
-| 4 | Containerize the project | Write Dockerfile for development and CI |
-| 5 | Automate release process | Script the release workflow (version bump, changelog, publish) |
-| 6 | Own infrastructure | Take ownership of CI/CD, build system, packaging |
+| 2 | Optimize build times | Profile build, identify bottlenecks, implement ccache/distcc |
+| 3 | Containerize the project | Write Dockerfile for development and testing |
+| 4 | Automate release process | Script the release workflow (version bump, changelog, publish) |
+| 5 | Improve test infrastructure | Expand ctest suite, add sanitizer targets |
+| 6 | Own infrastructure | Take ownership of build system, packaging, scripts |
 
 ### Key Resources
 
 - `CMakeLists.txt` — build configuration
-- `.github/` — CI/CD workflows
 - `scripts/` — build and development scripts
 - `cmake/` — CMake modules

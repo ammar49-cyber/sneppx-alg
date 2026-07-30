@@ -1,6 +1,6 @@
 # Branching Strategy
 
-SNEPPX-Algo follows a **track-based Git Flow** model adapted for security-first development. Every branch type maps to a contributor tier and has specific CI gates.
+SNEPPX-Algo follows a **track-based Git Flow** model adapted for security-first development. Every branch type maps to a contributor tier. All verification is manual — no CI/CD.
 
 ---
 
@@ -32,7 +32,6 @@ The `main` branch is **always deployable**. Every commit on `main` is a release 
 |----------|-------|
 | Base | — |
 | Protections | No direct pushes — merge only from `release/*`, `hotfix/*`, `security/*` |
-| Required CI | Full suite + packaging + security scan |
 | Merge approval | 2 T4+ approvals |
 | Tags | Every merge creates a signed semver tag (`v<major>.<minor>.<patch>`) |
 | Tier access | T4+ can merge, T5 has full access |
@@ -45,7 +44,6 @@ The `dev` branch is the **integration hub**. All feature branches merge here fir
 |----------|-------|
 | Base | `main` |
 | Protections | No direct pushes — merge only from `feature/*`, `docs/*` |
-| Required CI | Build + lint + unit tests + coverage |
 | Merge approval | 1 T3+ approval for features, 1 T4+ for structural changes |
 | Tier access | T3+ can merge |
 
@@ -62,7 +60,6 @@ For developing new features. Created from `dev`, merged back via squash.
 | Base | `dev` |
 | Naming | `feature/<track>-<description>` |
 | Track prefixes | `python`, `c-core`, `cuda`, `security`, `algo`, `infra`, `dist` |
-| CI | Build + lint + unit tests |
 | Review | `code-review` label triggers review assignment |
 | Merge | Squash-merge to `dev` |
 | Deletion | Delete after merge |
@@ -77,7 +74,6 @@ For stabilizing a release. Created from `dev` when feature freeze is declared.
 | Base | `dev` |
 | Naming | `release/v<major>.<minor>.<patch>` |
 | Allowed changes | Bug fixes, docs, release config, version bumps |
-| CI | Full suite + regression + package build |
 | Merge | Merged to `main` (as a release commit) AND back to `dev` |
 | Tags | Created on `main` after merge |
 | Tier access | T3+ can push, T4+ can approve merges |
@@ -90,7 +86,6 @@ For urgent production fixes. Created from `main`, merged back to `main` and `dev
 |----------|-------|
 | Base | `main` |
 | Naming | `hotfix/<short-description>` |
-| CI | Targeted tests + full security scan |
 | Merge | Merged to `main` first, then `dev` |
 | Tier access | T4+ only |
 
@@ -102,7 +97,6 @@ For coordinated security patches. May use private forks for embargoed fixes.
 |----------|-------|
 | Base | `main` |
 | Naming | `security/<CVE-ID>` or `security/<short-name>` |
-| CI | Full suite + L3 security gate (constant-time checks + crypto audit) |
 | Merge | Merged to `main` first, then `dev` |
 | Tier access | T4+ only, L3 security review required |
 | Embargo | Private fork until coordinated disclosure date |
@@ -114,7 +108,6 @@ For documentation-only changes.
 | Property | Value |
 |----------|-------|
 | Base | `dev` |
-| CI | Lint + markdown validation |
 | Merge | Squash-merge to `dev` |
 | Tier access | T2+ |
 
@@ -125,7 +118,6 @@ For research, spikes, and throwaway code. No merge guarantee.
 | Property | Value |
 |----------|-------|
 | Base | `dev` |
-| CI | Optional |
 | Merge | Discard or rebase into a `feature/*` branch |
 | Tier access | T2+ |
 
@@ -163,21 +155,7 @@ experiment/*─┤     ┌──────┐     ┌────────�
 | T4 Maintainer | Above + `main`, `hotfix/*`, `security/*` | `main` | All branches |
 | T5 Core | All | All | All |
 
----
 
-## CI Gates by Branch
-
-| Branch Type | Build | Lint | Unit Tests | Full Suite | Coverage | Security Scan | Package |
-|-------------|-------|------|------------|------------|----------|---------------|---------|
-| `feature/*` | Yes | Yes | Yes | — | — | — | — |
-| `docs/*` | — | Yes | — | — | — | — | — |
-| `dev` | Yes | Yes | Yes | Yes | Yes | Yes | — |
-| `release/*` | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| `hotfix/*` | Yes | Yes | Targeted | — | — | Full | — |
-| `security/*` | Yes | Yes | Yes | Yes | Yes | L3 audit | — |
-| `main` | Yes | Yes | Yes | Yes | Yes | Full | Yes |
-
----
 
 ## Workflow Examples
 
@@ -222,30 +200,6 @@ git commit -S -m "security: patch constant-time violation in Ed25519"
 
 ---
 
-## Branch Protection Rules (GitHub)
-
-Apply these branch protection rules on GitHub:
-
-### `main`
-
-- Require pull request before merging
-- Require 2 approvals (T4+)
-- Dismiss stale reviews when new commits are pushed
-- Require status checks (all CI)
-- Require signed commits
-- Require linear history
-- Include administrators
-- Restrict push access to T4+
-
-### `dev`
-
-- Require pull request before merging
-- Require 1 approval (T3+ for features, T4+ for structural)
-- Dismiss stale reviews when new commits are pushed
-- Require status checks (build, lint, unit tests, coverage)
-- Require signed commits
-- Restrict push access to T3+
-
 ---
 
 ## See Also
@@ -253,5 +207,3 @@ Apply these branch protection rules on GitHub:
 - `CONTRIBUTING.md` — contribution workflow
 - `docs/CONTRIBUTOR_TIERS.md` — tier definitions and gates
 - `docs/DEVELOPMENT.md` — build and test workflow
-- `.github/CODEOWNERS` — tier-based code ownership
-- `.github/workflows/` — CI workflow definitions

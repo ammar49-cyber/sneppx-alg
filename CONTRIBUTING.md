@@ -75,10 +75,10 @@ Open a PR using the template at `docs/PR_TEMPLATE.md`. Reference the issue and d
 
 Maintainer+ merges via squash or rebase. PR must have:
 
-- Green CI
 - All conversations resolved
 - Signed commits
 - Approval from required reviewers
+- All tests passing locally
 
 ### 7. Post-Merge
 
@@ -108,7 +108,7 @@ Every PR must pass before merge:
 
 ## Branching Strategy
 
-See `docs/BRANCHING_STRATEGY.md` for the full branching model, branch naming conventions, and CI gates per branch type.
+See `docs/BRANCHING_STRATEGY.md` for the full branching model and branch naming conventions.
 
 ---
 
@@ -122,7 +122,7 @@ Choose your track and follow the roadmap in `docs/LEARNING_PATHS.md`:
 - **CUDA** — GPU kernels, flash attention, NCCL
 - **Algorithms** — HSS, SER, ARC, NPE, FM
 - **Documentation** — Technical writing, API docs
-- **Infrastructure** — CI/CD, build system, packaging
+- **Infrastructure** — Build system, packaging, scripts
 
 ---
 
