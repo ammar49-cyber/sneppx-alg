@@ -1,5 +1,4 @@
 #include "multi_head_attention_module.h"
-#include "tensor.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -42,11 +41,11 @@ SNEPPXTensor* SNEPPX_mha_forward(SNEPPXMultiHeadAttention* mha, const SNEPPXTens
     int hidden_dim = num_heads * head_dim;
     float scale = 1.0f / sqrtf((float)head_dim);
     size_t out_shape[3] = {(size_t)batch, (size_t)seq_q, (size_t)hidden_dim};
-    SNEPPXTensor* output = arix_tensor_create(ARIX_DTYPE_F32, 3, out_shape);
+    SNEPPXTensor* output = SNEPPX_tensor_create(out_shape, 3, SNEPPX_FLOAT32);
     if (!output) return NULL;
     size_t attn_shape[3] = {(size_t)batch, (size_t)seq_q, (size_t)seq_k};
-    SNEPPXTensor* attn_scores = arix_tensor_create(ARIX_DTYPE_F32, 3, attn_shape);
-    if (!attn_scores) { arix_tensor_destroy(output); return NULL; }
+    SNEPPXTensor* attn_scores = SNEPPX_tensor_create(attn_shape, 3, SNEPPX_FLOAT32);
+    if (!attn_scores) { SNEPPX_tensor_destroy(output); return NULL; }
     float* qd = (float*)query->data;
     float* kd = (float*)key->data;
     float* vd = (float*)value->data;
@@ -100,7 +99,7 @@ SNEPPXTensor* SNEPPX_mha_forward(SNEPPXMultiHeadAttention* mha, const SNEPPXTens
             }
         }
     }
-    arix_tensor_destroy(attn_scores);
+    SNEPPX_tensor_destroy(attn_scores);
     return output;
 }
 
