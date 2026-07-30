@@ -1,9 +1,29 @@
-This project does not accept GitHub pull requests.
+<!-- Use the full PR template at docs/PR_TEMPLATE.md for detailed submissions -->
 
-Please email patches to algoarix@gmail.com following the format in CONTRIBUTING.md.
+## Description
 
-If you are a maintainer mirroring an emailed patch that has received BDFL approval,
-include:
-- Original author name and email
-- Email thread reference or Message-ID
-- BDFL approval confirmation
+<!-- Briefly describe the change. Reference the issue. -->
+
+Fixes #<!-- issue number -->
+
+## Type of Change
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation
+- [ ] Security fix
+
+## Contributor Tier
+
+- [ ] T1 Explorer / T2 Contributor / T3 Senior / T4 Maintainer / T5 Core
+
+## Checklist
+
+- [ ] Builds without warnings
+- [ ] Tests pass (`ctest -C Release --output-on-failure`)
+- [ ] Commits signed (GPG/Ed25519)
+- [ ] Documentation updated
+
+---
+
+*By submitting this PR, I agree my contributions are licensed under the MIT License.*
