@@ -59,7 +59,7 @@ def test_basic_training():
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            epoch_loss += float(loss.data)
+            epoch_loss += float(loss.data.item())
         total_loss += epoch_loss
         print(f"  Epoch {epoch:2d}: loss = {epoch_loss:.4f}")
 
@@ -90,7 +90,7 @@ def test_amp():
         )
     ]
     loss = params[0] * params[0]
-    print(f"  AMPLoss (scaled): {float(loss.data)}")
+    print(f"  AMPLoss (scaled): {float(loss.data.item())}")
 
 
 def test_schedule():
