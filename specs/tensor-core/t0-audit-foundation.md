@@ -15,7 +15,7 @@ Audit all existing tensor code, verify/extend the struct and enums, ensure all d
 
 ## STEP 0 — Audit Existing Tensor Files
 
-### 0.1 Read `src/core/include/SNEPPX_tensor.h`
+### 0.1 Read `include/neural_core/kernel/multidimensional_tensor_engine.h`
 
 Read the header completely. Report:
 
@@ -89,7 +89,7 @@ List every `#define` (excluding the include guard). Known macros to add:
 #### Total line count
 Report the exact line count of the header.
 
-### 0.2 Read `src/core/src/tensor.c`
+### 0.2 Read `kernel/tensor/tensor.c`
 
 Read the source completely. Report:
 
@@ -135,8 +135,8 @@ Report the exact line count of the source file.
 
 Find every file that references `SNEPPXTensor` or `SNEPPX_tensor`:
 
-- **Header**: `src/core/include/SNEPPX_tensor.h`
-- **Source**: `src/core/src/tensor.c`
+- **Header**: `include/neural_core/kernel/multidimensional_tensor_engine.h`
+- **Source**: `kernel/tensor/tensor.c`
 - **Unit tests**: `tests/unit/test_tensor.c`, `tests/unit/test_tensor_edge.c`
 - **Benchmarks**: `tests/benchmark/bench_tensor.c`
 - **Other consumers**: autodiff (`ops.c`, `tape.c`, `variable.c`), optimizer (`optimizer.c`), all arch components (HSS, SER, ARC, NPE, FM), all Python bindings, all integration tests
@@ -144,7 +144,7 @@ Find every file that references `SNEPPXTensor` or `SNEPPX_tensor`:
 ### 0.4 Report Total Existing Tensor LOC
 
 Sum the lines of:
-- `SNEPPX_tensor.h` (header declarations)
+- `multidimensional_tensor_engine.h` (header declarations)
 - `tensor.c` (implementations)
 - `test_tensor.c` (unit tests)
 - `test_tensor_edge.c` (edge case tests)
@@ -531,7 +531,7 @@ Verify:
 ### 8.3 Report
 After completion, report to the user:
 - Audit results: existing tensor LOC split by file, existing functions, existing dtypes, existing struct fields
-- Changes made to SNEPPX_tensor.h: macros added, enums extended, functions declared
+- Changes made to `multidimensional_tensor_engine.h`: macros added, enums extended, functions declared
 - Changes made to tensor.c: stubs added
 - Build result: pass/fail, error count, warning count
 - Test result: pass/fail counts
