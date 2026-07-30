@@ -44,17 +44,39 @@ static int fuzz_checkpoint_load(const uint8_t* data, size_t size) {
     return 0;
 }
 
+/* Register fuzz targets at static initialization time so they are available
+ * even when libFuzzer provides its own main() (in which case our main()
+ * is never linked). */
+static void SNEPPX_fuzz_register_defaults(void) {
+    static int registered = 0;
+    if (registered) return;
+    registered = 1;
+    SNEPPX_fuzz_register_target("tensor_create", fuzz_tensor_create);
+    SNEPPX_fuzz_register_target("checkpoint_load", fuzz_checkpoint_load);
+}
+
+/* GCC/Clang constructor — runs before main() or before libFuzzer's main() */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((constructor))
+static void SNEPPX_fuzz_auto_register(void) {
+    SNEPPX_fuzz_register_defaults();
+}
+#elif defined(_MSC_VER)
+/* MSVC: use a static initializer via a dummy variable */
+static int SNEPPX_fuzz_init = (SNEPPX_fuzz_register_defaults(), 0);
+#endif
+
 /* LibFuzzer entry point */
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     /* Run all registered targets */
-    for (int i = 0; i < g_num_targets; i++)
-        g_targets[i].target(data, size);
+    for (int i = 0; i < g_num_targets; i++) {
+        if (g_targets[i].target)
+            g_targets[i].target(data, size);
+    }
     return 0;
 }
 
 int main(void) {
-    SNEPPX_fuzz_register_target("tensor_create", fuzz_tensor_create);
-    SNEPPX_fuzz_register_target("checkpoint_load", fuzz_checkpoint_load);
     printf("SNEPPX Fuzz Harness (skeleton)\n");
     printf("Registered targets: %d\n", g_num_targets);
     return 0;
