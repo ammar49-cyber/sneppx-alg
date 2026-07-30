@@ -1,0 +1,154 @@
+# SNEPPX-Algo CODEOWNERS
+# Each line is a file pattern followed by tier-based owners.
+# T5 (Core) and T4 (Maintainer) groups are populated as contributors are promoted.
+
+# Default owner — every file falls back to BDFL / T5+
+* @ammar49-cyber
+
+# ============================================
+# CORE KERNEL — requires deep review (L2+)
+# ============================================
+
+# Tensor engine
+/kernel/tensor/ @ammar49-cyber
+
+# Autodiff
+/kernel/autodiff/ @ammar49-cyber
+
+# Optimizer
+/kernel/optimizer/ @ammar49-cyber
+
+# Memory management
+/kernel/memory/ @ammar49-cyber
+
+# Thread pool
+/kernel/thread_pool/ @ammar49-cyber
+
+# Trainer
+/kernel/train/ @ammar49-cyber
+
+# Attention
+/kernel/attention/ @ammar49-cyber
+
+# Distributed training
+/kernel/distributed/ @ammar49-cyber
+
+# Quantization
+/kernel/quantization/ @ammar49-cyber
+
+# Architecture extensions
+/kernel/arch/ @ammar49-cyber
+
+# Activations
+/kernel/activations/ @ammar49-cyber
+
+# Position encodings
+/kernel/position/ @ammar49-cyber
+
+# ============================================
+# CUDA KERNELS — requires GPU expertise (L2+)
+# ============================================
+
+/kernel/cuda/ @ammar49-cyber
+
+# ============================================
+# SECURITY LAYERS — requires L3 security review
+# ============================================
+
+# Cryptographic primitives (S0)
+/security/crypto/c/ @ammar49-cyber
+/security/crypto/asm/ @ammar49-cyber
+
+# Secure memory (S1)
+/security/memory/ @ammar49-cyber
+
+# Obfuscation engine (S2)
+/security/cpp/ @ammar49-cyber
+/security/obfuscation/ @ammar49-cyber
+
+# Behavioral monitor (S3)
+/security/monitor/ @ammar49-cyber
+
+# Network security (S4)
+/security/network/ @ammar49-cyber
+
+# AI sanitizer (S5)
+/security/ai/ @ammar49-cyber
+
+# Security UI / Key vault (S6)
+/security/ui/ @ammar49-cyber
+
+# Secure updates (S7)
+/security/updates/ @ammar49-cyber
+
+# Formal verification (S8)
+/security/formal/ @ammar49-cyber
+
+# Penetration testing (S9)
+/security/pentest/ @ammar49-cyber
+
+# Security headers
+/include/neural_core/security/ @ammar49-cyber
+
+# ============================================
+# ALGORITHMS
+# ============================================
+
+# HSS — Hierarchical State Space
+/algorithms/hss/ @ammar49-cyber
+
+# SER — Sparse Expert Routing
+/algorithms/ser/ @ammar49-cyber
+
+# ARC — Adversarial Robustness Core
+/algorithms/arc/ @ammar49-cyber
+
+# NPE — Neural Program Executor
+/algorithms/npe/ @ammar49-cyber
+
+# FM — Federated Memory
+/algorithms/fm/ @ammar49-cyber
+
+# ============================================
+# PYTHON BINDINGS
+# ============================================
+
+/bindings/python/ @ammar49-cyber
+
+# ============================================
+# TESTS
+# ============================================
+
+/tests/ @ammar49-cyber
+
+# ============================================
+# BUILD SYSTEM
+# ============================================
+
+/CMakeLists.txt @ammar49-cyber
+/cmake/ @ammar49-cyber
+
+# ============================================
+# DOCUMENTATION
+# ============================================
+
+/docs/ @ammar49-cyber
+/README.md @ammar49-cyber
+/CONTRIBUTING.md @ammar49-cyber
+/GOVERNANCE.md @ammar49-cyber
+/MAINTAINERS.md @ammar49-cyber
+/CODE_OF_CONDUCT.md @ammar49-cyber
+/SECURITY.md @ammar49-cyber
+
+# ============================================
+# CI/CD — Infrastructure team
+# ============================================
+
+/.github/ @ammar49-cyber
+
+# ============================================
+# ROOT-LEVEL CONFIG FILES
+# ============================================
+
+/setup.py @ammar49-cyber
+/pyproject.toml @ammar49-cyber

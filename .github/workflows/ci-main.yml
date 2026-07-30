@@ -1,0 +1,97 @@
+name: CI — Main Branch
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+      - name: clang-tidy
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          run-clang-tidy -p build -quiet
+
+  build:
+    name: Build All Targets
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        config: [Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
+            -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=ON -DSNEPPX_BUILD_BENCHMARKS=ON
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} -j$(nproc)
+
+  test:
+    name: Full Test Suite
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure & Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=ON
+          cmake --build build --config Release -j$(nproc)
+      - name: ctest
+        working-directory: build
+        run: ctest -C Release --output-on-failure
+      - name: Python tests
+        shell: bash
+        run: |
+          export PYTHONPATH="$PWD/bindings/python"
+          python -m pytest tests/python/ -v --timeout=60 -x
+      - name: Run benchmarks
+        working-directory: build
+        run: ctest -C Release -R "bench" --output-on-failure || true
+
+  security-scan:
+    name: Full Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bandit
+        run: |
+          pip install bandit
+          bandit -r bindings/python/ -ll
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: cpp, python
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+
+  package:
+    name: Build Packages
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Python wheel
+        run: |
+          pip install build
+          python -m build --wheel --sdist
+      - name: Upload Python artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-packages
+          path: dist/
+      - name: Verify wheel installs
+        run: |
+          pip install dist/*.whl
+          python -c "from SneppX_ALG import Tensor; print('Package OK')"

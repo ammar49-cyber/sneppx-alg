@@ -18,14 +18,36 @@ cmake --build build --config Debug -j$(nproc)
 cd build && ctest --output-on-failure
 ```
 
-## Workflow
+## Branching Model
 
-1. **Branch**: feature branches from `main`
+SNEPPX-Algo uses a **track-based Git Flow**. See `docs/BRANCHING_STRATEGY.md` for full details.
+
+### Branch Types
+
+| Type | Pattern | Base | Used for |
+|------|---------|------|----------|
+| Main | `main` | — | Production releases |
+| Integration | `dev` | `main` | Feature integration |
+| Feature | `feature/<track>-<name>` | `dev` | New features |
+| Release | `release/v*.*.*` | `dev` | Release stabilization |
+| Hotfix | `hotfix/<name>` | `main` | Urgent production fixes |
+| Security | `security/<name>` | `main` | Coordinated security patches |
+| Docs | `docs/<name>` | `dev` | Documentation changes |
+| Experiment | `experiment/<name>` | `dev` | Research spikes |
+
+### Track Prefixes
+
+Features use track prefixes: `python`, `c-core`, `cuda`, `security`, `algo`, `infra`, `dist`
+
+### Workflow
+
+1. **Branch**: `git checkout -b feature/<track>-<name> dev`
 2. **Develop**: write code, add tests, run locally
 3. **Format**: `clang-format -i -style=file <files>`
 4. **Test**: `ctest --output-on-failure`
-5. **Commit**: `git commit -m "component: message"`
-6. **Push**: `git push origin main`
+5. **Commit**: `git commit -S -m "component: message"`
+6. **Push**: `git push origin feature/<track>-<name>`
+7. **PR**: Open PR to `dev` using template at `docs/PR_TEMPLATE.md`
 
 ## Project Layout
 

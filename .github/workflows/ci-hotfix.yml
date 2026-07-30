@@ -1,0 +1,88 @@
+name: CI — Hotfix
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+    paths:
+      - 'security/**'
+      - 'kernel/**'
+      - 'include/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DSNEPPX_BUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} -j$(nproc)
+
+  targeted-tests:
+    name: Targeted Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine affected modules
+        id: changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            security/**
+            kernel/**
+            include/**
+      - name: Configure & Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
+          cmake --build build --config Debug -j$(nproc)
+      - name: Run relevant tests
+        working-directory: build
+        run: |
+          TESTS=""
+          if echo '${{ steps.changed.outputs.all_changed_files }}' | grep -q "security/"; then
+            TESTS="$TESTS -R security"
+          fi
+          if echo '${{ steps.changed.outputs.all_changed_files }}' | grep -q "kernel/"; then
+            TESTS="$TESTS -R test_tensor -R test_autodiff -R test_optimizer"
+          fi
+          if [ -n "$TESTS" ]; then
+            ctest -C Debug --output-on-failure $TESTS
+          else
+            ctest -C Debug --output-on-failure
+          fi
+
+  security-scan:
+    name: Full Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bandit
+        run: |
+          pip install bandit
+          bandit -r bindings/python/ -ll
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: cpp, python
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4

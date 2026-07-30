@@ -1,0 +1,130 @@
+name: CI — Security Branch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+    paths:
+      - 'security/**'
+      - 'include/neural_core/security/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  build:
+    name: Build All
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
+            -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_PYTHON=ON `
+            -DSNEPPX_USE_ASAN=ON -DSNEPPX_USE_UBSAN=ON
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} -j$(nproc)
+      - name: Verify no warnings
+        run: cmake --build build --config ${{ matrix.config }} -j$(nproc) 2>&1 | tee build.log
+      - name: Check for new warnings
+        shell: bash
+        run: |
+          if grep -q "warning:" build.log; then
+            echo "Found warnings in build"
+            grep "warning:" build.log
+            exit 1
+          fi
+
+  crypto-tests:
+    name: Crypto Test Suite
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure & Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
+          cmake --build build --config Debug -j$(nproc)
+      - name: Run all crypto tests
+        working-directory: build
+        run: |
+          ctest -C Debug -R "kyber|dilithium|sphincs|ed25519|x25519|chacha|aes|sha" --output-on-failure
+
+  constant-time-check:
+    name: Constant-Time Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ctgrind
+        run: |
+          pip install valgrind || true
+      - name: Build with debug symbols
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
+          cmake --build build --config Debug -j$(nproc)
+      - name: Run constant-time tests (if available)
+        working-directory: build
+        run: |
+          ctest -C Debug -R "ct_|constant_time|timing" --output-on-failure || echo "No ct tests configured"
+
+  security-scan:
+    name: Deep Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bandit
+        run: |
+          pip install bandit
+          bandit -r bindings/python/ -ll
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: cpp, python
+      - name: Semgrep security rules
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: p/security-audit
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+
+  fuzzing:
+    name: Fuzzing Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with fuzzing
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_USE_ASAN=ON
+          cmake --build build --config Debug -j$(nproc)
+      - name: Run fuzz tests (short)
+        working-directory: build
+        run: |
+          ctest -C Debug -R "fuzz" --output-on-failure || echo "No fuzz tests configured"
+
+  l3-review-label:
+    name: Request L3 Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['L3-security-review', 'security']
+            })

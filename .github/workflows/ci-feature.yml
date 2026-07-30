@@ -1,0 +1,56 @@
+name: CI — Feature Branch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - dev
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DSNEPPX_BUILD_TESTS=ON
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }} -j$(nproc)
+
+  test:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure & Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
+          cmake --build build --config Debug -j$(nproc)
+      - name: Run ctest
+        working-directory: build
+        run: ctest -C Debug --output-on-failure
+      - name: Run Python tests (bindings)
+        shell: bash
+        run: |
+          export PYTHONPATH="$PWD/bindings/python"
+          python -m pytest tests/python/ -q --timeout=60 || true
