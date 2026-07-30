@@ -13,17 +13,22 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 2
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run pre-commit
-        uses: pre-commit/action@v3.0.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: pre-commit/action@v3.0.0
 
   build:
-    name: Build
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -32,9 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
+        shell: bash
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DSNEPPX_BUILD_TESTS=ON
       - name: Build
-        run: cmake --build build --config ${{ matrix.config }} -j$(nproc)
+        shell: bash
+        run: cmake --build build --config ${{ matrix.config }}
 
   test:
     name: Unit Tests
@@ -42,15 +49,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Configure & Build
+        shell: bash
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON
-          cmake --build build --config Debug -j$(nproc)
+          cmake --build build --config Debug
       - name: Run ctest
         working-directory: build
         run: ctest -C Debug --output-on-failure
-      - name: Run Python tests (bindings)
+      - name: Run Python tests
         shell: bash
         run: |
+          pip install pytest pytest-timeout
           export PYTHONPATH="$PWD/bindings/python"
           python -m pytest tests/python/ -q --timeout=60 || true

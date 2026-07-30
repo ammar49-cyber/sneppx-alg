@@ -11,6 +11,32 @@ SNEPPX Algo is a cognitive processing system implementing neural architecture se
 - **Safe test list** (always run these for regression): `test_tensor.py`, `test_nn.py`, `test_optim.py`, `test_data.py`, `test_quantization.py`, `test_checkpoint.py`, `test_profiler.py`, `test_model_zoo.py`, `test_autograd_ops.py`, `test_schedulers.py`, `test_amp.py`, `test_grad_checkpoint.py`, `test_tokenizer.py`, `test_data_loader.py`, `test_advanced_ops.py`, `test_augmentation.py`, `test_pruning.py`, `test_distillation.py`, `test_hf_integration.py`, `test_continuous_batching.py`, `test_quantized_serve.py`, `test_cli.py`
 - **NEVER attempt**: `from transformers import ...`, `from llama_cpp import ...`, `torch.cuda.is_available()`, or any HuggingFace `from_pretrained()` call.
 
+## CI-First Policy (CRITICAL)
+
+**Before every commit and push**, you MUST:
+
+1. **Check all CI workflows** — after pushing, verify on GitHub that all triggered workflows (`ci-main.yml`, `ci-dev.yml`, etc.) pass. Do NOT proceed with new work while CI is red.
+
+2. **Fix failures first** — if any workflow fails, diagnose the issue and fix it before making any new changes. A red CI means the branch is broken.
+
+3. **Never skip CI** — do not add `[skip ci]` to commit messages unless the change is exclusively documentation (`.md`, `.txt`).
+
+4. **Check workflow syntax locally** — before pushing new or modified workflow files, validate them with:
+   ```bash
+   # Validate YAML syntax
+   python -c "import yaml; yaml.safe_load(open('.github/workflows/ci-main.yml'))"
+   ```
+
+5. **Workflow summary** — the 6 CI pipelines are:
+   - `ci-feature.yml` — PRs to `dev` (lint + build + test)
+   - `ci-dev.yml` — pushes/PRs to `dev` (full suite + security scan)
+   - `ci-main.yml` — pushes to `main` (full suite + packages + security)
+   - `ci-release.yml` — pushes/PRs to `release/*` (regression + security + package)
+   - `ci-hotfix.yml` — PRs to `main` touching security/kernel/include (build + targeted tests + security)
+   - `ci-security.yml` — PRs to `main` touching security/ (crypto tests + deep security + L3 label)
+
+Failure to follow this policy will result in broken CI on `main`/`dev`.
+
 ## Build Commands
 ```powershell
 # Configure (debug)
