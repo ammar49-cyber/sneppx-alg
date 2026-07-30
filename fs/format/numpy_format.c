@@ -302,7 +302,7 @@ int SNEPPX_npz_save(const char* path, const char** keys, const void** data_ptrs,
         unsigned comp = (unsigned)total;
         unsigned fname_len = (unsigned)strlen(keys[i]) + 4; /* add .npy */
         char* fname = (char*)malloc(fname_len + 1);
-        sprintf(fname, "%s.npy", keys[i]);
+        snprintf(fname, fname_len + 1, "%s.npy", keys[i]);
         fwrite(&sig, 1, 4, f);
         fwrite(&vneed, 1, 2, f); fwrite(&flags, 1, 2, f); fwrite(&method, 1, 2, f);
         unsigned short t0 = 0, d0 = 0; unsigned crc = 0;
@@ -329,7 +329,7 @@ int SNEPPX_npz_save(const char* path, const char** keys, const void** data_ptrs,
         unsigned comp = (unsigned)entry_len[i];
         unsigned short fname_len = (unsigned short)(strlen(keys[i]) + 4);
         char* fname = (char*)malloc(fname_len + 1);
-        sprintf(fname, "%s.npy", keys[i]);
+        snprintf(fname, fname_len + 1, "%s.npy", keys[i]);
         unsigned short extra = 0, comment = 0;
         unsigned short disk = 0, iattr = 0;
         unsigned attr = 0;

@@ -185,7 +185,7 @@ static Obj* pth_unpickle(const unsigned char* p, size_t len) {
             case 'C': { /* SHORT_BINBYTES */ unsigned char sl=p[i++]; unsigned char* s=(unsigned char*)malloc(sl?sl:1); memcpy(s,p+i,sl); i+=sl; Obj* o=obj_new(O_BYTES); o->sval=s; o->slen=sl; obj_push(&stack,&n,&scap,o); break; }
             case 'A': { /* BINBYTES */ unsigned sl=p[i]|(p[i+1]<<8)|(p[i+2]<<16)|(p[i+3]<<24); i+=4; unsigned char* s=(unsigned char*)malloc(sl?sl:1); memcpy(s,p+i,sl); i+=sl; Obj* o=obj_new(O_BYTES); o->sval=s; o->slen=sl; obj_push(&stack,&n,&scap,o); break; }
             case '\x8f': { /* BINBYTES8 */ size_t sl=0; for(int b=0;b<8;b++) sl|=(size_t)p[i++]<<(8*b); unsigned char* s=(unsigned char*)malloc(sl?sl:1); memcpy(s,p+i,sl); i+=sl; Obj* o=obj_new(O_BYTES); o->sval=s; o->slen=sl; obj_push(&stack,&n,&scap,o); break; }
-            case 'c': case '\x93': { /* GLOBAL / STACK_GLOBAL */ /* read module\nname\n */ char mod[256], nm[256]; unsigned c=0; while(p[i]!='\n'&&c<255) mod[c++]=p[i++]; mod[c]=0; i++; c=0; while(p[i]!='\n'&&c<255) nm[c++]=p[i++]; nm[c]=0; i++; Obj* o=obj_new(O_GLOBAL); size_t tl=strlen(mod)+strlen(nm)+2; char* full=(char*)malloc(tl); sprintf(full,"%s.%s",mod,nm); o->sval=(unsigned char*)full; o->slen=tl; if(op=='\x93'){ /* STACK_GLOBAL uses two strings already on stack */ } obj_push(&stack,&n,&scap,o); break; }
+            case 'c': case '\x93': { /* GLOBAL / STACK_GLOBAL */ /* read module\nname\n */ char mod[256], nm[256]; unsigned c=0; while(p[i]!='\n'&&c<255) mod[c++]=p[i++]; mod[c]=0; i++; c=0; while(p[i]!='\n'&&c<255) nm[c++]=p[i++]; nm[c]=0; i++; Obj* o=obj_new(O_GLOBAL); size_t tl=strlen(mod)+strlen(nm)+2; char* full=(char*)malloc(tl); snprintf(full, tl, "%s.%s", mod, nm); o->sval=(unsigned char*)full; o->slen=tl; if(op=='\x93'){ /* STACK_GLOBAL uses two strings already on stack */ } obj_push(&stack,&n,&scap,o); break; }
             case 'R': { /* REDUCE */ Obj* args=obj_pop(stack,&n); Obj* callable=obj_pop(stack,&n); Obj* out=NULL; if (callable->type==O_GLOBAL) { char* fn = (char*)callable->sval; if (strstr(fn,"rebuild_tensor_v2")||strstr(fn,"rebuild_from_type_v2")||strstr(fn,"_rebuild_tensor")) { /* args: (storage, offset, size, stride, requires_grad, ...) */ if (args->type==O_TUPLE && args->nitem>=4) { Obj* st=args->items[0]; Obj* sz=args->items[2]; Obj* t=obj_new(O_TENSOR); t->storage=st; t->offset=(st->type==O_STORAGE)?st->offset:0; if (sz->type==O_TUPLE){ t->ndim=sz->nitem; t->shape=(size_t*)malloc(sz->nitem?sz->nitem*sizeof(size_t):1); for(size_t k=0;k<sz->nitem;k++) t->shape[k]=(size_t)sz->items[k]->ival; } else { t->ndim=0; t->shape=NULL; } if(st->type==O_STORAGE){ t->dtype=st->dtype; } else t->dtype=PTH_FLOAT32; out=t; } } else if (strstr(fn,"_rebuild_storage_from_bytes")||strstr(fn,"_rebuild_storage")) { /* args: (typename, byteorder, elemsize, numel, key, bytes) */ if (args->type==O_TUPLE && args->nitem>=6) { Obj* name=args->items[0]; Obj* nm=args->items[4]; Obj* by=args->items[5]; Obj* so=obj_new(O_STORAGE); so->dtype=dtype_from_global((char*)name->sval); so->numel=by->slen/pth_esize(so->dtype); so->sval=(unsigned char*)malloc(by->slen); memcpy(so->sval,by->sval,by->slen); if (nm->type==O_STR) so->storage_id=(char*)malloc(nm->slen+1), memcpy(so->storage_id,nm->sval,nm->slen), so->storage_id[nm->slen]=0; out=so; } } }
                 if (!out) { /* fallback: keep as tuple */ out=args; }
                 obj_free(callable);
@@ -295,7 +295,7 @@ int SNEPPX_pth_set_tensor(void* state, const char* key, const void* data, const 
     for (size_t d=0; d<ndim; d++) t->shape[d]=shape[d];
     t->dtype = dtype; size_t esz=pth_esize(dtype); size_t total=esz; for(size_t d=0; d<ndim; d++) total*=shape[d];
     t->data = malloc(total?total:1); memcpy(t->data, data, total);
-    st->keys[st->count] = (char*)malloc(strlen(key)+1); strcpy(st->keys[st->count], key);
+    st->keys[st->count] = (char*)malloc(strlen(key)+1); strncpy(st->keys[st->count], key, strlen(key)+1);
     st->count++;
     return 0;
 }
@@ -314,7 +314,7 @@ int SNEPPX_pth_save(void* state, const char* path) {
         size_t esz = pth_esize(st->items[i].dtype);
         size_t total = esz; for (size_t d=0; d<st->items[i].ndim; d++) total *= st->items[i].shape[d];
         sdata[i] = (unsigned char*)st->items[i].data; slen[i] = total;
-        char id[64]; sprintf(id, "archive/data/%zu", i);
+        char id[64]; snprintf(id, sizeof(id), "archive/data/%zu", i);
         unsigned sig = 0x04034b50u; unsigned short vneed=20, method=0, flags=0, t0=0, d0=0; unsigned crc=0;
         unsigned comp=(unsigned)total; unsigned short fnl=(unsigned short)strlen(id), extra=0;
         fwrite(&sig,1,4,f); fwrite(&vneed,1,2,f); fwrite(&flags,1,2,f); fwrite(&method,1,2,f);
@@ -326,7 +326,7 @@ int SNEPPX_pth_save(void* state, const char* path) {
     /* central directory */
     unsigned cd_start = cd_offset;
     for (size_t i = 0; i < st->count; i++) {
-        char id[64]; sprintf(id, "archive/data/%zu", i);
+        char id[64]; snprintf(id, sizeof(id), "archive/data/%zu", i);
         unsigned sig=0x02014b50u; unsigned short vmade=20,vneed=20,flags=0,method=0,t0=0,d0=0; unsigned crc=0;
         unsigned comp=(unsigned)slen[i], fnl=(unsigned short)strlen(id); unsigned short extra=0,comment=0,disk=0,iattr=0; unsigned attr=0;
         fwrite(&sig,1,4,f); fwrite(&vmade,1,2,f); fwrite(&vneed,1,2,f); fwrite(&flags,1,2,f); fwrite(&method,1,2,f);

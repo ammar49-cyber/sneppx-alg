@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 /* Minimal safetensors implementation (little-endian).
  *
@@ -10,6 +11,29 @@
  * Header JSON: { name: { dtype, shape:[..], data_offsets:[start,end] }, ... ,
  *                "__metadata__": { ... } }  (offsets are relative to the byte
  *                buffer that follows the header). */
+
+/* Safe append to a growable buffer. Grows *cap if needed. */
+static void safe_append(char** buf, size_t* len, size_t* cap, const char* fmt, ...) {
+    va_list args;
+    while (1) {
+        if (*len + 256 >= *cap) {
+            *cap *= 2;
+            char* nw = (char*)realloc(*buf, *cap);
+            if (!nw) return;
+            *buf = nw;
+        }
+        va_start(args, fmt);
+        int n = vsnprintf(*buf + *len, *cap - *len, fmt, args);
+        va_end(args);
+        if (n < 0) return;
+        if ((size_t)n < *cap - *len) {
+            *len += (size_t)n;
+            return;
+        }
+        /* Output was truncated, grow and retry */
+        *cap *= 2;
+    }
+}
 
 typedef struct {
     char* name;
@@ -365,19 +389,18 @@ int SNEPPX_safetensors_save(void* st) {
     char* hdr = (char*)malloc(cap);
     if (!hdr) return -1;
     size_t len = 0;
-    len += (size_t)sprintf(hdr + len, "{");
+    safe_append(&hdr, &len, &cap, "{");
     for (size_t i = 0; i < h->w_count; i++) {
         STEntry* e = &h->w_entries[i];
-        if (i) len += (size_t)sprintf(hdr + len, ",");
-        len += (size_t)sprintf(hdr + len, "\"%s\":{\"dtype\":\"%s\",\"shape\":[", e->name, dtype_to_str(e->dtype));
+        if (i) safe_append(&hdr, &len, &cap, ",");
+        safe_append(&hdr, &len, &cap, "\"%s\":{\"dtype\":\"%s\",\"shape\":[", e->name, dtype_to_str(e->dtype));
         for (size_t k = 0; k < e->ndim; k++) {
-            if (k) len += (size_t)sprintf(hdr + len, ",");
-            len += (size_t)sprintf(hdr + len, "%zu", e->shape[k]);
+            if (k) safe_append(&hdr, &len, &cap, ",");
+            safe_append(&hdr, &len, &cap, "%zu", e->shape[k]);
         }
-        len += (size_t)sprintf(hdr + len, "],\"data_offsets\":[%zu,%zu]}", e->off_start, e->off_end);
-        if (len + 64 >= cap) { cap *= 2; char* nw = (char*)realloc(hdr, cap); if (!nw) { free(hdr); return -1; } hdr = nw; }
+        safe_append(&hdr, &len, &cap, "],\"data_offsets\":[%zu,%zu]}", e->off_start, e->off_end);
     }
-    len += (size_t)sprintf(hdr + len, "}");
+    safe_append(&hdr, &len, &cap, "}");
     /* Pad header to 8-byte alignment (optional but friendly). */
     uint64_t header_len = (uint64_t)len;
     uint64_t pad = (8 - (header_len & 7)) & 7;

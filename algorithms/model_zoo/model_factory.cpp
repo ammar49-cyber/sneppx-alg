@@ -370,7 +370,7 @@ Model ModelFactory::from_pretrained(const std::string& model_id,
     auto model = create_model(family, size);
     model.config().get()->name = static_cast<char*>(std::realloc(model.config().get()->name, model_id.size() + 1));
     if (model.config().get()->name) {
-        std::strcpy(model.config().get()->name, model_id.c_str());
+        std::strncpy(model.config().get()->name, model_id.c_str(), model_id.size()); model.config().get()->name[model_id.size()] = '\0';
     }
 
     std::cout << "[SNEPPX from_pretrained] " << model_id

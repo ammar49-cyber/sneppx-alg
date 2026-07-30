@@ -60,7 +60,7 @@ static int onnx_elem_is_float(int elem) { return elem == 1 || elem == 11 || elem
 static void ort_put(ONNXModel* m, const char* name, ORTensor* t) {
     for (size_t i = 0; i < m->nsym; i++) if (!strcmp(m->syms[i].name, name)) { free(m->syms[i].t.data); m->syms[i].t = *t; return; }
     if (m->nsym >= m->cap) { m->cap = m->cap ? m->cap*2 : 32; m->syms = (ORSym*)realloc(m->syms, m->cap*sizeof(ORSym)); }
-    m->syms[m->nsym].name = (char*)malloc(strlen(name)+1); strcpy(m->syms[m->nsym].name, name);
+    m->syms[m->nsym].name = (char*)malloc(strlen(name)+1); strncpy(m->syms[m->nsym].name, name, strlen(name)+1);
     m->syms[m->nsym].t = *t; m->nsym++;
 }
 
@@ -119,7 +119,7 @@ static void parse_valueinfo(const unsigned char* b, size_t len, char** name, siz
             pos = end;
         } else pos += t.len;
     }
-    if (name) *name = (char*)malloc(strlen(nm)+1), strcpy(*name, nm);
+    if (name) { *name = (char*)malloc(strlen(nm)+1); if (*name) strncpy(*name, nm, strlen(nm)+1); }
     *ndim = nd; *dtype = elem;
 }
 

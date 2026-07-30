@@ -133,7 +133,7 @@ static int is_key_valid(SNEPPX_HttpAuth* auth, const char* raw_key) {
     sha256_hash(raw_key, hash);
     char hex[65];
     for (int i = 0; i < 32; i++)
-        sprintf(hex + i * 2, "%02x", hash[i]);
+        snprintf(hex + i * 2, 3, "%02x", hash[i]);
     hex[64] = '\0';
 
     /* Query the database */

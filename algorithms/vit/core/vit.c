@@ -136,7 +136,8 @@ int SNEPPX_vit_forward(void* vit, const float* images, size_t batch_size, float*
         const float* img = images + b*Cin*m->img_size*m->img_size;
         for (size_t pj=0;pj<G;pj++) for (size_t pi=0;pi<G;pi++){
             size_t patch_idx = pj*G+pi;
-            float* flat = (float*)alloca(patch_dim*sizeof(float));
+            float* flat = (float*)malloc(patch_dim*sizeof(float));
+            if (!flat) continue;
             for (size_t c=0;c<Cin;c++) for (size_t yy=0;yy<P;yy++) for (size_t xx=0;xx<P;xx++){
                 size_t si = ((c*m->img_size + (pj*P+yy))*m->img_size + (pi*P+xx));
                 flat[(c*P+yy)*P+xx] = img[si];
@@ -145,6 +146,7 @@ int SNEPPX_vit_forward(void* vit, const float* images, size_t batch_size, float*
             linear_fwd(flat,1,(float*)m->Wproj->data,patch_dim,H,pe);
             memcpy(x + (patch_idx+1)*H, pe, H*sizeof(float));
             free(pe);
+            free(flat);
         }
         memcpy(x, m->cls_token->data, H*sizeof(float));
         for (size_t i=0;i<seq;i++) for (size_t p=0;p<H;p++) x[i*H+p]+=((float*)m->pos_embed->data)[i*H+p];
@@ -167,7 +169,8 @@ int SNEPPX_vit_extract_features(void* vit, const float* images, size_t batch_siz
         const float* img = images + b*Cin*m->img_size*m->img_size;
         for (size_t pj=0;pj<G;pj++) for (size_t pi=0;pi<G;pi++){
             size_t patch_idx=pj*G+pi;
-            float* flat=(float*)alloca(patch_dim*sizeof(float));
+            float* flat=(float*)malloc(patch_dim*sizeof(float));
+            if (!flat) continue;
             for (size_t c=0;c<Cin;c++) for (size_t yy=0;yy<P;yy++) for (size_t xx=0;xx<P;xx++){
                 size_t si=((c*m->img_size+(pj*P+yy))*m->img_size+(pi*P+xx));
                 flat[(c*P+yy)*P+xx]=img[si];
@@ -176,6 +179,7 @@ int SNEPPX_vit_extract_features(void* vit, const float* images, size_t batch_siz
             linear_fwd(flat,1,(float*)m->Wproj->data,patch_dim,H,pe);
             memcpy(x+(patch_idx+1)*H,pe,H*sizeof(float));
             free(pe);
+            free(flat);
         }
         memcpy(x,m->cls_token->data,H*sizeof(float));
         for (size_t i=0;i<seq;i++) for (size_t p=0;p<H;p++) x[i*H+p]+=((float*)m->pos_embed->data)[i*H+p];
