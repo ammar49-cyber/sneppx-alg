@@ -120,6 +120,18 @@ def main():
         "--firewall-knock-ports", type=str, default=None,
         help="Comma-separated port knock sequence",
     )
+    parser.add_argument(
+        "--key-store-path", type=str, default=None,
+        help="Path to SQLite database for persistent API key storage",
+    )
+    parser.add_argument(
+        "--admin-key", type=str, default=None,
+        help="Admin API key for managing keys via /v1/admin/keys endpoints",
+    )
+    parser.add_argument(
+        "--usage-db-path", type=str, default=None,
+        help="Path to SQLite database for usage tracking",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -178,7 +190,13 @@ def main():
         prompt_filter=prompt_filter,
         output_verifier=output_verifier,
     )
-    set_security(sec_config, firewall_config=firewall_overrides if firewall_overrides else None)
+    set_security(
+        sec_config,
+        firewall_config=firewall_overrides if firewall_overrides else None,
+        admin_key=args.admin_key,
+        key_store_path=args.key_store_path,
+        usage_db_path=args.usage_db_path,
+    )
     logging.info(
         f"Security: auth={auth.mode}, rate_limit={rate_limit.requests_per_minute}/min, "
         f"prompt_filter={prompt_filter.enabled}, output_verifier={output_verifier.enabled}"

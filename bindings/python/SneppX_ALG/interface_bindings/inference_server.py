@@ -31,6 +31,9 @@ from .generation import (
 )
 from .tokenizer import Tokenizer
 from .security_middleware import SecurityConfig, SecurityMiddleware
+from .api_key_manager import ApiKeyManager, get_key_manager
+from .usage_tracker import UsageTracker, get_usage_tracker, set_usage_tracker
+from .api_gateway import router as auth_router, self_service_router as keys_router
 from .firewall import create_firewall as _create_firewall
 from .continuous_batching import ContinuousBatchScheduler, SchedulerConfig, ScheduledRequest, continuous_generate_loop
 from .quantized_serve import QuantizedModelConfig, quantize_model_weights, dequantize_weights
@@ -238,22 +241,48 @@ def _make_chat_config(req: ChatCompletionRequest) -> GenerationConfig:
 
 
 _security: Optional[SecurityMiddleware] = None
+_admin_key: Optional[str] = None
 
 
 def get_security() -> Optional[SecurityMiddleware]:
     return _security
 
 
-def set_security(config: Optional[SecurityConfig] = None, firewall_config: Optional[dict] = None):
-    global _security
+def set_security(config: Optional[SecurityConfig] = None, firewall_config: Optional[dict] = None,
+                admin_key: Optional[str] = None, key_store_path: Optional[str] = None,
+                usage_db_path: Optional[str] = None):
+    global _security, _admin_key
+    if key_store_path:
+        from .api_key_store import ApiKeyStore
+        store = ApiKeyStore(db_path=key_store_path)
+        km = ApiKeyManager(store=store)
+        if admin_key:
+            km.set_admin_key(admin_key)
+        set_key_manager(km)
+    if usage_db_path:
+        set_usage_tracker(UsageTracker(db_path=usage_db_path))
     if config is None:
-        _security = SecurityMiddleware(SecurityConfig.from_env())
+        _security = SecurityMiddleware(SecurityConfig.from_env(), key_manager=get_key_manager())
     else:
-        _security = SecurityMiddleware(config)
+        _security = SecurityMiddleware(config, key_manager=get_key_manager())
+    _admin_key = admin_key
     if firewall_config is not None:
         _security.firewall = _create_firewall(**firewall_config)
     elif os.environ.get("FIREWALL_CONFIG"):
         _security.firewall = _create_firewall(os.environ["FIREWALL_CONFIG"])
+
+
+def _verify_admin_auth(authorization: Optional[str]) -> bool:
+    if not authorization:
+        return False
+    if _admin_key and authorization.strip() == _admin_key:
+        return True
+    token = authorization.strip()
+    if token.startswith("Bearer "):
+        token = token[7:]
+    if _admin_key and token == _admin_key:
+        return True
+    return False
 
 
 @asynccontextmanager
@@ -270,10 +299,56 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down SneppX inference server")
 
 
+import hashlib
+
+
+def _key_hash(raw_key: str) -> str:
+    return hashlib.sha256(raw_key.encode()).hexdigest()
+
+
 app = FastAPI(
     title="SneppX Inference API",
-    version="0.9.5.748",
+    version="1.1.0",
 )
+
+app.include_router(auth_router)
+app.include_router(keys_router)
+
+
+@app.middleware("http")
+async def usage_middleware(request: callable, call_next):
+    import time as time_module
+    start = time_module.time()
+    response = await call_next(request)
+    elapsed_ms = (time_module.time() - start) * 1000
+    try:
+        auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth_header:
+            key = auth_header.strip()
+            if key.startswith("Bearer "):
+                key = key[7:]
+            if key.startswith("sk-sneppx-"):
+                tracker = get_usage_tracker()
+                kh = _key_hash(key)
+                tracker.record(
+                    key_hash=kh,
+                    endpoint=request.url.path,
+                    response_ms=elapsed_ms,
+                    status_code=response.status_code,
+                )
+    except Exception:
+        pass
+    return response
+
+
+@app.get("/v1/health", response_model=HealthResponse)
+async def health_endpoint():
+    return HealthResponse(
+        status="ok",
+        version="1.1.0",
+        models_loaded=len(_models),
+        uptime_seconds=time.time() - _start_time,
+    )
 
 
 @app.get("/v1/models", response_model=ModelListResponse)
@@ -671,6 +746,89 @@ async def _chat_stream(entry, prompt: str, input_ids, gen_config):
         event_stream(),
         media_type="text/event-stream",
     )
+
+
+@app.get("/v1/admin/keys")
+async def admin_list_keys(authorization: Optional[str] = Query(default=None, alias="Authorization")):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    keys = km.list_keys()
+    return {"keys": keys, "count": len(keys)}
+
+
+@app.post("/v1/admin/keys")
+async def admin_create_key(
+    name: str = Query(default=""),
+    tier: str = Query(default="free"),
+    expires_in_days: Optional[int] = Query(default=None),
+    user_id: Optional[str] = Query(default=None),
+    authorization: Optional[str] = Query(default=None, alias="Authorization"),
+):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    result = km.create_key(
+        name=name, tier=tier,
+        expires_in_days=expires_in_days, user_id=user_id,
+    )
+    if result is None:
+        raise HTTPException(400, "Failed to create key")
+    return result
+
+
+@app.get("/v1/admin/keys/{key_id}")
+async def admin_get_key(key_id: str, authorization: Optional[str] = Query(default=None, alias="Authorization")):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    key = km.get_key(key_id)
+    if not key:
+        raise HTTPException(404, "Key not found")
+    return key
+
+
+@app.delete("/v1/admin/keys/{key_id}")
+async def admin_revoke_key(key_id: str, authorization: Optional[str] = Query(default=None, alias="Authorization")):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    if not km.revoke_key(key_id):
+        raise HTTPException(404, "Key not found")
+    return {"status": "revoked", "key_id": key_id}
+
+
+@app.patch("/v1/admin/keys/{key_id}")
+async def admin_update_key(
+    key_id: str,
+    name: Optional[str] = Query(default=None),
+    tier: Optional[str] = Query(default=None),
+    rate_limit_rpm: Optional[int] = Query(default=None),
+    expires_in_days: Optional[int] = Query(default=None),
+    authorization: Optional[str] = Query(default=None, alias="Authorization"),
+):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    if not km.update_key(key_id, name=name, tier=tier,
+                         rate_limit_rpm=rate_limit_rpm, expires_in_days=expires_in_days):
+        raise HTTPException(404, "Key not found")
+    return {"status": "updated", "key_id": key_id}
+
+
+@app.get("/v1/admin/keys/{key_id}/usage")
+async def admin_key_usage(
+    key_id: str,
+    since: Optional[float] = Query(default=None),
+    authorization: Optional[str] = Query(default=None, alias="Authorization"),
+):
+    if not _verify_admin_auth(authorization):
+        raise HTTPException(401, "Admin authentication required")
+    km = get_key_manager()
+    stats = km.get_usage_stats(key_id, since=since)
+    if not stats:
+        raise HTTPException(404, "Key not found")
+    return stats
 
 
 __all__ = [

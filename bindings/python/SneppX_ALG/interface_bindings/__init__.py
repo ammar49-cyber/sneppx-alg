@@ -506,6 +506,22 @@ from .security_middleware import (
     PromptFilter,
     OutputVerifier,
 )
+from .api_key_store import ApiKeyStore
+from .api_key_manager import (
+    ApiKeyManager,
+    get_key_manager,
+    set_key_manager,
+)
+from .usage_tracker import (
+    UsageTracker,
+    get_usage_tracker,
+    set_usage_tracker,
+)
+from .user_store import (
+    UserStore,
+    get_user_store,
+    set_user_store,
+)
 from .cuda_device import (
     cuda_is_available,
     set_device,
@@ -757,6 +773,8 @@ from .inference_server import (
     HealthResponse,
     ModelInfo,
     ModelListResponse,
+    set_security,
+    get_security,
 )
 from .serve_cli import main as serve_main
 from .generation import (
@@ -1169,6 +1187,21 @@ __all__ = [
     "Authenticator",
     "PromptFilter",
     "OutputVerifier",
+    # API Key management
+    "ApiKeyStore",
+    "ApiKeyManager",
+    "get_key_manager",
+    "set_key_manager",
+    "set_security",
+    "get_security",
+    # Usage tracking
+    "UsageTracker",
+    "get_usage_tracker",
+    "set_usage_tracker",
+    # User accounts
+    "UserStore",
+    "get_user_store",
+    "set_user_store",
     # FSDP
     "FullyShardedDataParallel",
     "FSDPConfig",

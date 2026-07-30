@@ -7,6 +7,7 @@ import logging
 import re
 from typing import Optional, List, Dict, Any, Tuple, Set
 from dataclasses import dataclass, field
+from .api_key_manager import ApiKeyManager, get_key_manager
 
 # S5 AI-safety backend is imported lazily to avoid a hard dependency at
 # import time (it falls back to pure Python when the C lib is absent).
@@ -298,11 +299,15 @@ class OutputVerifier:
 
 
 class Authenticator:
-    """Authenticate requests using Bearer tokens or API keys."""
+    """Authenticate requests using Bearer tokens or API keys.
 
-    def __init__(self, config: AuthConfig):
+    Supports both static key sets (CLI) and ApiKeyManager (persistent store).
+    """
+
+    def __init__(self, config: AuthConfig, key_manager: Optional[ApiKeyManager] = None):
         self._config = config
         self._key_set: Set[str] = set(config.api_keys)
+        self._key_manager = key_manager
 
     @property
     def enabled(self) -> bool:
@@ -312,21 +317,39 @@ class Authenticator:
     def mode(self) -> str:
         return self._config.mode
 
-    def authenticate(self, authorization: Optional[str]) -> Optional[str]:
-        """Return user id string if authenticated, ``None`` otherwise."""
+    def authenticate(self, authorization: Optional[str]) -> Optional[Dict[str, Any]]:
+        """Return key info dict if authenticated, ``None`` otherwise.
+
+        If using static keys, returns a simple dict with user_id.
+        If using ApiKeyManager, returns the full key info from the store.
+        """
         if not self.enabled:
-            return "anonymous"
+            return {"user_id": "anonymous", "tier": "free", "rate_limit_rpm": 60}
         if not authorization:
             return None
         if self._config.mode == "bearer":
             token = self._extract_bearer(authorization)
-            if token and token in self._key_set:
-                return f"user_{hashlib.sha256(token.encode()).hexdigest()[:16]}"
+            if not token:
+                return None
+            if self._key_manager and token.startswith("sk-sneppx-"):
+                info = self._key_manager.validate_key(token)
+                if info:
+                    return info
+            if token in self._key_set:
+                return {"user_id": f"user_{hashlib.sha256(token.encode()).hexdigest()[:16]}",
+                        "tier": "static", "rate_limit_rpm": self._config.rate_limit_rpm if hasattr(self._config, 'rate_limit_rpm') else 60}
             return None
         if self._config.mode == "api_key":
             key = authorization.strip()
+            if not key:
+                return None
+            if self._key_manager:
+                info = self._key_manager.validate_key(key)
+                if info:
+                    return info
             if key in self._key_set:
-                return f"user_{hashlib.sha256(key.encode()).hexdigest()[:16]}"
+                return {"user_id": f"user_{hashlib.sha256(key.encode()).hexdigest()[:16]}",
+                        "tier": "static", "rate_limit_rpm": self._config.rate_limit_rpm if hasattr(self._config, 'rate_limit_rpm') else 60}
             return None
         return None
 
@@ -359,25 +382,40 @@ class SecurityMiddleware:
         result = security.verify_output(text)
 """
 
-    def __init__(self, config: Optional[SecurityConfig] = None):
+    def __init__(self, config: Optional[SecurityConfig] = None,
+                 key_manager: Optional[ApiKeyManager] = None):
         self.config = config or SecurityConfig()
-        self.authenticator = Authenticator(self.config.auth)
+        self._key_manager = key_manager
+        self.authenticator = Authenticator(self.config.auth, key_manager=key_manager)
         self.prompt_filter = PromptFilter(self.config.prompt_filter)
         self.output_verifier = OutputVerifier(self.config.output_verifier)
         self._rate_limiters: Dict[str, _SlidingWindowCounter] = {}
+        self._tier_limits: Dict[str, int] = {
+            "free": 60, "pro": 1000, "enterprise": 10000, "static": 60,
+        }
         self._firewall = None
-    
+
+    @property
+    def key_manager(self) -> Optional[ApiKeyManager]:
+        return self._key_manager
+
+    @key_manager.setter
+    def key_manager(self, value: Optional[ApiKeyManager]):
+        self._key_manager = value
+        if value is not None:
+            self.authenticator._key_manager = value
+
     @property
     def firewall(self):
         if self._firewall is None:
             fw_cls = _get_firewall_runner()
             self._firewall = fw_cls()
         return self._firewall
-    
+
     @firewall.setter
     def firewall(self, value):
         self._firewall = value
-    
+
     def check_firewall(self, client_ip, method="GET", path="/", headers=None, body=None, query="", ssl_object=None, knock_header=""):
         return self.firewall.check_request(
             client_ip=client_ip,
@@ -389,22 +427,21 @@ class SecurityMiddleware:
             ssl_object=ssl_object,
             knock_header=knock_header,
         )
-    
-    def authenticate(self, authorization: Optional[str]) -> Optional[str]:
-        """Authenticate request. Returns user id or ``None``."""
+
+    def authenticate(self, authorization: Optional[str]) -> Optional[Dict[str, Any]]:
+        """Authenticate request. Returns key info dict or ``None``."""
         return self.authenticator.authenticate(authorization)
 
-    def check_rate_limit(self, user_id: str) -> Tuple[bool, str]:
+    def check_rate_limit(self, user_id: str, tier: str = "free") -> Tuple[bool, str]:
         """Check rate limit for user. Returns ``(allowed: bool, reason: str)``."""
         if not self.config.rate_limit.enabled:
             return True, ""
+        rpm = self._tier_limits.get(tier, self.config.rate_limit.requests_per_minute)
         if user_id not in self._rate_limiters:
-            self._rate_limiters[user_id] = _SlidingWindowCounter(
-                self.config.rate_limit.requests_per_minute, 60.0
-            )
+            self._rate_limiters[user_id] = _SlidingWindowCounter(rpm, 60.0)
         limiter = self._rate_limiters[user_id]
         if not limiter.allow():
-            return False, f"Rate limit exceeded ({self.config.rate_limit.requests_per_minute}/minute)"
+            return False, f"Rate limit exceeded ({rpm}/minute)"
         return True, ""
 
     def filter_prompt(self, prompt: str) -> Tuple[str, str]:
@@ -437,10 +474,10 @@ class SecurityMiddleware:
 
     def prompt_blocked_error(self) -> dict:
         return {"detail": "Prompt blocked by content filter"}
-    
+
     def firewall_blocked_error(self, result) -> dict:
         return {"detail": result.reason, "status_code": result.status_code}
-    
+
     def release_concurrent(self, client_ip: str):
         self.firewall.release_concurrent(client_ip)
 

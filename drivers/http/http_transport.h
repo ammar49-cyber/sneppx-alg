@@ -29,12 +29,14 @@ int SNEPPX_http_post(const char* host, int port, const char* path,
 typedef void (*SNEPPX_http_handler)(const char* method, const char* path,
                                     const char* body, char* resp, size_t resp_max);
 
-/* Create and run a blocking server on `port`, invoking `handler` per request.
- * This call blocks until SNEPPX_http_server_stop(server) is called from
- * another thread. */
+/* Legacy simple server — use net/http/http_server.h instead for full routing,
+ * middleware, and thread pool support. These are only available when
+ * SNEPPX_USE_TRANSPORT_SERVER is defined. */
+#ifdef SNEPPX_USE_TRANSPORT_SERVER
 void* SNEPPX_http_server_create(int port, SNEPPX_http_handler handler);
 int   SNEPPX_http_server_run(void* server);
 void  SNEPPX_http_server_stop(void* server);
+#endif
 
 #ifdef __cplusplus
 }

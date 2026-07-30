@@ -109,6 +109,9 @@ int SNEPPX_http_post(const char* host, int port, const char* path, const char* b
     return snepx_request("POST", host, port, path, body, out, out_max);
 }
 
+/* Legacy simple HTTP server — replaced by net/http/http_server.c.
+   To use this transport-level server instead, define SNEPPX_USE_TRANSPORT_SERVER. */
+#ifdef SNEPPX_USE_TRANSPORT_SERVER
 typedef struct {
     int port;
     SNEPPX_http_handler handler;
@@ -175,6 +178,7 @@ void SNEPPX_http_server_stop(void* server) {
     snepx_close(srv->listen_fd);
     free(srv);
 }
+#endif /* SNEPPX_USE_TRANSPORT_SERVER */
 
 #else /* !SNEPPX_BUILD_HTTP — UNSUPPORTED stub */
 
@@ -188,11 +192,13 @@ int SNEPPX_http_post(const char* host, int port, const char* path, const char* b
     (void)host; (void)port; (void)path; (void)body; (void)out; (void)out_max;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
+#ifdef SNEPPX_USE_TRANSPORT_SERVER
 void* SNEPPX_http_server_create(int port, SNEPPX_http_handler handler) {
     (void)port; (void)handler;
     return NULL;
 }
 int SNEPPX_http_server_run(void* server) { (void)server; return SNEPPX_DRIVER_UNSUPPORTED; }
 void SNEPPX_http_server_stop(void* server) { (void)server; }
+#endif /* SNEPPX_USE_TRANSPORT_SERVER */
 
 #endif
