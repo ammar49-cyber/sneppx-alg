@@ -13,9 +13,8 @@
 This directory contains the **SNEPPX-Alg** cognitive processing system — a
 next-generation AI framework with security built into the foundation.
 
-See the [top-level README](https://github.com/ammar49-cyber/sneppx-alg) and
-[`Docs.md`](./Docs.md) for the full overview, build instructions, and the
-S0–S9 security model.
+See the [top-level README](https://github.com/ammar49-cyber/sneppx-alg) for the full overview.
+For complete documentation, start at [`docs/index.md`](docs/index.md).
 
 ## Features
 
@@ -27,17 +26,35 @@ S0–S9 security model.
 - **Advanced Architectures**: Differential Attention, Mamba-2 SSM, FlexAttention, Mixture of Depth
 - **Built-in Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
 
-## What's new in v1.0.0
+## Documentation
 
-- **Stable Release** — All 8 development phases complete, API frozen, full regression suite passes
-- **Phase 1 — Model Zoo**: `from_pretrained()` API, ModelHub, C/C++/Python model configs, model cards, weight management, integration tests
-- **Phase 2 — Distributed Training**: ZeRO-1/2/3, pipeline parallelism, tensor parallelism, expert parallelism, elastic training, fault tolerance
-- **Phase 3 — Advanced Architectures**: Differential Attention, Mamba-2 selective SSM, FlexAttention with block-sparse kernels, Mixture of Depth
-- **Phase 4 — Security Audit**: S0-S9 hardened (symbol-collision fixes, mapping-leak fixes, behavioral monitoring)
-- **Phase 5 — Quantization**: INT8 sym/asym, INT4 packed, FP8 E4M3/E5M2, AWQ, GPTQ
-- **Phase 6 — Async Checkpointing**: Double-buffered async save, heartbeat, elastic node join/leave
-- **Phase 7 — Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
-- **Phase 8 — Weight Converters**: HF integration, safetensors reader, presets for LLaMA 2/3, Mistral, Qwen 2, DeepSeek V2
+| Area | Where to start |
+|------|----------------|
+| Quick start & build | [`docs/index.md`](docs/index.md) |
+| Contribution framework | [`docs/CONTRIBUTOR_TIERS.md`](docs/CONTRIBUTOR_TIERS.md) |
+| Branching strategy | [`docs/BRANCHING_STRATEGY.md`](docs/BRANCHING_STRATEGY.md) |
+| Code review guide | [`docs/CODE_REVIEW_GUIDE.md`](docs/CODE_REVIEW_GUIDE.md) |
+| API reference | [`docs/API.md`](docs/API.md) |
+| Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Security layers | [`docs/security_layers.md`](docs/security_layers.md) |
+| Development workflow | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
+| All docs | [`docs/README.md`](docs/README.md) |
+
+## What's new in v1.1.0
+
+- **Contribution framework**: Five-tier merit system, branching strategy, code review guide, learning paths
+- **CI/CD removed**: All automated pipelines deleted. Manual builds & tests only
+- **Docs reorganized**: 4 reference docs converted from `.txt` to `.md`, Doxygen config added
+
+## v1.0.0 — Initial Stable Release
+
+- **Model Zoo**: `from_pretrained()` API, ModelHub, C/C++/Python model configs, model cards, weight management
+- **Distributed Training**: ZeRO-1/2/3, pipeline/tensor/expert parallelism, elastic training, fault tolerance
+- **Advanced Architectures**: Differential Attention, Mamba-2 SSM, FlexAttention, Mixture of Depth
+- **Security Audit**: S0-S9 hardened (symbol-collision fixes, mapping-leak fixes, behavioral monitoring)
+- **Quantization**: INT8/INT4/FP8, AWQ, GPTQ
+- **Async Checkpointing**: Double-buffered save, heartbeat, elastic node join/leave
+- **Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
 
 ## Quick build
 

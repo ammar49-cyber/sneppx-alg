@@ -231,6 +231,30 @@ output = cfg.forward_mha(hidden_states, attention_mask, position_ids)
 
 See [`docs/guide/mha_forward_pass.md`](guide/mha_forward_pass.md).
 
+## Contribution Framework (v1.1.0)
+
+SNEPPX-Algo uses a **five-tier merit system** with a track-based Git Flow branching model.
+
+| Document | Purpose |
+|----------|---------|
+| [CONTRIBUTOR_TIERS.md](CONTRIBUTOR_TIERS.md) | Tier definitions, gates, badges, promotion/demotion |
+| [BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md) | Branch types, naming conventions, tier→branch mapping |
+| [CODE_REVIEW_GUIDE.md](CODE_REVIEW_GUIDE.md) | Review levels (L1–L3), per-subsystem criteria, review process |
+| [LEARNING_PATHS.md](LEARNING_PATHS.md) | Track-specific month-by-month roadmaps |
+| [PR_TEMPLATE.md](PR_TEMPLATE.md) | Pull request submission template |
+| [CONTRIBUTING.md](../CONTRIBUTING.md) | Contribution workflow and acceptance criteria |
+| [GOVERNANCE.md](../GOVERNANCE.md) | BDFL + Maintainer Council governance |
+| [MAINTAINERS.md](../MAINTAINERS.md) | Tier tracking and maintainer table |
+
+## Reference Docs
+
+| Document | Description |
+|----------|-------------|
+| [architecture.md](architecture.md) | System layers, data flow, memory model, distributed architecture |
+| [build.md](build.md) | Build prerequisites, options, targets, troubleshooting |
+| [api_quickref.md](api_quickref.md) | C and Python API quick reference with enums |
+| [security_layers.md](security_layers.md) | S0–S9 security deep dive with threat model |
+
 ## Next Steps
 
 - Read [docs/guide/index.md](guide/index.md) for feature guides
@@ -239,4 +263,3 @@ See [`docs/guide/mha_forward_pass.md`](guide/mha_forward_pass.md).
 - Read [docs/API.md](API.md) for the full C and Python API reference
 - Read [docs/installation.md](installation.md) for platform-specific build guides
 - Read [docs/ROADMAP.md](ROADMAP.md) for the project timeline
-- Read [docs/contributing.md](contributing.md) to learn how to contribute
