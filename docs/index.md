@@ -253,7 +253,7 @@ SNEPPX-Algo uses a **five-tier merit system** with a track-based Git Flow branch
 | [architecture.md](architecture.md) | System layers, data flow, memory model, distributed architecture |
 | [build.md](build.md) | Build prerequisites, options, targets, troubleshooting |
 | [api_quickref.md](api_quickref.md) | C and Python API quick reference with enums |
-| [API_REFERENCE.md](API_REFERENCE.md) | Full REST API reference for the inference server (24 endpoints) |
+| [API_REFERENCE.md](API_REFERENCE.md) | Full REST API reference for the inference server (21 endpoints) |
 | [security_layers.md](security_layers.md) | S0–S9 security deep dive with threat model |
 
 ## Next Steps
@@ -262,6 +262,6 @@ SNEPPX-Algo uses a **five-tier merit system** with a track-based Git Flow branch
 - Read [docs/ARCHITECTURE.md](ARCHITECTURE.md) for deep technical details
 - Read [docs/hss_training.md](hss_training.md) for an end-to-end HSS training walkthrough
 - Read [docs/API.md](API.md) for the full C and Python API reference
-- Read [docs/API_REFERENCE.md](API_REFERENCE.md) for the complete REST API reference (24 endpoints)
+- Read [docs/API_REFERENCE.md](API_REFERENCE.md) for the complete REST API reference (21 endpoints)
 - Read [docs/installation.md](installation.md) for platform-specific build guides
 - Read [docs/ROADMAP.md](ROADMAP.md) for the project timeline

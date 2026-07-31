@@ -759,24 +759,49 @@ from .llama_models import (
     load_hf_weights,
     convert_hf_llama_weights,
 )
-from .inference_server import (
-    app as inference_app,
-    register_model,
-    get_model,
-    list_models,
-    GenerateRequest,
-    GenerateResponse,
-    BatchGenerateRequest,
-    BatchGenerateResponse,
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    HealthResponse,
-    ModelInfo,
-    ModelListResponse,
-    set_security,
-    get_security,
-)
-from .serve_cli import main as serve_main
+try:
+    from .inference_server import (
+        app as inference_app,
+        register_model,
+        get_model,
+        list_models,
+        GenerateRequest,
+        GenerateResponse,
+        BatchGenerateRequest,
+        BatchGenerateResponse,
+        ChatCompletionRequest,
+        ChatCompletionResponse,
+        HealthResponse,
+        ModelInfo,
+        ModelListResponse,
+        set_security,
+        get_security,
+    )
+    from .serve_cli import main as serve_main
+except ImportError:
+    # fastapi/uvicorn not installed — inference server functionality is
+    # unavailable. Install with: pip install "sneppx-alg[serve]"
+    inference_app = None
+    serve_main = None
+    GenerateRequest = None
+    GenerateResponse = None
+    BatchGenerateRequest = None
+    BatchGenerateResponse = None
+    ChatCompletionRequest = None
+    ChatCompletionResponse = None
+    HealthResponse = None
+    ModelInfo = None
+    ModelListResponse = None
+    def register_model(*args, **kwargs):
+        raise ImportError("Inference server requires: pip install 'sneppx-alg[serve]'")
+    def get_model(*args, **kwargs):
+        raise ImportError("Inference server requires: pip install 'sneppx-alg[serve]'")
+    def list_models(*args, **kwargs):
+        raise ImportError("Inference server requires: pip install 'sneppx-alg[serve]'")
+    def set_security(*args, **kwargs):
+        raise ImportError("Inference server requires: pip install 'sneppx-alg[serve]'")
+    def get_security(*args, **kwargs):
+        raise ImportError("Inference server requires: pip install 'sneppx-alg[serve]'")
 from .generation import (
     GenerationConfig,
     top_k_top_p_filtering,

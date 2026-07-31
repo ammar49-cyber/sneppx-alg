@@ -853,6 +853,56 @@ SNEPPX_http_server_add_middleware(srv, mw, auth);
 
 In stub mode (no SQLite), any key with the `sk-sneppx-` prefix is accepted for development.
 
+### High-Level REST API (`http_api.h`)
+
+The `net/http/http_api.h` module registers the standard serving endpoints on a server
+in one call. It mirrors the Python `inference_server.py` surface for the core routes.
+
+```c
+#include "net/http/http_api.h"
+
+SNEPPX_HttpApi* api = SNEPPX_http_api_create("1.1.0");
+SNEPPX_http_api_register(srv, api);   /* registers the /v1/* routes */
+```
+
+Registered endpoints:
+
+| Method | Path                 | Auth    | Description                          |
+|--------|----------------------|---------|--------------------------------------|
+| GET    | `/v1/health`         | public  | Status, version, uptime, model count |
+| GET    | `/v1/models`         | public  | List known model presets             |
+| GET    | `/v1/models/{id}`    | public  | Single model configuration           |
+| POST   | `/v1/generate`       | Bearer  | Generate text from a prompt          |
+
+The generate handler parses a JSON body (`model`, `prompt`, optional
+`max_new_tokens`, `temperature`, `top_p`, `top_k`) and returns the same
+`GenerateResponse` shape as the Python server. Without loaded model weights it
+produces a deterministic continuation; responses include `generated_text`,
+`token_ids`, and token counts.
+
+A runnable demo is provided at `examples/http_server_demo.c`
+(builds when `SNEPPX_BUILD_HTTP=ON`):
+
+```powershell
+# build
+cmake -B build_http -DSNEPPX_BUILD_HTTP=ON
+cmake --build build_http --config Release --target http_server_demo
+
+# run (port, optional key DB)
+build_http\examples\Release\http_server_demo.exe 8080
+
+# exercise
+curl http://127.0.0.1:8080/v1/health
+curl http://127.0.0.1:8080/v1/models
+curl -H "Authorization: Bearer sk-sneppx-... \
+     -H "Content-Type: application/json" \
+     -d '{"model":"llama3-8B","prompt":"Hello"}' \
+     http://127.0.0.1:8080/v1/generate
+```
+
+Routes may also use `{param}` patterns; captured values are read with
+`SNEPPX_http_request_param(req, "name")`.
+
 ---
 
 ## Quick Reference

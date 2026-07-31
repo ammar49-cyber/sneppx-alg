@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sneppx-alg"
+version = "1.1.0"
+description = "Next-generation AI architecture with security built into the foundation"
+requires-python = ">=3.9"
+authors = [{ name = "Ammar [SNEPPX]", email = "algoSNEPPX@gmail.com" }]
+license = { text = "MIT" }
+keywords = ["ai", "machine-learning", "deep-learning", "neural-networks", "security", "post-quantum", "cryptography", "distributed-training", "cuda", "tensor", "state-space", "mixture-of-experts", "adversarial", "model-zoo", "quantization", "llama", "mistral", "attention", "mamba", "transformer", "formal-verification", "differential-privacy", "npu", "nccl"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    "numpy>=1.21.0",
+    "pyyaml>=5.1",
+]
+
+[project.urls]
+Source = "https://github.com/ammar49-cyber/sneppx-alg"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "scipy>=1.7"]
+hf = ["huggingface_hub>=0.16.0"]
+serve = ["uvicorn>=0.22.0"]
+
+[project.scripts]
+sneppx-train = "SneppX_ALG.interface_bindings.train_cli:main"
+sneppx-serve = "SneppX_ALG.interface_bindings.serve_cli:main"
+sneppx-experiment = "SneppX_ALG.interface_bindings.experiment_cli:main"
+sneppx-eval = "SneppX_ALG.interface_bindings.eval_cli:main"
+sneppx-quantize = "SneppX_ALG.interface_bindings.quantize_cli:main"
+sneppx-rlhf = "SneppX_ALG.interface_bindings.rlhf_cli:main"
+
+[tool.setuptools]
+packages = ["SneppX_ALG", "SneppX_ALG.interface_bindings"]
+
+[tool.setuptools.package-data]
+SneppX_ALG = [
+    "_SNEPPX_c*.pyd", "_SNEPPX_c*.so",
+    "_sneppx_c*.pyd", "_sneppx_c*.so",
+    "_arix_c*.pyd", "_arix_c*.so",
+]

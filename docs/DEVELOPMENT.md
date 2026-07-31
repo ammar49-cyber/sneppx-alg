@@ -116,3 +116,35 @@ Patches are reviewed for:
 - Style: does it follow STYLE_GUIDE.md?
 - Safety: are all allocations checked? No buffer overflows?
 - Tests: are new features adequately tested?
+
+## SNEPPX Dev Tools
+
+The 7 standalone SNEPPX developer tools are integrated into the workflow
+(see `.sneppx-tools.json` and `scripts/dev-tools.{ps1,sh}`). Install:
+
+```bash
+pip install sneppx-toolkit[all]
+```
+
+Run the full quality gate before pushing a feature branch:
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts\dev-tools.ps1
+# Linux/macOS
+./scripts/dev-tools.sh
+```
+
+Individual checks:
+
+```bash
+sneppx-analyze --dirs kernel algorithms net security   # security scan
+sneppx-format --lint kernel algorithms net             # style / standards lint
+sneppx-deps --circular .                               # circular dependency check
+sneppx-stats --save .sneppx/stats.json .               # code statistics
+sneppx-test --build-dir build --exclude cuda           # enhanced test runner
+sneppx-bench --build-dir build                         # benchmarks with regression tracking
+```
+
+The pre-commit hook (`scripts/install-hooks.sh`) also runs the analyzers when
+installed.

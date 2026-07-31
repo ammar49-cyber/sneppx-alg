@@ -48,3 +48,12 @@ target_include_directories(obf_demo PRIVATE
     ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
     ${CMAKE_SOURCE_DIR}/include/neural_core/architecture
 )
+
+if(SNEPPX_BUILD_HTTP)
+    add_executable(http_server_demo http_server_demo.c)
+    target_link_libraries(http_server_demo neural_core_kernel neural_architecture_layer)
+    target_include_directories(http_server_demo PRIVATE
+        ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
+        ${CMAKE_SOURCE_DIR}/net/http
+    )
+endif()

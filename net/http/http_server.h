@@ -42,6 +42,7 @@ const char* SNEPPX_http_request_header(SNEPPX_HttpRequest* req, const char* name
 const char* SNEPPX_http_request_body(SNEPPX_HttpRequest* req, size_t* len);
 const char* SNEPPX_http_request_query(SNEPPX_HttpRequest* req, const char* key);
 void*       SNEPPX_http_request_userdata(SNEPPX_HttpRequest* req);
+const char* SNEPPX_http_request_param(SNEPPX_HttpRequest* req, const char* name);
 
 /* Response setters */
 void SNEPPX_http_response_set_status(SNEPPX_HttpResponse* resp, int status_code);

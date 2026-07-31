@@ -92,6 +92,31 @@ else
     echo "  SKIP  cmake (not installed)"
 fi
 
+# 9. SNEPPX dev tools (if installed via sneppx-toolkit)
+if command -v sneppx-analyze &>/dev/null; then
+    check "sneppx-analyze (security)" sh -c "
+        cd "$ROOT_DIR" && sneppx-analyze --dirs kernel algorithms net security >/dev/null 2>&1
+    "
+else
+    echo "  SKIP  sneppx-analyze (pip install sneppx-analyze)"
+fi
+
+if command -v sneppx-format &>/dev/null; then
+    check "sneppx-format (lint)" sh -c "
+        cd "$ROOT_DIR" && sneppx-format --lint kernel algorithms net >/dev/null 2>&1
+    "
+else
+    echo "  SKIP  sneppx-format (pip install sneppx-format)"
+fi
+
+if command -v sneppx-deps &>/dev/null; then
+    check "sneppx-deps (circular)" sh -c "
+        cd "$ROOT_DIR" && sneppx-deps --circular . >/dev/null 2>&1
+    "
+else
+    echo "  SKIP  sneppx-deps (pip install sneppx-deps)"
+fi
+
 if [ "$FAILED" -eq 1 ]; then
     red "\nPre-commit checks FAILED. Fix errors before committing."
     exit 1

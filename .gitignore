@@ -51,6 +51,9 @@ node_modules/
 # opencode
 .opencode/
 
+# Local dev-tools data (lint logs, stats)
+.sneppx/
+
 # IDE
 .vscode/
 .idea/

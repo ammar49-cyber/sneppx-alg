@@ -1,68 +1,85 @@
-"""Setup for SneppX-ALG Python package."""
-from setuptools import setup, find_packages
-import os
+"""Setup shim for SneppX-ALG Python package.
 
-# Check if pre-built C extension exists
+Canonical metadata lives in pyproject.toml. This file exists only to:
+  1. Keep `pip install -e .` working (legacy editable installs)
+  2. Force a correct platform wheel tag for the prebuilt C extension
+     (`_SNEPPX_c.cp311-win_amd64.pyd`) so wheels are not published as
+     `py3-none-any`.
+"""
+import os
+import re
+
+from setuptools import setup
+from setuptools.dist import Distribution
+
 pkg_dir = os.path.join(os.path.dirname(__file__), "SneppX_ALG")
-has_c_ext = any(
-    f.startswith(("_SNEPPX_c", "_sneppx_c", "_arix_c")) and f.endswith((".pyd", ".so"))
-    for f in os.listdir(pkg_dir)
-)
+
+
+def _find_pyd():
+    if not os.path.isdir(pkg_dir):
+        return None
+    for f in os.listdir(pkg_dir):
+        if f.startswith(("_SNEPPX_c", "_sneppx_c", "_arix_c")) and f.endswith((".pyd", ".so")):
+            return f
+    return None
+
+
+_pyd = _find_pyd()
+_has_c_ext = _pyd is not None
+
+
+def _detect_tag(pyd_name):
+    """Extract (python, abi, plat) from a prebuilt extension name.
+
+    e.g. `_SNEPPX_c.cp311-win_amd64.pyd` -> ("cp311", "cp311", "win_amd64").
+    """
+    if pyd_name:
+        m = re.search(r"\.(cp\d{2,3})-([^.]+)\.(?:pyd|so)$", pyd_name)
+        if m:
+            return m.group(1), m.group(1), m.group(2)
+    import sysconfig
+    impl = sys.implementation.name
+    ver = "".join(map(str, sys.version_info[:2]))
+    return (
+        f"{impl}{ver}",
+        f"{impl}{ver}",
+        sysconfig.get_platform().replace("-", "_").replace(".", "_"),
+    )
+
+
+class BinaryDistribution(Distribution):
+    """Force a platform-specific wheel when a prebuilt .pyd is bundled."""
+
+    def has_ext_modules(self):
+        return _has_c_ext
+
+
+_cmdclass = {}
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bw
+
+    class BdistWheel(_bw):
+        """Tag the wheel for the prebuilt C extension's CPython ABI."""
+
+        def get_tag(self):
+            if _has_c_ext:
+                py, abi, plat = _detect_tag(_pyd)
+                return py, abi, plat
+            return super().get_tag()
+
+    _cmdclass["bdist_wheel"] = BdistWheel
+except ImportError:
+    pass
+
 
 setup(
-    name="sneppx-alg",
-    version="1.1.0",
-    description="Next-generation AI architecture with security built into the foundation",
-    long_description=open(os.path.join(os.path.dirname(__file__), "..", "..", "README.md"), encoding="utf-8").read() if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "README.md")) else "",
+    long_description=(
+        open(os.path.join(os.path.dirname(__file__), "..", "..", "README.md"), encoding="utf-8").read()
+        if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "..", "README.md"))
+        else ""
+    ),
     long_description_content_type="text/markdown",
-    author="Ammar [SNEPPX]",
-    author_email="algoSNEPPX@gmail.com",
-    url="https://github.com/ammar49-cyber/sneppx-alg",
-    project_urls={
-        "Source": "https://github.com/ammar49-cyber/sneppx-alg",
-    },
-    packages=find_packages(),
-    package_data={
-        "SneppX_ALG": [
-            "_SNEPPX_c*.pyd", "_SNEPPX_c*.so",
-            "_sneppx_c*.pyd", "_sneppx_c*.so",
-            "_arix_c*.pyd", "_arix_c*.so",
-            "interface_bindings/*.py",
-        ],
-    },
-    include_package_data=True,
-    python_requires=">=3.9",
-    install_requires=[
-        "numpy>=1.21.0",
-        "pyyaml>=5.1",
-    ],
-    extras_require={
-        "dev": ["pytest>=7.0", "scipy>=1.7"],
-        "hf": ["huggingface_hub>=0.16.0"],
-        "serve": ["uvicorn>=0.22.0"],
-    },
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Security :: Cryptography",
-    ],
-    keywords="ai, machine-learning, deep-learning, neural-networks, security, post-quantum, cryptography, distributed-training, cuda, tensor, state-space, mixture-of-experts, adversarial, model-zoo, quantization, llama, mistral, attention, mamba, transformer, formal-verification, differential-privacy, npu, nccl",
-    entry_points={
-        "console_scripts": [
-            "sneppx-train=SneppX_ALG.interface_bindings.train_cli:main",
-            "sneppx-serve=SneppX_ALG.interface_bindings.serve_cli:main",
-            "sneppx-experiment=SneppX_ALG.interface_bindings.experiment_cli:main",
-            "sneppx-eval=SneppX_ALG.interface_bindings.eval_cli:main",
-            "sneppx-quantize=SneppX_ALG.interface_bindings.quantize_cli:main",
-            "sneppx-rlhf=SneppX_ALG.interface_bindings.rlhf_cli:main",
-        ],
-    },
+    distclass=BinaryDistribution,
+    cmdclass=_cmdclass,
     zip_safe=False,
 )

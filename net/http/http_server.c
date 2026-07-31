@@ -31,6 +31,7 @@
 #define MAX_THREADS 16
 #define BUF_SIZE 65536
 #define MAX_HEADERS 64
+#define MAX_ROUTE_PARAMS 8
 
 /* ---- Request / Response ---- */
 
@@ -45,6 +46,9 @@ struct SNEPPX_HttpRequest {
     void* userdata;
     sock_t client_fd;
     SNEPPX_HttpServer* server;
+    /* Path parameters captured from routes like /v1/models/{id} */
+    char params[MAX_ROUTE_PARAMS][2][256];
+    int num_params;
 };
 
 struct SNEPPX_HttpResponse {
@@ -107,9 +111,37 @@ static void split_query(const char* path, char* out_path, char* out_query) {
     }
 }
 
-static int match_route(const char* pattern, const char* path) {
-    /* Simple prefix match for now (no wildcards) */
-    return strcmp(pattern, path) == 0;
+static int match_route(const char* pattern, const char* path, SNEPPX_HttpRequest* req) {
+    /* Support {param} segments in the pattern (e.g. /v1/models/{id}).
+     * Captured values are stored in req->params. */
+    req->num_params = 0;
+    while (*pattern && *path) {
+        if (*pattern == '{') {
+            const char* close = strchr(pattern, '}');
+            if (!close) return 0;
+            size_t name_len = (size_t)(close - pattern) - 1;
+            const char* seg_end = strchr(path, '/');
+            size_t seg_len = seg_end ? (size_t)(seg_end - path) : strlen(path);
+            if (seg_len == 0) return 0;
+            if (req->num_params < MAX_ROUTE_PARAMS) {
+                size_t n = name_len < 255 ? name_len : 255;
+                memcpy(req->params[req->num_params][0], pattern + 1, n);
+                req->params[req->num_params][0][n] = '\0';
+                n = seg_len < 255 ? seg_len : 255;
+                memcpy(req->params[req->num_params][1], path, n);
+                req->params[req->num_params][1][n] = '\0';
+                req->num_params++;
+            }
+            pattern = close + 1;
+            path = seg_end ? seg_end : path + seg_len;
+        } else if (*pattern == *path) {
+            pattern++;
+            path++;
+        } else {
+            return 0;
+        }
+    }
+    return *pattern == '\0' && *path == '\0';
 }
 
 static const char* find_header(SNEPPX_HttpRequest* req, const char* name) {
@@ -212,16 +244,35 @@ static int build_response(SNEPPX_HttpResponse* resp, char* out, size_t out_max) 
 
 static void handle_connection(sock_t client_fd, SNEPPX_HttpServer* srv) {
     char raw[BUF_SIZE];
-    int n = recv(client_fd, raw, (int)sizeof(raw) - 1, 0);
-    if (n <= 0) { snepx_close(client_fd); return; }
-    raw[n] = '\0';
+    size_t raw_len = 0;
+    for (;;) {
+        int n = recv(client_fd, raw + raw_len, (int)(sizeof(raw) - 1 - raw_len), 0);
+        if (n <= 0) { snepx_close(client_fd); return; }
+        raw_len += (size_t)n;
+        raw[raw_len] = '\0';
+        /* If we have the header terminator and a Content-Length, keep reading
+         * until the full body has arrived. Otherwise one packet is enough. */
+        const char* body_start = strstr(raw, "\r\n\r\n");
+        if (body_start) {
+            size_t have = raw_len - (size_t)(body_start + 4 - raw);
+            long content_len = -1;
+            const char* cl = strstr(raw, "Content-Length:");
+            if (!cl) cl = strstr(raw, "content-length:");
+            if (cl) content_len = atol(cl + 15);
+            if (content_len <= 0 || have >= (size_t)content_len) break;
+        } else {
+            /* Guard against header floods without a terminator. */
+            if (raw_len > 16384) break;
+        }
+    }
+    raw[raw_len] = '\0';
 
     SNEPPX_HttpRequest req;
     SNEPPX_HttpResponse resp;
     memset(&resp, 0, sizeof(resp));
     resp.status_code = 200;
 
-    if (parse_http_request(raw, (size_t)n, &req) != 0) {
+    if (parse_http_request(raw, raw_len, &req) != 0) {
         resp.status_code = 400;
         const char* err = "Bad Request";
         SNEPPX_http_response_set_body_str(&resp, err);
@@ -284,7 +335,7 @@ static void handle_connection(sock_t client_fd, SNEPPX_HttpServer* srv) {
         if (!handled) {
             for (int i = 0; i < srv->num_routes; i++) {
                 if (strcmp(req.method, srv->routes[i].method) == 0 &&
-                    match_route(srv->routes[i].path_pattern, req.path)) {
+                    match_route(srv->routes[i].path_pattern, req.path, &req)) {
                     resp.status_code = 200;
                     resp.body_len = 0;
                     resp.num_headers = 0;
@@ -313,20 +364,22 @@ static void handle_connection(sock_t client_fd, SNEPPX_HttpServer* srv) {
 
 #ifdef _WIN32
 DWORD WINAPI worker_thread(LPVOID arg) {
-    sock_t* pfd = (sock_t*)arg;
-    sock_t client_fd = *pfd;
-    SNEPPX_HttpServer* srv = (SNEPPX_HttpServer*)(((void**)arg)[1]);
+    void** argv = (void**)arg;
+    sock_t client_fd = *(sock_t*)argv[0];
+    SNEPPX_HttpServer* srv = (SNEPPX_HttpServer*)argv[1];
     handle_connection(client_fd, srv);
-    free(arg);
+    free(argv[0]);
+    free(argv);
     return 0;
 }
 #else
 static void* worker_thread(void* arg) {
-    sock_t* pfd = (sock_t*)arg;
-    sock_t client_fd = *pfd;
-    SNEPPX_HttpServer* srv = (SNEPPX_HttpServer*)(((void**)arg)[1]);
+    void** argv = (void**)arg;
+    sock_t client_fd = *(sock_t*)argv[0];
+    SNEPPX_HttpServer* srv = (SNEPPX_HttpServer*)argv[1];
     handle_connection(client_fd, srv);
-    free(arg);
+    free(argv[0]);
+    free(argv);
     return NULL;
 }
 #endif
@@ -477,6 +530,14 @@ const char* SNEPPX_http_request_query(SNEPPX_HttpRequest* req, const char* key) 
     return NULL;
 }
 void* SNEPPX_http_request_userdata(SNEPPX_HttpRequest* req) { return req->userdata; }
+const char* SNEPPX_http_request_param(SNEPPX_HttpRequest* req, const char* name) {
+    if (!req || !name) return NULL;
+    for (int i = 0; i < req->num_params; i++) {
+        if (strcmp(req->params[i][0], name) == 0)
+            return req->params[i][1];
+    }
+    return NULL;
+}
 
 /* ---- Response setters ---- */
 
