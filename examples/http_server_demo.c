@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    SNEPPX_HttpApi* api = SNEPPX_http_api_create("1.1.0");
+    SNEPPX_HttpApi* api = SNEPPX_http_api_create("1.1.1");
     if (!api) {
         printf("ERROR: failed to create API state\n");
         SNEPPX_http_server_destroy(srv);

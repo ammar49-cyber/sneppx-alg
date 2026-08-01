@@ -2,7 +2,7 @@
 # Run: doxygen Doxyfile
 
 PROJECT_NAME           = "SNEPPX-Algo"
-PROJECT_NUMBER         = "1.1.0"
+PROJECT_NUMBER         = "1.1.1"
 PROJECT_BRIEF          = "Secure Neural Algorithm Pipeline"
 OUTPUT_DIRECTORY       = output
 CREATE_SUBDIRS         = YES

@@ -1,6 +1,6 @@
 # SneppX API Reference
 
-**Version:** 1.1.0  
+**Version:** 1.1.1  
 **Base URL:** `http://localhost:8080`  
 **OpenAPI:** Auto-generated at `/docs` (Swagger UI) when FastAPI server is running.
 
@@ -62,7 +62,7 @@ Check server status.
 ```json
 {
   "status": "ok",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "models_loaded": 0,
   "uptime_seconds": 123.45
 }
@@ -861,7 +861,7 @@ in one call. It mirrors the Python `inference_server.py` surface for the core ro
 ```c
 #include "net/http/http_api.h"
 
-SNEPPX_HttpApi* api = SNEPPX_http_api_create("1.1.0");
+SNEPPX_HttpApi* api = SNEPPX_http_api_create("1.1.1");
 SNEPPX_http_api_register(srv, api);   /* registers the /v1/* routes */
 ```
 

@@ -2,9 +2,48 @@
 
 All notable changes to SNEPPX-Algo.
 
+## [1.1.1] — 2026-08-01
+
+### Security
+- Replaced unsafe C functions with safe alternatives across 8 files (`37ba14d`):
+  `gets`/`scanf`/`strcpy`/`sprintf`/`alloca` eliminated in `model_factory.cpp`,
+  `vit.c`, `numpy_format.c`, `onnx_format.c`, `pth_format.c`, `safetensors.c`,
+  `http_auth.c`, and `s9_extensions.c` (49 insertions, 22 deletions).
+
+### C HTTP Server (real serving endpoints)
+- New `net/http/http_api.{h,c}` module registering `GET /v1/health`,
+  `GET /v1/models`, `GET /v1/models/{id}`, and `POST /v1/generate` — mirroring the
+  Python `inference_server.py` response shapes (`GenerateResponse` JSON with
+  `generated_text`, `token_ids`, token counts). No LLM weights required to serve.
+- Route patterns now support `{param}` captures via
+  `SNEPPX_http_request_param(req, "name")`.
+- Fixed `worker_thread` unpacking bug: `client_fd` was read as the pointer value
+  instead of the socket, so the server never served a request.
+- Fixed request-body reads: the single `recv` could miss bodies split across TCP
+  segments (curl sends headers/body separately); now loops until `Content-Length`
+  is satisfied.
+- Added `examples/http_server_demo.c` (builds with `SNEPPX_BUILD_HTTP=ON`) with
+  auth middleware — public health/models, Bearer-protected generate.
+
+### Packaging
+- Wheel metadata (`bindings/python/pyproject.toml`) + wheel-tagging `setup.py`
+  (`cp311-cp311-win_amd64`) with optional fastapi imports so the base package
+  installs without serving dependencies.
+- Added `QUICKSTART.md`, `scripts/dev-tools.ps1/.sh`, `.sneppx-tools.json`
+  manifest, and extended `scripts/pre-commit.sh` with sneppx-analyze/format/deps.
+
+### Docs
+- Corrected endpoint count (24 → 21), documented the C HTTP API + demo, and
+  added the dev-tools chain to `docs/DEVELOPMENT.md` / `scripts/README.md`.
+
 ## [1.1.0] — 2026-07-27
 
-
+### Major
+- Contribution framework (five-tier merit system, track-based Git Flow, tiered
+  code review), CI/CD removed — manual-only workflow.
+- Version promoted to **1.1.0**; C HTTP server framework with middleware +
+  static dirs (`net/http/http_server.c`), auth middleware (`http_auth.c`),
+  and API reference docs.
 
 ## [1.0.0] — 2026-07-25
 

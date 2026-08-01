@@ -308,7 +308,7 @@ def _key_hash(raw_key: str) -> str:
 
 app = FastAPI(
     title="SneppX Inference API",
-    version="1.1.0",
+    version="1.1.1",
 )
 
 app.include_router(auth_router)
@@ -345,7 +345,7 @@ async def usage_middleware(request: callable, call_next):
 async def health_endpoint():
     return HealthResponse(
         status="ok",
-        version="1.1.0",
+        version="1.1.1",
         models_loaded=len(_models),
         uptime_seconds=time.time() - _start_time,
     )

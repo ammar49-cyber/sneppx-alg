@@ -1,6 +1,6 @@
 # SNEPPX-Alg: Secure Neural Architecture (ARIX_Algo)
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![C/C++](https://img.shields.io/badge/language-C%2FC%2B%2B-00599C.svg)]()
@@ -40,7 +40,15 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 | Development workflow | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | All docs | [`docs/README.md`](docs/README.md) |
 
-## What's new in v1.1.0
+## What's new in v1.1.1
+
+- **C HTTP REST API**: Real serving endpoints — `GET /v1/health`, `GET /v1/models`, `GET /v1/models/{id}`, `POST /v1/generate` (see `net/http/http_api.c`, demo at `examples/http_server_demo.c`)
+- **Security fixes**: Unsafe C functions replaced with safe alternatives across 8 files (model factory, VIT, numpy/onnx/pth/safetensors formats, HTTP auth, S9 extensions)
+- **Python packaging**: `pyproject.toml` wheel metadata + `cp311-cp311-win_amd64` wheel tag, optional serve deps
+- **Dev tools chain**: `scripts/dev-tools.ps1/.sh`, `.sneppx-tools.json` manifest, extended pre-commit
+- **Quickstart**: `QUICKSTART.md` for build/test/install/serve
+
+## v1.1.0
 
 - **Contribution framework**: Five-tier merit system, branching strategy, code review guide, learning paths
 - **CI/CD removed**: All automated pipelines deleted. Manual builds & tests only
