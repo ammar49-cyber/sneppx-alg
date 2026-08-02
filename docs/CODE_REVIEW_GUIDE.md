@@ -15,6 +15,8 @@ For every PR, verify:
 [ ] Test coverage ≥ 80% for new code
 [ ] Signed commits (GPG/Ed25519)
 [ ] Follows STYLE_GUIDE.md
+[ ] Follows COMMENTING.md (Layer 1 headers + Layer 4 API docs on public functions)
+[ ] `sneppx-format --docs` clean on modified files
 [ ] No new clang-tidy warnings
 [ ] CHANGELOG.md updated (if user-facing)
 [ ] Documentation updated
