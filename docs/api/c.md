@@ -2,6 +2,8 @@
 
 Full C API for all SNEPPX-Algo components.
 
+> **Commenting Standard**: All public `SNEPPX_*` functions in this API follow the four-layer commenting standard in [COMMENTING.md](../COMMENTING.md). Every function has a `@brief/@param/@return` Doxygen block, and every source file has a Layer-1 header block.
+
 ## Tensor API
 
 **Header**: `#include "SNEPPX_tensor.h"`
