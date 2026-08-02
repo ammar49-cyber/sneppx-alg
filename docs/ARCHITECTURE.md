@@ -1,5 +1,9 @@
 # SNEPPX-Algo Architecture
 
+## Documentation Standards
+
+This project uses a four-layer commenting standard defined in [COMMENTING.md](COMMENTING.md). All source files must have Layer 1 file headers and public `SNEPPX_*` functions must have Layer 4 Doxygen docs. See [STYLE_GUIDE.md](STYLE_GUIDE.md) for code formatting rules.
+
 ## Overview
 
 SNEPPX-Algo implements a composite AI algorithm with cryptographic integrity. The system processes inputs through five sequential algorithm components, each wrapped in ten security layers.
