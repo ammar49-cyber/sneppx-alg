@@ -191,7 +191,16 @@ SneppX_ALG/
 └── config/                      # Model zoo configs
 ```
 
-## Key Metrics
+## Documentation Standards
+
+This project uses a **four-layer commenting standard** defined in [COMMENTING.md](COMMENTING.md):
+
+1. **Layer 1** — File header blocks (WHAT/CONCEPT/ROLE/REFERENCES) on every source file
+2. **Layer 2** — Concept blocks before non-obvious algorithms
+3. **Layer 3** — Inline "why" comments for non-obvious decisions
+4. **Layer 4** — Doxygen `@brief/@param/@return` on every public `SNEPPX_*` function
+
+The `sneppx-format` linter enforces Layers 1 and 4 via `--docs` flag. All contributors must follow these conventions when modifying or adding source files. See [STYLE_GUIDE.md](STYLE_GUIDE.md) for code formatting rules and [COMMENTING.md](COMMENTING.md) for the full commenting standard.
 
 - **C/C++ source**: ~25,000 lines across all components
 - **Tests**: 100+ registered (all pass except 2 pre-existing S0 edge cases)
