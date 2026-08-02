@@ -35,6 +35,8 @@ SNEPPX-Algo uses a **five-tier merit-based system**. See `docs/CONTRIBUTOR_TIERS
 | T4 | Maintainer | Yes | Yes |
 | T5 | Core | Yes | Yes (full access) |
 
+All source files must follow the four-layer commenting standard in [docs/COMMENTING.md](docs/COMMENTING.md). Run `sneppx-format --docs` to verify before submitting.
+
 Start at Tier 1 (Explorer) by reading the docs, building the project, and submitting an issue.
 
 ---
