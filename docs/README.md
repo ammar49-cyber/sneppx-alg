@@ -10,7 +10,8 @@
 | [DESIGN.md](DESIGN.md) | Design principles, trade-offs, decisions | v0.5.0 |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow, build system, testing | v1.0.0 |
 | [installation.md](installation.md) | Detailed installation guide | v0.5.0 |
-| [STYLE_GUIDE.md](STYLE_GUIDE.md) | Coding style, naming, formatting | v0.5.0 |
+| [STYLE_GUIDE.md](STYLE_GUIDE.md) | Coding style, naming, formatting | v1.1.0 |
+| [COMMENTING.md](COMMENTING.md) | Four-layer commenting standard for all source files | v1.1.0 |
 | [security.md](security.md) | Security overview, threat model | v0.5.0 |
 | [ROADMAP.md](ROADMAP.md) | Version roadmap, milestones | v1.0.0 |
 | [VISION.md](VISION.md) | Long-term vision and philosophy | v0.5.0 |
