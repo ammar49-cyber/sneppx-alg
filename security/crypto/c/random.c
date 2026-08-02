@@ -38,6 +38,23 @@ int SNEPPX_random_bytes(uint8_t* buffer, size_t len) {
     (void)buffer; (void)len;
     return -1;
 #endif
+/*
+ * SNEPPX - Cryptographic Random Number Wrapper
+ *
+ * WHAT
+ *   Cryptographic Random Number Wrapper.
+ *
+ * CONCEPT
+ *   Public API wrapper routing all random requests through the CSPRNG with auto reseeding.
+ *
+ * ROLE
+ *   Public entry point for all cryptographic randomness used by every crypto module.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 }
 
 uint32_t SNEPPX_random_uint32(void) {

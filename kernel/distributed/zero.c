@@ -163,3 +163,19 @@ int sneppx_zero_destroy(SNEPPX_ZeroOptimizer* opt) {
     return 0;
 }
 #endif
+/*
+ * SNEPPX - ZeRO Optimizer State Partitioning
+ *
+ * WHAT
+ *   ZeRO Optimizer State Partitioning.
+ *
+ * CONCEPT
+ *   ZeRO Optimizer State Partitioning implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

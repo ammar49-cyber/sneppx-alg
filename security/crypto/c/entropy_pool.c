@@ -82,6 +82,23 @@ int SNEPPX_entropy_pool_add_os(SNEPPXEntropyPool* ep) {
     FILE* f=fopen("/dev/urandom","rb");
     if (f) { got=(fread(buf,1,sizeof(buf),f)==sizeof(buf)); fclose(f); }
 #endif
+/*
+ * SNEPPX - Entropy Pool
+ *
+ * WHAT
+ *   Entropy Pool.
+ *
+ * CONCEPT
+ *   Collects entropy from OS sources into a pool for the CSPRNG.
+ *
+ * ROLE
+ *   Foundation for the random number subsystem feeding the DRBG.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
     if (!got) { srand((unsigned)time(NULL)); for (int i=0;i<32;i++) buf[i]=(uint8_t)(rand()%256); }
     return SNEPPX_entropy_pool_add(ep,SNEPPX_ENTROPY_SOURCE_OS,buf,sizeof(buf));
 }

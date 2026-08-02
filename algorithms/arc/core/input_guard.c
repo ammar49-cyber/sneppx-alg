@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - ARC Input Sanitization Guard
+ *
+ * WHAT
+ *   ARC Input Sanitization Guard.
+ *
+ * CONCEPT
+ *   Sanitizes inputs before they reach the model to prevent adversarial exploitation.
+ *
+ * ROLE
+ *   Applies input normalization, clipping, and perturbation detection to filter out adversarial inputs before inference.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXARCConfig SNEPPX_arc_config_default(void) {
     SNEPPXARCConfig cfg;

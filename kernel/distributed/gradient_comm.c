@@ -210,3 +210,19 @@ int sneppx_grad_decompress(SNEPPX_GradCompressor* gc,
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Hierarchical Gradient Communication
+ *
+ * WHAT
+ *   Hierarchical Gradient Communication.
+ *
+ * CONCEPT
+ *   Hierarchical Gradient Communication implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

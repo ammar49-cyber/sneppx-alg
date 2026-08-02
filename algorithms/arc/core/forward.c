@@ -1,6 +1,23 @@
 #include "adversarial_robustness_certification.h"
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - ARC Forward Pass
+ *
+ * WHAT
+ *   ARC Forward Pass.
+ *
+ * CONCEPT
+ *   ARC adversarial training forward pass with perturbation injection.
+ *
+ * ROLE
+ *   Core ARC forward that applies adversarial perturbations to inputs and computes robust loss.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_arc_forward(SNEPPXARCLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** output, float* security_metrics) {
     SNEPPXTensor* sanitized = NULL;

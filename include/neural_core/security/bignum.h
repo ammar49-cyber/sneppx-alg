@@ -11,6 +11,23 @@ extern "C" {
 #define SNEPPX_BN_MAX_WORDS 128
 #define SNEPPX_BN_WORD uint64_t
 #define SNEPPX_BN_HALF_WORD uint32_t
+/*
+ * SNEPPX - Big-Integer Arithmetic
+ *
+ * WHAT
+ *   Big-Integer Arithmetic.
+ *
+ * CONCEPT
+ *   Arbitrary-precision integer arithmetic for RSA, Dilithium, and other crypto modules.
+ *
+ * ROLE
+ *   Foundation for RSA, Dilithium, and other number-theoretic crypto algorithms.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 
 typedef struct {
     SNEPPX_BN_WORD words[SNEPPX_BN_MAX_WORDS];

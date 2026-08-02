@@ -16,6 +16,23 @@
 #ifndef SNEPPX_DIV
 #define SNEPPX_DIV(a, b) ((b) == 0.0f ? 0.0f : (a) / (b))
 #endif
+/*
+ * SNEPPX - AWQ Weight Quantization
+ *
+ * WHAT
+ *   AWQ Weight Quantization.
+ *
+ * CONCEPT
+ *   AWQ Weight Quantization implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /*
  * AWQ (Activation-aware Weight Quantization):

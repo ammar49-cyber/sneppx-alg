@@ -7,6 +7,23 @@
 #include "neural_programming_engine.h"
 #include "fractal_memory_orchestrator.h"
 #include "multi_head_attention_module.h"
+/*
+ * SNEPPX - System Architecture Definitions
+ *
+ * WHAT
+ *   System Architecture Definitions.
+ *
+ * CONCEPT
+ *   Unified configuration and model structs for the HSS-SER-ARC-NPE-FM pipeline.
+ *
+ * ROLE
+ *   Top-level architecture header that wires all algorithm modules together.
+ *
+ * REFERENCES
+ *   None (internal architecture).
+ */
+
+
 
 typedef struct {
     SNEPPXHSSConfig hss_config;

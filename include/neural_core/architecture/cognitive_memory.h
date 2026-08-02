@@ -10,6 +10,23 @@
 #define SNEPPX_WORKING_MEMORY_MAX_SLOTS 9
 #define SNEPPX_WORKING_MEMORY_DEFAULT_SLOTS 7
 #define SNEPPX_MAX_CONCEPT_KEY_LEN 128
+/*
+ * SNEPPX - Cognitive Memory
+ *
+ * WHAT
+ *   Cognitive Memory.
+ *
+ * CONCEPT
+ *   Cognitive memory configuration and API for the SNEPPX-Algo system.
+ *
+ * ROLE
+ *   Declares the cognitive memory API for persistent memory across inference sessions.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef struct {
     size_t capacity;

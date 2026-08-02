@@ -113,4 +113,21 @@ int SNEPPX_mlockall_possible(void) {
     fprintf(stderr, "WARNING: mlockall failed (not privileged)\n");
     return -1;
 #endif
+/*
+ * SNEPPX - Synchronization Lock
+ *
+ * WHAT
+ *   Synchronization Lock.
+ *
+ * CONCEPT
+ *   Fast mutex/lock primitives for protecting shared crypto state across threads.
+ *
+ * ROLE
+ *   Internal synchronization for the crypto module shared state.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 }

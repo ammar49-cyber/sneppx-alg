@@ -59,6 +59,23 @@ static int64_t snepx_log_ns(void) {
     clock_gettime(CLOCK_REALTIME, &ts);
     return (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 }
 
 int SNEPPX_logger_init(SNEPPX_Logger** logger, const SNEPPX_LogConfig* config) {

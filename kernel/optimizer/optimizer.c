@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - Optimizer Library
+ *
+ * WHAT
+ *   Optimizer Library.
+ *
+ * CONCEPT
+ *   Optimizer Library implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 SNEPPXOptimizerConfig SNEPPX_optimizer_config_default(void) {
     SNEPPXOptimizerConfig cfg;

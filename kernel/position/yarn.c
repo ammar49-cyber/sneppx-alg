@@ -1,5 +1,22 @@
 #include "position_encoding.h"
 #include <math.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 int SNEPPX_yarn_precompute(float* cos, float* sin, int max_seq, int dim, float base, float scale, float alpha, float beta) {
     if (!cos || !sin || max_seq <= 0 || dim <= 0) return -1;

@@ -94,3 +94,19 @@ int sneppx_ddp_bucket_all_reduce(SNEPPX_DDPState* ddp, int bucket_id,
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Distributed Data Parallel
+ *
+ * WHAT
+ *   Distributed Data Parallel.
+ *
+ * CONCEPT
+ *   Distributed Data Parallel implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

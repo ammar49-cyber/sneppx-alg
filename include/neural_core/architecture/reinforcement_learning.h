@@ -2,6 +2,23 @@
 #define SNEPPX_REINFORCEMENT_LEARNING_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Reinforcement Learning
+ *
+ * WHAT
+ *   Reinforcement Learning.
+ *
+ * CONCEPT
+ *   RL configuration and training API for the SNEPPX-Algo system.
+ *
+ * ROLE
+ *   Declares the RL API for reinforcement learning operations within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

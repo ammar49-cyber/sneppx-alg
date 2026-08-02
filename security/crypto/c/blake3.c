@@ -39,6 +39,23 @@ static const uint8_t MSG_PERM[7][16] = {
 #define FLAG_CHUNK_END   (1 << 1)
 #define FLAG_PARENT      (1 << 2)
 #define FLAG_ROOT        (1 << 3)
+/*
+ * SNEPPX - BLAKE3 Cryptographic Hash
+ *
+ * WHAT
+ *   BLAKE3 Cryptographic Hash.
+ *
+ * CONCEPT
+ *   BLAKE3 hash function with Merkle tree structure, incremental updates, and parallelism.
+ *
+ * ROLE
+ *   Used for content-addressable storage, integrity verification, and key derivation.
+ *
+ * REFERENCES
+ *   IETF draft-irtf-cfrg-blake3, BLAKE3 specification.
+ */
+
+
 
 static void blake3_compress(const uint32_t key[8], const uint8_t block[64], uint64_t counter, uint8_t flags, uint32_t out[16]) {
     uint32_t v[16], msg[16];

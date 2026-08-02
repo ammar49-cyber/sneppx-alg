@@ -2,6 +2,23 @@
 #include <string.h>
 
 #define MASK26 0x3ffffffULL
+/*
+ * SNEPPX - Poly1305 Message Authentication Code
+ *
+ * WHAT
+ *   Poly1305 Message Authentication Code.
+ *
+ * CONCEPT
+ *   RFC 8439 Poly1305-AES MAC: 128-bit tag from a 32-byte one-time key and message.
+ *
+ * ROLE
+ *   Layer S2 authenticated encryption - the MAC half of ChaCha20-Poly1305.
+ *
+ * REFERENCES
+ *   RFC 8439 (ChaCha20-Poly1305), Daniel Bernstein Poly1305-AES.
+ */
+
+
 
 static void poly1305_block(SNEPPXPoly1305State *s, const uint8_t *m, unsigned int hibit) {
     uint64_t h0 = s->h[0], h1 = s->h[1], h2 = s->h[2], h3 = s->h[3], h4 = s->h[4];

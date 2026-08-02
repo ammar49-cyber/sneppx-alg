@@ -2,6 +2,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - ARC Adversarial Attack Simulation
+ *
+ * WHAT
+ *   ARC Adversarial Attack Simulation.
+ *
+ * CONCEPT
+ *   PGD and FGSM adversarial attack simulation for robustness training.
+ *
+ * ROLE
+ *   Generates adversarial perturbations using Projected Gradient Descent (PGD) or Fast Gradient Sign Method (FGSM) to train adversarial-robust models.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_arc_simulate_attack(const SNEPPXTensor* clean_input, int attack_type, float epsilon, SNEPPXTensor** adversarial) {
     size_t batch = clean_input->shape[0];

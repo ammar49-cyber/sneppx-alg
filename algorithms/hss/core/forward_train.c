@@ -4,6 +4,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+/*
+ * SNEPPX - HSS Forward Pass (Training Mode)
+ *
+ * WHAT
+ *   HSS Forward Pass (Training Mode).
+ *
+ * CONCEPT
+ *   HSS forward pass with gradient flow through the selective scan for backpropagation.
+ *
+ * ROLE
+ *   Training variant of the HSS forward pass that records intermediate values for reverse-mode autodiff.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 int SNEPPX_hss_build_train_graph(SNEPPXHSSModel* model, SNEPPXTape* tape,
                                SNEPPXVariable* input_var,

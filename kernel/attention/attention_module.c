@@ -6,6 +6,23 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.7071067811865475f
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 typedef struct SNEPPXMultiHeadAttention {
     int num_heads;

@@ -1,5 +1,22 @@
 #include "siphash.h"
 #include <string.h>
+/*
+ * SNEPPX - SipHash 2-4 Pseudorandom Function
+ *
+ * WHAT
+ *   SipHash 2-4 Pseudorandom Function.
+ *
+ * CONCEPT
+ *   Fast, cryptographically secure PRF designed by Aumasson and Bernstein for short inputs.
+ *
+ * ROLE
+ *   Used for hash-table key hashing and as a building block in key derivation.
+ *
+ * REFERENCES
+ *   Aumasson & Bernstein 2012 (SipHash: a fast short-input PRF).
+ */
+
+
 
 static uint64_t rotl64(uint64_t x, int b) { return (x<<b)|(x>>(64-b)); }
 static void sipround(SNEPPXSipHash* sh) {

@@ -4,6 +4,23 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+/*
+ * SNEPPX - FM Fractal Memory Bank
+ *
+ * WHAT
+ *   FM Fractal Memory Bank.
+ *
+ * CONCEPT
+ *   Hierarchical memory bank with fractal indexing and syncing.
+ *
+ * ROLE
+ *   Implements the fractal memory structure where memories are organized in a tree, with parent nodes aggregating child memories and leaf nodes storing fine-grained entries.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 static float euclidean_similarity(const float* a, const float* b, size_t dim) {
     float dist_sq = 0.0f;

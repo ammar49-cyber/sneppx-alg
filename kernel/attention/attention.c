@@ -4,6 +4,23 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+/*
+ * SNEPPX - Attention Mechanisms
+ *
+ * WHAT
+ *   Attention Mechanisms.
+ *
+ * CONCEPT
+ *   Attention Mechanisms implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* ========== Helpers ========== */
 

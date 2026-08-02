@@ -3,6 +3,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - HSS Layer Wrapper
+ *
+ * WHAT
+ *   HSS Layer Wrapper.
+ *
+ * CONCEPT
+ *   Initialization, forward, and destruction of the HSS layer object.
+ *
+ * ROLE
+ *   Public API for creating and managing HSS layers — the entry point for HSS model construction.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 SNEPPXHSSConfig SNEPPX_hss_config_default(void) {
     SNEPPXHSSConfig cfg;

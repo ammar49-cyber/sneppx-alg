@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - NPE JIT Compilation Pipeline
+ *
+ * WHAT
+ *   NPE JIT Compilation Pipeline.
+ *
+ * CONCEPT
+ *   Just-in-time compilation pipeline for NPE programs.
+ *
+ * ROLE
+ *   Implements the JIT pipeline that compiles programs to native code at runtime for accelerated execution.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXNPEProgram* SNEPPX_npe_jit_optimize(SNEPPXNPEJITProfile* profile, const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory) {
     if (!prog) return NULL;

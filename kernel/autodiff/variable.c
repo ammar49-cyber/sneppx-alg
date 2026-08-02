@@ -1,6 +1,23 @@
 #include "automatic_differentiation_framework.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 SNEPPXVariable* SNEPPX_variable_create(SNEPPXTensor* data, int requires_grad) {
     SNEPPXVariable* var = (SNEPPXVariable*)SNEPPX_malloc(sizeof(SNEPPXVariable), 64);

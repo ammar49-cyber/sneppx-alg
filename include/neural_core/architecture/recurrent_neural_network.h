@@ -2,6 +2,23 @@
 #define SNEPPX_RECURRENT_NEURAL_NETWORK_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Recurrent Neural Network
+ *
+ * WHAT
+ *   Recurrent Neural Network.
+ *
+ * CONCEPT
+ *   RNN configuration and forward API for sequential data.
+ *
+ * ROLE
+ *   Declares the RNN API for recurrent neural network operations within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

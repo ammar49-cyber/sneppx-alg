@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Layer Wrapper
+ *
+ * WHAT
+ *   SER Layer Wrapper.
+ *
+ * CONCEPT
+ *   Initialization, forward, and destruction of the SER layer object.
+ *
+ * ROLE
+ *   Public API for creating and managing SER layers.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 SNEPPXSERLayer* SNEPPX_ser_layer_create(const SNEPPXSERConfig* config, unsigned int seed) {
     SNEPPXSERLayer* layer = (SNEPPXSERLayer*)SNEPPX_malloc(sizeof(SNEPPXSERLayer), 64);

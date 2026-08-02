@@ -2,6 +2,23 @@
 #define SNEPPX_VISION_TRANSFORMER_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Vision Transformer
+ *
+ * WHAT
+ *   Vision Transformer.
+ *
+ * CONCEPT
+ *   ViT configuration and forward API for image classification.
+ *
+ * ROLE
+ *   Declares the Vision Transformer API for image understanding within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -5,6 +5,23 @@
 
 static void blake2b_round(uint64_t v[16], const uint64_t m[16]) {
     #define B2B_G(a,b,c,d,x,y) do { \
+/*
+ * SNEPPX - Argon2 Password Hashing
+ *
+ * WHAT
+ *   Argon2 Password Hashing.
+ *
+ * CONCEPT
+ *   Argon2id password hashing with configurable time, memory, and parallelism costs.
+ *
+ * ROLE
+ *   Password storage and key derivation for the key-vault component.
+ *
+ * REFERENCES
+ *   RFC 9106 (Argon2), PHC 2015 winner.
+ */
+
+
         v[a] += v[b] + x; v[d] ^= v[a]; v[d] = (v[d] >> 32) | (v[d] << 32); \
         v[c] += v[d]; v[b] ^= v[c]; v[b] = (v[b] >> 24) | (v[b] << 40); \
         v[a] += v[b] + y; v[d] ^= v[a]; v[d] = (v[d] >> 16) | (v[d] << 48); \

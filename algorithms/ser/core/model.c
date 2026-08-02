@@ -1,6 +1,23 @@
 #include "sparse_expert_routing.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+/*
+ * SNEPPX - SER Model Assembly
+ *
+ * WHAT
+ *   SER Model Assembly.
+ *
+ * CONCEPT
+ *   Assembles a complete SER model from layers, experts, and configuration.
+ *
+ * ROLE
+ *   Public API for building a full SER model.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 SNEPPXSERModel* SNEPPX_ser_model_create(const SNEPPXSERConfig* config, unsigned int seed, size_t num_layers) {
     SNEPPXSERModel* model = (SNEPPXSERModel*)SNEPPX_malloc(sizeof(SNEPPXSERModel), 64);

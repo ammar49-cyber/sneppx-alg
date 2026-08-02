@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Layer Forward Pass
+ *
+ * WHAT
+ *   SER Layer Forward Pass.
+ *
+ * CONCEPT
+ *   SER layer forward pass: gating, expert dispatch, and combine.
+ *
+ * ROLE
+ *   Core SER layer that gates input tokens to experts, dispatches them, computes expert outputs, and combines them.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_ser_forward(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** output) {
     size_t num_tokens = input->shape[0];

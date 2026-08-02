@@ -1,4 +1,21 @@
 #include "side_channel_resistant_primitives.h"
+/*
+ * SNEPPX - Scalar Multiplication (Curve25519 / Ed25519)
+ *
+ * WHAT
+ *   Scalar Multiplication (Curve25519 / Ed25519).
+ *
+ * CONCEPT
+ *   Constant-time scalar multiplication using the Montgomery ladder on Curve25519 and Ed25519.
+ *
+ * ROLE
+ *   Foundation for X25519 key exchange and Ed25519 signatures used by the key-vault.
+ *
+ * REFERENCES
+ *   RFC 7748 (X25519), RFC 8032 (Ed25519).
+ */
+
+
 
 uint32_t SNEPPX_sc_select_u32(uint32_t condition, uint32_t a, uint32_t b) {
     uint32_t mask = (uint32_t)((int32_t)condition >> 31);

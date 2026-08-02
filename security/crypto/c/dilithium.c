@@ -10,6 +10,23 @@
 #define DILITHIUM_N 256
 #define DILITHIUM_Q 8380417
 #define DILITHIUM_ROOT 1753
+/*
+ * SNEPPX - Dilithium ML-DSA (Post-Quantum Digital Signatures)
+ *
+ * WHAT
+ *   Dilithium ML-DSA (Post-Quantum Digital Signatures).
+ *
+ * CONCEPT
+ *   Module-lattice-based digital signature scheme for FIPS 204 quantum-safe signatures.
+ *
+ * ROLE
+ *   Layer S0 post-quantum crypto of the S0-S9 security stack for quantum-safe signing.
+ *
+ * REFERENCES
+ *   FIPS 204 (Dilithium / ML-DSA), NIST PQC Round 3 finalist.
+ */
+
+
 
 static int16_t dilithium_zetas[256];
 static int init_ntt_d = 0;

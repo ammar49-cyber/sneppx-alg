@@ -8,6 +8,23 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 
 

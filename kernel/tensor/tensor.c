@@ -861,6 +861,23 @@ SNEPPXTensor* SNEPPX_tensor_ge(const SNEPPXTensor* a, const SNEPPXTensor* b) { r
 
 /* Helper: binary op with contiguity support */
 #define BINARY_OP_F32(name, body) \
+/*
+ * SNEPPX - Multidimensional Tensor Engine
+ *
+ * WHAT
+ *   Multidimensional Tensor Engine.
+ *
+ * CONCEPT
+ *   Multidimensional Tensor Engine implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 SNEPPXTensor* SNEPPX_tensor_##name(const SNEPPXTensor* a, const SNEPPXTensor* b) { \
     if (!a || !b) return NULL; \
     SNEPPXTensor* ta = NULL, *tb = NULL; \

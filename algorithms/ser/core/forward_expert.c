@@ -1,6 +1,23 @@
 #include "sparse_expert_routing.h"
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Per-Expert Computation
+ *
+ * WHAT
+ *   SER Per-Expert Computation.
+ *
+ * CONCEPT
+ *   Per-expert computation dispatcher that routes tokens to experts and collects results.
+ *
+ * ROLE
+ *   Implements the per-expert forward pass that applies the expert network to each token assigned to that expert.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 static float gelu(float x) {
     float x3 = x * x * x;

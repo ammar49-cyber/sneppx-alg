@@ -5,6 +5,23 @@
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
 #include <stdint.h>
+/*
+ * SNEPPX - Fractal Memory Orchestrator (FM)
+ *
+ * WHAT
+ *   Fractal Memory Orchestrator (FM).
+ *
+ * CONCEPT
+ *   FM controller, memory bank, and sync API declarations.
+ *
+ * ROLE
+ *   Declares the FM module API for hierarchical memory management.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef enum {
     SNEPPX_SYNC_ALL_REDUCE,

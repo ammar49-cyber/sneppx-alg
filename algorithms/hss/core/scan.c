@@ -2,6 +2,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+/*
+ * SNEPPX - HSS Associative Scan (Blelloch)
+ *
+ * WHAT
+ *   HSS Associative Scan (Blelloch).
+ *
+ * CONCEPT
+ *   Parallel associative scan using the Blelloch algorithm for HSS state recurrences.
+ *
+ * ROLE
+ *   Implements the associative scan that parallelizes the HSS recurrence h_t = A h_{t-1} + B x_t into O(log n) steps.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 typedef struct {
     float* A;  /* state_dim × state_dim  (row-major) */

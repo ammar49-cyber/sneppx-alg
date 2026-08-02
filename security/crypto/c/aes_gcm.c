@@ -1,5 +1,22 @@
 #include "aes_gcm.h"
 #include <string.h>
+/*
+ * SNEPPX - AES-GCM (Galois/Counter Mode)
+ *
+ * WHAT
+ *   AES-GCM (Galois/Counter Mode).
+ *
+ * CONCEPT
+ *   AES-128/192/256 encryption in CTR mode with GHASH authentication tag.
+ *
+ * ROLE
+ *   Layer S2 authenticated encryption for TLS record protection and key wrapping.
+ *
+ * REFERENCES
+ *   NIST SP 800-38D (GCM), FIPS 197 (AES).
+ */
+
+
 
 static const uint32_t rcon[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36, 0x6C, 0xD8, 0xAB, 0x4D};
 static const uint8_t sbox[256] = {

@@ -2,6 +2,23 @@
 #include <string.h>
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
+/*
+ * SNEPPX - ChaCha20 Stream Cipher
+ *
+ * WHAT
+ *   ChaCha20 Stream Cipher.
+ *
+ * CONCEPT
+ *   ChaCha20 256-bit stream cipher with 96-bit nonce and 32-bit counter.
+ *
+ * ROLE
+ *   Layer S2 authenticated encryption (ChaCha20-Poly1305). Preferred over AES-GCM on platforms without AES-NI.
+ *
+ * REFERENCES
+ *   RFC 8439 (ChaCha20-Poly1305), RFC 7539 (original ChaCha20-Poly1305).
+ */
+
+
 
 static void qr(uint32_t* a, uint32_t* b, uint32_t* c, uint32_t* d) {
     *a += *b; *d ^= *a; *d = ROTL32(*d, 16);

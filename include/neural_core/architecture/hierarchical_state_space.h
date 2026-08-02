@@ -4,6 +4,23 @@
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
+/*
+ * SNEPPX - Hierarchical State Space (HSS)
+ *
+ * WHAT
+ *   Hierarchical State Space (HSS).
+ *
+ * CONCEPT
+ *   HSS model configuration, layer structs, and forward declaration API.
+ *
+ * ROLE
+ *   Declares the HSS module API used by the system architecture and the HSS core implementation.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef struct {
     size_t state_dim;

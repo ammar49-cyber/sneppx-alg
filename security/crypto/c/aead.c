@@ -4,6 +4,23 @@
 #include "constant_time_operations.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - AEAD (Authenticated Encryption with Associated Data)
+ *
+ * WHAT
+ *   AEAD (Authenticated Encryption with Associated Data).
+ *
+ * CONCEPT
+ *   Combines symmetric encryption with a MAC covering both ciphertext and associated data.
+ *
+ * ROLE
+ *   Layer S2 authenticated encryption for transport and key-vault components.
+ *
+ * REFERENCES
+ *   NIST SP 800-38D (GCM), RFC 8439 (ChaCha20-Poly1305).
+ */
+
+
 
 static void poly1305_key_gen(const uint8_t key[32], const uint8_t nonce[12], uint8_t poly_key[32]) {
     SNEPPXChaCha20State state;

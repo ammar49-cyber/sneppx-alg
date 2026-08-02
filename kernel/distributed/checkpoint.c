@@ -428,3 +428,20 @@ int sneppx_fault_tolerance_handle_failure(SNEPPX_FaultTolerance* ft,
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Distributed Checkpointing
+ *
+ * WHAT
+ *   Distributed Checkpointing.
+ *
+ * CONCEPT
+ *   Distributed Checkpointing implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+

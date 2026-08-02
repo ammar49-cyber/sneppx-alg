@@ -4,6 +4,23 @@
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
+/*
+ * SNEPPX - Adversarial Robustness Certification (ARC)
+ *
+ * WHAT
+ *   Adversarial Robustness Certification (ARC).
+ *
+ * CONCEPT
+ *   ARC model configuration, attack simulation, and verification API.
+ *
+ * ROLE
+ *   Declares the ARC module API for adversarial robustness training and certification.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef enum {
     SNEPPX_OBF_NONE = 0,

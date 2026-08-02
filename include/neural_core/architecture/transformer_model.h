@@ -2,6 +2,23 @@
 #define SNEPPX_TRANSFORMER_MODEL_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Transformer Model
+ *
+ * WHAT
+ *   Transformer Model.
+ *
+ * CONCEPT
+ *   Transformer configuration and forward API for the SNEPPX-Algo system.
+ *
+ * ROLE
+ *   Declares the transformer API for standard transformer operations within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

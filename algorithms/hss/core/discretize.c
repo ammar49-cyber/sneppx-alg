@@ -1,6 +1,23 @@
 #include "hierarchical_state_space.h"
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - HSS Discretization
+ *
+ * WHAT
+ *   HSS Discretization.
+ *
+ * CONCEPT
+ *   Converts continuous-time SSM matrices (A, B) to discrete-time equivalents using Zero-Order Hold or Bilinear (Tustin) transform.
+ *
+ * ROLE
+ *   Implements the HSS pipeline stage that discretizes the state-space model before the selective scan.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_hss_discretize_zoh(const float* A, const float* B, int state_dim, float dt, float* Ad, float* Bd) {
     for (int i = 0; i < state_dim; i++) {

@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - FM Forward Pass
+ *
+ * WHAT
+ *   FM Forward Pass.
+ *
+ * CONCEPT
+ *   Fractal memory forward pass: read from memory bank, combine with input, write back.
+ *
+ * ROLE
+ *   Core FM forward that retrieves relevant memories, combines them with the current input, and produces the output.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 int SNEPPX_fm_forward(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!ctrl || !input || !output) return 1;

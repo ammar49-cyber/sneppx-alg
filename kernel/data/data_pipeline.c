@@ -13,6 +13,23 @@
   #include <sys/mman.h>
   #include <unistd.h>
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 struct SNEPPXDataPipeline {
     size_t batch_size;

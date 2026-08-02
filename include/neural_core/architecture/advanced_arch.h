@@ -3,6 +3,23 @@
 
 #include <stddef.h>
 #include <stdint.h>
+/*
+ * SNEPPX - Advanced Architecture Unified Header
+ *
+ * WHAT
+ *   Advanced Architecture Unified Header.
+ *
+ * CONCEPT
+ *   Unified header for DifferentialAttn, MLA, FlexAttn, Mamba2, MoD, gated activations, YaRN NTK-RoPE, ALiBi.
+ *
+ * ROLE
+ *   Top-level advanced architecture header that aggregates all transformer variant declarations.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 #ifdef __cplusplus
 extern "C" {

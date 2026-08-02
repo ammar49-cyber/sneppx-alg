@@ -95,6 +95,23 @@ int SNEPPX_timing_safe_equal(const uint8_t* a, const uint8_t* b, size_t len, uin
 #else
         *timing_ns = t1 - t0;
 #endif
+/*
+ * SNEPPX - Timing Attack Countermeasures
+ *
+ * WHAT
+ *   Timing Attack Countermeasures.
+ *
+ * CONCEPT
+ *   Defenses against timing attacks exploiting data-dependent execution time.
+ *
+ * ROLE
+ *   Layer S5 side-channel resistance used by all crypto modules handling secret keys.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
     }
     return result;
 }

@@ -1,6 +1,23 @@
 #include "pbkdf2.h"
 #include "hmac.h"
 #include <string.h>
+/*
+ * SNEPPX - PBKDF2 (Password-Based Key Derivation Function 2)
+ *
+ * WHAT
+ *   PBKDF2 (Password-Based Key Derivation Function 2).
+ *
+ * CONCEPT
+ *   RFC 8018 PBKDF2: iterated HMAC to stretch a password into a cryptographic key.
+ *
+ * ROLE
+ *   Legacy key derivation in the key-vault; Argon2 is preferred for new code.
+ *
+ * REFERENCES
+ *   RFC 8018 (PKCS #5), NIST SP 800-132.
+ */
+
+
 
 int SNEPPX_pbkdf2_hmac_sha256(const uint8_t* pwd, size_t pwd_len, const uint8_t* salt, size_t salt_len, uint32_t iter, uint8_t* out, size_t out_len) {
     if (!pwd||!salt||!out) return -1;

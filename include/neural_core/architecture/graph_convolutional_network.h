@@ -2,6 +2,23 @@
 #define SNEPPX_GRAPH_CONVOLUTIONAL_NETWORK_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Graph Convolutional Network
+ *
+ * WHAT
+ *   Graph Convolutional Network.
+ *
+ * CONCEPT
+ *   GCN configuration and forward API for graph-structured data.
+ *
+ * ROLE
+ *   Declares the GCN API for graph neural network operations within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

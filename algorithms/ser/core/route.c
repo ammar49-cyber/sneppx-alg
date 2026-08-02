@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Expert Dispatch/Combine
+ *
+ * WHAT
+ *   SER Expert Dispatch/Combine.
+ *
+ * CONCEPT
+ *   All-to-all expert dispatch and combine for the SER architecture.
+ *
+ * ROLE
+ *   Implements the routing pattern that scatters tokens to expert ranks and gathers results back, using an all-to-all communication pattern.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 static unsigned long lcg_next(unsigned long state) {
     return state * 1103515245UL + 12345UL;

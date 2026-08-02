@@ -50,6 +50,23 @@ int SNEPPX_arch_num_cores(void) {
 #else
     return 1;
 #endif
+/*
+ * SNEPPX - Architecture Variants
+ *
+ * WHAT
+ *   Architecture Variants.
+ *
+ * CONCEPT
+ *   Architecture Variants implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 }
 
 int SNEPPX_arch_cache_line_size(void) {

@@ -20,6 +20,23 @@ static uint64_t umul128(uint64_t a, uint64_t b, uint64_t *hi) {
     return (uint64_t)p;
 }
 #endif
+/*
+ * SNEPPX - X25519 Key Exchange (ECDH over Curve25519)
+ *
+ * WHAT
+ *   X25519 Key Exchange (ECDH over Curve25519).
+ *
+ * CONCEPT
+ *   X25519 ECDH key exchange computing shared secrets from private/public key pairs.
+ *
+ * ROLE
+ *   Used by the key-vault for establishing shared secrets with peers (X25519 + HKDF = Noise pattern).
+ *
+ * REFERENCES
+ *   RFC 7748 (X25519), Daniel Bernstein Curve25519.
+ */
+
+
 
 static void mul(uint64_t r[8], const uint64_t a[4], const uint64_t b[4]) {
     uint64_t p[8] = {0};

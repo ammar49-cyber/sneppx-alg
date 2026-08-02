@@ -99,3 +99,19 @@ int sneppx_fm_distributed_broadcast(float* data, int size, int root,
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Expert Parallelism
+ *
+ * WHAT
+ *   Expert Parallelism.
+ *
+ * CONCEPT
+ *   Expert Parallelism implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

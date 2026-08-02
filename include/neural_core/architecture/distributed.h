@@ -9,6 +9,23 @@ extern "C" {
 #endif
 
 #ifndef SNEPPX_HAS_CUDA
+/*
+ * SNEPPX - Distributed Training Configuration
+ *
+ * WHAT
+ *   Distributed Training Configuration.
+ *
+ * CONCEPT
+ *   Unified configuration for DP/TP/PP/EP sizes, ZeRO stage, NCCL dtype, pipeline microbatches.
+ *
+ * ROLE
+ *   Declares the distributed training configuration API used by the kernel/distributed module.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 typedef void* cudaStream_t;
 #endif
 

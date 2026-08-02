@@ -19,6 +19,23 @@
 #define SPX_D 10
 #define SPX_FULL_HEIGHT 60
 #define SPX_TREE_HEIGHT (SPX_FULL_HEIGHT / SPX_D)
+/*
+ * SNEPPX - SPHINCS+ Stateless Hash-Based Signatures
+ *
+ * WHAT
+ *   SPHINCS+ Stateless Hash-Based Signatures.
+ *
+ * CONCEPT
+ *   SPHINCS+ hash-based signature scheme for FIPS 205 quantum-safe signatures.
+ *
+ * ROLE
+ *   Layer S0 post-quantum crypto for long-lived signatures (firmware manifests, release signing).
+ *
+ * REFERENCES
+ *   FIPS 205 (SPHINCS+), NIST PQC Round 3 finalist.
+ */
+
+
 
 static void spx_hash(uint8_t *out, const uint8_t *in, size_t inlen) {
     SNEPPX_sha256(out, in, inlen);

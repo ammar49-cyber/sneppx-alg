@@ -1,5 +1,22 @@
 #include "polymorphic_memory_allocator.h"
 #include <stdlib.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* NOTE: SNEPPX_malloc / SNEPPX_free / SNEPPX_realloc are intentionally NOT
  * defined here. The real, security-hardened implementations (aligned +

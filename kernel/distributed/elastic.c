@@ -17,6 +17,23 @@ static int64_t snepx_ns_now_elastic(void) {
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
 #endif
+/*
+ * SNEPPX - Elastic Training
+ *
+ * WHAT
+ *   Elastic Training.
+ *
+ * CONCEPT
+ *   Elastic Training implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 }
 
 int SNEPPX_elastic_init(SNEPPXElasticTraining** et, int world_size, int rank,

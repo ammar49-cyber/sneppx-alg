@@ -2,6 +2,23 @@
 #define SNEPPX_POWER_H
 
 #include <stdint.h>
+/*
+ * SNEPPX - Power Analysis Mitigation
+ *
+ * WHAT
+ *   Power Analysis Mitigation.
+ *
+ * CONCEPT
+ *   Defenses against differential and simple power analysis on cryptographic operations.
+ *
+ * ROLE
+ *   Layer S5 side-channel resistance of the S0-S9 security stack.
+ *
+ * REFERENCES
+ *   None (internal hardening).
+ */
+
+
 
 void SNEPPX_power_balance_start(void);
 void SNEPPX_power_balance_end(void);

@@ -2,6 +2,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - HSS Forward Pass
+ *
+ * WHAT
+ *   HSS Forward Pass.
+ *
+ * CONCEPT
+ *   Runs the HSS selective scan recurrence: h_t = A h_{t-1} + B x_t, producing hidden states and outputs.
+ *
+ * ROLE
+ *   Core HSS forward inference — the heart of the HSS pipeline used by every HSS model.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 static void layer_norm(float* data, size_t n, const float* gamma, const float* beta) {
     float mean = 0.0f;

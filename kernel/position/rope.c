@@ -1,6 +1,23 @@
 #include "position_encoding.h"
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 int SNEPPX_rope_precompute_freqs(float* cos, float* sin, int max_seq, int dim, float base) {
     if (!cos || !sin || max_seq <= 0 || dim <= 0) return -1;

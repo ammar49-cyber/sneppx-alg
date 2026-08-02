@@ -4,6 +4,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 struct SNEPPXInferenceEngine {
     unsigned int seed;

@@ -1,6 +1,26 @@
 #include "address_space_randomization.h"
 #include "cryptographic_random_generator.h"
 
+/*
+ * SNEPPX - Address Space Layout Randomization
+ *
+ * WHAT
+ *   Generates random offsets and applies ASLR to base pointers for
+ *   address-space layout randomization hardening.
+ *
+ * CONCEPT
+ *   Produces a random offset aligned to the page boundary (4096 bytes)
+ *   using the CSPRNG, then shifts a base pointer and shrinks the size
+ *   to create a randomized view of an allocated region.
+ *
+ * ROLE
+ *   Internal hardening module (S3 memory layout randomization). Used by
+ *   the secure memory allocator and stack protector components.
+ *
+ * REFERENCES
+ *   Internal hardening module.
+ */
+
 size_t SNEPPX_aslr_random_offset(size_t max_offset) {
     if (max_offset == 0) return 0;
     uint64_t r;

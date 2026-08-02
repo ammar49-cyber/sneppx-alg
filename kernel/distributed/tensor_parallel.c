@@ -97,3 +97,19 @@ int sneppx_tp_destroy(SNEPPX_TensorParallel* tp) {
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Tensor Parallelism
+ *
+ * WHAT
+ *   Tensor Parallelism.
+ *
+ * CONCEPT
+ *   Tensor Parallelism implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

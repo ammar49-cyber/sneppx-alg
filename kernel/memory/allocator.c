@@ -221,6 +221,23 @@ static __declspec(thread) SNEPPXTlsCache* g_tls_cache = NULL;
 #else
 static __thread SNEPPXTlsCache* g_tls_cache = NULL;
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 static volatile int g_active_tls_caches = 0;
 

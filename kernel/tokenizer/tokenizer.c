@@ -7,6 +7,23 @@
 #include <stdint.h>
 
 #define MAX_TOKEN_LEN 256
+/*
+ * SNEPPX - Tokenizer
+ *
+ * WHAT
+ *   Tokenizer.
+ *
+ * CONCEPT
+ *   Tokenizer implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 typedef struct {
     int left_id;

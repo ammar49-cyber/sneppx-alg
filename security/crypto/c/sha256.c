@@ -8,6 +8,23 @@
 #define EP1(x) (ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25))
 #define SIG0(x) (ROTR(x, 7) ^ ROTR(x, 18) ^ ((x) >> 3))
 #define SIG1(x) (ROTR(x, 17) ^ ROTR(x, 19) ^ ((x) >> 10))
+/*
+ * SNEPPX - SHA-256 Cryptographic Hash
+ *
+ * WHAT
+ *   SHA-256 Cryptographic Hash.
+ *
+ * CONCEPT
+ *   FIPS 180-4 SHA-256: 256-bit digest from arbitrary input via Merkle-Damgard compression.
+ *
+ * ROLE
+ *   Used by HMAC, HKDF, DRBG, and as a general-purpose integrity hash.
+ *
+ * REFERENCES
+ *   FIPS 180-4 (SHA-256).
+ */
+
+
 
 static const uint32_t K[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,

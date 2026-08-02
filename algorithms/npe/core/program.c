@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - NPE Program Representation
+ *
+ * WHAT
+ *   NPE Program Representation.
+ *
+ * CONCEPT
+ *   Program representation and 32-opcode definitions for the Neural Programming Engine.
+ *
+ * ROLE
+ *   Defines the VM program format, opcode encodings, and the program builder API used by the compiler and JIT pipeline.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXNPEConfig SNEPPX_npe_config_default(void) {
     SNEPPXNPEConfig cfg;

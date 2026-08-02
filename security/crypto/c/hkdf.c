@@ -1,6 +1,23 @@
 #include "hkdf.h"
 #include "hmac.h"
 #include <string.h>
+/*
+ * SNEPPX - HKDF (HMAC-based Key Derivation Function)
+ *
+ * WHAT
+ *   HKDF (HMAC-based Key Derivation Function).
+ *
+ * CONCEPT
+ *   RFC 5869 HKDF: extract a pseudorandom key, then expand into derived keys.
+ *
+ * ROLE
+ *   Used by the key-vault for sub-key derivation and secure-transport session key derivation.
+ *
+ * REFERENCES
+ *   RFC 5869 (HKDF).
+ */
+
+
 
 int SNEPPX_hkdf_extract(const uint8_t* salt, size_t salt_len, const uint8_t* ikm, size_t ikm_len, uint8_t* prk, size_t prk_len) {
     if (!ikm||!prk||prk_len<32) return -1;

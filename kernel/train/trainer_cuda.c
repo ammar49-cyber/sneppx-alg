@@ -263,4 +263,21 @@ int SNEPPX_trainer_cuda_optimizer_step(SNEPPXOptimizer* opt, SNEPPXTensor** para
     (void)opt; (void)params; (void)grads; (void)n;
     return -1;
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 }

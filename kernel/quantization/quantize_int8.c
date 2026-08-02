@@ -12,6 +12,23 @@
 #ifndef SNEPPX_CLAMP
 #define SNEPPX_CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #endif
+/*
+ * SNEPPX - INT8 Quantization
+ *
+ * WHAT
+ *   INT8 Quantization.
+ *
+ * CONCEPT
+ *   INT8 Quantization implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 int SNEPPX_quantize_int8_sym(const float* input, int8_t* output,
                               size_t n, float* scale_out)

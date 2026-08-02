@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - ARC Output Safety Verification
+ *
+ * WHAT
+ *   ARC Output Safety Verification.
+ *
+ * CONCEPT
+ *   Verifies model outputs against safety constraints after inference.
+ *
+ * ROLE
+ *   Checks that model outputs satisfy safety constraints (e.g. no adversarial perturbations in output, within expected distribution).
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXOutputVerifier* SNEPPX_arc_output_verifier_create(size_t output_dim, size_t num_layers, unsigned int seed) {
     SNEPPXOutputVerifier* verifier = (SNEPPXOutputVerifier*)SNEPPX_malloc(sizeof(SNEPPXOutputVerifier), 64);

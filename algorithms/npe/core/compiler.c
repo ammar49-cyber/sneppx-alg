@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - NPE Program Compiler
+ *
+ * WHAT
+ *   NPE Program Compiler.
+ *
+ * CONCEPT
+ *   Compiles high-level programs into VM instructions for the Neural Programming Engine.
+ *
+ * ROLE
+ *   The compiler translates an IR representation of a program into the 32-opcode VM instruction format, performing optimization passes and register allocation.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXNPEProgram* SNEPPX_npe_compile_attention(size_t seq_len, size_t dim) {
     SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(32);

@@ -4,6 +4,23 @@
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
+/*
+ * SNEPPX - Sparse Expert Routing (SER)
+ *
+ * WHAT
+ *   Sparse Expert Routing (SER).
+ *
+ * CONCEPT
+ *   SER model configuration, gating, and routing API declarations.
+ *
+ * ROLE
+ *   Declares the SER module API used by the system architecture and the SER core implementation.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef enum {
     SNEPPX_ACT_RELU,

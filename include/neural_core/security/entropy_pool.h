@@ -11,6 +11,23 @@ extern "C" {
 #define SNEPPX_ENTROPY_POOL_SIZE 256
 #define SNEPPX_ENTROPY_THRESHOLD 128
 #define SNEPPX_ENTROPY_SOURCES 8
+/*
+ * SNEPPX - Entropy Pool
+ *
+ * WHAT
+ *   Entropy Pool.
+ *
+ * CONCEPT
+ *   Collects entropy from OS sources into a pool for the CSPRNG.
+ *
+ * ROLE
+ *   Foundation for the random number subsystem feeding the DRBG.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 
 typedef enum {
     SNEPPX_ENTROPY_SOURCE_RDTSC = 0,

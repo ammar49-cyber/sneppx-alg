@@ -2,6 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+/*
+ * SNEPPX - Model Zoo and Config
+ *
+ * WHAT
+ *   Model Zoo and Config.
+ *
+ * CONCEPT
+ *   Model Zoo and Config implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* LLaMA 2 presets */
 static const SNEPPXLlamaConfig llama2_7b = {

@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - SER Expert Network
+ *
+ * WHAT
+ *   SER Expert Network.
+ *
+ * CONCEPT
+ *   Individual expert network forward pass in the Mixture-of-Experts architecture.
+ *
+ * ROLE
+ *   Each expert is a small feed-forward network that processes a subset of tokens routed to it by the gating function.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXSERConfig SNEPPX_ser_config_default(void) {
     SNEPPXSERConfig cfg;

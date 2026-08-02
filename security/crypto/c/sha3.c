@@ -2,6 +2,23 @@
 #include <string.h>
 
 #define ROTL64(x, n) (((x) << (n)) | ((x) >> (64 - (n))))
+/*
+ * SNEPPX - SHA-3 / Keccak Cryptographic Hash
+ *
+ * WHAT
+ *   SHA-3 / Keccak Cryptographic Hash.
+ *
+ * CONCEPT
+ *   FIPS 202 SHA-3 using the Keccak sponge construction for 224/256/384/512-bit digests.
+ *
+ * ROLE
+ *   Used by DRBG (Hash-DRBG), key-vault hashing, and general-purpose hashing.
+ *
+ * REFERENCES
+ *   FIPS 202 (SHA-3 / Keccak).
+ */
+
+
 
 static const uint64_t RC[24] = {
     0x0000000000000001ULL, 0x0000000000008082ULL, 0x800000000000808aULL,

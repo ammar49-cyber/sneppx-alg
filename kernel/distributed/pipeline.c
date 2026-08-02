@@ -119,3 +119,19 @@ int sneppx_pipeline_destroy(SNEPPX_PipelineParallel* pp) {
     return 0;
 }
 #endif
+/*
+ * SNEPPX - Pipeline Parallelism (1F1B)
+ *
+ * WHAT
+ *   Pipeline Parallelism (1F1B).
+ *
+ * CONCEPT
+ *   Pipeline Parallelism (1F1B) implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

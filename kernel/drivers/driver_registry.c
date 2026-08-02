@@ -111,6 +111,23 @@ int SNEPPX_driver_unload_all(void) {
 #else
         if (g_registry[i].lib_handle) dlclose(g_registry[i].lib_handle);
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
     }
     memset(g_registry, 0, sizeof(g_registry));
     memset(g_names, 0, sizeof(g_names));

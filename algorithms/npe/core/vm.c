@@ -3,6 +3,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - NPE 16-Register Neural VM
+ *
+ * WHAT
+ *   NPE 16-Register Neural VM.
+ *
+ * CONCEPT
+ *   16-register neural virtual machine with 32 opcodes and dispatch loop.
+ *
+ * ROLE
+ *   The core VM executes NPE programs: a 16-register file, 32 opcodes covering tensor ops, control flow, and neural primitives, with a dispatch loop that fetches, decodes, and executes instructions.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 
 static SNEPPXTensor* tensor_add(const SNEPPXTensor* a, const SNEPPXTensor* b) {

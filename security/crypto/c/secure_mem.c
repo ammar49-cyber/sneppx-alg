@@ -117,6 +117,23 @@ void SNEPPX_secure_pool_destroy(SNEPPXSecurePool* pool) {
 #else
     munmap(pool->raw_base, pool->raw_len);
 #endif
+/*
+ * SNEPPX - Secure Memory Allocation
+ *
+ * WHAT
+ *   Secure Memory Allocation.
+ *
+ * CONCEPT
+ *   Allocator that locks pages, prevents swapping, and wipes memory on free.
+ *
+ * ROLE
+ *   Used by every crypto module handling secret keys and intermediate values.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
     SNEPPX_secure_zero((void*)pool, sizeof(SNEPPXSecurePool));
     free(pool);
 }

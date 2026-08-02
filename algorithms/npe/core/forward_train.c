@@ -2,6 +2,23 @@
 #include "automatic_differentiation_framework.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+/*
+ * SNEPPX - NPE Forward (Training)
+ *
+ * WHAT
+ *   NPE Forward (Training).
+ *
+ * CONCEPT
+ *   NPE forward pass with training mode and gradient flow through the VM.
+ *
+ * ROLE
+ *   Training variant of the NPE forward pass that records VM execution trace for backpropagation through the neural program.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 size_t SNEPPX_npe_get_params(SNEPPXNPEProgram* prog, SNEPPXTensor** out, size_t max_out) {
     if (!prog || !prog->memory) return 0;

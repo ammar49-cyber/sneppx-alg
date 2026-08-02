@@ -26,6 +26,23 @@ static uint128 mul64_64(uint64_t a, uint64_t b) {
     uint128 result; result.lo = (uint64_t)r; result.hi = (uint64_t)(r >> 64); return result;
 }
 #endif
+/*
+ * SNEPPX - Ed25519 Digital Signatures
+ *
+ * WHAT
+ *   Ed25519 Digital Signatures.
+ *
+ * CONCEPT
+ *   Ed25519 signature generation and verification on the Edwards curve Ed25519.
+ *
+ * ROLE
+ *   Used for code-signing, release manifests, and compact (64-byte) authentication.
+ *
+ * REFERENCES
+ *   RFC 8032 (EdDSA), Daniel Bernstein high-speed signatures.
+ */
+
+
 
 static const field D = {{
     0x00034DCA135978A3ULL, 0x0001A8283B156EBDULL, 0x0005E7A26001C029ULL,

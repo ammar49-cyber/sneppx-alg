@@ -2,6 +2,23 @@
 #include "sha512_hashing_implementation.h"
 #include "constant_time_operations.h"
 #include <string.h>
+/*
+ * SNEPPX - HMAC (Hash-based Message Authentication Code)
+ *
+ * WHAT
+ *   HMAC (Hash-based Message Authentication Code).
+ *
+ * CONCEPT
+ *   RFC 2104 HMAC: a keyed hash providing integrity and authenticity for arbitrary messages.
+ *
+ * ROLE
+ *   Used by HKDF (extract phase), DRBG reseeding, and keyed integrity checks.
+ *
+ * REFERENCES
+ *   RFC 2104 (HMAC), FIPS 198-1.
+ */
+
+
 
 static void hmac_compute(const uint8_t* key, size_t key_len, const uint8_t* data, size_t data_len, uint8_t* out, size_t out_len, int use_sha512) {
     uint8_t k[128],ipad[128],opad[128];

@@ -72,6 +72,23 @@ void SNEPPX_kernel_timer_destroy(SNEPPX_KernelTimer* kt) {
 #else
 /* Stubs come from profiler.h macros when SNEPPX_HAS_CUDA is not defined */
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* =========================================================================
  * Profiler

@@ -3,6 +3,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - ARC Forward (Training)
+ *
+ * WHAT
+ *   ARC Forward (Training).
+ *
+ * CONCEPT
+ *   ARC forward pass with training-mode adversarial perturbation and gradient obfuscation.
+ *
+ * ROLE
+ *   Training variant that computes adversarial perturbations on-the-fly and applies gradient obfuscation for robustness.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 int SNEPPX_arc_build_train_graph(SNEPPXARCLayer* layer, SNEPPXTape* tape,
                                 SNEPPXVariable* input_var,

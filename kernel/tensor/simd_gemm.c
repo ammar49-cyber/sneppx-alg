@@ -334,6 +334,23 @@ void SNEPPX_reduce_rowsum_exp_avx2(const float* A, float* out, int rows, int col
 }
 
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* =========================================================================
  * SSE42 / AVX512 shims (use AVX2 or scalar; real SSE/AVX512 kept minimal)

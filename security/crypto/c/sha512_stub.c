@@ -1,5 +1,22 @@
 #include "sha512_hashing_implementation.h"
 #include <string.h>
+/*
+ * SNEPPX - SHA-512 Stub (Platform Fallback)
+ *
+ * WHAT
+ *   SHA-512 Stub (Platform Fallback).
+ *
+ * CONCEPT
+ *   Software fallback SHA-512 for platforms without hardware SHA support.
+ *
+ * ROLE
+ *   Fallback for SHA-512 on platforms without hardware support.
+ *
+ * REFERENCES
+ *   FIPS 180-4 (SHA-512).
+ */
+
+
 
 void SNEPPX_sha512_hash(const uint8_t *data, size_t len, uint8_t hash[64]) {
     SNEPPX_sha512(data, len, hash);

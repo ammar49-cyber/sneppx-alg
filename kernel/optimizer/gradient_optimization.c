@@ -3,6 +3,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /* Real gradient-optimizer implementation. Supports SGD (with momentum and
  * weight decay, optionally Nesterov) and Adam / AdamW (with bias correction).

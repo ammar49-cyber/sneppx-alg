@@ -137,3 +137,19 @@ int sneppx_grad_accumulator_step(SNEPPX_GradAccumulator* ga,
     return 1;
 }
 #endif
+/*
+ * SNEPPX - Sharded Data Sampling
+ *
+ * WHAT
+ *   Sharded Data Sampling.
+ *
+ * CONCEPT
+ *   Sharded Data Sampling implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+

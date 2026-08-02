@@ -1,6 +1,23 @@
 #include "fractal_memory_orchestrator.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+/*
+ * SNEPPX - FM Memory Node
+ *
+ * WHAT
+ *   FM Memory Node.
+ *
+ * CONCEPT
+ *   Individual memory node operations: read, write, and update in the fractal memory tree.
+ *
+ * ROLE
+ *   Implements the basic read/write/merge operations on a single memory node in the fractal hierarchy.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXFMNode* SNEPPX_fm_node_create(size_t node_id, size_t memory_dim, size_t capacity) {
     SNEPPXFMNode* node = (SNEPPXFMNode*)SNEPPX_malloc(sizeof(SNEPPXFMNode), 64);

@@ -2,6 +2,23 @@
 #define SNEPPX_GENERATIVE_ADVERSARIAL_NETWORK_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Generative Adversarial Network
+ *
+ * WHAT
+ *   Generative Adversarial Network.
+ *
+ * CONCEPT
+ *   GAN configuration and training API for the SNEPPX-Algo system.
+ *
+ * ROLE
+ *   Declares the GAN API for generative adversarial training within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

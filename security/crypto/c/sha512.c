@@ -8,6 +8,23 @@
 #define SIGMA1(x) (ROTR64(x, 14) ^ ROTR64(x, 18) ^ ROTR64(x, 41))
 #define sigma0(x) (ROTR64(x, 1) ^ ROTR64(x, 8) ^ ((x) >> 7))
 #define sigma1(x) (ROTR64(x, 19) ^ ROTR64(x, 61) ^ ((x) >> 6))
+/*
+ * SNEPPX - SHA-512 Cryptographic Hash
+ *
+ * WHAT
+ *   SHA-512 Cryptographic Hash.
+ *
+ * CONCEPT
+ *   FIPS 180-4 SHA-512: 512-bit digest from arbitrary input (64-bit variant of SHA-256).
+ *
+ * ROLE
+ *   Used by HMAC, HKDF, DRBG, and anywhere a 512-bit hash is needed.
+ *
+ * REFERENCES
+ *   FIPS 180-4 (SHA-512).
+ */
+
+
 
 static const uint64_t K[80] = {
     0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,

@@ -239,6 +239,23 @@ int SNEPPX_bn_set_array(SNEPPXBigNum* bn, const uint8_t* bytes, size_t len) {
         return 0;
     }
 #endif
+/*
+ * SNEPPX - Big-Integer Arithmetic
+ *
+ * WHAT
+ *   Big-Integer Arithmetic.
+ *
+ * CONCEPT
+ *   Arbitrary-precision integer arithmetic for RSA, Dilithium, and other crypto modules.
+ *
+ * ROLE
+ *   Foundation for RSA, Dilithium, and other number-theoretic crypto algorithms.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 
 int SNEPPX_bn_from_hex(SNEPPXBigNum* bn, const char* hex) {
     if (!bn||!hex) return -1;

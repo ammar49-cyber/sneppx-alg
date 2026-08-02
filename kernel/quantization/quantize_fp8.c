@@ -2,6 +2,23 @@
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
+/*
+ * SNEPPX - FP8 Quantization
+ *
+ * WHAT
+ *   FP8 Quantization.
+ *
+ * CONCEPT
+ *   FP8 Quantization implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /*
  * FP8 E4M3: 1 sign bit, 4 exponent bits, 3 mantissa bits

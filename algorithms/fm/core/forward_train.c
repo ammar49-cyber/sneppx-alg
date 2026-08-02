@@ -1,5 +1,22 @@
 #include "fractal_memory_orchestrator.h"
 #include "automatic_differentiation_framework.h"
+/*
+ * SNEPPX - FM Forward (Training)
+ *
+ * WHAT
+ *   FM Forward (Training).
+ *
+ * CONCEPT
+ *   FM forward pass with training-mode memory updates and gradient flow.
+ *
+ * ROLE
+ *   Training variant that updates memory entries based on loss gradients and writes new memories to the bank.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 size_t SNEPPX_fm_get_params(const SNEPPXFMController* ctrl, SNEPPXTensor** out, size_t max_out) {
     if (!ctrl || !out || max_out == 0) return 0;

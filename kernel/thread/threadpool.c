@@ -437,6 +437,23 @@ size_t SNEPPX_threadpool_default_count(void) {
     long n = sysconf(_SC_NPROCESSORS_ONLN);
     if (n <= 0) n = 4;
 #endif
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
     return (n < 2) ? 2 : n;
 }
 

@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - ARC Gradient Obfuscation
+ *
+ * WHAT
+ *   ARC Gradient Obfuscation.
+ *
+ * CONCEPT
+ *   Obfuscates gradients during adversarial training to improve robustness.
+ *
+ * ROLE
+ *   Applies gradient obfuscation techniques (randomized smoothing of gradients, gradient clipping with noise) to make adversarial training more effective.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXGradientObfuscator* SNEPPX_gradient_obfuscator_create(size_t max_params, unsigned int seed) {
     (void)seed;

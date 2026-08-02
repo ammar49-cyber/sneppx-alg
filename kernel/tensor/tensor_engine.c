@@ -8,3 +8,20 @@
  * implementation in `tensor.c`. All real symbols are provided by `tensor.c`.
  */
 #include "multidimensional_tensor_engine.h"
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+

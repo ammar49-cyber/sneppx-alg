@@ -1,4 +1,21 @@
 #include "hierarchical_state_space.h"
+/*
+ * SNEPPX - HSS Single Step
+ *
+ * WHAT
+ *   HSS Single Step.
+ *
+ * CONCEPT
+ *   Single-step HSS state transition for one time step.
+ *
+ * ROLE
+ *   Implements one step of the HSS recurrence for use in autoregressive decoding and step-by-step inference.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_hss_step(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x, SNEPPXTensor* h_next) {
     size_t s_dim = layer->A_bar->shape[0];

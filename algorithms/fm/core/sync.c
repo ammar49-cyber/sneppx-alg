@@ -4,6 +4,23 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+/*
+ * SNEPPX - FM Memory Bank Synchronization
+ *
+ * WHAT
+ *   FM Memory Bank Synchronization.
+ *
+ * CONCEPT
+ *   Ring/butterfly all-reduce for federated memory synchronization across ranks.
+ *
+ * ROLE
+ *   Implements the synchronization pattern that aggregates memory updates across distributed ranks using ring or butterfly all-reduce.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 static float uniform_01(void) {
     static unsigned long seed = 123456789;

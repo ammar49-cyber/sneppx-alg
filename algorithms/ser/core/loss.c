@@ -2,6 +2,23 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Load-Balancing Loss
+ *
+ * WHAT
+ *   SER Load-Balancing Loss.
+ *
+ * CONCEPT
+ *   Auxiliary loss that encourages uniform expert utilization across tokens.
+ *
+ * ROLE
+ *   Computes the load-balancing loss term that penalizes the router for sending too many tokens to the same expert, preventing expert collapse.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 float SNEPPX_ser_load_balance_loss(const SNEPPXTensor* gate_weights, const int* expert_indices, size_t num_tokens) {
     size_t n_act = gate_weights->shape[1];

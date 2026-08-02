@@ -6,6 +6,23 @@
 #include "gradient_optimization_suite.h"
 #include "multidimensional_tensor_engine.h"
 #include <stddef.h>
+/*
+ * SNEPPX - Differentiable Training Pipeline
+ *
+ * WHAT
+ *   Differentiable Training Pipeline.
+ *
+ * CONCEPT
+ *   End-to-end differentiable training pipeline configuration and API.
+ *
+ * ROLE
+ *   Declares the training pipeline API that wraps HSS, SER, and attention modules for end-to-end differentiable training.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef struct {
     size_t num_epochs;

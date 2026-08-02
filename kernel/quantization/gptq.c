@@ -13,6 +13,23 @@
 #ifndef SNEPPX_CLAMP
 #define SNEPPX_CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #endif
+/*
+ * SNEPPX - GPTQ Weight Quantization
+ *
+ * WHAT
+ *   GPTQ Weight Quantization.
+ *
+ * CONCEPT
+ *   GPTQ Weight Quantization implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 /*
  * GPTQ (Post-Training Quantization):

@@ -1,5 +1,22 @@
 #include "position_encoding.h"
 #include <math.h>
+/*
+ * SNEPPX - Kernel Module
+ *
+ * WHAT
+ *   Kernel Module.
+ *
+ * CONCEPT
+ *   Kernel Module implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 int SNEPPX_alibi_compute_slopes(float* slopes, int num_heads, float slope_base) {
     if (!slopes || num_heads <= 0) return -1;

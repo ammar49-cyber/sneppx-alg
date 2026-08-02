@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <stdlib.h>
 #include <string.h>
+/*
+ * SNEPPX - HSS Model Assembly
+ *
+ * WHAT
+ *   HSS Model Assembly.
+ *
+ * CONCEPT
+ *   Assembles a complete HSS model from layers, parameters, and configuration.
+ *
+ * ROLE
+ *   Public API for building a full HSS model from individual components.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 SNEPPXHSSModel* SNEPPX_hss_model_create(const SNEPPXHSSConfig* config, unsigned int seed) {
     SNEPPXHSSModel* model = (SNEPPXHSSModel*)SNEPPX_malloc(sizeof(SNEPPXHSSModel), 64);

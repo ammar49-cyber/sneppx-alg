@@ -168,6 +168,23 @@ void SNEPPX_heartbeat_destroy(SNEPPXHeartbeat* hb) {
 #else
         close(hb->socket);
 #endif
+/*
+ * SNEPPX - Distributed Heartbeat
+ *
+ * WHAT
+ *   Distributed Heartbeat.
+ *
+ * CONCEPT
+ *   Distributed Heartbeat implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
     }
     free(hb->peer_addrs);
     free(hb->peer_status);

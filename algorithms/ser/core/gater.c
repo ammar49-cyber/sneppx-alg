@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <math.h>
+/*
+ * SNEPPX - SER Top-K Gating
+ *
+ * WHAT
+ *   SER Top-K Gating.
+ *
+ * CONCEPT
+ *   Softmax-based top-k gating with auxiliary load-balancing loss.
+ *
+ * ROLE
+ *   The gating function computes a probability distribution over experts using softmax on the router logits, selects the top-k experts per token, and adds an auxiliary loss that encourages uniform expert utilization.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_ser_route_mlp_gated(SNEPPXSERLayer* layer, const SNEPPXTensor* input,
                                 SNEPPXTensor** gate_weights, int** expert_indices) {

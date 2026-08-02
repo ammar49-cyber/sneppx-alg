@@ -1,6 +1,23 @@
 #include "activations.h"
 #include <math.h>
 #include <float.h>
+/*
+ * SNEPPX - Activation Functions
+ *
+ * WHAT
+ *   Activation Functions.
+ *
+ * CONCEPT
+ *   Activation Functions implementation.
+ *
+ * ROLE
+ *   Core kernel module used throughout the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal kernel module).
+ */
+
+
 
 int SNEPPX_act_forward(const float* x, float* output, SNEPPXActivationType act, size_t n) {
     if (!x || !output || n == 0) return -1;

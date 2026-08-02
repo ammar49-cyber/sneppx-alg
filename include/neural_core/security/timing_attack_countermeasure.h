@@ -3,6 +3,23 @@
 
 #include <stddef.h>
 #include <stdint.h>
+/*
+ * SNEPPX - Timing Attack Countermeasures
+ *
+ * WHAT
+ *   Timing Attack Countermeasures.
+ *
+ * CONCEPT
+ *   Defenses against timing attacks exploiting data-dependent execution time.
+ *
+ * ROLE
+ *   Layer S5 side-channel resistance used by all crypto modules handling secret keys.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 
 uint64_t SNEPPX_timing_start(void);
 uint64_t SNEPPX_timing_end(void);

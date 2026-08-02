@@ -1,6 +1,23 @@
 #include "adversarial_robustness_certification.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+/*
+ * SNEPPX - ARC Layer Wrapper
+ *
+ * WHAT
+ *   ARC Layer Wrapper.
+ *
+ * CONCEPT
+ *   Initialization, forward, and destruction of the ARC layer object.
+ *
+ * ROLE
+ *   Public API for creating and managing ARC layers.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 SNEPPXARCLayer* SNEPPX_arc_layer_create(const SNEPPXARCConfig* config, size_t input_dim, size_t output_dim, unsigned int seed) {
     SNEPPXARCLayer* layer = (SNEPPXARCLayer*)SNEPPX_malloc(sizeof(SNEPPXARCLayer), 64);

@@ -3,6 +3,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - SER Layer Forward (Training)
+ *
+ * WHAT
+ *   SER Layer Forward (Training).
+ *
+ * CONCEPT
+ *   SER layer forward pass with training mode including auxiliary loss computation.
+ *
+ * ROLE
+ *   Training variant that computes the load-balancing auxiliary loss alongside the main forward pass.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 int SNEPPX_ser_build_train_graph(SNEPPXSERModel* model, SNEPPXTape* tape,
                                SNEPPXVariable* input_var,

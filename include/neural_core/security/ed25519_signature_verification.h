@@ -8,6 +8,23 @@
 #define SNEPPX_ED25519_PRIVATE_KEY_LEN 64
 #define SNEPPX_ED25519_SIGNATURE_LEN 64
 #define SNEPPX_ED25519_SEED_LEN 32
+/*
+ * SNEPPX - Ed25519 Digital Signatures
+ *
+ * WHAT
+ *   Ed25519 Digital Signatures.
+ *
+ * CONCEPT
+ *   Ed25519 signature generation and verification on the Edwards curve Ed25519.
+ *
+ * ROLE
+ *   Used for code-signing, release manifests, and compact authentication.
+ *
+ * REFERENCES
+ *   RFC 8032 (EdDSA).
+ */
+
+
 
 typedef struct {
     uint8_t public_key[SNEPPX_ED25519_PUBLIC_KEY_LEN];
@@ -20,7 +37,25 @@ typedef struct {
 
 int SNEPPX_ed25519_keypair_generate(SNEPPXEd25519Keypair* kp);
 int SNEPPX_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed);
+/**
+ * @brief Sign a message with Ed25519.
+ * @param uint8_t *sig
+ * @param size_t *siglen
+ * @param const uint8_t *m
+ * @param size_t mlen
+ * @param const uint8_t *sk
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, size_t msg_len, SNEPPXEd25519Signature* sig);
+/**
+ * @brief Verify an Ed25519 signature.
+ * @param const uint8_t *sig
+ * @param size_t siglen
+ * @param const uint8_t *m
+ * @param size_t mlen
+ * @param const uint8_t *pk
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig);
 int SNEPPX_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point);
 

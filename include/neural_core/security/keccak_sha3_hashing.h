@@ -7,6 +7,23 @@
 #define SNEPPX_SHA3_256_DIGEST_SIZE 32
 #define SNEPPX_SHA3_512_DIGEST_SIZE 64
 #define SNEPPX_SHA3_STATE_SIZE 200
+/*
+ * SNEPPX - SHA-3 / Keccak Cryptographic Hash
+ *
+ * WHAT
+ *   SHA-3 / Keccak Cryptographic Hash.
+ *
+ * CONCEPT
+ *   FIPS 202 SHA-3 using the Keccak sponge construction.
+ *
+ * ROLE
+ *   Used by DRBG (Hash-DRBG), key-vault hashing, and general-purpose hashing.
+ *
+ * REFERENCES
+ *   FIPS 202 (SHA-3 / Keccak).
+ */
+
+
 
 typedef struct {
     uint64_t state[25];

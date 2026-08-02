@@ -10,6 +10,23 @@ extern "C" {
 
 #define SNEPPX_SIPHASH_KEY_SIZE 16
 #define SNEPPX_SIPHASH_OUT_SIZE 8
+/*
+ * SNEPPX - SipHash 2-4 Pseudorandom Function
+ *
+ * WHAT
+ *   SipHash 2-4 Pseudorandom Function.
+ *
+ * CONCEPT
+ *   Fast, cryptographically secure PRF designed by Aumasson and Bernstein.
+ *
+ * ROLE
+ *   Used for hash-table key hashing and as a building block in key derivation.
+ *
+ * REFERENCES
+ *   Aumasson & Bernstein 2012 (SipHash).
+ */
+
+
 
 typedef struct {
     uint64_t v0, v1, v2, v3;
@@ -20,10 +37,31 @@ typedef struct {
 
 void SNEPPX_siphash_init(SNEPPXSipHash* sh, const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE]);
 void SNEPPX_siphash_update(SNEPPXSipHash* sh, const uint8_t* data, size_t len);
+/**
+ * @brief Compute SipHash 2-4 of input.
+ * @param const uint8_t *key
+ * @param const uint8_t *in
+ * @param size_t inlen
+ * @return hash value.
+ */
 uint64_t SNEPPX_siphash_finalize(SNEPPXSipHash* sh);
+/**
+ * @brief Compute SipHash 2-4 of input.
+ * @param const uint8_t *key
+ * @param const uint8_t *in
+ * @param size_t inlen
+ * @return hash value.
+ */
 uint64_t SNEPPX_siphash(const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE], const uint8_t* data, size_t len);
 
 void SNEPPX_siphash_24_init(SNEPPXSipHash* sh, const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE]);
+/**
+ * @brief Compute SipHash 2-4 of input.
+ * @param const uint8_t *key
+ * @param const uint8_t *in
+ * @param size_t inlen
+ * @return hash value.
+ */
 uint64_t SNEPPX_siphash_24(const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE], const uint8_t* data, size_t len);
 
 #ifdef __cplusplus

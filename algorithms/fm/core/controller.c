@@ -2,6 +2,23 @@
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
 #include <stdlib.h>
+/*
+ * SNEPPX - FM Fractal Memory Controller
+ *
+ * WHAT
+ *   FM Fractal Memory Controller.
+ *
+ * CONCEPT
+ *   Controls the fractal memory system: allocation, indexing, and lifecycle of memory nodes.
+ *
+ * ROLE
+ *   The controller manages the hierarchical memory tree, coordinating reads and writes across the fractal memory bank.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 SNEPPXFMConfig SNEPPX_fm_config_default(void) {
     SNEPPXFMConfig cfg;

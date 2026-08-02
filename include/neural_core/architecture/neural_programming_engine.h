@@ -4,6 +4,23 @@
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
+/*
+ * SNEPPX - Neural Programming Engine (NPE)
+ *
+ * WHAT
+ *   Neural Programming Engine (NPE).
+ *
+ * CONCEPT
+ *   NPE VM, compiler, and program API declarations.
+ *
+ * ROLE
+ *   Declares the NPE module API for the 16-register neural VM with 32 opcodes.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 
 typedef enum {
     SNEPPX_NOP,

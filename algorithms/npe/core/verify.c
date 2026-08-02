@@ -8,6 +8,23 @@
 #else
 #define SNEPPX_strdup strdup
 #endif
+/*
+ * SNEPPX - NPE Program Verifier
+ *
+ * WHAT
+ *   NPE Program Verifier.
+ *
+ * CONCEPT
+ *   Type-checking and safety verification of NPE programs before execution.
+ *
+ * ROLE
+ *   Verifies that a compiled program is type-safe, has no invalid opcodes, and respects resource limits before execution.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 int SNEPPX_npe_verify_program(const SNEPPXNPEProgram* prog, char** error_msg, size_t* error_len) {
     if (!prog) { if (error_msg) { *error_msg = (char*)malloc(13); if (*error_msg) memcpy(*error_msg, "Null program\0", 13); } if (error_len) *error_len = 12; return 0; }

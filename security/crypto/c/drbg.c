@@ -2,6 +2,23 @@
 #include "sha512_hashing_implementation.h"
 #include "constant_time_operations.h"
 #include <string.h>
+/*
+ * SNEPPX - Deterministic Random Bit Generator (DRBG)
+ *
+ * WHAT
+ *   Deterministic Random Bit Generator (DRBG).
+ *
+ * CONCEPT
+ *   NIST SP 800-90A compliant HMAC-DRBG and Hash-DRBG for expanding entropy seeds.
+ *
+ * ROLE
+ *   Foundation for all random-number generation in the crypto module.
+ *
+ * REFERENCES
+ *   NIST SP 800-90A (DRBG).
+ */
+
+
 
 static void sha256_f(const uint8_t* in, size_t in_len, uint8_t out[32]) {
     SNEPPXSHA512Context ctx;

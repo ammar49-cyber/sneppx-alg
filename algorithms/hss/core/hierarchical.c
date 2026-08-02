@@ -1,4 +1,21 @@
 #include "hierarchical_state_space.h"
+/*
+ * SNEPPX - HSS Hierarchical Aggregation
+ *
+ * WHAT
+ *   HSS Hierarchical Aggregation.
+ *
+ * CONCEPT
+ *   Hierarchical state aggregation for multi-scale HSS models.
+ *
+ * ROLE
+ *   Implements the hierarchical pooling that builds multi-scale representations in the HSS architecture.
+ *
+ * REFERENCES
+ *   None (internal algorithm).
+ */
+
+
 
 void SNEPPX_hss_hierarchical_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* y_seq) {
     /* For v0.1, hierarchical scan delegates to standard scan.

@@ -2,6 +2,23 @@
 #define SNEPPX_DIFFUSION_MODEL_H
 #include <stddef.h>
 #include <stdbool.h>
+/*
+ * SNEPPX - Diffusion Model
+ *
+ * WHAT
+ *   Diffusion Model.
+ *
+ * CONCEPT
+ *   Diffusion model configuration and forward API for the SNEPPX-Algo diffusion pipeline.
+ *
+ * ROLE
+ *   Declares the diffusion model API for generative modeling within the SNEPPX-Algo system.
+ *
+ * REFERENCES
+ *   None (internal module).
+ */
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -3,6 +3,23 @@
 
 #include <stddef.h>
 #include <stdint.h>
+/*
+ * SNEPPX - Constant-Time Operations
+ *
+ * WHAT
+ *   Constant-Time Operations.
+ *
+ * CONCEPT
+ *   Primitives that execute in data-independent time to prevent timing side-channel leaks.
+ *
+ * ROLE
+ *   Layer S5 side-channel resistance used by all crypto modules handling secret keys.
+ *
+ * REFERENCES
+ *   None (internal utility).
+ */
+
+
 
 int SNEPPX_ct_equal(const uint8_t* a, const uint8_t* b, size_t len);
 uint8_t SNEPPX_ct_select(uint8_t mask, uint8_t a, uint8_t b);
