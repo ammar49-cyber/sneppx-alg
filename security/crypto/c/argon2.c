@@ -1,10 +1,3 @@
-#include "memory_hard_key_derivation.h"
-#include "constant_time_operations.h"
-#include <string.h>
-#include <stdlib.h>
-
-static void blake2b_round(uint64_t v[16], const uint64_t m[16]) {
-    #define B2B_G(a,b,c,d,x,y) do { \
 /*
  * SNEPPX - Argon2 Password Hashing
  *
@@ -20,8 +13,13 @@ static void blake2b_round(uint64_t v[16], const uint64_t m[16]) {
  * REFERENCES
  *   RFC 9106 (Argon2), PHC 2015 winner.
  */
+#include "memory_hard_key_derivation.h"
+#include "constant_time_operations.h"
+#include <string.h>
+#include <stdlib.h>
 
-
+static void blake2b_round(uint64_t v[16], const uint64_t m[16]) {
+    #define B2B_G(a,b,c,d,x,y) do { \
         v[a] += v[b] + x; v[d] ^= v[a]; v[d] = (v[d] >> 32) | (v[d] << 32); \
         v[c] += v[d]; v[b] ^= v[c]; v[b] = (v[b] >> 24) | (v[b] << 40); \
         v[a] += v[b] + y; v[d] ^= v[a]; v[d] = (v[d] >> 16) | (v[d] << 48); \
