@@ -134,3 +134,11 @@ Wrap at 72 characters.
 | Python classes | PascalCase | `Tensor` |
 | Python functions | snake_case | `from_numpy` |
 | Directories | snake_case | `kernel/tensor/` |
+
+## Commenting Standard
+
+See [COMMENTING.md](COMMENTING.md) for the four-layer commenting standard:
+- Layer 1: File header blocks (WHAT/CONCEPT/ROLE/REFERENCES)
+- Layer 2: Concept blocks before non-obvious algorithms
+- Layer 3: Inline "why" comments
+- Layer 4: Doxygen `@brief/@param/@return` on every public `SNEPPX_*` function
