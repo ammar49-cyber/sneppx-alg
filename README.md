@@ -38,6 +38,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Security layers | [`docs/security_layers.md`](docs/security_layers.md) |
 | Development workflow | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
+| Commenting standard | [`docs/COMMENTING.md`](docs/COMMENTING.md) |
 | All docs | [`docs/README.md`](docs/README.md) |
 
 ## What's new in v1.1.1
