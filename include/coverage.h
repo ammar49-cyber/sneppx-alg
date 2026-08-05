@@ -1,6 +1,22 @@
 #ifndef _COVERAGE_H
 #define _COVERAGE_H
 
+/*
+ * SNEPPX - Coverage
+ *
+ * WHAT
+ *   Coverage.
+ *
+ * CONCEPT
+ *   Provides the Coverage.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // Standalone coverage instrumentation header.
 // Usage: include in source files, then link with --coverage.
 
