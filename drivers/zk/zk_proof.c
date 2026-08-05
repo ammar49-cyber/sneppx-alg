@@ -7,6 +7,22 @@
 
 #ifdef SNEPPX_BUILD_ZK
 
+/*
+ * SNEPPX - Zk Proof
+ *
+ * WHAT
+ *   Zk Proof.
+ *
+ * CONCEPT
+ *   Provides the Zk Proof.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ------------------------------------------------------------------ */
 /* Embedded SHA-256 (self-contained, FIPS 180-4)                       */
 /* ------------------------------------------------------------------ */
@@ -232,12 +248,20 @@ static uint32_t rng_u32(void) {
     return r;
 }
 
+/**
+ * @brief Initialize Zk.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_init(void) {
     rng_seed();
     bn_t one; bn_set_u32(one, 1);
     bn_sub(ZK_ORD, ZK_P, one);  /* order = p - 1 */
     return 0;
 }
+/**
+ * @brief Perform Zk Shutdown.
+ */
 void SNEPPX_zk_shutdown(void) {}
 
 static void bn_rand_mod(const bn_t m, bn_t r) {
@@ -253,6 +277,15 @@ static void bn_rand_mod(const bn_t m, bn_t r) {
     }
 }
 
+/**
+ * @brief Generate Zk.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param pub [out] Pub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_keygen(const uint8_t* secret, size_t secret_len, uint8_t* pub, size_t* pub_len) {
     if (!secret || !pub || !pub_len) return -1;
     if (secret_len > 32) secret_len = 32;
@@ -267,6 +300,19 @@ int SNEPPX_zk_keygen(const uint8_t* secret, size_t secret_len, uint8_t* pub, siz
     return 0;
 }
 
+/**
+ * @brief Perform Zk Prove.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param pub [in] Pub value.
+ * @param pub_len [in] Pub Len value.
+ * @param msg [in] Msg value.
+ * @param msg_len [in] Msg Len value.
+ * @param proof [out] Proof value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_prove(const uint8_t* secret, size_t secret_len,
                     const uint8_t* pub, size_t pub_len,
                     const uint8_t* msg, size_t msg_len,
@@ -307,6 +353,17 @@ int SNEPPX_zk_prove(const uint8_t* secret, size_t secret_len,
     return 0;
 }
 
+/**
+ * @brief Verify Zk.
+ *
+ * @param pub [in] Pub value.
+ * @param pub_len [in] Pub Len value.
+ * @param msg [in] Msg value.
+ * @param msg_len [in] Msg Len value.
+ * @param proof [in] Proof value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_verify(const uint8_t* pub, size_t pub_len,
                      const uint8_t* msg, size_t msg_len,
                      const uint8_t* proof, size_t proof_len) {
@@ -337,17 +394,58 @@ int SNEPPX_zk_verify(const uint8_t* pub, size_t pub_len,
 
 #else /* !SNEPPX_BUILD_ZK — UNSUPPORTED stub */
 
+/**
+ * @brief Initialize Zk.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_init(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Zk Shutdown.
+ */
 void SNEPPX_zk_shutdown(void) {}
+/**
+ * @brief Generate Zk.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param pub [out] Pub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_keygen(const uint8_t* secret, size_t secret_len, uint8_t* pub, size_t* pub_len) {
     (void)secret; (void)secret_len; (void)pub; (void)pub_len;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
+/**
+ * @brief Perform Zk Prove.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param pub [in] Pub value.
+ * @param pub_len [in] Pub Len value.
+ * @param msg [in] Msg value.
+ * @param msg_len [in] Msg Len value.
+ * @param proof [out] Proof value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_prove(const uint8_t* secret, size_t secret_len, const uint8_t* pub, size_t pub_len,
                     const uint8_t* msg, size_t msg_len, uint8_t* proof, size_t* proof_len) {
     (void)secret;(void)secret_len;(void)pub;(void)pub_len;(void)msg;(void)msg_len;(void)proof;(void)proof_len;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
+/**
+ * @brief Verify Zk.
+ *
+ * @param pub [in] Pub value.
+ * @param pub_len [in] Pub Len value.
+ * @param msg [in] Msg value.
+ * @param msg_len [in] Msg Len value.
+ * @param proof [in] Proof value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_zk_verify(const uint8_t* pub, size_t pub_len, const uint8_t* msg, size_t msg_len,
                      const uint8_t* proof, size_t proof_len) {
     (void)pub;(void)pub_len;(void)msg;(void)msg_len;(void)proof;(void)proof_len;

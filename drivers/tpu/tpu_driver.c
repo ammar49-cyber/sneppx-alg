@@ -21,6 +21,22 @@
   #define TPU_DLCLOSE(handle) dlclose(handle)
 #endif
 
+/*
+ * SNEPPX - Tpu Driver
+ *
+ * WHAT
+ *   Tpu Driver.
+ *
+ * CONCEPT
+ *   Provides the Tpu Driver.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void* pjrt_lib = NULL;
 static int pjrt_loaded = 0;
 static int tpu_device_count = 0;
@@ -74,6 +90,11 @@ static TPUBuffer* add_buffer(void* data, size_t size, int is_device) {
     return b;
 }
 
+/**
+ * @brief Perform Tpu Register Driver.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_register_driver(void) {
     (void)pjrt_lib;
     (void)pjrt_loaded;
@@ -81,12 +102,24 @@ int SNEPPX_tpu_register_driver(void) {
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Tpu Get Device Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_get_device_count(int* count) {
     if (!count) return SNEPPX_DRIVER_ERROR;
     *count = tpu_device_count;
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Tpu Get Device Props.
+ *
+ * @param dev_id [in] Dev Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_get_device_props(int dev_id, SNEPPXTPUDeviceProps* props) {
     if (!props) return -1;
     memset(props, 0, sizeof(*props));
@@ -102,6 +135,11 @@ int SNEPPX_tpu_get_device_props(int dev_id, SNEPPXTPUDeviceProps* props) {
     return 0;
 }
 
+/**
+ * @brief Perform Tpu Create Context.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTPUContext* SNEPPX_tpu_create_context(int device_id) {
     SNEPPXTPUContext* ctx = (SNEPPXTPUContext*)calloc(1, sizeof(SNEPPXTPUContext));
     if (!ctx) return NULL;
@@ -117,12 +155,23 @@ SNEPPXTPUContext* SNEPPX_tpu_create_context(int device_id) {
     return ctx;
 }
 
+/**
+ * @brief Perform Tpu Destroy Context.
+ */
 void SNEPPX_tpu_destroy_context(SNEPPXTPUContext* ctx) {
     if (!ctx) return;
     free(ctx->client);
     free(ctx);
 }
 
+/**
+ * @brief Perform Tpu Mem Alloc.
+ *
+ * @param dev_ptr [out] Dev Ptr value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_mem_alloc(void** dev_ptr, size_t bytes, SNEPPXTPUContext* ctx) {
     if (!dev_ptr || !ctx) return -1;
     (void)ctx;
@@ -137,6 +186,13 @@ int SNEPPX_tpu_mem_alloc(void** dev_ptr, size_t bytes, SNEPPXTPUContext* ctx) {
     return 0;
 }
 
+/**
+ * @brief Free Tpu Mem.
+ *
+ * @param dev_ptr [out] Dev Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_mem_free(void* dev_ptr, SNEPPXTPUContext* ctx) {
     if (!dev_ptr || !ctx) return -1;
     (void)ctx;
@@ -146,6 +202,15 @@ int SNEPPX_tpu_mem_free(void* dev_ptr, SNEPPXTPUContext* ctx) {
     return 0;
 }
 
+/**
+ * @brief Perform Tpu Mem Htod.
+ *
+ * @param dev_dst [out] Dev Dst value.
+ * @param host_src [in] Host Src value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_mem_htod(void* dev_dst, const void* host_src, size_t bytes, SNEPPXTPUContext* ctx) {
     if (!dev_dst || !host_src || bytes == 0 || !ctx) return -1;
     (void)ctx;
@@ -153,6 +218,15 @@ int SNEPPX_tpu_mem_htod(void* dev_dst, const void* host_src, size_t bytes, SNEPP
     return 0;
 }
 
+/**
+ * @brief Perform Tpu Mem Dtoh.
+ *
+ * @param host_dst [out] Host Dst value.
+ * @param dev_src [in] Dev Src value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes, SNEPPXTPUContext* ctx) {
     if (!host_dst || !dev_src || bytes == 0 || !ctx) return -1;
     (void)ctx;
@@ -160,6 +234,14 @@ int SNEPPX_tpu_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes, SNEPP
     return 0;
 }
 
+/**
+ * @brief Perform Tpu Compile.
+ *
+ * @param hlo_module [in] Hlo Module value.
+ * @param hlo_len [in] Hlo Len value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTPUExecutable* SNEPPX_tpu_compile(const char* hlo_module, size_t hlo_len, SNEPPXTPUContext* ctx) {
     if (!hlo_module || hlo_len == 0 || !ctx) return NULL;
     (void)hlo_module;
@@ -171,10 +253,24 @@ SNEPPXTPUExecutable* SNEPPX_tpu_compile(const char* hlo_module, size_t hlo_len, 
     return exec;
 }
 
+/**
+ * @brief Destroy Tpu Executable.
+ */
 void SNEPPX_tpu_executable_destroy(SNEPPXTPUExecutable* exec) {
     free(exec);
 }
 
+/**
+ * @brief Perform Tpu Execute.
+ *
+ * @param exec [out] Exec value.
+ * @param inputs [out] Inputs value.
+ * @param num_inputs [in] Num Inputs value.
+ * @param outputs [out] Outputs value.
+ * @param num_outputs [in] Num Outputs value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_execute(SNEPPXTPUExecutable* exec, SNEPPXTensor** inputs, size_t num_inputs,
                       SNEPPXTensor** outputs, size_t num_outputs, SNEPPXTPUContext* ctx) {
     if (!exec || !inputs || num_inputs == 0 || !outputs || num_outputs == 0 || !ctx) return -1;
@@ -211,6 +307,17 @@ int SNEPPX_tpu_execute(SNEPPXTPUExecutable* exec, SNEPPXTensor** inputs, size_t 
     return 0;
 }
 
+/**
+ * @brief Perform Tpu All Reduce.
+ *
+ * @param send_buf [out] Send Buf value.
+ * @param recv_buf [out] Recv Buf value.
+ * @param count [in] Count value.
+ * @param dtype [in] Dtype value.
+ * @param reduce_op [in] Reduce Op value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpu_all_reduce(void* send_buf, void* recv_buf, size_t count,
                         int dtype, int reduce_op, SNEPPXTPUContext* ctx) {
     if (!send_buf || !recv_buf || count == 0 || !ctx) return -1;

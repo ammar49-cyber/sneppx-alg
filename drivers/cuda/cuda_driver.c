@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Cuda Driver
+ *
+ * WHAT
+ *   Cuda Driver.
+ *
+ * CONCEPT
+ *   Provides the Cuda Driver.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * CUDA Driver Implementation — v1.0
  * PURPOSE: Real CUDA Runtime API calls wrapped behind SNEPPXCUDA interface.
  */
@@ -46,6 +62,11 @@ static void set_error(SNEPPXCUDAContext* ctx, int err) {
     if (ctx) ctx->error_state = err;
 }
 
+/**
+ * @brief Perform Cuda Register Driver.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_register_driver(void) {
     /* In the future, this registers into a global driver ops table */
     return 0;
@@ -53,6 +74,11 @@ int SNEPPX_cuda_register_driver(void) {
 
 /* ---------- Device lifecycle ---------- */
 
+/**
+ * @brief Perform Cuda Get Device Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_get_device_count(int* count) {
     if (!count) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -67,6 +93,13 @@ int SNEPPX_cuda_get_device_count(int* count) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Get Device Props.
+ *
+ * @param dev_id [in] Dev Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_get_device_props(int dev_id, SNEPPXCUDADeviceProps* props) {
     if (!props) return -1;
     memset(props, 0, sizeof(*props));
@@ -95,6 +128,11 @@ int SNEPPX_cuda_get_device_props(int dev_id, SNEPPXCUDADeviceProps* props) {
     return 0;
 }
 
+/**
+ * @brief Perform Cuda Set Device.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_set_device(int dev_id) {
 #if defined(SNEPPX_HAS_CUDA)
     return (cudaSetDevice(dev_id) == cudaSuccess) ? 0 : -1;
@@ -104,6 +142,11 @@ int SNEPPX_cuda_set_device(int dev_id) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Get Device.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_get_device(int* dev_id) {
     if (!dev_id) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -119,6 +162,11 @@ int SNEPPX_cuda_get_device(int* dev_id) {
 
 /* ---------- Context ---------- */
 
+/**
+ * @brief Perform Cuda Create Context.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXCUDAContext* SNEPPX_cuda_create_context(int device_id) {
     SNEPPXCUDAContext* ctx = (SNEPPXCUDAContext*)calloc(1, sizeof(SNEPPXCUDAContext));
     if (!ctx) return NULL;
@@ -156,6 +204,9 @@ SNEPPXCUDAContext* SNEPPX_cuda_create_context(int device_id) {
     return ctx;
 }
 
+/**
+ * @brief Perform Cuda Destroy Context.
+ */
 void SNEPPX_cuda_destroy_context(SNEPPXCUDAContext* ctx) {
     if (!ctx) return;
 #if defined(SNEPPX_HAS_CUDA)
@@ -174,12 +225,24 @@ void SNEPPX_cuda_destroy_context(SNEPPXCUDAContext* ctx) {
     free(ctx);
 }
 
+/**
+ * @brief Perform Cuda Context Error.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_context_error(const SNEPPXCUDAContext* ctx) {
     return ctx ? ctx->error_state : -1;
 }
 
 /* ---------- Stream / event ---------- */
 
+/**
+ * @brief Create Cuda Stream.
+ *
+ * @param stream [out] Stream value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_stream_create(SNEPPXCUDAStream** stream, int priority) {
     if (!stream) return -1;
     *stream = (SNEPPXCUDAStream*)calloc(1, sizeof(SNEPPXCUDAStream));
@@ -194,6 +257,9 @@ int SNEPPX_cuda_stream_create(SNEPPXCUDAStream** stream, int priority) {
     return 0;
 }
 
+/**
+ * @brief Destroy Cuda Stream.
+ */
 void SNEPPX_cuda_stream_destroy(SNEPPXCUDAStream* stream) {
     if (!stream) return;
 #if defined(SNEPPX_HAS_CUDA)
@@ -202,6 +268,11 @@ void SNEPPX_cuda_stream_destroy(SNEPPXCUDAStream* stream) {
     free(stream);
 }
 
+/**
+ * @brief Perform Cuda Stream Synchronize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_stream_synchronize(SNEPPXCUDAStream* stream) {
     if (!stream) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -211,6 +282,11 @@ int SNEPPX_cuda_stream_synchronize(SNEPPXCUDAStream* stream) {
 #endif
 }
 
+/**
+ * @brief Create Cuda Event.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_event_create(SNEPPXCUDAEvent** event) {
     if (!event) return -1;
     *event = (SNEPPXCUDAEvent*)calloc(1, sizeof(SNEPPXCUDAEvent));
@@ -223,6 +299,9 @@ int SNEPPX_cuda_event_create(SNEPPXCUDAEvent** event) {
     return 0;
 }
 
+/**
+ * @brief Destroy Cuda Event.
+ */
 void SNEPPX_cuda_event_destroy(SNEPPXCUDAEvent* event) {
     if (!event) return;
 #if defined(SNEPPX_HAS_CUDA)
@@ -231,6 +310,13 @@ void SNEPPX_cuda_event_destroy(SNEPPXCUDAEvent* event) {
     free(event);
 }
 
+/**
+ * @brief Perform Cuda Event Record.
+ *
+ * @param event [out] Event value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_event_record(SNEPPXCUDAEvent* event, SNEPPXCUDAStream* stream) {
     if (!event || !stream) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -240,6 +326,11 @@ int SNEPPX_cuda_event_record(SNEPPXCUDAEvent* event, SNEPPXCUDAStream* stream) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Event Synchronize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_event_synchronize(SNEPPXCUDAEvent* event) {
     if (!event) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -249,6 +340,14 @@ int SNEPPX_cuda_event_synchronize(SNEPPXCUDAEvent* event) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Event Elapsed Ms.
+ *
+ * @param ms [out] Ms value.
+ * @param start [out] Start value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_event_elapsed_ms(float* ms, SNEPPXCUDAEvent* start, SNEPPXCUDAEvent* end) {
     if (!ms || !start || !end) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -261,6 +360,13 @@ int SNEPPX_cuda_event_elapsed_ms(float* ms, SNEPPXCUDAEvent* start, SNEPPXCUDAEv
 
 /* ---------- Memory ---------- */
 
+/**
+ * @brief Perform Cuda Mem Alloc.
+ *
+ * @param dev_ptr [out] Dev Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_alloc(void** dev_ptr, size_t bytes) {
     if (!dev_ptr) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -271,6 +377,11 @@ int SNEPPX_cuda_mem_alloc(void** dev_ptr, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Free Cuda Mem.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_free(void* dev_ptr) {
     if (!dev_ptr) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -280,6 +391,14 @@ int SNEPPX_cuda_mem_free(void* dev_ptr) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Mem Htod.
+ *
+ * @param dev_dst [out] Dev Dst value.
+ * @param host_src [in] Host Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
     if (!dev_dst || !host_src) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -289,6 +408,14 @@ int SNEPPX_cuda_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Mem Dtoh.
+ *
+ * @param host_dst [out] Host Dst value.
+ * @param dev_src [in] Dev Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
     if (!host_dst || !dev_src) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -298,6 +425,14 @@ int SNEPPX_cuda_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Mem Dtod.
+ *
+ * @param dev_dst [out] Dev Dst value.
+ * @param dev_src [in] Dev Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
     if (!dev_dst || !dev_src) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -307,6 +442,14 @@ int SNEPPX_cuda_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Set Cuda Mem.
+ *
+ * @param dev_ptr [out] Dev Ptr value.
+ * @param value [in] Value value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_mem_set(void* dev_ptr, int value, size_t bytes) {
     if (!dev_ptr) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -318,6 +461,11 @@ int SNEPPX_cuda_mem_set(void* dev_ptr, int value, size_t bytes) {
 
 /* ---------- Kernel dispatch ---------- */
 
+/**
+ * @brief Perform Cuda Launch Kernel.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_launch_kernel(const SNEPPXCUDAKernelLaunch* launch) {
     if (!launch) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -334,12 +482,24 @@ int SNEPPX_cuda_launch_kernel(const SNEPPXCUDAKernelLaunch* launch) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Launch Kernel Async.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_launch_kernel_async(const SNEPPXCUDAKernelLaunch* launch) {
     return SNEPPX_cuda_launch_kernel(launch);
 }
 
 /* ---------- Tensor-core GEMM ---------- */
 
+/**
+ * @brief Perform Cuda Tc Gemm.
+ *
+ * @param desc [in] Desc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cuda_tc_gemm(const SNEPPXCUDATensorCoreGemm* desc, SNEPPXCUDAStream* stream) {
     if (!desc || !stream) return -1;
 #if defined(SNEPPX_HAS_CUDA)
@@ -367,6 +527,11 @@ int SNEPPX_cuda_tc_gemm(const SNEPPXCUDATensorCoreGemm* desc, SNEPPXCUDAStream* 
 
 /* ---------- Warp primitives ---------- */
 
+/**
+ * @brief Perform Cuda Warp Ballot.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_cuda_warp_ballot(int predicate) {
 #if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     return __ballot_sync(__activemask(), predicate);
@@ -376,6 +541,11 @@ uint32_t SNEPPX_cuda_warp_ballot(int predicate) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Warp Reduce Sum.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_cuda_warp_reduce_sum(uint32_t value) {
 #if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     value += __shfl_xor_sync(__activemask(), value, 16);
@@ -389,6 +559,11 @@ uint32_t SNEPPX_cuda_warp_reduce_sum(uint32_t value) {
 #endif
 }
 
+/**
+ * @brief Perform Cuda Warp Reduce Sum F32.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_cuda_warp_reduce_sum_f32(float value) {
 #if defined(SNEPPX_HAS_CUDA) && defined(__CUDACC__)
     value += __shfl_xor_sync(__activemask(), value, 16);
@@ -404,6 +579,11 @@ float SNEPPX_cuda_warp_reduce_sum_f32(float value) {
 
 /* ---------- Error string ---------- */
 
+/**
+ * @brief Perform Cuda Error String.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_cuda_error_string(int error_code) {
 #if defined(SNEPPX_HAS_CUDA)
     return cudaGetErrorString((cudaError_t)error_code);

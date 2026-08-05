@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Fuzz Harness
+ *
+ * WHAT
+ *   Fuzz Harness.
+ *
+ * CONCEPT
+ *   Provides the Fuzz Harness.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * SNEPPX Fuzzing Harness — SKELETON
  * VERSION: v0.5
  *
@@ -47,6 +63,9 @@ static int fuzz_checkpoint_load(const uint8_t* data, size_t size) {
 /* Register fuzz targets at static initialization time so they are available
  * even when libFuzzer provides its own main() (in which case our main()
  * is never linked). */
+/**
+ * @brief Perform Fuzz Register Defaults.
+ */
 static void SNEPPX_fuzz_register_defaults(void) {
     static int registered = 0;
     if (registered) return;
@@ -58,6 +77,9 @@ static void SNEPPX_fuzz_register_defaults(void) {
 /* GCC/Clang constructor — runs before main() or before libFuzzer's main() */
 #if defined(__GNUC__) || defined(__clang__)
 __attribute__((constructor))
+/**
+ * @brief Perform Fuzz Auto Register.
+ */
 static void SNEPPX_fuzz_auto_register(void) {
     SNEPPX_fuzz_register_defaults();
 }

@@ -15,6 +15,22 @@
   #define ROCM_DLCLOSE(handle) dlclose(handle)
 #endif
 
+/*
+ * SNEPPX - Rocm Driver
+ *
+ * WHAT
+ *   Rocm Driver.
+ *
+ * CONCEPT
+ *   Provides the Rocm Driver.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void* rocm_lib = NULL;
 static int rocm_loaded = 0;
 static int rocm_device_count = 0;
@@ -111,11 +127,21 @@ static void host_free(void* ptr, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Perform Rocm Register Driver.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_register_driver(void) {
     if (!rocm_loaded) try_load_rocm();
     return rocm_device_count > 0 ? 0 : -1;
 }
 
+/**
+ * @brief Perform Rocm Get Device Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_get_device_count(int* count) {
     if (!count) return -1;
     if (!rocm_initialized) try_load_rocm();
@@ -124,6 +150,13 @@ int SNEPPX_rocm_get_device_count(int* count) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Get Device Props.
+ *
+ * @param dev_id [in] Dev Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_get_device_props(int dev_id, SNEPPXROCmDeviceProps* props) {
     if (!props) return -1;
     memset(props, 0, sizeof(*props));
@@ -144,12 +177,22 @@ int SNEPPX_rocm_get_device_props(int dev_id, SNEPPXROCmDeviceProps* props) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Set Device.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_set_device(int dev_id) {
     (void)dev_id;
     if (rocm_initialized && hipSetDevice_fn) return hipSetDevice_fn(dev_id);
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Create Context.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXROCmContext* SNEPPX_rocm_create_context(int device_id) {
     SNEPPXROCmContext* ctx = (SNEPPXROCmContext*)calloc(1, sizeof(SNEPPXROCmContext));
     if (!ctx) return NULL;
@@ -165,6 +208,9 @@ SNEPPXROCmContext* SNEPPX_rocm_create_context(int device_id) {
     return ctx;
 }
 
+/**
+ * @brief Perform Rocm Destroy Context.
+ */
 void SNEPPX_rocm_destroy_context(SNEPPXROCmContext* ctx) {
     if (!ctx) return;
     for (int i = 0; i < ctx->num_streams; i++)
@@ -173,6 +219,11 @@ void SNEPPX_rocm_destroy_context(SNEPPXROCmContext* ctx) {
     free(ctx);
 }
 
+/**
+ * @brief Create Rocm Stream.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_stream_create(SNEPPXROCmStream** stream) {
     if (!stream) return -1;
     *stream = (SNEPPXROCmStream*)calloc(1, sizeof(SNEPPXROCmStream));
@@ -185,6 +236,9 @@ int SNEPPX_rocm_stream_create(SNEPPXROCmStream** stream) {
     return 0;
 }
 
+/**
+ * @brief Destroy Rocm Stream.
+ */
 void SNEPPX_rocm_stream_destroy(SNEPPXROCmStream* stream) {
     if (!stream) return;
     if (rocm_initialized && hipStreamDestroy_fn && stream->handle)
@@ -192,6 +246,11 @@ void SNEPPX_rocm_stream_destroy(SNEPPXROCmStream* stream) {
     free(stream);
 }
 
+/**
+ * @brief Perform Rocm Stream Synchronize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_stream_synchronize(SNEPPXROCmStream* stream) {
     if (!stream) return -1;
     if (rocm_initialized && hipStreamSynchronize_fn && stream->handle)
@@ -199,6 +258,11 @@ int SNEPPX_rocm_stream_synchronize(SNEPPXROCmStream* stream) {
     return 0;
 }
 
+/**
+ * @brief Create Rocm Event.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_event_create(SNEPPXROCmEvent** event) {
     if (!event) return -1;
     *event = (SNEPPXROCmEvent*)calloc(1, sizeof(SNEPPXROCmEvent));
@@ -210,6 +274,9 @@ int SNEPPX_rocm_event_create(SNEPPXROCmEvent** event) {
     return 0;
 }
 
+/**
+ * @brief Destroy Rocm Event.
+ */
 void SNEPPX_rocm_event_destroy(SNEPPXROCmEvent* event) {
     if (!event) return;
     if (rocm_initialized && hipEventDestroy_fn && event->handle)
@@ -217,6 +284,13 @@ void SNEPPX_rocm_event_destroy(SNEPPXROCmEvent* event) {
     free(event);
 }
 
+/**
+ * @brief Perform Rocm Event Record.
+ *
+ * @param event [out] Event value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_event_record(SNEPPXROCmEvent* event, SNEPPXROCmStream* stream) {
     if (!event || !stream) return -1;
     if (rocm_initialized && hipEventRecord_fn && event->handle && stream->handle)
@@ -224,6 +298,11 @@ int SNEPPX_rocm_event_record(SNEPPXROCmEvent* event, SNEPPXROCmStream* stream) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Event Synchronize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_event_synchronize(SNEPPXROCmEvent* event) {
     if (!event) return -1;
     if (rocm_initialized && hipEventSynchronize_fn && event->handle)
@@ -231,6 +310,13 @@ int SNEPPX_rocm_event_synchronize(SNEPPXROCmEvent* event) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Mem Alloc.
+ *
+ * @param dev_ptr [out] Dev Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_mem_alloc(void** dev_ptr, size_t bytes) {
     if (!dev_ptr) return -1;
     if (rocm_initialized && hipMalloc_fn && bytes > 0) {
@@ -241,6 +327,11 @@ int SNEPPX_rocm_mem_alloc(void** dev_ptr, size_t bytes) {
     return *dev_ptr ? 0 : -1;
 }
 
+/**
+ * @brief Free Rocm Mem.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_mem_free(void* dev_ptr) {
     if (!dev_ptr) return -1;
     if (rocm_initialized && hipFree_fn && dev_ptr) {
@@ -251,6 +342,14 @@ int SNEPPX_rocm_mem_free(void* dev_ptr) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Mem Htod.
+ *
+ * @param dev_dst [out] Dev Dst value.
+ * @param host_src [in] Host Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
     if (!dev_dst || !host_src || bytes == 0) return -1;
     if (rocm_initialized && hipMemcpy_fn)
@@ -259,6 +358,14 @@ int SNEPPX_rocm_mem_htod(void* dev_dst, const void* host_src, size_t bytes) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Mem Dtoh.
+ *
+ * @param host_dst [out] Host Dst value.
+ * @param dev_src [in] Dev Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
     if (!host_dst || !dev_src || bytes == 0) return -1;
     if (rocm_initialized && hipMemcpy_fn)
@@ -267,6 +374,14 @@ int SNEPPX_rocm_mem_dtoh(void* host_dst, const void* dev_src, size_t bytes) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Mem Dtod.
+ *
+ * @param dev_dst [out] Dev Dst value.
+ * @param dev_src [in] Dev Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
     if (!dev_dst || !dev_src || bytes == 0) return -1;
     if (rocm_initialized && hipMemcpy_fn)
@@ -275,6 +390,11 @@ int SNEPPX_rocm_mem_dtod(void* dev_dst, const void* dev_src, size_t bytes) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Launch Kernel.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_launch_kernel(const SNEPPXROCmKernelLaunch* launch) {
     if (!launch) return -1;
     if (rocm_initialized && hipModuleLaunchKernel_fn && launch->kernel_func) {
@@ -289,6 +409,11 @@ int SNEPPX_rocm_launch_kernel(const SNEPPXROCmKernelLaunch* launch) {
     return 0;
 }
 
+/**
+ * @brief Perform Rocm Launch Kernel Async.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rocm_launch_kernel_async(const SNEPPXROCmKernelLaunch* launch) {
     return SNEPPX_rocm_launch_kernel(launch);
 }

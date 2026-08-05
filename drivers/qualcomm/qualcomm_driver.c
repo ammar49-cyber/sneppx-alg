@@ -7,6 +7,22 @@
 
 #ifdef SNEPPX_BUILD_QNN
 
+/*
+ * SNEPPX - Qualcomm Driver
+ *
+ * WHAT
+ *   Qualcomm Driver.
+ *
+ * CONCEPT
+ *   Provides the Qualcomm Driver.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int g_qnn_device_count = 1;
 
 typedef struct {
@@ -19,15 +35,34 @@ typedef struct {
     size_t output_size;
 } QNNContext;
 
+/**
+ * @brief Perform Qualcomm Register.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_register(void) {
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Qualcomm Get Device Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_device_count(int* count) {
     if (count) *count = g_qnn_device_count;
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Qualcomm Get Device Props.
+ *
+ * @param dev_id [in] Dev Id value.
+ * @param name [out] Name value.
+ * @param name_max [in] Name Max value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_device_props(int dev_id, char* name, size_t name_max, unsigned long long* total_mem) {
     (void)dev_id;
     if (name) snprintf(name, name_max, "Qualcomm QNN (reference)");
@@ -35,6 +70,11 @@ int SNEPPX_qualcomm_get_device_props(int dev_id, char* name, size_t name_max, un
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Qualcomm Create Context.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_qualcomm_create_context(const char* model_path) {
     QNNContext* ctx = (QNNContext*)calloc(1, sizeof(QNNContext));
     if (!ctx) return NULL;
@@ -51,6 +91,9 @@ void* SNEPPX_qualcomm_create_context(const char* model_path) {
     return ctx;
 }
 
+/**
+ * @brief Perform Qualcomm Destroy Context.
+ */
 void SNEPPX_qualcomm_destroy_context(void* ctx) {
     if (!ctx) return;
     QNNContext* c = (QNNContext*)ctx;
@@ -60,6 +103,15 @@ void SNEPPX_qualcomm_destroy_context(void* ctx) {
     free(c);
 }
 
+/**
+ * @brief Perform Qualcomm Set Input.
+ *
+ * @param ctx [out] Ctx value.
+ * @param name [in] Name value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_set_input(void* ctx, const char* name, const float* data, size_t size) {
     if (!ctx || !name || !data) return SNEPPX_DRIVER_ERROR;
     QNNContext* c = (QNNContext*)ctx;
@@ -72,6 +124,11 @@ int SNEPPX_qualcomm_set_input(void* ctx, const char* name, const float* data, si
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Qualcomm Run Inference.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_run_inference(void* ctx) {
     if (!ctx) return SNEPPX_DRIVER_ERROR;
     QNNContext* c = (QNNContext*)ctx;
@@ -86,6 +143,15 @@ int SNEPPX_qualcomm_run_inference(void* ctx) {
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Qualcomm Get Output.
+ *
+ * @param ctx [out] Ctx value.
+ * @param name [in] Name value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_output(void* ctx, const char* name, float* data, size_t size) {
     if (!ctx || !name || !data) return SNEPPX_DRIVER_ERROR;
     QNNContext* c = (QNNContext*)ctx;
@@ -98,13 +164,65 @@ int SNEPPX_qualcomm_get_output(void* ctx, const char* name, float* data, size_t 
 
 #else
 
+/**
+ * @brief Perform Qualcomm Register.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_register(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Qualcomm Get Device Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_device_count(int* count) { if (count) *count = 0; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Qualcomm Get Device Props.
+ *
+ * @param dev_id [in] Dev Id value.
+ * @param name [out] Name value.
+ * @param name_max [in] Name Max value.
+ * @param name [out] Name value.
+ * @param name_max [in] Name Max value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_device_props(int dev_id, char* name, size_t name_max, unsigned long long* total_mem) { (void)dev_id; if (name) snprintf(name, name_max, "QNN Device %d", dev_id); if (total_mem) *total_mem = 8ULL*1024*1024*1024; return SNEPPX_DRIVER_OK; }
+/**
+ * @brief Perform Qualcomm Create Context.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_qualcomm_create_context(const char* model_path) { (void)model_path; return calloc(1, sizeof(void*)); }
+/**
+ * @brief Perform Qualcomm Destroy Context.
+ */
 void SNEPPX_qualcomm_destroy_context(void* ctx) { free(ctx); }
+/**
+ * @brief Perform Qualcomm Set Input.
+ *
+ * @param ctx [out] Ctx value.
+ * @param name [in] Name value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_set_input(void* ctx, const char* name, const float* data, size_t size) { (void)ctx; (void)name; (void)data; (void)size; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Qualcomm Run Inference.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_run_inference(void* ctx) { (void)ctx; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Qualcomm Get Output.
+ *
+ * @param ctx [out] Ctx value.
+ * @param name [in] Name value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_qualcomm_get_output(void* ctx, const char* name, float* data, size_t size) { (void)ctx; (void)name; (void)data; (void)size; return SNEPPX_DRIVER_UNSUPPORTED; }
 
 #endif

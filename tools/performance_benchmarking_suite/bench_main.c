@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Bench Main
+ *
+ * WHAT
+ *   Bench Main.
+ *
+ * CONCEPT
+ *   Provides the Bench Main.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * SNEPPX Benchmark Runner — SKELETON
  * VERSION: v0.5
  *

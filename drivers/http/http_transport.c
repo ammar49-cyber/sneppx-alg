@@ -10,6 +10,22 @@
   #include <winsock2.h>
   #include <ws2tcpip.h>
   #pragma comment(lib, "ws2_32.lib")
+/*
+ * SNEPPX - Http Transport
+ *
+ * WHAT
+ *   Http Transport.
+ *
+ * CONCEPT
+ *   Provides the Http Transport.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
   typedef SOCKET sock_t;
   #define SNEPPX_INVALID_SOCKET INVALID_SOCKET
   #define snepx_close closesocket
@@ -26,6 +42,11 @@
 
 static int g_http_initialized = 0;
 
+/**
+ * @brief Initialize Http.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_init(void) {
 #ifdef _WIN32
     if (g_http_initialized) return 0;
@@ -36,6 +57,9 @@ int SNEPPX_http_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Http Shutdown.
+ */
 void SNEPPX_http_shutdown(void) {
 #ifdef _WIN32
     if (g_http_initialized) { WSACleanup(); g_http_initialized = 0; }
@@ -101,10 +125,31 @@ static int snepx_request(const char* method, const char* host, int port,
     return 0;
 }
 
+/**
+ * @brief Get Http.
+ *
+ * @param host [in] Host value.
+ * @param port [in] Port value.
+ * @param path [in] Path value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_get(const char* host, int port, const char* path, char* out, size_t out_max) {
     return snepx_request("GET", host, port, path, NULL, out, out_max);
 }
 
+/**
+ * @brief Perform Http Post.
+ *
+ * @param host [in] Host value.
+ * @param port [in] Port value.
+ * @param path [in] Path value.
+ * @param body [in] Body value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_post(const char* host, int port, const char* path, const char* body, char* out, size_t out_max) {
     return snepx_request("POST", host, port, path, body, out, out_max);
 }
@@ -119,6 +164,13 @@ typedef struct {
     sock_t listen_fd;
 } snepx_http_server;
 
+/**
+ * @brief Create Http Server.
+ *
+ * @param port [in] Port value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_http_server_create(int port, SNEPPX_http_handler handler) {
     if (SNEPPX_http_init() != 0) return NULL;
     snepx_http_server* srv = (snepx_http_server*)calloc(1, sizeof(*srv));
@@ -148,6 +200,11 @@ void* SNEPPX_http_server_create(int port, SNEPPX_http_handler handler) {
     return srv;
 }
 
+/**
+ * @brief Run Http Server.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_run(void* server) {
     snepx_http_server* srv = (snepx_http_server*)server;
     if (!srv || !srv->handler) return -1;
@@ -171,6 +228,9 @@ int SNEPPX_http_server_run(void* server) {
     return 0;
 }
 
+/**
+ * @brief Stop Http Server.
+ */
 void SNEPPX_http_server_stop(void* server) {
     snepx_http_server* srv = (snepx_http_server*)server;
     if (!srv) return;
@@ -182,22 +242,66 @@ void SNEPPX_http_server_stop(void* server) {
 
 #else /* !SNEPPX_BUILD_HTTP — UNSUPPORTED stub */
 
+/**
+ * @brief Initialize Http.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_init(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Http Shutdown.
+ */
 void SNEPPX_http_shutdown(void) {}
+/**
+ * @brief Get Http.
+ *
+ * @param host [in] Host value.
+ * @param port [in] Port value.
+ * @param path [in] Path value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_get(const char* host, int port, const char* path, char* out, size_t out_max) {
     (void)host; (void)port; (void)path; (void)out; (void)out_max;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
+/**
+ * @brief Perform Http Post.
+ *
+ * @param host [in] Host value.
+ * @param port [in] Port value.
+ * @param path [in] Path value.
+ * @param body [in] Body value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_post(const char* host, int port, const char* path, const char* body, char* out, size_t out_max) {
     (void)host; (void)port; (void)path; (void)body; (void)out; (void)out_max;
     return SNEPPX_DRIVER_UNSUPPORTED;
 }
 #ifdef SNEPPX_USE_TRANSPORT_SERVER
+/**
+ * @brief Create Http Server.
+ *
+ * @param port [in] Port value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_http_server_create(int port, SNEPPX_http_handler handler) {
     (void)port; (void)handler;
     return NULL;
 }
+/**
+ * @brief Run Http Server.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_run(void* server) { (void)server; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Stop Http Server.
+ */
 void SNEPPX_http_server_stop(void* server) { (void)server; }
 #endif /* SNEPPX_USE_TRANSPORT_SERVER */
 

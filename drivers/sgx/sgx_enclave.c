@@ -6,6 +6,22 @@
 
 #ifdef SNEPPX_BUILD_SGX
 
+/*
+ * SNEPPX - Sgx Enclave
+ *
+ * WHAT
+ *   Sgx Enclave.
+ *
+ * CONCEPT
+ *   Provides the Sgx Enclave.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char enclave_name[64];
     size_t heap_size;
@@ -16,6 +32,11 @@ typedef struct {
 
 static SGXEnclave g_enclave;
 
+/**
+ * @brief Initialize Sgx.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_init(const char* enclave_path) {
     (void)enclave_path;
     memset(&g_enclave, 0, sizeof(g_enclave));
@@ -24,10 +45,21 @@ int SNEPPX_sgx_init(const char* enclave_path) {
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Destroy Sgx.
+ */
 void SNEPPX_sgx_destroy(void) {
     memset(&g_enclave, 0, sizeof(g_enclave));
 }
 
+/**
+ * @brief Perform Sgx Create Enclave.
+ *
+ * @param name [in] Name value.
+ * @param heap_size [in] Heap Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_create_enclave(const char* name, size_t heap_size, size_t stack_size) {
     if (!name) return SNEPPX_DRIVER_ERROR;
     strncpy(g_enclave.enclave_name, name, sizeof(g_enclave.enclave_name) - 1);
@@ -38,6 +70,11 @@ int SNEPPX_sgx_create_enclave(const char* name, size_t heap_size, size_t stack_s
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Sgx Destroy Enclave.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_destroy_enclave(void) {
     memset(&g_enclave.enclave_name, 0, sizeof(g_enclave.enclave_name));
     g_enclave.heap_size = 0;
@@ -46,6 +83,16 @@ int SNEPPX_sgx_destroy_enclave(void) {
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Sgx Call.
+ *
+ * @param func_name [in] Func Name value.
+ * @param input [out] Input value.
+ * @param input_len [in] Input Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_call(const char* func_name, void* input, size_t input_len, void* output, size_t output_len) {
     if (!func_name || !input || !output || !g_enclave.created) return SNEPPX_DRIVER_ERROR;
     (void)output_len;
@@ -60,6 +107,15 @@ int SNEPPX_sgx_call(const char* func_name, void* input, size_t input_len, void* 
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Sgx Seal Data.
+ *
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ * @param sealed [out] Sealed value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_seal_data(const unsigned char* data, size_t data_len, unsigned char* sealed, size_t* sealed_len) {
     if (!data || !sealed || !sealed_len) return SNEPPX_DRIVER_ERROR;
     size_t total = data_len + 32 + 16;
@@ -73,6 +129,15 @@ int SNEPPX_sgx_seal_data(const unsigned char* data, size_t data_len, unsigned ch
     return SNEPPX_DRIVER_OK;
 }
 
+/**
+ * @brief Perform Sgx Unseal Data.
+ *
+ * @param sealed [in] Sealed value.
+ * @param sealed_len [in] Sealed Len value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_unseal_data(const unsigned char* sealed, size_t sealed_len, unsigned char* data, size_t* data_len) {
     if (!sealed || !data || !data_len || sealed_len < 48) return SNEPPX_DRIVER_ERROR;
     size_t payload_len = sealed_len - 48;
@@ -85,12 +150,61 @@ int SNEPPX_sgx_unseal_data(const unsigned char* sealed, size_t sealed_len, unsig
 
 #else
 
+/**
+ * @brief Initialize Sgx.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_init(const char* enclave_path) { (void)enclave_path; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Destroy Sgx.
+ */
 void SNEPPX_sgx_destroy(void) {}
+/**
+ * @brief Perform Sgx Create Enclave.
+ *
+ * @param name [in] Name value.
+ * @param heap_size [in] Heap Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_create_enclave(const char* name, size_t heap_size, size_t stack_size) { (void)name; (void)heap_size; (void)stack_size; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Sgx Destroy Enclave.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_destroy_enclave(void) { return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Sgx Call.
+ *
+ * @param func_name [in] Func Name value.
+ * @param input [out] Input value.
+ * @param input_len [in] Input Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_call(const char* func_name, void* input, size_t input_len, void* output, size_t output_len) { (void)func_name; (void)input; (void)input_len; (void)output; (void)output_len; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Sgx Seal Data.
+ *
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ * @param sealed [out] Sealed value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_seal_data(const unsigned char* data, size_t data_len, unsigned char* sealed, size_t* sealed_len) { (void)data; (void)data_len; (void)sealed; (void)sealed_len; return SNEPPX_DRIVER_UNSUPPORTED; }
+/**
+ * @brief Perform Sgx Unseal Data.
+ *
+ * @param sealed [in] Sealed value.
+ * @param sealed_len [in] Sealed Len value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sgx_unseal_data(const unsigned char* sealed, size_t sealed_len, unsigned char* data, size_t* data_len) { (void)sealed; (void)sealed_len; (void)data; (void)data_len; return SNEPPX_DRIVER_UNSUPPORTED; }
 
 #endif

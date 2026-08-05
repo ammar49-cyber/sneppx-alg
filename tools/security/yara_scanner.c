@@ -7,6 +7,22 @@
 #define SNEPPX_YARA_MAX_MATCHES 65536
 #define SNEPPX_YARA_SCAN_BUF_SIZE 1048576
 
+/*
+ * SNEPPX - Yara Scanner
+ *
+ * WHAT
+ *   Yara Scanner.
+ *
+ * CONCEPT
+ *   Provides the Yara Scanner.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char* rule_name;
     char* rule_author;

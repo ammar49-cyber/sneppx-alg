@@ -22,6 +22,22 @@
 #define CONNECT_TIMEOUT_MS 5000
 #define BUFFER_SIZE 65536
 
+/*
+ * SNEPPX - Ssl Scanner
+ *
+ * WHAT
+ *   Ssl Scanner.
+ *
+ * CONCEPT
+ *   Provides the Ssl Scanner.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char host[256];
     uint16_t port;

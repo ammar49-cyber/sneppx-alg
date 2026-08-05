@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Main
+ *
+ * WHAT
+ *   Main.
+ *
+ * CONCEPT
+ *   Provides the Main.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * SNEPPX Command-Line Interface — SKELETON
  * VERSION: v0.5
  *
