@@ -59,7 +59,7 @@ case "${OS}" in
             echo ""
             echo "  Install with:"
             echo "    xcode-select --install"
-            echo "    brew install cmake"
+            echo "    brew install cmake ninja"
         fi
         ;;
     windows)
