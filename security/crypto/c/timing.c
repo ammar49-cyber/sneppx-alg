@@ -5,6 +5,22 @@
 
 #if defined(_MSC_VER)
 #include <intrin.h>
+/*
+ * SNEPPX - Timing
+ *
+ * WHAT
+ *   Timing.
+ *
+ * CONCEPT
+ *   Provides timing attack countermeasures.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 #elif defined(_WIN32)
 #include <windows.h>
 #elif defined(__x86_64__) || defined(__amd64__)
@@ -13,6 +29,11 @@
 #include <arm_acle.h>
 #endif
 
+/**
+ * @brief Start Timing.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_timing_start(void) {
 #if defined(_MSC_VER)
     __cpuidex((int[]){0,0,0,0}, 0, 0);
@@ -41,6 +62,11 @@ uint64_t SNEPPX_timing_start(void) {
 #endif
 }
 
+/**
+ * @brief Perform Timing End.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_timing_end(void) {
 #if defined(_MSC_VER)
     unsigned int aux;
@@ -72,6 +98,11 @@ uint64_t SNEPPX_timing_end(void) {
 #endif
 }
 
+/**
+ * @brief Perform Timing Random Delay.
+ *
+ * @param min_ns [in] Min Ns value.
+ */
 void SNEPPX_timing_random_delay(uint32_t min_ns, uint32_t max_ns) {
     if (max_ns <= min_ns) return;
     uint32_t range = max_ns - min_ns;
@@ -85,6 +116,15 @@ void SNEPPX_timing_random_delay(uint32_t min_ns, uint32_t max_ns) {
     }
 }
 
+/**
+ * @brief Perform Timing Safe Equal.
+ *
+ * @param a [in] A value.
+ * @param b [in] B value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_timing_safe_equal(const uint8_t* a, const uint8_t* b, size_t len, uint64_t* timing_ns) {
     uint64_t t0 = SNEPPX_timing_start();
     int result = SNEPPX_ct_equal(a, b, len);

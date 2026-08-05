@@ -19,6 +19,18 @@
 
 
 
+/**
+ * @brief Perform Pbkdf2 Hmac Sha256.
+ *
+ * @param pwd [in] Pwd value.
+ * @param pwd_len [in] Pwd Len value.
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param iter [in] Iter value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pbkdf2_hmac_sha256(const uint8_t* pwd, size_t pwd_len, const uint8_t* salt, size_t salt_len, uint32_t iter, uint8_t* out, size_t out_len) {
     if (!pwd||!salt||!out) return -1;
     size_t hlen=32;
@@ -41,6 +53,18 @@ int SNEPPX_pbkdf2_hmac_sha256(const uint8_t* pwd, size_t pwd_len, const uint8_t*
     return 0;
 }
 
+/**
+ * @brief Perform Pbkdf2 Hmac Sha512.
+ *
+ * @param pwd [in] Pwd value.
+ * @param pwd_len [in] Pwd Len value.
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param iter [in] Iter value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pbkdf2_hmac_sha512(const uint8_t* pwd, size_t pwd_len, const uint8_t* salt, size_t salt_len, uint32_t iter, uint8_t* out, size_t out_len) {
     if (!pwd||!salt||!out) return -1;
     size_t hlen=64;

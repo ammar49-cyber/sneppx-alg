@@ -29,6 +29,16 @@ static void sha256_f(const uint8_t* in, size_t in_len, uint8_t out[32]) {
     memcpy(out,full,32);
 }
 
+/**
+ * @brief Initialize Drbg.
+ *
+ * @param ctx [out] Ctx value.
+ * @param entropy [in] Entropy value.
+ * @param entropy_len [in] Entropy Len value.
+ * @param nonce [in] Nonce value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_drbg_init(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_len, const uint8_t* nonce, size_t nonce_len) {
     if (!ctx||!entropy||entropy_len<48) return -1;
     memset(ctx,0,sizeof(*ctx));
@@ -56,6 +66,14 @@ int SNEPPX_drbg_init(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_len
     return 0;
 }
 
+/**
+ * @brief Perform Drbg Reseed.
+ *
+ * @param ctx [out] Ctx value.
+ * @param entropy [in] Entropy value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_drbg_reseed(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_len) {
     if (!ctx||!ctx->hb.initialized||!entropy) return -1;
     uint8_t seed[SNEPPX_DRBG_SEED_SIZE+256];
@@ -69,6 +87,14 @@ int SNEPPX_drbg_reseed(SNEPPXDRBG* ctx, const uint8_t* entropy, size_t entropy_l
     return 0;
 }
 
+/**
+ * @brief Perform Drbg Generate.
+ *
+ * @param ctx [out] Ctx value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_drbg_generate(SNEPPXDRBG* ctx, uint8_t* out, size_t out_len) {
     if (!ctx||!ctx->hb.initialized||!out||out_len>SNEPPX_DRBG_MAX_OUTPUT) return -1;
     if (ctx->hb.reseed_counter>10000) return -1;
@@ -92,6 +118,9 @@ int SNEPPX_drbg_generate(SNEPPXDRBG* ctx, uint8_t* out, size_t out_len) {
     return 0;
 }
 
+/**
+ * @brief Destroy Drbg.
+ */
 void SNEPPX_drbg_destroy(SNEPPXDRBG* ctx) {
     if (ctx) {
         volatile uint8_t* p=(volatile uint8_t*)ctx;
@@ -99,6 +128,11 @@ void SNEPPX_drbg_destroy(SNEPPXDRBG* ctx) {
     }
 }
 
+/**
+ * @brief Perform Drbg Self Test.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_drbg_self_test(void) {
     SNEPPXDRBG ctx;
     uint8_t entropy[48],nonce[16],out[64];

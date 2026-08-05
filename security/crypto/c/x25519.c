@@ -138,6 +138,9 @@ static void mask_l64(uint64_t *out, int bit) {
     *out = 0 - (uint64_t)(bit & 1);
 }
 
+/**
+ * @brief Perform X25519 Clamp.
+ */
 void SNEPPX_x25519_clamp(uint8_t scalar[32]) {
     scalar[0] &= 248;
     scalar[31] &= 127;
@@ -163,6 +166,9 @@ static void fe_mul_a24(uint64_t r[4], const uint64_t e[4]) {
     reduce(r, t);
 }
 
+/**
+ * @brief Perform X25519 Scalar Mult.
+ */
 void SNEPPX_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32]) {
     uint64_t x2[4], z2[4], x3[4], z3[4];
     uint64_t a[4], b[4], c[4], d[4];
@@ -217,18 +223,31 @@ void SNEPPX_x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32], const 
     for (int i = 0; i < 32; i++) out[31 - i] = p[i];
 }
 
+/**
+ * @brief Generate X25519.
+ */
 void SNEPPX_x25519_keygen(uint8_t public_key[32], uint8_t secret_key[32]) {
     SNEPPX_random_bytes(secret_key, 32);
     SNEPPX_x25519_clamp(secret_key);
     SNEPPX_x25519_scalar_mult(public_key, secret_key, basepoint);
 }
 
+/**
+ * @brief Perform X25519 Shared Secret.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_x25519_shared_secret(uint8_t shared[32], const uint8_t secret_key[32], const uint8_t public_key[32]) {
     if (!shared || !secret_key || !public_key) return -1;
     SNEPPX_x25519_scalar_mult(shared, secret_key, public_key);
     return 0;
 }
 
+/**
+ * @brief Perform X25519 Scalar Valid.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_x25519_scalar_valid(const uint8_t scalar[32]) {
     if (!scalar) return 0;
     for (int i = 0; i < 32; i++) if (scalar[i]) return 1;

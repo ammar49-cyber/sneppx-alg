@@ -30,6 +30,17 @@ static void poly1305_key_gen(const uint8_t key[32], const uint8_t nonce[12], uin
     memcpy(poly_key, block, 32);
 }
 
+/**
+ * @brief Encrypt Aead.
+ *
+ * @param ciphertext [out] Ciphertext value.
+ * @param plaintext [in] Plaintext value.
+ * @param len [in] Len value.
+ * @param aad [in] Aad value.
+ * @param aad_len [in] Aad Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_aead_encrypt(uint8_t* ciphertext, uint8_t tag[16], const uint8_t* plaintext, size_t len,
                       const uint8_t* aad, size_t aad_len, const uint8_t key[32], const uint8_t nonce[12]) {
     if (!ciphertext || !tag || !plaintext || !key || !nonce) return -1;
@@ -58,6 +69,17 @@ int SNEPPX_aead_encrypt(uint8_t* ciphertext, uint8_t tag[16], const uint8_t* pla
     return 0;
 }
 
+/**
+ * @brief Decrypt Aead.
+ *
+ * @param plaintext [out] Plaintext value.
+ * @param ciphertext [in] Ciphertext value.
+ * @param len [in] Len value.
+ * @param aad [in] Aad value.
+ * @param aad_len [in] Aad Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_aead_decrypt(uint8_t* plaintext, const uint8_t* ciphertext, size_t len,
                       const uint8_t tag[16], const uint8_t* aad, size_t aad_len,
                       const uint8_t key[32], const uint8_t nonce[12]) {

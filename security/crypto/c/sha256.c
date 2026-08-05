@@ -71,6 +71,11 @@ static void sha256_transform(sha256_ctx_t *ctx) {
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
 }
 
+/**
+ * @brief Perform Sha256.
+ *
+ * @param in [in] In value.
+ */
 void SNEPPX_sha256(uint8_t out[32], const uint8_t *in, size_t inlen) {
     sha256_ctx_t ctx;
     ctx.state[0] = 0x6a09e667; ctx.state[1] = 0xbb67ae85;

@@ -19,6 +19,17 @@
 
 
 
+/**
+ * @brief Perform Hkdf Extract.
+ *
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param ikm [in] Ikm value.
+ * @param ikm_len [in] Ikm Len value.
+ * @param prk [out] Prk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hkdf_extract(const uint8_t* salt, size_t salt_len, const uint8_t* ikm, size_t ikm_len, uint8_t* prk, size_t prk_len) {
     if (!ikm||!prk||prk_len<32) return -1;
     const uint8_t* s=salt;
@@ -28,6 +39,17 @@ int SNEPPX_hkdf_extract(const uint8_t* salt, size_t salt_len, const uint8_t* ikm
     return SNEPPX_hmac_sha256(s,sl,ikm,ikm_len,prk);
 }
 
+/**
+ * @brief Perform Hkdf Expand.
+ *
+ * @param prk [in] Prk value.
+ * @param prk_len [in] Prk Len value.
+ * @param info [in] Info value.
+ * @param info_len [in] Info Len value.
+ * @param okm [out] Okm value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hkdf_expand(const uint8_t* prk, size_t prk_len, const uint8_t* info, size_t info_len, uint8_t* okm, size_t okm_len) {
     if (!prk||!okm||okm_len>255*32) return -1;
     uint8_t t[32],block[32+256];
@@ -47,6 +69,19 @@ int SNEPPX_hkdf_expand(const uint8_t* prk, size_t prk_len, const uint8_t* info, 
     return 0;
 }
 
+/**
+ * @brief Perform Hkdf.
+ *
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param ikm [in] Ikm value.
+ * @param ikm_len [in] Ikm Len value.
+ * @param info [in] Info value.
+ * @param info_len [in] Info Len value.
+ * @param okm [out] Okm value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hkdf(const uint8_t* salt, size_t salt_len, const uint8_t* ikm, size_t ikm_len, const uint8_t* info, size_t info_len, uint8_t* okm, size_t okm_len) {
     uint8_t prk[32];
     if (SNEPPX_hkdf_extract(salt,salt_len,ikm,ikm_len,prk,32)!=0) return -1;

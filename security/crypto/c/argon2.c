@@ -59,6 +59,17 @@ static void fill_block_with_xor(const uint64_t prev[128], const uint64_t ref[128
     else { memcpy(next, tmp, 128 * 8); }
 }
 
+/**
+ * @brief Perform Argon2id.
+ *
+ * @param password [in] Password value.
+ * @param password_len [in] Password Len value.
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param config [in] Config value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_argon2id(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
                   const SNEPPXArgon2Config* config, uint8_t* hash) {
     if (!password || !salt || !config || !hash) return -1;
@@ -130,6 +141,17 @@ int SNEPPX_argon2id(const uint8_t* password, size_t password_len, const uint8_t*
     return 0;
 }
 
+/**
+ * @brief Verify Argon2id.
+ *
+ * @param password [in] Password value.
+ * @param password_len [in] Password Len value.
+ * @param salt [in] Salt value.
+ * @param salt_len [in] Salt Len value.
+ * @param config [in] Config value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_argon2id_verify(const uint8_t* password, size_t password_len, const uint8_t* salt, size_t salt_len,
                          const SNEPPXArgon2Config* config, const uint8_t* expected_hash) {
     uint8_t computed[32];

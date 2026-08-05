@@ -26,6 +26,11 @@ static void sipround(SNEPPXSipHash* sh) {
     sh->v2+=sh->v1; sh->v1=rotl64(sh->v1,17); sh->v1^=sh->v2; sh->v2=rotl64(sh->v2,32);
 }
 
+/**
+ * @brief Initialize Siphash.
+ *
+ * @param sh [out] Sh value.
+ */
 void SNEPPX_siphash_init(SNEPPXSipHash* sh, const uint8_t key[16]) {
     memset(sh,0,sizeof(*sh));
     sh->k0=((uint64_t*)key)[0];
@@ -37,6 +42,12 @@ void SNEPPX_siphash_init(SNEPPXSipHash* sh, const uint8_t key[16]) {
     sh->c_rounds=2; sh->d_rounds=4;
 }
 
+/**
+ * @brief Update Siphash.
+ *
+ * @param sh [out] Sh value.
+ * @param data [in] Data value.
+ */
 void SNEPPX_siphash_update(SNEPPXSipHash* sh, const uint8_t* data, size_t len) {
     uint64_t m;
     size_t off=0;
@@ -54,12 +65,24 @@ void SNEPPX_siphash_update(SNEPPXSipHash* sh, const uint8_t* data, size_t len) {
     sh->v0^=m;
 }
 
+/**
+ * @brief Perform Siphash Finalize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_siphash_finalize(SNEPPXSipHash* sh) {
     sh->v2^=0xFF;
     for (int i=0;i<sh->d_rounds;i++) sipround(sh);
     return sh->v0^sh->v1^sh->v2^sh->v3;
 }
 
+/**
+ * @brief Hash Sip.
+ *
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_siphash(const uint8_t key[16], const uint8_t* data, size_t len) {
     SNEPPXSipHash sh;
     SNEPPX_siphash_init(&sh,key);
@@ -67,11 +90,23 @@ uint64_t SNEPPX_siphash(const uint8_t key[16], const uint8_t* data, size_t len) 
     return SNEPPX_siphash_finalize(&sh);
 }
 
+/**
+ * @brief Initialize Siphash 24.
+ *
+ * @param sh [out] Sh value.
+ */
 void SNEPPX_siphash_24_init(SNEPPXSipHash* sh, const uint8_t key[16]) {
     SNEPPX_siphash_init(&sh,key);
     sh->c_rounds=2; sh->d_rounds=4;
 }
 
+/**
+ * @brief Perform Siphash 24.
+ *
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_siphash_24(const uint8_t key[16], const uint8_t* data, size_t len) {
     return SNEPPX_siphash(key,data,len);
 }

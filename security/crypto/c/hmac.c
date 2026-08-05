@@ -54,6 +54,15 @@ static void hmac_compute(const uint8_t* key, size_t key_len, const uint8_t* data
     memset(k,0,sizeof(k)); memset(ipad,0,sizeof(ipad)); memset(opad,0,sizeof(opad));
 }
 
+/**
+ * @brief Initialize Hmac.
+ *
+ * @param ctx [out] Ctx value.
+ * @param key [in] Key value.
+ * @param key_len [in] Key Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hmac_init(SNEPPXHMAC* ctx, const uint8_t* key, size_t key_len, int hash_type) {
     if (!ctx||!key) return -1;
     ctx->key_len=key_len<SNEPPX_HMAC_MAX_KEY?key_len:SNEPPX_HMAC_MAX_KEY;
@@ -62,6 +71,16 @@ int SNEPPX_hmac_init(SNEPPXHMAC* ctx, const uint8_t* key, size_t key_len, int ha
     return 0;
 }
 
+/**
+ * @brief Compute Hmac.
+ *
+ * @param ctx [out] Ctx value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hmac_compute(SNEPPXHMAC* ctx, const uint8_t* data, size_t data_len, uint8_t* out, size_t* out_len) {
     if (!ctx||!data||!out||!out_len) return -1;
     size_t hash_size=(ctx->hash_type==0)?32:64;
@@ -71,12 +90,32 @@ int SNEPPX_hmac_compute(SNEPPXHMAC* ctx, const uint8_t* data, size_t data_len, u
     return 0;
 }
 
+/**
+ * @brief Perform Hmac Sha256.
+ *
+ * @param key [in] Key value.
+ * @param key_len [in] Key Len value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hmac_sha256(const uint8_t* key, size_t key_len, const uint8_t* data, size_t data_len, uint8_t out[32]) {
     if (!key||!data||!out) return -1;
     hmac_compute(key,key_len,data,data_len,out,32,0);
     return 0;
 }
 
+/**
+ * @brief Perform Hmac Sha512.
+ *
+ * @param key [in] Key value.
+ * @param key_len [in] Key Len value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hmac_sha512(const uint8_t* key, size_t key_len, const uint8_t* data, size_t data_len, uint8_t out[64]) {
     if (!key||!data||!out) return -1;
     hmac_compute(key,key_len,data,data_len,out,64,1);

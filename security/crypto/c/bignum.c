@@ -6,6 +6,22 @@
     #define NO_UINT128
 #endif
 
+/*
+ * SNEPPX - Bignum
+ *
+ * WHAT
+ *   Bignum.
+ *
+ * CONCEPT
+ *   Provides big-number arithmetic.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Functions marked WITH_UINT128 use 128-bit arithmetic for correctness.
    When NO_UINT128 is defined (MSVC), those functions are replaced with
    stubs that return -1 (not supported). The remaining functions work
@@ -21,12 +37,22 @@ static unsigned clz64(uint64_t x) {
 
 void SNEPPX_bn_init(SNEPPXBigNum* bn) { if (bn) memset(bn,0,sizeof(*bn)); }
 
+/**
+ * @brief Perform Bn Zero.
+ */
 void SNEPPX_bn_zero(SNEPPXBigNum* bn) {
     if (!bn) return;
     memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
     bn->used=0; bn->sign=0;
 }
 
+/**
+ * @brief Perform Bn Set Word.
+ *
+ * @param bn [out] Bn value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_set_word(SNEPPXBigNum* bn, SNEPPX_BN_WORD val) {
     if (!bn) return -1;
     memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
@@ -34,6 +60,14 @@ int SNEPPX_bn_set_word(SNEPPXBigNum* bn, SNEPPX_BN_WORD val) {
     return 0;
 }
 
+/**
+ * @brief Perform Bn Set Array.
+ *
+ * @param bn [out] Bn value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_set_array(SNEPPXBigNum* bn, const uint8_t* bytes, size_t len) {
     if (!bn||!bytes) return -1;
     memset(bn->words,0,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
@@ -257,6 +291,13 @@ int SNEPPX_bn_set_array(SNEPPXBigNum* bn, const uint8_t* bytes, size_t len) {
 
 
 
+/**
+ * @brief Perform Bn From Hex.
+ *
+ * @param bn [out] Bn value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_from_hex(SNEPPXBigNum* bn, const char* hex) {
     if (!bn||!hex) return -1;
     size_t len=strlen(hex);
@@ -283,6 +324,12 @@ int SNEPPX_bn_from_hex(SNEPPXBigNum* bn, const char* hex) {
     return 0;
 }
 
+/**
+ * @brief Perform Bn To Array.
+ *
+ * @param bn [in] Bn value.
+ * @param out [out] Out value.
+ */
 void SNEPPX_bn_to_array(const SNEPPXBigNum* bn, uint8_t* out, size_t* out_len) {
     if (!bn||!out||!out_len) return;
     size_t pos=0;
@@ -295,6 +342,13 @@ void SNEPPX_bn_to_array(const SNEPPXBigNum* bn, uint8_t* out, size_t* out_len) {
     done: *out_len=pos;
 }
 
+/**
+ * @brief Perform Bn Copy.
+ *
+ * @param dst [out] Dst value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_copy(SNEPPXBigNum* dst, const SNEPPXBigNum* src) {
     if (!dst||!src) return -1;
     memcpy(dst->words,src->words,sizeof(SNEPPX_BN_WORD)*SNEPPX_BN_MAX_WORDS);
@@ -302,9 +356,26 @@ int SNEPPX_bn_copy(SNEPPXBigNum* dst, const SNEPPXBigNum* src) {
     return 0;
 }
 
+/**
+ * @brief Perform Bn Is Zero.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_is_zero(const SNEPPXBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==0; }
+/**
+ * @brief Perform Bn Is One.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_is_one(const SNEPPXBigNum* bn) { return bn&&bn->used==1&&bn->words[0]==1; }
 
+/**
+ * @brief Perform Bn Cmp.
+ *
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_cmp(const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!a||!b) return -2;
     if (a->used>b->used) return 1;
@@ -316,6 +387,13 @@ int SNEPPX_bn_cmp(const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     return 0;
 }
 
+/**
+ * @brief Perform Bn Cmp Word.
+ *
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_cmp_word(const SNEPPXBigNum* a, SNEPPX_BN_WORD b) {
     if (!a) return -2;
     if (a->used>1) return 1;
@@ -324,6 +402,14 @@ int SNEPPX_bn_cmp_word(const SNEPPXBigNum* a, SNEPPX_BN_WORD b) {
     return 0;
 }
 
+/**
+ * @brief Add Bn.
+ *
+ * @param r [out] R value.
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_add(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
     int max=a->used>b->used?a->used:b->used;
@@ -347,6 +433,14 @@ int SNEPPX_bn_add(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b)
     return 0;
 }
 
+/**
+ * @brief Perform Bn Sub.
+ *
+ * @param r [out] R value.
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_sub(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
     int cmp=SNEPPX_bn_cmp(a,b);
@@ -371,6 +465,14 @@ int SNEPPX_bn_sub(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b)
     return 0;
 }
 
+/**
+ * @brief Perform Bn Mod.
+ *
+ * @param r [out] R value.
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m) {
     if (!r||!a||!m) return -1;
     if (SNEPPX_bn_is_zero(m)) return -1;
@@ -379,6 +481,15 @@ int SNEPPX_bn_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m)
     return ret;
 }
 
+/**
+ * @brief Perform Bn Exp Mod.
+ *
+ * @param r [out] R value.
+ * @param base [in] Base value.
+ * @param exp [in] Exp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_exp_mod(SNEPPXBigNum* r, const SNEPPXBigNum* base, const SNEPPXBigNum* exp, const SNEPPXBigNum* mod) {
     if (!r||!base||!exp||!mod||SNEPPX_bn_is_zero(mod)) return -1;
     SNEPPXBigNum b,e,t; SNEPPX_bn_init(&b); SNEPPX_bn_init(&e); SNEPPX_bn_init(&t);
@@ -395,6 +506,14 @@ int SNEPPX_bn_exp_mod(SNEPPXBigNum* r, const SNEPPXBigNum* base, const SNEPPXBig
     return 0;
 }
 
+/**
+ * @brief Perform Bn Gcd.
+ *
+ * @param r [out] R value.
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_gcd(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b) {
     if (!r||!a||!b) return -1;
     SNEPPXBigNum ta,tb,tr; SNEPPX_bn_init(&ta); SNEPPX_bn_init(&tb); SNEPPX_bn_init(&tr);
@@ -408,6 +527,14 @@ int SNEPPX_bn_gcd(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* b)
     return 0;
 }
 
+/**
+ * @brief Perform Bn Inv Mod.
+ *
+ * @param r [out] R value.
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_inv_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum* m) {
     if (!r||!a||!m||SNEPPX_bn_is_zero(m)) return -1;
     SNEPPXBigNum r0,r1,s0,s1,q,tmp; SNEPPX_bn_init(&r0); SNEPPX_bn_init(&r1);
@@ -434,6 +561,11 @@ int SNEPPX_bn_inv_mod(SNEPPXBigNum* r, const SNEPPXBigNum* a, const SNEPPXBigNum
     return 0;
 }
 
+/**
+ * @brief Perform Bn Is Prime.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bn_is_prime(const SNEPPXBigNum* bn) {
     if (!bn) return -1;
     if (SNEPPX_bn_cmp_word(bn,2)<0) return 0;
@@ -466,6 +598,9 @@ int SNEPPX_bn_is_prime(const SNEPPXBigNum* bn) {
     return 1;
 }
 
+/**
+ * @brief Perform Bn Print.
+ */
 void SNEPPX_bn_print(const SNEPPXBigNum* bn) {
     if (!bn) return;
     if (bn->sign) printf("-");

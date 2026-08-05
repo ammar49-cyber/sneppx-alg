@@ -67,6 +67,9 @@ static void sha3_absorb(SNEPPXSHA3State* s, const uint8_t* data, size_t len) {
     }
 }
 
+/**
+ * @brief Initialize Sha3 256.
+ */
 void SNEPPX_sha3_256_init(SNEPPXSHA3State* s) {
     memset(s, 0, sizeof(*s));
     s->rate = 136;
@@ -74,6 +77,9 @@ void SNEPPX_sha3_256_init(SNEPPXSHA3State* s) {
     s->digest_size = 32;
 }
 
+/**
+ * @brief Initialize Sha3 512.
+ */
 void SNEPPX_sha3_512_init(SNEPPXSHA3State* s) {
     memset(s, 0, sizeof(*s));
     s->rate = 72;
@@ -81,6 +87,12 @@ void SNEPPX_sha3_512_init(SNEPPXSHA3State* s) {
     s->digest_size = 64;
 }
 
+/**
+ * @brief Update Sha3.
+ *
+ * @param s [out] S value.
+ * @param data [in] Data value.
+ */
 void SNEPPX_sha3_update(SNEPPXSHA3State* s, const uint8_t* data, size_t len) {
     if (s->buflen) {
         size_t fill = s->rate - s->buflen;
@@ -97,6 +109,11 @@ void SNEPPX_sha3_update(SNEPPXSHA3State* s, const uint8_t* data, size_t len) {
     if (len) { memcpy(s->buffer, data, len); s->buflen = (unsigned int)len; }
 }
 
+/**
+ * @brief Perform Sha3 Finish.
+ *
+ * @param s [out] S value.
+ */
 void SNEPPX_sha3_finish(SNEPPXSHA3State* s, uint8_t* hash) {
     uint8_t buf[200];
     memcpy(buf, s->buffer, s->buflen);

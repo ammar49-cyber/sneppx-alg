@@ -208,6 +208,14 @@ static void spx_ht_sign(uint8_t *sig, size_t *siglen, const uint8_t *msg, const 
     *siglen = pos;
 }
 
+/**
+ * @brief Generate Sphincs.
+ *
+ * @param pk [out] Pk value.
+ * @param sk [out] Sk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sphincs_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     uint8_t sk_seed[SPX_N], sk_prf[SPX_N], pub_seed[SPX_N];
@@ -222,6 +230,17 @@ int SNEPPX_sphincs_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     return 0;
 }
 
+/**
+ * @brief Sign Sphincs.
+ *
+ * @param sig [out] Sig value.
+ * @param siglen [out] Siglen value.
+ * @param m [in] M value.
+ * @param mlen [in] Mlen value.
+ * @param sk [in] Sk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sphincs_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
     if (!sig || !siglen || !m || !sk) return -1;
     uint8_t sk_seed[SPX_N], pub_seed[SPX_N];
@@ -231,6 +250,17 @@ int SNEPPX_sphincs_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t m
     return 0;
 }
 
+/**
+ * @brief Verify Sphincs.
+ *
+ * @param sig [in] Sig value.
+ * @param siglen [in] Siglen value.
+ * @param m [in] M value.
+ * @param mlen [in] Mlen value.
+ * @param pk [in] Pk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sphincs_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk, int variant) {
     if (!sig || !pk) return -1;
     size_t fors_sig_bytes = (size_t)SPX_FORS_TREES * (SPX_N + (size_t)SPX_FORS_HEIGHT * SPX_N);

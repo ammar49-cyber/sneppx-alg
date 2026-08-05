@@ -20,6 +20,22 @@
     G(v[3], v[4], v[9],  v[14], msg[r[14]], msg[r[15]]); \
 } while(0)
 
+/*
+ * SNEPPX - Blake3
+ *
+ * WHAT
+ *   Blake3.
+ *
+ * CONCEPT
+ *   Provides the Blake3.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static const uint32_t IV[8] = {
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
     0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
@@ -89,6 +105,9 @@ static void blake3_hash_chunk(const uint32_t key[8], const uint8_t* data, size_t
     blake3_compress(key, block, counter, flags & ~FLAG_CHUNK_START, out);
 }
 
+/**
+ * @brief Initialize Blake3.
+ */
 void SNEPPX_blake3_init(SNEPPXBlake3State* s) {
     memcpy(s->key, IV, 32);
     s->counter = 0;
@@ -96,6 +115,12 @@ void SNEPPX_blake3_init(SNEPPXBlake3State* s) {
     s->flags = 0;
 }
 
+/**
+ * @brief Update Blake3.
+ *
+ * @param s [out] S value.
+ * @param data [in] Data value.
+ */
 void SNEPPX_blake3_update(SNEPPXBlake3State* s, const uint8_t* data, size_t len) {
     while (len) {
         size_t take = SNEPPX_BLAKE3_CHUNK_LEN - s->buflen;
@@ -112,6 +137,11 @@ void SNEPPX_blake3_update(SNEPPXBlake3State* s, const uint8_t* data, size_t len)
     }
 }
 
+/**
+ * @brief Perform Blake3 Finish.
+ *
+ * @param s [out] S value.
+ */
 void SNEPPX_blake3_finish(SNEPPXBlake3State* s, uint8_t* hash) {
     uint32_t cv[16];
     uint8_t flags = FLAG_ROOT;

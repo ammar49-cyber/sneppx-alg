@@ -55,6 +55,9 @@ static void store32(uint8_t* b, uint32_t w) { b[0]=(uint8_t)(w>>24); b[1]=(uint8
 static void xor_block(uint8_t* d, const uint8_t* s) { for (int i=0;i<16;i++) d[i]^=s[i]; }
 static void inc32(uint8_t* block) { for (int i=15;i>=12;i--) if (++block[i]) break; }
 
+/**
+ * @brief Expand Aes256.
+ */
 void SNEPPX_aes256_key_expansion(const uint8_t key[32], uint32_t rk[60]) {
     for (int i=0;i<8;i++) rk[i]=load32(key+i*4);
     for (int i=8;i<60;i++) {
@@ -65,6 +68,9 @@ void SNEPPX_aes256_key_expansion(const uint8_t key[32], uint32_t rk[60]) {
     }
 }
 
+/**
+ * @brief Encrypt a single block with Aes256.
+ */
 void SNEPPX_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
     uint32_t s[4];
     for (int i=0;i<4;i++) s[i]=load32(in+i*4)^rk[i];
@@ -85,6 +91,9 @@ void SNEPPX_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[16], ui
     for (int i=0;i<4;i++) store32(out+i*4,load32(out+i*4)^rk[56+i]);
 }
 
+/**
+ * @brief Decrypt a single block with Aes256.
+ */
 void SNEPPX_aes256_decrypt_block(const uint32_t rk[60], const uint8_t in[16], uint8_t out[16]) {
     uint32_t s[4];
     for (int i=0;i<4;i++) s[i]=load32(in+i*4)^rk[56+i];
@@ -120,6 +129,13 @@ static void gcm_len_block(uint8_t* out, uint64_t aad_len, uint64_t crypt_len) {
     for (int i=0;i<8;i++) { out[i]=aad_len>>(56-8*i); out[8+i]=crypt_len>>(56-8*i); }
 }
 
+/**
+ * @brief Initialize Aes Gcm.
+ *
+ * @param ctx [out] Ctx value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_aes_gcm_init(SNEPPXAESGCM* ctx, const uint8_t key[32], const uint8_t iv[12], int encrypt) {
     if (!ctx||!key||!iv) return -1;
     memset(ctx,0,sizeof(*ctx));
@@ -134,12 +150,25 @@ int SNEPPX_aes_gcm_init(SNEPPXAESGCM* ctx, const uint8_t key[32], const uint8_t 
     return 0;
 }
 
+/**
+ * @brief Perform Aes Gcm Update Aad.
+ *
+ * @param ctx [out] Ctx value.
+ * @param aad [in] Aad value.
+ */
 void SNEPPX_aes_gcm_update_aad(SNEPPXAESGCM* ctx, const uint8_t* aad, size_t aad_len) {
     if (!ctx||!aad||!aad_len) return;
     ctx->aad_len+=aad_len;
     gcm_ghash(ctx->y,ctx->h,aad,aad_len);
 }
 
+/**
+ * @brief Encrypt Aes Gcm.
+ *
+ * @param ctx [out] Ctx value.
+ * @param pt [in] Pt value.
+ * @param ct [out] Ct value.
+ */
 void SNEPPX_aes_gcm_encrypt(SNEPPXAESGCM* ctx, const uint8_t* pt, uint8_t* ct, size_t len) {
     if (!ctx||!ct||!len) return;
     uint8_t counter[16],ebc[16];
@@ -156,6 +185,15 @@ void SNEPPX_aes_gcm_encrypt(SNEPPXAESGCM* ctx, const uint8_t* pt, uint8_t* ct, s
     gcm_ghash(ctx->y,ctx->h,ct,len);
 }
 
+/**
+ * @brief Decrypt Aes Gcm.
+ *
+ * @param ctx [out] Ctx value.
+ * @param ct [in] Ct value.
+ * @param pt [out] Pt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_aes_gcm_decrypt(SNEPPXAESGCM* ctx, const uint8_t* ct, uint8_t* pt, size_t len) {
     if (!ctx||!ct||!pt) return -1;
     ctx->crypt_len+=len;
@@ -164,6 +202,11 @@ int SNEPPX_aes_gcm_decrypt(SNEPPXAESGCM* ctx, const uint8_t* ct, uint8_t* pt, si
     return 0;
 }
 
+/**
+ * @brief Perform Aes Gcm Finalize.
+ *
+ * @param ctx [out] Ctx value.
+ */
 void SNEPPX_aes_gcm_finalize(SNEPPXAESGCM* ctx, uint8_t tag[16]) {
     if (!ctx) return;
     uint8_t len_block[16];
@@ -174,6 +217,13 @@ void SNEPPX_aes_gcm_finalize(SNEPPXAESGCM* ctx, uint8_t tag[16]) {
     if (tag) memcpy(tag,ctx->tag,16);
 }
 
+/**
+ * @brief Perform Aes Gcm Verify Tag.
+ *
+ * @param ctx [out] Ctx value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_aes_gcm_verify_tag(SNEPPXAESGCM* ctx, const uint8_t expected[16]) {
     if (!ctx||!expected) return 0;
     int diff=0;

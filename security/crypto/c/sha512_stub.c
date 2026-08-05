@@ -18,10 +18,24 @@
 
 
 
+/**
+ * @brief Hash Sha512.
+ *
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_sha512_hash(const uint8_t *data, size_t len, uint8_t hash[64]) {
     SNEPPX_sha512(data, len, hash);
 }
 
+/**
+ * @brief Perform Sha512 Hmac.
+ *
+ * @param key [in] Key value.
+ * @param key_len [in] Key Len value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ */
 void SNEPPX_sha512_hmac(const uint8_t *key, size_t key_len, const uint8_t *data, size_t data_len, uint8_t mac[64]) {
     uint8_t k_ipad[128], k_opad[128];
     uint8_t inner_key[128];

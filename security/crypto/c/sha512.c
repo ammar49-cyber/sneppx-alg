@@ -73,6 +73,9 @@ static void sha512_transform(SNEPPXSHA512Context* ctx, const uint8_t block[SNEPP
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
 }
 
+/**
+ * @brief Initialize Sha512.
+ */
 void SNEPPX_sha512_init(SNEPPXSHA512Context* ctx) {
     ctx->state[0] = 0x6a09e667f3bcc908ULL;
     ctx->state[1] = 0xbb67ae8584caa73bULL;
@@ -86,6 +89,12 @@ void SNEPPX_sha512_init(SNEPPXSHA512Context* ctx) {
     ctx->buflen = 0;
 }
 
+/**
+ * @brief Update Sha512.
+ *
+ * @param ctx [out] Ctx value.
+ * @param data [in] Data value.
+ */
 void SNEPPX_sha512_update(SNEPPXSHA512Context* ctx, const uint8_t* data, size_t len) {
     uint64_t bitlen = (uint64_t)len * 8;
     ctx->count[1] += (uint64_t)((ctx->count[0] + bitlen) < ctx->count[0]);
@@ -105,6 +114,11 @@ void SNEPPX_sha512_update(SNEPPXSHA512Context* ctx, const uint8_t* data, size_t 
     if (len) { memcpy(ctx->buffer, data, len); ctx->buflen = (unsigned int)len; }
 }
 
+/**
+ * @brief Perform Sha512 Finish.
+ *
+ * @param ctx [out] Ctx value.
+ */
 void SNEPPX_sha512_finish(SNEPPXSHA512Context* ctx, uint8_t digest[SNEPPX_SHA512_DIGEST_SIZE]) {
     uint8_t pad[SNEPPX_SHA512_BLOCK_SIZE * 2];
     size_t padlen = 0;
@@ -122,6 +136,12 @@ void SNEPPX_sha512_finish(SNEPPXSHA512Context* ctx, uint8_t digest[SNEPPX_SHA512
             digest[i * 8 + j] = (uint8_t)(ctx->state[i] >> (56 - j * 8));
 }
 
+/**
+ * @brief Perform Sha512.
+ *
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_sha512(const uint8_t* data, size_t len, uint8_t digest[SNEPPX_SHA512_DIGEST_SIZE]) {
     SNEPPXSHA512Context ctx;
     SNEPPX_sha512_init(&ctx);

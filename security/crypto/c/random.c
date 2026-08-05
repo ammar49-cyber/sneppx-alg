@@ -4,6 +4,22 @@
 #include <windows.h>
 #include <bcrypt.h>
 #pragma comment(lib, "bcrypt.lib")
+/*
+ * SNEPPX - Random
+ *
+ * WHAT
+ *   Random.
+ *
+ * CONCEPT
+ *   Provides randomness generation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 #elif defined(__linux__) || defined(__unix__)
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -12,6 +28,13 @@
 #include <stdlib.h>
 #endif
 
+/**
+ * @brief Perform Random Bytes.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_random_bytes(uint8_t* buffer, size_t len) {
     if (!buffer || !len) return -1;
 #ifdef _WIN32
@@ -57,12 +80,22 @@ int SNEPPX_random_bytes(uint8_t* buffer, size_t len) {
 
 }
 
+/**
+ * @brief Perform Random Uint32.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_random_uint32(void) {
     uint32_t val;
     if (SNEPPX_random_bytes((uint8_t*)&val, 4) != 0) return 0;
     return val;
 }
 
+/**
+ * @brief Perform Random Uniform.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_random_uniform(uint32_t upper_bound) {
     if (upper_bound == 0) return 0;
     uint32_t threshold = -upper_bound % upper_bound;

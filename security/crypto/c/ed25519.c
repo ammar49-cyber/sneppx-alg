@@ -7,6 +7,30 @@
 #endif
 #include <stdio.h>
 
+/*
+ * SNEPPX - Ed25519
+ *
+ * WHAT
+ *   Ed25519.
+ *
+ * CONCEPT
+ *   Provides Ed25519 signatures (RFC 8032).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Perform Random Bytes.
+ *
+ * @param buffer [out] Buffer value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 extern int SNEPPX_random_bytes(uint8_t* buffer, size_t len);
 
 /* GF(2^255-19) field element: 5 limbs of 51 bits */
@@ -425,6 +449,13 @@ static void sc_mul256(uint8_t p[64], const uint8_t a[32], const uint8_t b[32]) {
     }
 }
 
+/**
+ * @brief Perform Ed25519 Secret Key Expand.
+ *
+ * @param expanded_sk [out] Expanded Sk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed) {
     if (!seed || !expanded_sk) return -1;
     uint8_t hash[64];
@@ -434,6 +465,11 @@ int SNEPPX_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed) 
     return 0;
 }
 
+/**
+ * @brief Perform Ed25519 Keypair Generate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_keypair_generate(SNEPPXEd25519Keypair* kp) {
     if (!kp) return -1;
     init_base_point();
@@ -472,6 +508,15 @@ int SNEPPX_ed25519_keypair_generate(SNEPPXEd25519Keypair* kp) {
     return 0;
 }
 
+/**
+ * @brief Sign Ed25519.
+ *
+ * @param kp [in] Kp value.
+ * @param message [in] Message value.
+ * @param msg_len [in] Msg Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, size_t msg_len, SNEPPXEd25519Signature* sig) {
     if (!kp || !message || !sig) return -1;
     init_base_point();
@@ -518,6 +563,15 @@ int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, 
     return 0;
 }
 
+/**
+ * @brief Verify Ed25519.
+ *
+ * @param public_key [in] Public Key value.
+ * @param message [in] Message value.
+ * @param msg_len [in] Msg Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig) {
     if (!public_key || !message || !sig) return -1;
     init_base_point();
@@ -564,6 +618,14 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
     return SNEPPX_ct_equal(bx, cx, 32) && SNEPPX_ct_equal(by, cy, 32);
 }
 
+/**
+ * @brief Perform Ed25519 Scalar Multiply.
+ *
+ * @param result [out] Result value.
+ * @param scalar [in] Scalar value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point_bytes) {
     if (!result || !scalar || !point_bytes) return -1;
     point p; if (point_from_bytes(&p, point_bytes) != 0) return -1;

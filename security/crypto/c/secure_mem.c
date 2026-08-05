@@ -14,6 +14,22 @@
 #include <unistd.h>
 #endif
 
+/*
+ * SNEPPX - Secure Mem
+ *
+ * WHAT
+ *   Secure Mem.
+ *
+ * CONCEPT
+ *   Provides the Secure Mem.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXSecurePool {
     uint8_t* base;
     uint8_t* raw_base;   /* original allocation (before guard/ASLR offset) */
@@ -39,11 +55,23 @@ static size_t get_page_size(void) {
 }
 #endif
 
+/**
+ * @brief Perform Secure Zero.
+ *
+ * @param ptr [out] Ptr value.
+ */
 void SNEPPX_secure_zero(void* ptr, size_t len) {
     volatile uint8_t* p = (volatile uint8_t*)ptr;
     for (size_t i = 0; i < len; i++) p[i] = 0;
 }
 
+/**
+ * @brief Create Secure Pool.
+ *
+ * @param size [in] Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXSecurePool* SNEPPX_secure_pool_create(size_t size, const SNEPPXSecureAllocConfig* config) {
     size_t page = get_page_size();
     size_t alloc_size = size + (config && config->guard_pages ? 2 * page : 0);
@@ -108,6 +136,9 @@ SNEPPXSecurePool* SNEPPX_secure_pool_create(size_t size, const SNEPPXSecureAlloc
     return pool;
 }
 
+/**
+ * @brief Destroy Secure Pool.
+ */
 void SNEPPX_secure_pool_destroy(SNEPPXSecurePool* pool) {
     if (!pool) return;
     SNEPPX_secure_zero(pool->base, pool->capacity);
@@ -138,6 +169,14 @@ void SNEPPX_secure_pool_destroy(SNEPPXSecurePool* pool) {
     free(pool);
 }
 
+/**
+ * @brief Perform Secure Malloc.
+ *
+ * @param pool [out] Pool value.
+ * @param size [in] Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_secure_malloc(SNEPPXSecurePool* pool, size_t size, size_t alignment) {
     if (!pool || !size) return NULL;
     if (alignment < 16) alignment = 16;
@@ -158,6 +197,12 @@ void* SNEPPX_secure_malloc(SNEPPXSecurePool* pool, size_t size, size_t alignment
     return ptr;
 }
 
+/**
+ * @brief Free Secure Pool.
+ *
+ * @param pool [out] Pool value.
+ * @param ptr [out] Ptr value.
+ */
 void SNEPPX_secure_pool_free(SNEPPXSecurePool* pool, void* ptr, size_t size) {
     if (!pool || !ptr) return;
     if (pool->use_canaries) {
@@ -176,6 +221,16 @@ void SNEPPX_secure_pool_free(SNEPPXSecurePool* pool, void* ptr, size_t size) {
     SNEPPX_secure_zero(ptr, size);
 }
 
+/**
+ * @brief Perform Secure Realloc.
+ *
+ * @param pool [out] Pool value.
+ * @param ptr [out] Ptr value.
+ * @param old_size [in] Old Size value.
+ * @param new_size [in] New Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_secure_realloc(SNEPPXSecurePool* pool, void* ptr, size_t old_size, size_t new_size, size_t alignment) {
     if (!pool) return NULL;
     if (!ptr) return SNEPPX_secure_malloc(pool, new_size, alignment);
@@ -187,6 +242,13 @@ void* SNEPPX_secure_realloc(SNEPPXSecurePool* pool, void* ptr, size_t old_size, 
     return new_ptr;
 }
 
+/**
+ * @brief Perform Secure Pool Stats.
+ *
+ * @param pool [out] Pool value.
+ * @param total [out] Total value.
+ * @param used [out] Used value.
+ */
 void SNEPPX_secure_pool_stats(SNEPPXSecurePool* pool, size_t* total, size_t* used, size_t* peak) {
     if (!pool) return;
     if (total) *total = pool->capacity;

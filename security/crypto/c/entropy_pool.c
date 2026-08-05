@@ -12,6 +12,22 @@
 #include <stdio.h>
 #endif
 
+/*
+ * SNEPPX - Entropy Pool
+ *
+ * WHAT
+ *   Entropy Pool.
+ *
+ * CONCEPT
+ *   Provides entropy collection.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static uint64_t get_tsc(void) {
 #ifdef _WIN32
     LARGE_INTEGER c; QueryPerformanceCounter(&c); return (uint64_t)c.QuadPart;
@@ -21,6 +37,11 @@ static uint64_t get_tsc(void) {
 #endif
 }
 
+/**
+ * @brief Initialize Entropy Pool.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_init(SNEPPXEntropyPool* ep) {
     if (!ep) return -1;
     memset(ep,0,sizeof(*ep));
@@ -28,6 +49,15 @@ int SNEPPX_entropy_pool_init(SNEPPXEntropyPool* ep) {
     return 0;
 }
 
+/**
+ * @brief Add Entropy Pool.
+ *
+ * @param ep [out] Ep value.
+ * @param src [in] Src value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_add(SNEPPXEntropyPool* ep, SNEPPXEntropySource src, const uint8_t* data, size_t len) {
     if (!ep||!data||len==0) return -1;
     uint8_t sip_key[16]={0};
@@ -60,6 +90,11 @@ int SNEPPX_entropy_pool_add(SNEPPXEntropyPool* ep, SNEPPXEntropySource src, cons
     return 0;
 }
 
+/**
+ * @brief Perform Entropy Pool Add Rdtsc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_add_rdtsc(SNEPPXEntropyPool* ep) {
     if (!ep) return -1;
     uint64_t tsc=get_tsc();
@@ -68,6 +103,11 @@ int SNEPPX_entropy_pool_add_rdtsc(SNEPPXEntropyPool* ep) {
     return SNEPPX_entropy_pool_add(ep,SNEPPX_ENTROPY_SOURCE_RDTSC,(const uint8_t*)&jitter,sizeof(jitter));
 }
 
+/**
+ * @brief Perform Entropy Pool Add Os.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_add_os(SNEPPXEntropyPool* ep) {
     if (!ep) return -1;
     uint8_t buf[32];
@@ -103,6 +143,11 @@ int SNEPPX_entropy_pool_add_os(SNEPPXEntropyPool* ep) {
     return SNEPPX_entropy_pool_add(ep,SNEPPX_ENTROPY_SOURCE_OS,buf,sizeof(buf));
 }
 
+/**
+ * @brief Perform Entropy Pool Collect.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_collect(SNEPPXEntropyPool* ep) {
     if (!ep) return -1;
     SNEPPX_entropy_pool_add_rdtsc(ep);
@@ -110,6 +155,14 @@ int SNEPPX_entropy_pool_collect(SNEPPXEntropyPool* ep) {
     return 0;
 }
 
+/**
+ * @brief Get Entropy Pool.
+ *
+ * @param ep [out] Ep value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_get(SNEPPXEntropyPool* ep, uint8_t* out, size_t out_len) {
     if (!ep||!out) return -1;
     if (ep->entropy_estimate<SNEPPX_ENTROPY_THRESHOLD) SNEPPX_entropy_pool_collect(ep);
@@ -126,8 +179,16 @@ int SNEPPX_entropy_pool_get(SNEPPXEntropyPool* ep, uint8_t* out, size_t out_len)
     return 0;
 }
 
+/**
+ * @brief Perform Entropy Pool Estimate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_entropy_pool_estimate(const SNEPPXEntropyPool* ep) { return ep?ep->entropy_estimate:0; }
 
+/**
+ * @brief Perform Entropy Pool Stir.
+ */
 void SNEPPX_entropy_pool_stir(SNEPPXEntropyPool* ep) {
     if (!ep) return;
     uint8_t sip_key[16];

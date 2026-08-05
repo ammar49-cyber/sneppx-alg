@@ -10,6 +10,22 @@
 #include <pthread.h>
 #endif
 
+/*
+ * SNEPPX - Lock
+ *
+ * WHAT
+ *   Lock.
+ *
+ * CONCEPT
+ *   Provides the Lock.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct SNEPPXLock {
 #if defined(_WIN32)
     CRITICAL_SECTION cs;
@@ -19,6 +35,11 @@ typedef struct SNEPPXLock {
     int held;
 } SNEPPXLock;
 
+/**
+ * @brief Initialize Lock.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXLock* SNEPPX_lock_init(void) {
     SNEPPXLock* lock = (SNEPPXLock*)malloc(sizeof(SNEPPXLock));
     if (!lock) return NULL;
@@ -31,6 +52,9 @@ SNEPPXLock* SNEPPX_lock_init(void) {
     return lock;
 }
 
+/**
+ * @brief Destroy Lock.
+ */
 void SNEPPX_lock_destroy(SNEPPXLock* lock) {
     if (!lock) return;
 #if defined(_WIN32)
@@ -41,6 +65,9 @@ void SNEPPX_lock_destroy(SNEPPXLock* lock) {
     free(lock);
 }
 
+/**
+ * @brief Perform Lock Acquire.
+ */
 void SNEPPX_lock_acquire(SNEPPXLock* lock) {
     if (!lock) return;
 #if defined(_WIN32)
@@ -51,6 +78,9 @@ void SNEPPX_lock_acquire(SNEPPXLock* lock) {
     lock->held = 1;
 }
 
+/**
+ * @brief Perform Lock Release.
+ */
 void SNEPPX_lock_release(SNEPPXLock* lock) {
     if (!lock) return;
     lock->held = 0;
@@ -61,6 +91,11 @@ void SNEPPX_lock_release(SNEPPXLock* lock) {
 #endif
 }
 
+/**
+ * @brief Perform Lock Try Acquire.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lock_try_acquire(SNEPPXLock* lock) {
     if (!lock) return 0;
 #if defined(_WIN32)
@@ -74,10 +109,22 @@ int SNEPPX_lock_try_acquire(SNEPPXLock* lock) {
 #endif
 }
 
+/**
+ * @brief Perform Lock Is Held.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lock_is_held(const SNEPPXLock* lock) {
     return lock ? lock->held : 0;
 }
 
+/**
+ * @brief Perform Mlock.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mlock(void* ptr, size_t len) {
     if (!ptr || !len) return -1;
 #if defined(_WIN32)
@@ -95,6 +142,13 @@ int SNEPPX_mlock(void* ptr, size_t len) {
 #endif
 }
 
+/**
+ * @brief Perform Munlock.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_munlock(void* ptr, size_t len) {
     if (!ptr || !len) return -1;
 #if defined(_WIN32)
@@ -105,6 +159,11 @@ int SNEPPX_munlock(void* ptr, size_t len) {
 #endif
 }
 
+/**
+ * @brief Perform Mlockall Possible.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mlockall_possible(void) {
 #if defined(_WIN32)
     return -1;

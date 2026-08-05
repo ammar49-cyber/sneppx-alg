@@ -8,6 +8,22 @@
 #define KYBER_N 256
 #define KYBER_Q 3329
 
+/*
+ * SNEPPX - Kyber
+ *
+ * WHAT
+ *   Kyber.
+ *
+ * CONCEPT
+ *   Provides Kyber post-quantum KEM (FIPS 203).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int16_t zetas[128];
 static int16_t zetas_inv[128];
 static int init_ntt = 0;
@@ -242,6 +258,14 @@ static void cpa_pke_keygen(uint8_t pk[KYBER_PUBLICKEYBYTES], uint8_t sk[KYBER_SE
     free(a);
 }
 
+/**
+ * @brief Generate Kyber.
+ *
+ * @param pk [out] Pk value.
+ * @param sk [out] Sk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kyber_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     (void)variant;
@@ -249,6 +273,15 @@ int SNEPPX_kyber_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     return 0;
 }
 
+/**
+ * @brief Encapsulate Kyber.
+ *
+ * @param ct [out] Ct value.
+ * @param ss [out] Ss value.
+ * @param pk [in] Pk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kyber_encaps(uint8_t *ct, uint8_t *ss, const uint8_t *pk, int variant) {
     if (!ct || !ss || !pk) return -1;
     int du = (variant == 2) ? 10 : (variant == 3) ? 10 : 11;
@@ -303,6 +336,15 @@ int SNEPPX_kyber_encaps(uint8_t *ct, uint8_t *ss, const uint8_t *pk, int variant
     return 0;
 }
 
+/**
+ * @brief Decapsulate Kyber.
+ *
+ * @param ss [out] Ss value.
+ * @param ct [in] Ct value.
+ * @param sk [in] Sk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kyber_decaps(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, int variant) {
     if (!ss || !ct || !sk) return -1;
     int du = (variant == 2) ? 10 : (variant == 3) ? 10 : 11;
