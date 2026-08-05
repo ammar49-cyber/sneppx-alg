@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Perform Arc Simulate Attack.
+ *
+ * @param clean_input [in] Clean Input value.
+ * @param attack_type [in] Attack Type value.
+ * @param epsilon [in] Epsilon value.
+ */
 void SNEPPX_arc_simulate_attack(const SNEPPXTensor* clean_input, int attack_type, float epsilon, SNEPPXTensor** adversarial) {
     size_t batch = clean_input->shape[0];
     size_t dim = clean_input->ndim > 1 ? clean_input->shape[1] : clean_input->shape[0];

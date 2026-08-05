@@ -6,6 +6,22 @@
 
 #define SNEPPX_T_MAXSEQ 8192
 
+/*
+ * SNEPPX - Transformer
+ *
+ * WHAT
+ *   Transformer.
+ *
+ * CONCEPT
+ *   Provides transformer architecture.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXTransformer {
     size_t vocab, hidden, heads, layers, ffn;
     int use_rope;
@@ -71,6 +87,18 @@ static void rope(float* qk, size_t seq, size_t hidden, size_t heads, size_t head
     }
 }
 
+/**
+ * @brief Create Transformer.
+ *
+ * @param vocab_size [in] Vocab Size value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param num_heads [in] Num Heads value.
+ * @param num_layers [in] Num Layers value.
+ * @param ffn_dim [in] Ffn Dim value.
+ * @param dropout [in] Dropout value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTransformer* SNEPPX_transformer_create(size_t vocab_size, size_t hidden_dim,
         size_t num_heads, size_t num_layers, size_t ffn_dim, float dropout, int use_rope) {
     if (hidden_dim == 0 || num_heads == 0 || hidden_dim % num_heads != 0 || num_layers == 0) return NULL;
@@ -111,6 +139,9 @@ SNEPPXTransformer* SNEPPX_transformer_create(size_t vocab_size, size_t hidden_di
     return m;
 }
 
+/**
+ * @brief Destroy Transformer.
+ */
 void SNEPPX_transformer_destroy(void* model) {
     SNEPPXTransformer* m = (SNEPPXTransformer*)model;
     if (!m) return;
@@ -128,6 +159,15 @@ void SNEPPX_transformer_destroy(void* model) {
     free(m);
 }
 
+/**
+ * @brief Run the forward pass for Transformer.
+ *
+ * @param model [out] Model value.
+ * @param input_ids [in] Input Ids value.
+ * @param seq_len [in] Seq Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_transformer_forward(void* model, const int* input_ids, size_t seq_len, float* logits) {
     SNEPPXTransformer* m = (SNEPPXTransformer*)model;
     if (!m || !input_ids || !logits) return -1;
@@ -199,6 +239,18 @@ int SNEPPX_transformer_forward(void* model, const int* input_ids, size_t seq_len
     return 0;
 }
 
+/**
+ * @brief Perform Transformer Generate.
+ *
+ * @param model [out] Model value.
+ * @param prompt [in] Prompt value.
+ * @param prompt_len [in] Prompt Len value.
+ * @param output [out] Output value.
+ * @param max_len [in] Max Len value.
+ * @param temperature [in] Temperature value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_transformer_generate(void* model, const int* prompt, size_t prompt_len,
         int* output, size_t max_len, int temperature, int top_k) {
     (void)temperature; (void)top_k;

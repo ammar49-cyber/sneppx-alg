@@ -18,6 +18,14 @@
 
 
 
+/**
+ * @brief Perform Fm Get Params.
+ *
+ * @param ctrl [in] Ctrl value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_fm_get_params(const SNEPPXFMController* ctrl, SNEPPXTensor** out, size_t max_out) {
     if (!ctrl || !out || max_out == 0) return 0;
     size_t count = 0;
@@ -29,6 +37,17 @@ size_t SNEPPX_fm_get_params(const SNEPPXFMController* ctrl, SNEPPXTensor** out, 
     return count;
 }
 
+/**
+ * @brief Perform Fm Build Train Graph.
+ *
+ * @param ctrl [out] Ctrl value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_build_train_graph(SNEPPXFMController* ctrl, SNEPPXTape* tape,
                                SNEPPXVariable* input_var,
                                SNEPPXVariable** weight_vars, size_t num_weights,

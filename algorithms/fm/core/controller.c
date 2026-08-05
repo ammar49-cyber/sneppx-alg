@@ -20,6 +20,11 @@
 
 
 
+/**
+ * @brief Perform Fm Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXFMConfig SNEPPX_fm_config_default(void) {
     SNEPPXFMConfig cfg;
     cfg.num_nodes = 4;
@@ -34,6 +39,11 @@ SNEPPXFMConfig SNEPPX_fm_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Fm Controller.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXFMController* SNEPPX_fm_controller_create(const SNEPPXFMConfig* config) {
     if (!config) return NULL;
     SNEPPXFMController* ctrl = (SNEPPXFMController*)SNEPPX_malloc(sizeof(SNEPPXFMController), 64);
@@ -75,6 +85,9 @@ SNEPPXFMController* SNEPPX_fm_controller_create(const SNEPPXFMConfig* config) {
     return ctrl;
 }
 
+/**
+ * @brief Destroy Fm Controller.
+ */
 void SNEPPX_fm_controller_destroy(SNEPPXFMController* ctrl) {
     if (!ctrl) return;
     if (ctrl->nodes) {

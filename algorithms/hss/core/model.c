@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Create Hss Model.
+ *
+ * @param config [in] Config value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXHSSModel* SNEPPX_hss_model_create(const SNEPPXHSSConfig* config, unsigned int seed) {
     SNEPPXHSSModel* model = (SNEPPXHSSModel*)SNEPPX_malloc(sizeof(SNEPPXHSSModel), 64);
     if (!model) return NULL;
@@ -57,6 +64,14 @@ SNEPPXHSSModel* SNEPPX_hss_model_create(const SNEPPXHSSConfig* config, unsigned 
     return model;
 }
 
+/**
+ * @brief Perform Hss Get Params.
+ *
+ * @param model [in] Model value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_hss_get_params(const SNEPPXHSSModel* model, SNEPPXTensor** out, size_t max_out) {
     if (!model) return 0;
 
@@ -76,6 +91,9 @@ size_t SNEPPX_hss_get_params(const SNEPPXHSSModel* model, SNEPPXTensor** out, si
     return count;
 }
 
+/**
+ * @brief Destroy Hss Model.
+ */
 void SNEPPX_hss_model_destroy(SNEPPXHSSModel* model) {
     if (!model) return;
     for (size_t i = 0; i < model->config.num_layers; i++) {

@@ -48,6 +48,13 @@ static int cmp_desc(const void* a, const void* b) {
     return (fa > fb) ? -1 : (fa < fb) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Ser Route.
+ *
+ * @param layer [out] Layer value.
+ * @param input [in] Input value.
+ * @param gate_weights [out] Gate Weights value.
+ */
 void SNEPPX_ser_route(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** gate_weights, int** expert_indices) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];
@@ -144,6 +151,15 @@ void SNEPPX_ser_route(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTe
 
 // Gating forward with learned temperature scaling
 // Returns pre-softmax logits for z-loss computation
+/**
+ * @brief Run the forward pass for Ser Gate.
+ *
+ * @param layer [in] Layer value.
+ * @param input [in] Input value.
+ * @param gate_weights [out] Gate Weights value.
+ * @param expert_indices [out] Expert Indices value.
+ * @param gate_logits [out] Gate Logits value.
+ */
 void SNEPPX_ser_gate_forward(const SNEPPXSERLayer* layer, const SNEPPXTensor* input,
                            SNEPPXTensor** gate_weights, int** expert_indices,
                            SNEPPXTensor** gate_logits, float temperature) {
@@ -227,6 +243,11 @@ void SNEPPX_ser_gate_forward(const SNEPPXSERLayer* layer, const SNEPPXTensor* in
 
 // Z-loss: auxiliary loss that keeps gate logits near zero
 // Computes mean(gate_logits^2) to penalize large logit magnitudes
+/**
+ * @brief Perform Ser Z Loss.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_ser_z_loss(const SNEPPXTensor* gate_logits) {
     size_t n = gate_logits->size;
     float* data = (float*)gate_logits->data;
@@ -238,6 +259,17 @@ float SNEPPX_ser_z_loss(const SNEPPXTensor* gate_logits) {
 }
 
 // Combined auxiliary loss: load balancing + z-loss
+/**
+ * @brief Perform Ser Aux Loss.
+ *
+ * @param gate_weights [in] Gate Weights value.
+ * @param expert_indices [in] Expert Indices value.
+ * @param gate_logits [in] Gate Logits value.
+ * @param num_tokens [in] Num Tokens value.
+ * @param load_balance_coef [in] Load Balance Coef value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_ser_aux_loss(const SNEPPXTensor* gate_weights, const int* expert_indices,
                         const SNEPPXTensor* gate_logits, size_t num_tokens,
                         float load_balance_coef, float z_loss_coef) {
@@ -247,6 +279,14 @@ float SNEPPX_ser_aux_loss(const SNEPPXTensor* gate_weights, const int* expert_in
 }
 
 // Enforce expert capacity: drop lowest-weighted tokens from overloaded experts
+/**
+ * @brief Perform Ser Expert Capacity Balance.
+ *
+ * @param gate_weights [out] Gate Weights value.
+ * @param expert_indices [out] Expert Indices value.
+ * @param num_tokens [in] Num Tokens value.
+ * @param num_active [in] Num Active value.
+ */
 void SNEPPX_ser_expert_capacity_balance(SNEPPXTensor* gate_weights, int* expert_indices,
                                       size_t num_tokens, size_t num_active,
                                       size_t expert_capacity) {

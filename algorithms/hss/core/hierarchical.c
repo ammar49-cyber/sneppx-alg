@@ -17,6 +17,12 @@
 
 
 
+/**
+ * @brief Perform Hss Hierarchical Scan.
+ *
+ * @param layer [in] Layer value.
+ * @param x_seq [in] X Seq value.
+ */
 void SNEPPX_hss_hierarchical_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* y_seq) {
     /* For v0.1, hierarchical scan delegates to standard scan.
        Future multi-scale implementation:

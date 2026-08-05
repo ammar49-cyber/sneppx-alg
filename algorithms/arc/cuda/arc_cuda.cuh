@@ -5,6 +5,22 @@
 #include <cuda_fp16.h>
 #include "../../../kernel/cuda/common.cuh"
 
+/*
+ * SNEPPX - Arc Cuda
+ *
+ * WHAT
+ *   Arc Cuda.
+ *
+ * CONCEPT
+ *   Provides the Arc Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ARC Adversarial Robustness CUDA Kernels
 // - Gradient obfuscation (input gradient masking)
 // - Adversarial attack simulation (PGD, FGSM, CW)

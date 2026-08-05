@@ -320,6 +320,11 @@ static SNEPPXTensor* tensor_split_half(const SNEPPXTensor* a) {
     memcpy(r->data,a->data,h*a->item_size);return r;
 }
 
+/**
+ * @brief Create Npe Vm.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEVM* SNEPPX_npe_vm_create(const SNEPPXNPEConfig* config) {
     if (!config) return NULL;
     SNEPPXNPEVM* vm = (SNEPPXNPEVM*)SNEPPX_malloc(sizeof(SNEPPXNPEVM), 64);
@@ -338,6 +343,9 @@ SNEPPXNPEVM* SNEPPX_npe_vm_create(const SNEPPXNPEConfig* config) {
     return vm;
 }
 
+/**
+ * @brief Destroy Npe Vm.
+ */
 void SNEPPX_npe_vm_destroy(SNEPPXNPEVM* vm) {
     if (!vm) return;
     SNEPPX_free(vm->execution_trace, vm->max_trace * sizeof(SNEPPXNPEInstruction));
@@ -345,12 +353,22 @@ void SNEPPX_npe_vm_destroy(SNEPPXNPEVM* vm) {
     SNEPPX_free(vm, sizeof(SNEPPXNPEVM));
 }
 
+/**
+ * @brief Load Npe Vm.
+ *
+ * @param vm [out] Vm value.
+ */
 void SNEPPX_npe_vm_load(SNEPPXNPEVM* vm, SNEPPXNPEProgram* prog) {
     vm->program = prog;
     vm->trace_length = 0;
     if (prog) prog->pc = 0;
 }
 
+/**
+ * @brief Perform Npe Vm Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npe_vm_step(SNEPPXNPEVM* vm) {
     if (!vm->program) return 1;
     SNEPPXNPEProgram* prog = vm->program;
@@ -655,6 +673,14 @@ int SNEPPX_npe_vm_step(SNEPPXNPEVM* vm) {
     return ret;
 }
 
+/**
+ * @brief Run Npe Vm.
+ *
+ * @param vm [out] Vm value.
+ * @param input [out] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npe_vm_run(SNEPPXNPEVM* vm, SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!vm->program) return 1;
     SNEPPXNPEProgram* prog = vm->program;
@@ -694,6 +720,11 @@ int SNEPPX_npe_vm_run(SNEPPXNPEVM* vm, SNEPPXTensor* input, SNEPPXTensor** outpu
     return steps >= vm->step_limit ? 2 : 0;
 }
 
+/**
+ * @brief Perform Npe Vm Optimize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npe_vm_optimize(SNEPPXNPEVM* vm) {
     if (!vm || !vm->program) return -1;
     if (!vm->jit_profile) return -1;

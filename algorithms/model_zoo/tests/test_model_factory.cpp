@@ -7,6 +7,22 @@
 #include <fstream>
 #include <filesystem>
 
+/*
+ * SNEPPX - Test Model Factory
+ *
+ * WHAT
+ *   Test Model Factory.
+ *
+ * CONCEPT
+ *   Provides the Test Model Factory.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 using namespace sneppx;
 
 static int tests_passed = 0;

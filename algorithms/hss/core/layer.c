@@ -21,6 +21,11 @@
 
 
 
+/**
+ * @brief Perform Hss Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXHSSConfig SNEPPX_hss_config_default(void) {
     SNEPPXHSSConfig cfg;
     cfg.state_dim = 64;
@@ -59,6 +64,13 @@ static void fill_randn(SNEPPXTensor* t, unsigned long* state, float scale) {
     }
 }
 
+/**
+ * @brief Create Hss Layer.
+ *
+ * @param config [in] Config value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXHSSLayer* SNEPPX_hss_layer_create(const SNEPPXHSSConfig* config, unsigned int seed) {
     SNEPPXHSSLayer* layer = (SNEPPXHSSLayer*)SNEPPX_malloc(sizeof(SNEPPXHSSLayer), 64);
     if (!layer) return NULL;
@@ -107,6 +119,9 @@ SNEPPXHSSLayer* SNEPPX_hss_layer_create(const SNEPPXHSSConfig* config, unsigned 
     return layer;
 }
 
+/**
+ * @brief Destroy Hss Layer.
+ */
 void SNEPPX_hss_layer_destroy(SNEPPXHSSLayer* layer) {
     if (!layer) return;
     if (layer->A) SNEPPX_tensor_destroy(layer->A);

@@ -9,6 +9,22 @@
 
 #define SNEPPX_DIF_MAXT 10000
 
+/*
+ * SNEPPX - Diffusion
+ *
+ * WHAT
+ *   Diffusion.
+ *
+ * CONCEPT
+ *   Provides the Diffusion.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXDiffusion {
     size_t img_channels, img_size, hidden, T;
     int schedule_type;
@@ -26,6 +42,16 @@ static void linear_fwd(const float* x, size_t m, const float* w, size_t k, size_
     for (size_t i=0;i<m;i++) for (size_t j=0;j<out;j++){float s=0;for(size_t p=0;p<k;p++)s+=x[i*k+p]*w[j*k+p];y[i*out+j]=s;}
 }
 
+/**
+ * @brief Create Diffusion.
+ *
+ * @param img_channels [in] Img Channels value.
+ * @param img_size [in] Img Size value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param num_timesteps [in] Num Timesteps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXDiffusion* SNEPPX_diffusion_create(size_t img_channels, size_t img_size, size_t hidden_dim, int num_timesteps, int noise_schedule_type) {
     if (img_channels==0||img_size==0||num_timesteps<=0) return NULL;
     SNEPPXDiffusion* m=(SNEPPXDiffusion*)calloc(1,sizeof(*m));
@@ -61,6 +87,9 @@ SNEPPXDiffusion* SNEPPX_diffusion_create(size_t img_channels, size_t img_size, s
     return m;
 }
 
+/**
+ * @brief Destroy Diffusion.
+ */
 void SNEPPX_diffusion_destroy(void* model) {
     SNEPPXDiffusion* m=(SNEPPXDiffusion*)model; if(!m) return;
     SNEPPX_tensor_destroy(m->Wemb); SNEPPX_tensor_destroy(m->W1); SNEPPX_tensor_destroy(m->W2); SNEPPX_tensor_destroy(m->Wout);
@@ -96,6 +125,15 @@ static void timestep_embed(int t, size_t H, float* out) {
     }
 }
 
+/**
+ * @brief Perform Diffusion Sample.
+ *
+ * @param model [out] Model value.
+ * @param output [out] Output value.
+ * @param num_samples [in] Num Samples value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_diffusion_sample(void* model, float* output, size_t num_samples, const float* cond) {
     (void)cond;
     SNEPPXDiffusion* m=(SNEPPXDiffusion*)model;
@@ -122,6 +160,15 @@ int SNEPPX_diffusion_sample(void* model, float* output, size_t num_samples, cons
     return 0;
 }
 
+/**
+ * @brief Perform Diffusion Train Step.
+ *
+ * @param model [out] Model value.
+ * @param images [in] Images value.
+ * @param num_samples [in] Num Samples value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_diffusion_train_step(void* model, const float* images, size_t num_samples, float* loss) {
     SNEPPXDiffusion* m=(SNEPPXDiffusion*)model;
     if(!m||!images||!loss) return -1;

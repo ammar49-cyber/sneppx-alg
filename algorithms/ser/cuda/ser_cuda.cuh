@@ -5,6 +5,22 @@
 #include <cuda_fp16.h>
 #include "../../../kernel/cuda/common.cuh"
 
+/*
+ * SNEPPX - Ser Cuda
+ *
+ * WHAT
+ *   Ser Cuda.
+ *
+ * CONCEPT
+ *   Provides the Ser Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // SER (Sparse Experts Router) CUDA Kernels
 // - Expert routing (top-k gating)
 // - Expert parallel dispatch

@@ -22,6 +22,17 @@
 
 
 
+/**
+ * @brief Perform Hss Build Train Graph.
+ *
+ * @param model [out] Model value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hss_build_train_graph(SNEPPXHSSModel* model, SNEPPXTape* tape,
                                SNEPPXVariable* input_var,
                                SNEPPXVariable** weight_vars, size_t num_weights,

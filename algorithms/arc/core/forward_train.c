@@ -21,6 +21,17 @@
 
 
 
+/**
+ * @brief Perform Arc Build Train Graph.
+ *
+ * @param layer [out] Layer value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arc_build_train_graph(SNEPPXARCLayer* layer, SNEPPXTape* tape,
                                 SNEPPXVariable* input_var,
                                 SNEPPXVariable** weight_vars, size_t num_weights,
@@ -51,6 +62,18 @@ int SNEPPX_arc_build_train_graph(SNEPPXARCLayer* layer, SNEPPXTape* tape,
     return 0;
 }
 
+/**
+ * @brief Perform Arc Build Adversarial Train Graph.
+ *
+ * @param layer [out] Layer value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ * @param clean_output [out] Clean Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arc_build_adversarial_train_graph(SNEPPXARCLayer* layer, SNEPPXTape* tape,
                                             SNEPPXVariable* input_var,
                                             SNEPPXVariable** weight_vars, size_t num_weights,

@@ -28,6 +28,12 @@ static float swish(float x) {
     return x / (1.0f + expf(-x));
 }
 
+/**
+ * @brief Run the forward pass for Ser Expert.
+ *
+ * @param expert [in] Expert value.
+ * @param input [in] Input value.
+ */
 void SNEPPX_ser_expert_forward(const SNEPPXExpert* expert, const SNEPPXTensor* input, SNEPPXTensor* output) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];

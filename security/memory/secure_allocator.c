@@ -46,22 +46,6 @@
  */
 
 
-/*
- * SNEPPX - Secure Allocator
- *
- * WHAT
- *   Secure Allocator.
- *
- * CONCEPT
- *   Provides the Secure Allocator.
- *
- * ROLE
- *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
- *   four-layer commenting standard used across this codebase.
- *
- */
-
-
 static int g_scrub_pattern = SNEPPX_SCRUB_PATTERN_ZERO;
 static int g_quarantine_max = SNEPPX_SECURE_QUARANTINE_SIZE;
 

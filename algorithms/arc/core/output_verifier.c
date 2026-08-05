@@ -21,6 +21,14 @@
 
 
 
+/**
+ * @brief Create Arc Output Verifier.
+ *
+ * @param output_dim [in] Output Dim value.
+ * @param num_layers [in] Num Layers value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOutputVerifier* SNEPPX_arc_output_verifier_create(size_t output_dim, size_t num_layers, unsigned int seed) {
     SNEPPXOutputVerifier* verifier = (SNEPPXOutputVerifier*)SNEPPX_malloc(sizeof(SNEPPXOutputVerifier), 64);
     if (!verifier) return NULL;
@@ -70,6 +78,9 @@ SNEPPXOutputVerifier* SNEPPX_arc_output_verifier_create(size_t output_dim, size_
     return verifier;
 }
 
+/**
+ * @brief Destroy Arc Output Verifier.
+ */
 void SNEPPX_arc_output_verifier_destroy(SNEPPXOutputVerifier* verifier) {
     if (!verifier) return;
     for (size_t i = 0; i < verifier->num_layers; i++) {
@@ -82,6 +93,13 @@ void SNEPPX_arc_output_verifier_destroy(SNEPPXOutputVerifier* verifier) {
     SNEPPX_free(verifier, sizeof(SNEPPXOutputVerifier));
 }
 
+/**
+ * @brief Perform Arc Verify Output.
+ *
+ * @param verifier [out] Verifier value.
+ * @param output [in] Output value.
+ * @param verified_output [out] Verified Output value.
+ */
 void SNEPPX_arc_verify_output(SNEPPXOutputVerifier* verifier, const SNEPPXTensor* output, SNEPPXTensor** verified_output, float* confidence) {
     size_t batch = output->shape[0];
     size_t dim = output->shape[1];

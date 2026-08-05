@@ -4,6 +4,22 @@
 #include <string.h>
 #include <ctype.h>
 
+/*
+ * SNEPPX - Model Card
+ *
+ * WHAT
+ *   Model Card.
+ *
+ * CONCEPT
+ *   Provides the Model Card.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ── Internal helpers ────────────────────────────────────────────────────────
 
 static char *dup_str(const char *s) {

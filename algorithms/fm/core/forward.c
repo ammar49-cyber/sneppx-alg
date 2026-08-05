@@ -21,6 +21,15 @@
 
 
 
+/**
+ * @brief Run the forward pass for Fm.
+ *
+ * @param ctrl [out] Ctrl value.
+ * @param node_id [in] Node Id value.
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_forward(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!ctrl || !input || !output) return 1;
     if (node_id >= ctrl->config.num_nodes) return 1;

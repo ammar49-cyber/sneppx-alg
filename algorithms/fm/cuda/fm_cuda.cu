@@ -1,6 +1,22 @@
 #include "fm_cuda.cuh"
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Fm Cuda
+ *
+ * WHAT
+ *   Fm Cuda.
+ *
+ * CONCEPT
+ *   Provides the Fm Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // Ring all-reduce step

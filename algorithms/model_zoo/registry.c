@@ -4,6 +4,22 @@
 #include <string.h>
 #include <ctype.h>
 
+/*
+ * SNEPPX - Registry
+ *
+ * WHAT
+ *   Registry.
+ *
+ * CONCEPT
+ *   Provides the Registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct ModelRegistryEntry ModelRegistryEntry;
 typedef struct ModelRegistry ModelRegistry;
 

@@ -33,6 +33,11 @@ static float laplace_noise(float epsilon) {
     return -epsilon * (u > 0 ? 1.0f : -1.0f) * logf(1.0f - 2.0f * fabsf(u) + 1e-10f);
 }
 
+/**
+ * @brief Perform Fm Add Privacy Noise.
+ *
+ * @param data [out] Data value.
+ */
 void SNEPPX_fm_add_privacy_noise(SNEPPXTensor* data, float epsilon) {
     if (!data || epsilon <= 0.0f) return;
     float* d = (float*)data->data;
@@ -54,6 +59,13 @@ static int cmp_mag(const void* a, const void* b) {
     return 0;
 }
 
+/**
+ * @brief Perform Fm Compress Gradients.
+ *
+ * @param gradients [in] Gradients value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_fm_compress_gradients(const SNEPPXTensor* gradients, float ratio) {
     if (!gradients || ratio <= 0.0f) return NULL;
     if (ratio >= 1.0f) {
@@ -121,6 +133,11 @@ static void average_two_banks(SNEPPXFMMemoryBank* a, SNEPPXFMMemoryBank* b, floa
     }
 }
 
+/**
+ * @brief Perform Fm Sync All Reduce.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_sync_all_reduce(SNEPPXFMController* ctrl) {
     if (!ctrl || ctrl->config.num_nodes == 0) return 1;
     size_t dim = ctrl->config.memory_dim;
@@ -192,6 +209,13 @@ int SNEPPX_fm_sync_all_reduce(SNEPPXFMController* ctrl) {
     return 0;
 }
 
+/**
+ * @brief Perform Fm Sync Gossip.
+ *
+ * @param ctrl [out] Ctrl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_sync_gossip(SNEPPXFMController* ctrl, size_t num_pairs) {
     if (!ctrl || ctrl->config.num_nodes < 2) return 1;
     size_t n_nodes = ctrl->config.num_nodes;
@@ -211,6 +235,11 @@ int SNEPPX_fm_sync_gossip(SNEPPXFMController* ctrl, size_t num_pairs) {
     return 0;
 }
 
+/**
+ * @brief Perform Fm Sync Topology.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_sync_topology(SNEPPXFMController* ctrl) {
     if (!ctrl || ctrl->config.num_nodes < 2) return 1;
     size_t n_nodes = ctrl->config.num_nodes;
@@ -229,6 +258,13 @@ int SNEPPX_fm_sync_topology(SNEPPXFMController* ctrl) {
 
 // ── Error-compensated gradient compression (EF-SGD) ──────────────────────────
 
+/**
+ * @brief Create Fm Error Feedback.
+ *
+ * @param dim [in] Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXFMErrorFeedback* SNEPPX_fm_error_feedback_create(size_t dim, float ratio) {
     if (dim == 0 || ratio <= 0.0f) return NULL;
     SNEPPXFMErrorFeedback* ef = (SNEPPXFMErrorFeedback*)SNEPPX_malloc(sizeof(SNEPPXFMErrorFeedback), 64);
@@ -247,6 +283,9 @@ SNEPPXFMErrorFeedback* SNEPPX_fm_error_feedback_create(size_t dim, float ratio) 
     return ef;
 }
 
+/**
+ * @brief Destroy Fm Error Feedback.
+ */
 void SNEPPX_fm_error_feedback_destroy(SNEPPXFMErrorFeedback* ef) {
     if (!ef) return;
     if (ef->error_buffer) SNEPPX_tensor_destroy(ef->error_buffer);
@@ -254,6 +293,13 @@ void SNEPPX_fm_error_feedback_destroy(SNEPPXFMErrorFeedback* ef) {
     SNEPPX_free(ef, sizeof(SNEPPXFMErrorFeedback));
 }
 
+/**
+ * @brief Perform Fm Compress With Error.
+ *
+ * @param ef [out] Ef value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_fm_compress_with_error(SNEPPXFMErrorFeedback* ef, const SNEPPXTensor* gradient) {
     if (!ef || !gradient) return NULL;
 
@@ -282,6 +328,11 @@ SNEPPXTensor* SNEPPX_fm_compress_with_error(SNEPPXFMErrorFeedback* ef, const SNE
 
 // ── Exponential moving average for catastrophic forgetting protection ────────
 
+/**
+ * @brief Update Fm Ewm.
+ *
+ * @param bank [out] Bank value.
+ */
 void SNEPPX_fm_ewm_update(SNEPPXFMMemoryBank* bank, float alpha) {
     if (!bank || bank->num_entries == 0 || alpha < 0.0f || alpha > 1.0f) return;
     size_t dim = bank->keys->shape[1];
@@ -302,6 +353,13 @@ void SNEPPX_fm_ewm_update(SNEPPXFMMemoryBank* bank, float alpha) {
 
 // ── Adaptive sync frequency ──────────────────────────────────────────────────
 
+/**
+ * @brief Perform Fm Compute Change Rate.
+ *
+ * @param bank [out] Bank value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_fm_compute_change_rate(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* new_values) {
     if (!bank || !new_values || bank->num_entries == 0) return 0.0f;
     size_t dim = bank->keys->shape[1];
@@ -321,6 +379,13 @@ float SNEPPX_fm_compute_change_rate(SNEPPXFMMemoryBank* bank, const SNEPPXTensor
     return sqrtf(total_diff / (float)(n * dim) + 1e-10f);
 }
 
+/**
+ * @brief Perform Fm Adaptive Sync Interval.
+ *
+ * @param ctrl [out] Ctrl value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_fm_adaptive_sync_interval(SNEPPXFMController* ctrl, float base_interval) {
     if (!ctrl || base_interval < 1.0f) base_interval = 1.0f;
     float total_contrib = 0.0f;
@@ -350,6 +415,14 @@ size_t SNEPPX_fm_adaptive_sync_interval(SNEPPXFMController* ctrl, float base_int
 
 // ── Gradient send / receive ──────────────────────────────────────────────────
 
+/**
+ * @brief Perform Fm Send Gradients.
+ *
+ * @param ctrl [out] Ctrl value.
+ * @param node_id [in] Node Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_send_gradients(SNEPPXFMController* ctrl, size_t node_id, const SNEPPXTensor* gradients) {
     if (!ctrl || !gradients || node_id >= ctrl->config.num_nodes) return 1;
     SNEPPXFMNode* node = ctrl->nodes[node_id];
@@ -367,6 +440,14 @@ int SNEPPX_fm_send_gradients(SNEPPXFMController* ctrl, size_t node_id, const SNE
     return 0;
 }
 
+/**
+ * @brief Perform Fm Receive Gradients.
+ *
+ * @param ctrl [out] Ctrl value.
+ * @param node_id [in] Node Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_receive_gradients(SNEPPXFMController* ctrl, size_t node_id, SNEPPXTensor* aggregated) {
     if (!ctrl || !aggregated || node_id >= ctrl->config.num_nodes) return 1;
 
@@ -390,6 +471,14 @@ int SNEPPX_fm_receive_gradients(SNEPPXFMController* ctrl, size_t node_id, SNEPPX
     return 0;
 }
 
+/**
+ * @brief Perform Fm Sync Nccl.
+ *
+ * @param ctrl [out] Ctrl value.
+ * @param pg_allreduce [in] Pg Allreduce value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_sync_nccl(SNEPPXFMController* ctrl, SNEPPXFMSyncCallback pg_allreduce, void* context) {
     if (!ctrl) return 1;
     if (pg_allreduce) {

@@ -20,6 +20,14 @@
 
 
 
+/**
+ * @brief Perform Npe Jit Optimize.
+ *
+ * @param profile [out] Profile value.
+ * @param prog [in] Prog value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_optimize(SNEPPXNPEJITProfile* profile, const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory) {
     if (!prog) return NULL;
 

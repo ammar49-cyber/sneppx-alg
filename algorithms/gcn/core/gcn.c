@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Gcn
+ *
+ * WHAT
+ *   Gcn.
+ *
+ * CONCEPT
+ *   Provides the Gcn.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXGCN {
     size_t in_features, out_features, hidden_features, num_layers;
     float dropout;
@@ -14,6 +30,16 @@ static void gemm(const float* x, size_t m, const float* w, size_t k, size_t o, f
     for (size_t i=0;i<m;i++) for (size_t j=0;j<o;j++){float s=0;for(size_t p=0;p<k;p++)s+=x[i*k+p]*w[j*k+p];y[i*o+j]=s;}
 }
 
+/**
+ * @brief Create Gcn.
+ *
+ * @param in_features [in] In Features value.
+ * @param out_features [in] Out Features value.
+ * @param hidden_features [in] Hidden Features value.
+ * @param num_layers [in] Num Layers value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXGCN* SNEPPX_gcn_create(size_t in_features, size_t out_features, size_t hidden_features, int num_layers, float dropout) {
     if (num_layers==0) return NULL;
     SNEPPXGCN* m=(SNEPPXGCN*)calloc(1,sizeof(*m));
@@ -28,12 +54,27 @@ SNEPPXGCN* SNEPPX_gcn_create(size_t in_features, size_t out_features, size_t hid
     }
     return m;
 }
+/**
+ * @brief Destroy Gcn.
+ *
+ * @param gcn [out] Gcn value.
+ */
 void SNEPPX_gcn_destroy(void* gcn){
     SNEPPXGCN* m=(SNEPPXGCN*)gcn; if(!m)return;
     for(size_t l=0;l<m->num_layers;l++) SNEPPX_tensor_destroy(m->W[l]);
     free(m->W); free(m);
 }
 
+/**
+ * @brief Run the forward pass for Gcn.
+ *
+ * @param gcn [out] Gcn value.
+ * @param adj [in] Adj value.
+ * @param features [in] Features value.
+ * @param num_nodes [in] Num Nodes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gcn_forward(void* gcn, const float* adj, const float* features, size_t num_nodes, float* output) {
     SNEPPXGCN* m=(SNEPPXGCN*)gcn;
     if(!m||!adj||!features||!output) return -1;

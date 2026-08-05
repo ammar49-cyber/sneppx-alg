@@ -7,6 +7,22 @@
 #include <iostream>
 #include <filesystem>
 
+/*
+ * SNEPPX - Model Factory
+ *
+ * WHAT
+ *   Model Factory.
+ *
+ * CONCEPT
+ *   Provides the Model Factory.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace sneppx {
 
 namespace fs = std::filesystem;

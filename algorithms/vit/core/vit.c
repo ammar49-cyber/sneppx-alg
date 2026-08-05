@@ -5,6 +5,22 @@
 #include <math.h>
 #include <malloc.h>
 
+/*
+ * SNEPPX - Vit
+ *
+ * WHAT
+ *   Vit.
+ *
+ * CONCEPT
+ *   Provides the Vit.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXVisionTransformer {
     size_t img_size, patch_size, in_channels, num_classes, hidden, heads, layers;
     float dropout;
@@ -33,6 +49,19 @@ static void layernorm_fwd(const float* x, const float* g, const float* b, size_t
     }
 }
 
+/**
+ * @brief Create Vit.
+ *
+ * @param img_size [in] Img Size value.
+ * @param patch_size [in] Patch Size value.
+ * @param in_channels [in] In Channels value.
+ * @param num_classes [in] Num Classes value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param num_heads [in] Num Heads value.
+ * @param num_layers [in] Num Layers value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVisionTransformer* SNEPPX_vit_create(size_t img_size, size_t patch_size, size_t in_channels,
         size_t num_classes, size_t hidden_dim, size_t num_heads, size_t num_layers, float dropout) {
     if (img_size % patch_size != 0 || hidden_dim % num_heads != 0 || num_layers == 0) return NULL;
@@ -76,6 +105,9 @@ SNEPPXVisionTransformer* SNEPPX_vit_create(size_t img_size, size_t patch_size, s
     return m;
 }
 
+/**
+ * @brief Destroy Vit.
+ */
 void SNEPPX_vit_destroy(void* vit) {
     SNEPPXVisionTransformer* m=(SNEPPXVisionTransformer*)vit;
     if(!m) return;
@@ -125,6 +157,15 @@ done:
     free(xn);free(q);free(k);free(v);free(attn);free(proj);free(ffn);free(ffn2);
 }
 
+/**
+ * @brief Run the forward pass for Vit.
+ *
+ * @param vit [out] Vit value.
+ * @param images [in] Images value.
+ * @param batch_size [in] Batch Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vit_forward(void* vit, const float* images, size_t batch_size, float* logits) {
     SNEPPXVisionTransformer* m=(SNEPPXVisionTransformer*)vit;
     if(!m||!images||!logits) return -1;
@@ -158,6 +199,15 @@ int SNEPPX_vit_forward(void* vit, const float* images, size_t batch_size, float*
     return 0;
 }
 
+/**
+ * @brief Perform Vit Extract Features.
+ *
+ * @param vit [out] Vit value.
+ * @param images [in] Images value.
+ * @param batch_size [in] Batch Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vit_extract_features(void* vit, const float* images, size_t batch_size, float* features) {
     SNEPPXVisionTransformer* m=(SNEPPXVisionTransformer*)vit;
     if(!m||!images||!features) return -1;

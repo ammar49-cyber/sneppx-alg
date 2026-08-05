@@ -19,6 +19,13 @@
 
 
 
+/**
+ * @brief Run the forward pass for Arc.
+ *
+ * @param layer [out] Layer value.
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ */
 void SNEPPX_arc_forward(SNEPPXARCLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** output, float* security_metrics) {
     SNEPPXTensor* sanitized = NULL;
     float anomaly_score = 0.0f;

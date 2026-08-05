@@ -5,6 +5,22 @@
 #include <string.h>
 #include <assert.h>
 
+/*
+ * SNEPPX - Test Model Card
+ *
+ * WHAT
+ *   Test Model Card.
+ *
+ * CONCEPT
+ *   Provides the Test Model Card.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 void test_create_destroy(void) {
     printf("test_create_destroy... ");
     ModelCard *card = model_card_create();

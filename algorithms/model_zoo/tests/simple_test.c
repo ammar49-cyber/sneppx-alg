@@ -1,6 +1,22 @@
 #include <neural_core/model_zoo/model_card.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Simple Test
+ *
+ * WHAT
+ *   Simple Test.
+ *
+ * CONCEPT
+ *   Provides the Simple Test.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     printf("Starting test...\n");
     

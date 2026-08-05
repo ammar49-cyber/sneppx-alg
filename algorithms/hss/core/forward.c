@@ -128,6 +128,14 @@ static int process_sequence(SNEPPXHSSModel* model, const float* input_seq,
     return 0;
 }
 
+/**
+ * @brief Run the forward pass for Hss.
+ *
+ * @param model [out] Model value.
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hss_forward(SNEPPXHSSModel* model, const SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!model || !input || !output) return -1;
 

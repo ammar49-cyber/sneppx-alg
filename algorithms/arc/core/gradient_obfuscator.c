@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Create Gradient Obfuscator.
+ *
+ * @param max_params [in] Max Params value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXGradientObfuscator* SNEPPX_gradient_obfuscator_create(size_t max_params, unsigned int seed) {
     (void)seed;
     SNEPPXGradientObfuscator* obf = (SNEPPXGradientObfuscator*)SNEPPX_malloc(sizeof(SNEPPXGradientObfuscator), 64);
@@ -32,6 +39,9 @@ SNEPPXGradientObfuscator* SNEPPX_gradient_obfuscator_create(size_t max_params, u
     return obf;
 }
 
+/**
+ * @brief Destroy Gradient Obfuscator.
+ */
 void SNEPPX_gradient_obfuscator_destroy(SNEPPXGradientObfuscator* obf) {
     if (!obf) return;
     if (obf->noise_buffer) SNEPPX_tensor_destroy(obf->noise_buffer);
@@ -39,6 +49,12 @@ void SNEPPX_gradient_obfuscator_destroy(SNEPPXGradientObfuscator* obf) {
     SNEPPX_free(obf, sizeof(SNEPPXGradientObfuscator));
 }
 
+/**
+ * @brief Perform Arc Obfuscate Gradients.
+ *
+ * @param obf [out] Obf value.
+ * @param gradients [out] Gradients value.
+ */
 void SNEPPX_arc_obfuscate_gradients(SNEPPXGradientObfuscator* obf, SNEPPXTensor* gradients, int method) {
     if (!obf || !gradients) return;
     float* gd = (float*)gradients->data;

@@ -19,6 +19,15 @@
 
 
 
+/**
+ * @brief Create Arc Layer.
+ *
+ * @param config [in] Config value.
+ * @param input_dim [in] Input Dim value.
+ * @param output_dim [in] Output Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXARCLayer* SNEPPX_arc_layer_create(const SNEPPXARCConfig* config, size_t input_dim, size_t output_dim, unsigned int seed) {
     SNEPPXARCLayer* layer = (SNEPPXARCLayer*)SNEPPX_malloc(sizeof(SNEPPXARCLayer), 64);
     if (!layer) return NULL;
@@ -38,6 +47,9 @@ SNEPPXARCLayer* SNEPPX_arc_layer_create(const SNEPPXARCConfig* config, size_t in
     return layer;
 }
 
+/**
+ * @brief Destroy Arc Layer.
+ */
 void SNEPPX_arc_layer_destroy(SNEPPXARCLayer* layer) {
     if (!layer) return;
     if (layer->input_guard) SNEPPX_input_guard_destroy(layer->input_guard);
@@ -47,6 +59,14 @@ void SNEPPX_arc_layer_destroy(SNEPPXARCLayer* layer) {
     SNEPPX_free(layer, sizeof(SNEPPXARCLayer));
 }
 
+/**
+ * @brief Perform Arc Get Params.
+ *
+ * @param layer [in] Layer value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_arc_get_params(const SNEPPXARCLayer* layer, SNEPPXTensor** out, size_t max_out) {
     if (!layer) return 0;
     size_t total = 1 + 2 * layer->output_verifier->num_layers;

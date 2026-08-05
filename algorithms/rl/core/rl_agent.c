@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Rl Agent
+ *
+ * WHAT
+ *   Rl Agent.
+ *
+ * CONCEPT
+ *   Provides the Rl Agent.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 struct SNEPPXRLAgent {
     size_t state_dim, action_dim, hidden;
     float lr, gamma;
@@ -16,6 +32,16 @@ static void gemm1(const float* x, size_t m, const float* w, size_t k, size_t o, 
     for (size_t i=0;i<m;i++) for (size_t j=0;j<o;j++){float s=0;for(size_t p=0;p<k;p++)s+=x[i*k+p]*w[j*k+p];y[i*o+j]=s;}
 }
 
+/**
+ * @brief Create Rl.
+ *
+ * @param state_dim [in] State Dim value.
+ * @param action_dim [in] Action Dim value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param lr [in] Lr value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXRLAgent* SNEPPX_rl_create(size_t state_dim, size_t action_dim, size_t hidden_dim, float lr, float gamma) {
     if (state_dim==0||action_dim==0||hidden_dim==0) return NULL;
     SNEPPXRLAgent* m=(SNEPPXRLAgent*)calloc(1,sizeof(*m));
@@ -29,6 +55,11 @@ SNEPPXRLAgent* SNEPPX_rl_create(size_t state_dim, size_t action_dim, size_t hidd
     m->b2=SNEPPX_tensor_zeros((size_t[]){action_dim},1,SNEPPX_FLOAT32);
     return m;
 }
+/**
+ * @brief Destroy Rl.
+ *
+ * @param agent [out] Agent value.
+ */
 void SNEPPX_rl_destroy(void* agent){
     SNEPPXRLAgent* m=(SNEPPXRLAgent*)agent; if(!m)return;
     SNEPPX_tensor_destroy(m->W0);SNEPPX_tensor_destroy(m->b0);
@@ -50,6 +81,14 @@ static void forward_q(SNEPPXRLAgent* m, const float* s, float* q, float* h0, flo
     free(a0); free(a1);
 }
 
+/**
+ * @brief Perform Rl Select Action.
+ *
+ * @param agent [out] Agent value.
+ * @param state [in] State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rl_select_action(void* agent, const float* state, float* action) {
     SNEPPXRLAgent* m=(SNEPPXRLAgent*)agent;
     if(!m||!state||!action) return -1;
@@ -65,6 +104,17 @@ int SNEPPX_rl_select_action(void* agent, const float* state, float* action) {
     return 0;
 }
 
+/**
+ * @brief Update Rl.
+ *
+ * @param agent [out] Agent value.
+ * @param state [in] State value.
+ * @param action [in] Action value.
+ * @param reward [in] Reward value.
+ * @param next_state [in] Next State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rl_update(void* agent, const float* state, const float* action, float reward,
         const float* next_state, int done) {
     SNEPPXRLAgent* m=(SNEPPXRLAgent*)agent;

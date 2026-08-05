@@ -21,6 +21,11 @@
 
 
 
+/**
+ * @brief Perform Arc Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXARCConfig SNEPPX_arc_config_default(void) {
     SNEPPXARCConfig cfg;
     cfg.input_guard_strength = 0.7f;
@@ -35,6 +40,13 @@ SNEPPXARCConfig SNEPPX_arc_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Input Guard.
+ *
+ * @param input_dim [in] Input Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXInputGuard* SNEPPX_input_guard_create(size_t input_dim, unsigned int seed) {
     SNEPPXInputGuard* guard = (SNEPPXInputGuard*)SNEPPX_malloc(sizeof(SNEPPXInputGuard), 64);
     if (!guard) return NULL;
@@ -70,6 +82,9 @@ SNEPPXInputGuard* SNEPPX_input_guard_create(size_t input_dim, unsigned int seed)
     return guard;
 }
 
+/**
+ * @brief Destroy Input Guard.
+ */
 void SNEPPX_input_guard_destroy(SNEPPXInputGuard* guard) {
     if (!guard) return;
     if (guard->projection_matrix) SNEPPX_tensor_destroy(guard->projection_matrix);
@@ -78,6 +93,13 @@ void SNEPPX_input_guard_destroy(SNEPPXInputGuard* guard) {
     SNEPPX_free(guard, sizeof(SNEPPXInputGuard));
 }
 
+/**
+ * @brief Run the forward pass for Arc Input Guard.
+ *
+ * @param guard [out] Guard value.
+ * @param input [in] Input value.
+ * @param sanitized [out] Sanitized value.
+ */
 void SNEPPX_arc_input_guard_forward(SNEPPXInputGuard* guard, const SNEPPXTensor* input, SNEPPXTensor** sanitized, float* anomaly_score) {
     size_t batch = input->shape[0];
     size_t dim = input->shape[1];

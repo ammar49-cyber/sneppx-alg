@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Gan
+ *
+ * WHAT
+ *   Gan.
+ *
+ * CONCEPT
+ *   Provides the Gan.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Small 2-hidden-layer MLP with ReLU, linear output, and SGD backprop. */
 typedef struct {
     size_t dims[4];               /* in, h1, h2, out */
@@ -97,6 +113,16 @@ struct SNEPPXGAN {
     float lr;
 };
 
+/**
+ * @brief Create Gan.
+ *
+ * @param latent_dim [in] Latent Dim value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param output_dim [in] Output Dim value.
+ * @param use_batch_norm [in] Use Batch Norm value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXGAN* SNEPPX_gan_create(size_t latent_dim, size_t hidden_dim, size_t output_dim, int use_batch_norm, int use_spectral_norm) {
     SNEPPXGAN* m=(SNEPPXGAN*)calloc(1,sizeof(*m));
     if(!m) return NULL;
@@ -107,8 +133,20 @@ SNEPPXGAN* SNEPPX_gan_create(size_t latent_dim, size_t hidden_dim, size_t output
     if(!m->G||!m->D){SNEPPX_gan_destroy(m);return NULL;}
     return m;
 }
+/**
+ * @brief Destroy Gan.
+ */
 void SNEPPX_gan_destroy(void* gan){ SNEPPXGAN* m=(SNEPPXGAN*)gan; if(!m)return; mlp_destroy(m->G); mlp_destroy(m->D); free(m); }
 
+/**
+ * @brief Perform Gan Generate.
+ *
+ * @param gan [out] Gan value.
+ * @param noise [in] Noise value.
+ * @param num_samples [in] Num Samples value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gan_generate(void* gan, const float* noise, size_t num_samples, float* output) {
     SNEPPXGAN* m=(SNEPPXGAN*)gan; if(!m||!noise||!output) return -1;
     float* a0=(float*)malloc(num_samples*m->hidden*sizeof(float));
@@ -123,6 +161,16 @@ int SNEPPX_gan_generate(void* gan, const float* noise, size_t num_samples, float
     return 0;
 }
 
+/**
+ * @brief Perform Gan Train Step.
+ *
+ * @param gan [out] Gan value.
+ * @param real_samples [in] Real Samples value.
+ * @param num_samples [in] Num Samples value.
+ * @param g_loss [out] G Loss value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gan_train_step(void* gan, const float* real_samples, size_t num_samples, float* g_loss, float* d_loss) {
     SNEPPXGAN* m=(SNEPPXGAN*)gan; if(!m||!real_samples||!g_loss||!d_loss) return -1;
     float* noise=(float*)malloc(num_samples*m->latent*sizeof(float));

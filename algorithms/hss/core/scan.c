@@ -43,6 +43,13 @@ static void assoc_combine(AssocPair* out, const AssocPair* a, const AssocPair* b
     }
 }
 
+/**
+ * @brief Perform Hss Scan.
+ *
+ * @param layer [in] Layer value.
+ * @param x_seq [in] X Seq value.
+ * @param h_seq [out] H Seq value.
+ */
 void SNEPPX_hss_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq) {
     size_t seq_len = x_seq->shape[0];
     size_t i_dim = x_seq->shape[1];
@@ -94,6 +101,13 @@ void SNEPPX_hss_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNE
     }
 }
 
+/**
+ * @brief Perform Hss Parallel Scan.
+ *
+ * @param layer [in] Layer value.
+ * @param x_seq [in] X Seq value.
+ * @param h_seq [out] H Seq value.
+ */
 void SNEPPX_hss_parallel_scan(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x_seq, SNEPPXTensor* h_seq, SNEPPXTensor* y_seq) {
     size_t seq_len = x_seq->shape[0];
     size_t i_dim = x_seq->shape[1];

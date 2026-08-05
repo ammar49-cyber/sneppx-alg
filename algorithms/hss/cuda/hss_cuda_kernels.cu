@@ -2,6 +2,22 @@
 #include "../../../kernel/cuda/common.cuh"
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Hss Cuda Kernels
+ *
+ * WHAT
+ *   Hss Cuda Kernels.
+ *
+ * CONCEPT
+ *   Provides compute kernel.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // ============================================================================

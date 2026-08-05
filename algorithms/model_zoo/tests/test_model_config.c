@@ -3,6 +3,22 @@
 #include <string.h>
 #include <assert.h>
 
+/*
+ * SNEPPX - Test Model Config
+ *
+ * WHAT
+ *   Test Model Config.
+ *
+ * CONCEPT
+ *   Provides the Test Model Config.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 void test_create_destroy(void) {
     printf("test_create_destroy... ");
     ModelConfig *cfg = model_config_create();

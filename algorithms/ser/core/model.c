@@ -19,6 +19,14 @@
 
 
 
+/**
+ * @brief Create Ser Model.
+ *
+ * @param config [in] Config value.
+ * @param seed [in] Seed value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXSERModel* SNEPPX_ser_model_create(const SNEPPXSERConfig* config, unsigned int seed, size_t num_layers) {
     SNEPPXSERModel* model = (SNEPPXSERModel*)SNEPPX_malloc(sizeof(SNEPPXSERModel), 64);
     if (!model) return NULL;
@@ -41,6 +49,9 @@ SNEPPXSERModel* SNEPPX_ser_model_create(const SNEPPXSERConfig* config, unsigned 
     return model;
 }
 
+/**
+ * @brief Destroy Ser Model.
+ */
 void SNEPPX_ser_model_destroy(SNEPPXSERModel* model) {
     if (!model) return;
     for (size_t i = 0; i < model->num_layers; i++) {
@@ -50,6 +61,14 @@ void SNEPPX_ser_model_destroy(SNEPPXSERModel* model) {
     SNEPPX_free(model, sizeof(SNEPPXSERModel));
 }
 
+/**
+ * @brief Perform Ser Get Params.
+ *
+ * @param model [in] Model value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_ser_get_params(const SNEPPXSERModel* model, SNEPPXTensor** out, size_t max_out) {
     if (!model) return 0;
     size_t count = 0;

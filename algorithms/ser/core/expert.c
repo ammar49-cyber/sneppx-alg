@@ -20,6 +20,11 @@
 
 
 
+/**
+ * @brief Perform Ser Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXSERConfig SNEPPX_ser_config_default(void) {
     SNEPPXSERConfig cfg;
     cfg.num_experts = 8;
@@ -54,6 +59,14 @@ static void fill_randn(float* data, size_t n, unsigned long* state, float scale)
     }
 }
 
+/**
+ * @brief Create Expert.
+ *
+ * @param config [in] Config value.
+ * @param seed [in] Seed value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExpert* SNEPPX_expert_create(const SNEPPXSERConfig* config, unsigned int seed, SNEPPXActivation activation) {
     SNEPPXExpert* expert = (SNEPPXExpert*)SNEPPX_malloc(sizeof(SNEPPXExpert), 64);
     if (!expert) return NULL;
@@ -85,6 +98,9 @@ SNEPPXExpert* SNEPPX_expert_create(const SNEPPXSERConfig* config, unsigned int s
     return expert;
 }
 
+/**
+ * @brief Destroy Expert.
+ */
 void SNEPPX_expert_destroy(SNEPPXExpert* expert) {
     if (!expert) return;
     if (expert->w1) SNEPPX_tensor_destroy(expert->w1);

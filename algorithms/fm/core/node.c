@@ -19,6 +19,14 @@
 
 
 
+/**
+ * @brief Create Fm Node.
+ *
+ * @param node_id [in] Node Id value.
+ * @param memory_dim [in] Memory Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXFMNode* SNEPPX_fm_node_create(size_t node_id, size_t memory_dim, size_t capacity) {
     SNEPPXFMNode* node = (SNEPPXFMNode*)SNEPPX_malloc(sizeof(SNEPPXFMNode), 64);
     if (!node) return NULL;
@@ -45,6 +53,9 @@ SNEPPXFMNode* SNEPPX_fm_node_create(size_t node_id, size_t memory_dim, size_t ca
     return node;
 }
 
+/**
+ * @brief Destroy Fm Node.
+ */
 void SNEPPX_fm_node_destroy(SNEPPXFMNode* node) {
     if (!node) return;
     if (node->memory_bank) SNEPPX_fm_memory_bank_destroy(node->memory_bank);

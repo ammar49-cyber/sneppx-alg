@@ -1,6 +1,22 @@
 #include "npe_cuda.cuh"
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Npe Cuda
+ *
+ * WHAT
+ *   Npe Cuda.
+ *
+ * CONCEPT
+ *   Provides the Npe Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // NPE instruction dispatch kernel

@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Create Ser Layer.
+ *
+ * @param config [in] Config value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXSERLayer* SNEPPX_ser_layer_create(const SNEPPXSERConfig* config, unsigned int seed) {
     SNEPPXSERLayer* layer = (SNEPPXSERLayer*)SNEPPX_malloc(sizeof(SNEPPXSERLayer), 64);
     if (!layer) return NULL;
@@ -93,6 +100,9 @@ SNEPPXSERLayer* SNEPPX_ser_layer_create(const SNEPPXSERConfig* config, unsigned 
     return layer;
 }
 
+/**
+ * @brief Destroy Ser Layer.
+ */
 void SNEPPX_ser_layer_destroy(SNEPPXSERLayer* layer) {
     if (!layer) return;
     for (size_t i = 0; i < layer->config.num_experts; i++) {

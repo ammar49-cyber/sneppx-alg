@@ -5,6 +5,22 @@
 #include <cuda_fp16.h>
 #include "../../../kernel/cuda/common.cuh"
 
+/*
+ * SNEPPX - Npe Cuda
+ *
+ * WHAT
+ *   Npe Cuda.
+ *
+ * CONCEPT
+ *   Provides the Npe Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // NPE (Neural Program Engine) CUDA Kernels
 // - Neural VM instruction dispatch
 // - Tensor program execution

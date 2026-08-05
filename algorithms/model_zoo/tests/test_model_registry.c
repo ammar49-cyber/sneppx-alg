@@ -4,6 +4,22 @@
 #include <string.h>
 #include <assert.h>
 
+/*
+ * SNEPPX - Test Model Registry
+ *
+ * WHAT
+ *   Test Model Registry.
+ *
+ * CONCEPT
+ *   Provides the Test Model Registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 void test_create_destroy(void) {
     printf("test_create_destroy... ");
     ModelRegistry *r = model_registry_create();

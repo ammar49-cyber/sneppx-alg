@@ -1,6 +1,22 @@
 #ifndef ARIX_HSS_CUDA_KERNELS_H
 #define ARIX_HSS_CUDA_KERNELS_H
 /*
+ * SNEPPX - Hss Cuda Kernels
+ *
+ * WHAT
+ *   Hss Cuda Kernels.
+ *
+ * CONCEPT
+ *   Provides compute kernel.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * HSS CUDA Kernels — v1.0 (GPU-accelerated sparse operations)
  *
  * PURPOSE: CUDA device kernels for the hierarchical sparse structure.

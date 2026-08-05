@@ -31,6 +31,13 @@ static float euclidean_similarity(const float* a, const float* b, size_t dim) {
     return 1.0f / (1.0f + dist_sq / (float)dim);
 }
 
+/**
+ * @brief Create Fm Memory Bank.
+ *
+ * @param memory_dim [in] Memory Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXFMMemoryBank* SNEPPX_fm_memory_bank_create(size_t memory_dim, size_t capacity) {
     SNEPPXFMMemoryBank* bank = (SNEPPXFMMemoryBank*)SNEPPX_malloc(sizeof(SNEPPXFMMemoryBank), 64);
     if (!bank) return NULL;
@@ -54,6 +61,9 @@ SNEPPXFMMemoryBank* SNEPPX_fm_memory_bank_create(size_t memory_dim, size_t capac
     return bank;
 }
 
+/**
+ * @brief Destroy Fm Memory Bank.
+ */
 void SNEPPX_fm_memory_bank_destroy(SNEPPXFMMemoryBank* bank) {
     if (!bank) return;
     if (bank->keys) SNEPPX_tensor_destroy(bank->keys);
@@ -63,6 +73,14 @@ void SNEPPX_fm_memory_bank_destroy(SNEPPXFMMemoryBank* bank) {
     SNEPPX_free(bank, sizeof(SNEPPXFMMemoryBank));
 }
 
+/**
+ * @brief Write Fm Memory Bank.
+ *
+ * @param bank [out] Bank value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fm_memory_bank_write(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key, const SNEPPXTensor* value) {
     if (!bank || !key || !value) return 0;
     size_t dim = bank->keys->shape[1];
@@ -113,6 +131,13 @@ int SNEPPX_fm_memory_bank_write(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* ke
     return 1;
 }
 
+/**
+ * @brief Read Fm Memory Bank.
+ *
+ * @param bank [out] Bank value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_fm_memory_bank_read(SNEPPXFMMemoryBank* bank, const SNEPPXTensor* key) {
     if (!bank || !key || bank->num_entries == 0) return NULL;
     size_t dim = bank->keys->shape[1];
@@ -158,6 +183,11 @@ static int cmp_retention(const void* a, const void* b) {
     return 0;
 }
 
+/**
+ * @brief Get Fm Memory Bank For.
+ *
+ * @param bank [out] Bank value.
+ */
 void SNEPPX_fm_memory_bank_forget(SNEPPXFMMemoryBank* bank, float forget_rate) {
     if (!bank || bank->num_entries == 0) return;
     size_t dim = bank->keys->shape[1];

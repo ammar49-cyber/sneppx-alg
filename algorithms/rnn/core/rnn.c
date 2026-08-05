@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Rnn
+ *
+ * WHAT
+ *   Rnn.
+ *
+ * CONCEPT
+ *   Provides the Rnn.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum { RNN_VANILLA, RNN_LSTM, RNN_GRU } RNNT;
 
 struct SNEPPXRNN {
@@ -22,6 +38,17 @@ static void linear_fwd(const float* x, size_t m, const float* w, size_t k, size_
 }
 static float sigmoidf_x(float x) { return 1.0f/(1.0f+expf(-x)); }
 
+/**
+ * @brief Create Rnn.
+ *
+ * @param input_size [in] Input Size value.
+ * @param hidden_size [in] Hidden Size value.
+ * @param num_layers [in] Num Layers value.
+ * @param bidirectional [in] Bidirectional value.
+ * @param dropout [in] Dropout value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXRNN* SNEPPX_rnn_create(size_t input_size, size_t hidden_size, size_t num_layers,
         int bidirectional, float dropout, const char* rnn_type) {
     (void)dropout;
@@ -63,6 +90,9 @@ SNEPPXRNN* SNEPPX_rnn_create(size_t input_size, size_t hidden_size, size_t num_l
     return m;
 }
 
+/**
+ * @brief Destroy Rnn.
+ */
 void SNEPPX_rnn_destroy(void* rnn) {
     SNEPPXRNN* m=(SNEPPXRNN*)rnn; if(!m) return;
     for (size_t l=0;l<m->num_layers;l++){
@@ -120,6 +150,17 @@ static void rnn_dir(SNEPPXRNN* m, size_t l, const float* x, size_t seq, size_t b
     free(hprev); free(cprev); free(xi); free(xh);
 }
 
+/**
+ * @brief Run the forward pass for Rnn.
+ *
+ * @param rnn [out] Rnn value.
+ * @param input [in] Input value.
+ * @param seq_len [in] Seq Len value.
+ * @param batch_size [in] Batch Size value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rnn_forward(void* rnn, const float* input, size_t seq_len, size_t batch_size, float* output, float* hidden) {
     SNEPPXRNN* m=(SNEPPXRNN*)rnn;
     if(!m||!input||!output) return -1;

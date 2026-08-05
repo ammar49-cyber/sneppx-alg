@@ -21,6 +21,12 @@
 
 
 
+/**
+ * @brief Run the forward pass for Ser.
+ *
+ * @param layer [out] Layer value.
+ * @param input [in] Input value.
+ */
 void SNEPPX_ser_forward(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPXTensor** output) {
     size_t num_tokens = input->shape[0];
     size_t i_dim = input->shape[1];

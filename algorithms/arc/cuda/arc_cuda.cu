@@ -1,6 +1,22 @@
 #include "arc_cuda.cuh"
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Arc Cuda
+ *
+ * WHAT
+ *   Arc Cuda.
+ *
+ * CONCEPT
+ *   Provides the Arc Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 __global__ void fgsm_attack_kernel(

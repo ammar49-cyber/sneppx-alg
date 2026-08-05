@@ -3,6 +3,22 @@
 #include <string.h>
 #include <assert.h>
 
+/*
+ * SNEPPX - Test Weights
+ *
+ * WHAT
+ *   Test Weights.
+ *
+ * CONCEPT
+ *   Provides the Test Weights.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 void test_create_destroy(void) {
     printf("test_create_destroy... ");
     WeightCollection *wc = weight_collection_create();

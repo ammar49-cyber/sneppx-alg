@@ -7,6 +7,22 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Integration
+ *
+ * WHAT
+ *   Test Integration.
+ *
+ * CONCEPT
+ *   Provides the Test Integration.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_total = 0;
 

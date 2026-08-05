@@ -5,6 +5,22 @@
 #include <cuda_fp16.h>
 #include "../../../kernel/cuda/common.cuh"
 
+/*
+ * SNEPPX - Fm Cuda
+ *
+ * WHAT
+ *   Fm Cuda.
+ *
+ * CONCEPT
+ *   Provides the Fm Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // FM (Federated Memory) CUDA Kernels
 // - All-reduce gradient aggregation (ring/butterfly/tree)
 // - Memory bank synchronization

@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Perform Npe Compile Attention.
+ *
+ * @param seq_len [in] Seq Len value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_compile_attention(size_t seq_len, size_t dim) {
     SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(32);
     if (!prog) return NULL;
@@ -57,6 +64,13 @@ SNEPPXNPEProgram* SNEPPX_npe_compile_attention(size_t seq_len, size_t dim) {
     return prog;
 }
 
+/**
+ * @brief Perform Npe Compile Mlp.
+ *
+ * @param dim [in] Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_compile_mlp(size_t dim, size_t hidden_dim) {
     SNEPPXNPEProgram* prog = SNEPPX_npe_program_create(32);
     if (!prog) return NULL;
@@ -115,6 +129,11 @@ SNEPPXNPEProgram* SNEPPX_npe_compile_mlp(size_t dim, size_t hidden_dim) {
     return prog;
 }
 
+/**
+ * @brief Create Npe Jit Profile.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEJITProfile* SNEPPX_npe_jit_profile_create(size_t hot_threshold) {
     SNEPPXNPEJITProfile* profile = (SNEPPXNPEJITProfile*)calloc(1, sizeof(SNEPPXNPEJITProfile));
     if (!profile) return NULL;
@@ -123,10 +142,19 @@ SNEPPXNPEJITProfile* SNEPPX_npe_jit_profile_create(size_t hot_threshold) {
     return profile;
 }
 
+/**
+ * @brief Destroy Npe Jit Profile.
+ */
 void SNEPPX_npe_jit_profile_destroy(SNEPPXNPEJITProfile* profile) {
     if (profile) free(profile);
 }
 
+/**
+ * @brief Perform Npe Jit Record.
+ *
+ * @param profile [out] Profile value.
+ * @param opcode [in] Opcode value.
+ */
 void SNEPPX_npe_jit_record(SNEPPXNPEJITProfile* profile, int opcode, float latency_us) {
     if (!profile || !profile->is_profiling) return;
     if (opcode >= 0 && opcode < 32) {
@@ -136,6 +164,13 @@ void SNEPPX_npe_jit_record(SNEPPXNPEJITProfile* profile, int opcode, float laten
     }
 }
 
+/**
+ * @brief Perform Npe Jit Compile.
+ *
+ * @param profile [out] Profile value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_compile(SNEPPXNPEJITProfile* profile, const SNEPPXNPEProgram* original) {
     if (!profile || !original) return NULL;
 
@@ -173,6 +208,15 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_compile(SNEPPXNPEJITProfile* profile, const SNE
     return opt;
 }
 
+/**
+ * @brief Perform Npe Jit Specialize.
+ *
+ * @param prog [in] Prog value.
+ * @param batch [in] Batch value.
+ * @param seq_len [in] Seq Len value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_specialize(const SNEPPXNPEProgram* prog, size_t batch, size_t seq_len, size_t dim) {
     if (!prog) return NULL;
     SNEPPXNPEProgram* spec = SNEPPX_npe_program_create(prog->max_instructions);
@@ -203,6 +247,11 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_specialize(const SNEPPXNPEProgram* prog, size_t
     return spec;
 }
 
+/**
+ * @brief Perform Npe Jit Fuse.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog) {
     if (!prog) return NULL;
     SNEPPXNPEProgram* fused = SNEPPX_npe_program_create(prog->max_instructions);
@@ -262,6 +311,13 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_fuse(const SNEPPXNPEProgram* prog) {
     return fused;
 }
 
+/**
+ * @brief Perform Npe Jit Constant Fold.
+ *
+ * @param prog [in] Prog value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_constant_fold(const SNEPPXNPEProgram* prog, const SNEPPXTensor* memory) {
     if (!prog) return NULL;
     SNEPPXNPEProgram* folded = SNEPPX_npe_program_create(prog->max_instructions);
@@ -334,6 +390,11 @@ SNEPPXNPEProgram* SNEPPX_npe_jit_constant_fold(const SNEPPXNPEProgram* prog, con
     return folded;
 }
 
+/**
+ * @brief Perform Npe Jit Dce.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_jit_dce(const SNEPPXNPEProgram* prog) {
     if (!prog) return NULL;
 

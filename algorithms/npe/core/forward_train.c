@@ -20,6 +20,14 @@
 
 
 
+/**
+ * @brief Perform Npe Get Params.
+ *
+ * @param prog [out] Prog value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_npe_get_params(SNEPPXNPEProgram* prog, SNEPPXTensor** out, size_t max_out) {
     if (!prog || !prog->memory) return 0;
 
@@ -68,6 +76,17 @@ size_t SNEPPX_npe_get_params(SNEPPXNPEProgram* prog, SNEPPXTensor** out, size_t 
     return 4;
 }
 
+/**
+ * @brief Perform Npe Build Train Graph.
+ *
+ * @param prog [out] Prog value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npe_build_train_graph(SNEPPXNPEProgram* prog, SNEPPXTape* tape,
                                 SNEPPXVariable* input_var,
                                 SNEPPXVariable** weight_vars, size_t num_weights,

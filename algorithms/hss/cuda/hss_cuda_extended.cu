@@ -2,6 +2,22 @@
 #include <cooperative_groups.h>
 #include <cufft.h>
 
+/*
+ * SNEPPX - Hss Cuda Extended
+ *
+ * WHAT
+ *   Hss Cuda Extended.
+ *
+ * CONCEPT
+ *   Provides the Hss Cuda Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // ============================================================================

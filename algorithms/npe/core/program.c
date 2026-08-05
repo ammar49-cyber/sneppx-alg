@@ -20,6 +20,11 @@
 
 
 
+/**
+ * @brief Perform Npe Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXNPEConfig SNEPPX_npe_config_default(void) {
     SNEPPXNPEConfig cfg;
     cfg.max_program_length = 256;
@@ -32,6 +37,11 @@ SNEPPXNPEConfig SNEPPX_npe_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Npe Program.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXNPEProgram* SNEPPX_npe_program_create(size_t max_instructions) {
     SNEPPXNPEProgram* prog = (SNEPPXNPEProgram*)SNEPPX_malloc(sizeof(SNEPPXNPEProgram), 64);
     if (!prog) return NULL;
@@ -53,6 +63,9 @@ SNEPPXNPEProgram* SNEPPX_npe_program_create(size_t max_instructions) {
     return prog;
 }
 
+/**
+ * @brief Destroy Npe Program.
+ */
 void SNEPPX_npe_program_destroy(SNEPPXNPEProgram* prog) {
     if (!prog) return;
     for (int i = 0; i < 16; i++) {
@@ -67,6 +80,11 @@ void SNEPPX_npe_program_destroy(SNEPPXNPEProgram* prog) {
     SNEPPX_free(prog, sizeof(SNEPPXNPEProgram));
 }
 
+/**
+ * @brief Perform Npe Program Append.
+ *
+ * @param prog [out] Prog value.
+ */
 void SNEPPX_npe_program_append(SNEPPXNPEProgram* prog, SNEPPXNPEInstruction inst) {
     if (prog->num_instructions >= prog->max_instructions) return;
     prog->instructions[prog->num_instructions++] = inst;

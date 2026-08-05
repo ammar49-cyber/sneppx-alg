@@ -6,6 +6,22 @@
 #include "../../../kernel/cuda/common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Hss Cuda Extended
+ *
+ * WHAT
+ *   Hss Cuda Extended.
+ *
+ * CONCEPT
+ *   Provides the Hss Cuda Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

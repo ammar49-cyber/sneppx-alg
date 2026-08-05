@@ -20,6 +20,13 @@
 
 
 
+/**
+ * @brief Perform Ser Route Mlp Gated.
+ *
+ * @param layer [out] Layer value.
+ * @param input [in] Input value.
+ * @param gate_weights [out] Gate Weights value.
+ */
 void SNEPPX_ser_route_mlp_gated(SNEPPXSERLayer* layer, const SNEPPXTensor* input,
                                 SNEPPXTensor** gate_weights, int** expert_indices) {
     if (!layer || !input || !gate_weights || !expert_indices) return;

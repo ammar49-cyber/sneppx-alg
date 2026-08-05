@@ -26,6 +26,14 @@
 
 
 
+/**
+ * @brief Perform Npe Verify Program.
+ *
+ * @param prog [in] Prog value.
+ * @param error_msg [out] Error Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npe_verify_program(const SNEPPXNPEProgram* prog, char** error_msg, size_t* error_len) {
     if (!prog) { if (error_msg) { *error_msg = (char*)malloc(13); if (*error_msg) memcpy(*error_msg, "Null program\0", 13); } if (error_len) *error_len = 12; return 0; }
 

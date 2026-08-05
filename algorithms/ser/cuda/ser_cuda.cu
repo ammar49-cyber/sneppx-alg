@@ -1,6 +1,22 @@
 #include "ser_cuda.cuh"
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Ser Cuda
+ *
+ * WHAT
+ *   Ser Cuda.
+ *
+ * CONCEPT
+ *   Provides the Ser Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // Top-k gating (softmax + top-k selection)

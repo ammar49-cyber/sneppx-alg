@@ -45,22 +45,6 @@
  */
 
 
-/*
- * SNEPPX - Monitor Advanced
- *
- * WHAT
- *   Monitor Advanced.
- *
- * CONCEPT
- *   Provides the Monitor Advanced.
- *
- * ROLE
- *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
- *   four-layer commenting standard used across this codebase.
- *
- */
-
-
 static void* g_so_guard_page = NULL;
 static void* g_so_stack_bottom = NULL;
 static size_t g_so_guard_size = 0;

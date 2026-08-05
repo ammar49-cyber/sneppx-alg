@@ -17,6 +17,12 @@
 
 
 
+/**
+ * @brief Perform Hss Step.
+ *
+ * @param layer [in] Layer value.
+ * @param x [in] X value.
+ */
 void SNEPPX_hss_step(const SNEPPXHSSLayer* layer, const SNEPPXTensor* x, SNEPPXTensor* h_next) {
     size_t s_dim = layer->A_bar->shape[0];
     size_t i_dim = x->size;

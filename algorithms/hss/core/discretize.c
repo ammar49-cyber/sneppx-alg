@@ -19,6 +19,15 @@
 
 
 
+/**
+ * @brief Perform Hss Discretize Zoh.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param state_dim [in] State Dim value.
+ * @param dt [in] Dt value.
+ * @param Ad [out] Ad value.
+ */
 void SNEPPX_hss_discretize_zoh(const float* A, const float* B, int state_dim, float dt, float* Ad, float* Bd) {
     for (int i = 0; i < state_dim; i++) {
         for (int j = 0; j < state_dim; j++) {
@@ -37,6 +46,15 @@ void SNEPPX_hss_discretize_zoh(const float* A, const float* B, int state_dim, fl
     }
 }
 
+/**
+ * @brief Perform Hss Discretize Bilinear.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param state_dim [in] State Dim value.
+ * @param dt [in] Dt value.
+ * @param Ad [out] Ad value.
+ */
 void SNEPPX_hss_discretize_bilinear(const float* A, const float* B, int state_dim, float dt, float* Ad, float* Bd) {
     float half_dt = 0.5f * dt;
     for (int i = 0; i < state_dim; i++) {
@@ -56,6 +74,13 @@ void SNEPPX_hss_discretize_bilinear(const float* A, const float* B, int state_di
     }
 }
 
+/**
+ * @brief Perform Hss Hierarchical Levels.
+ *
+ * @param state_dim [in] State Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hss_hierarchical_levels(int state_dim, int min_dim) {
     if (state_dim <= min_dim || min_dim <= 0) return 0;
     int levels = 0;
@@ -67,6 +92,9 @@ int SNEPPX_hss_hierarchical_levels(int state_dim, int min_dim) {
     return levels;
 }
 
+/**
+ * @brief Perform Hss Discretize.
+ */
 void SNEPPX_hss_discretize(SNEPPXHSSLayer* layer) {
     size_t s_dim = layer->A->shape[0];
     size_t i_dim = layer->B->shape[1];
