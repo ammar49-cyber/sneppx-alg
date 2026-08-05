@@ -97,7 +97,7 @@ test category:
   test_fm: FM algorithm tests
 
 # Run tests with sanitizers (Debug build)
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_USE_SANITIZERS=ON
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_USE_SANITIZERS=ON
 cmake --build . -j$(nproc)
 cd build && ctest -C Debug --output-on-failure
 ```
@@ -272,7 +272,7 @@ python -m pytest tests/python/test_tensor.py -v
 
 # Run core C/C++ tests (if available)
 echo "Building C/C++ tests..."
-cmake .. -DSNEPPX_BUILD_TESTS=ON && cmake --build . -j$(nproc)
+cmake .. -G Ninja -DSNEPPX_BUILD_TESTS=ON && cmake --build . -j$(nproc)
 
 cd build
 echo "Running C/C++ tests..."

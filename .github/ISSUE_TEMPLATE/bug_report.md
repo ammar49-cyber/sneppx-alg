@@ -10,7 +10,7 @@ assignees: ""
 A clear and concise description of the bug.
 
 ## Reproduction Steps
-1. Configure: `cmake .. -DCMAKE_BUILD_TYPE=Debug -DARIX_BUILD_TESTS=ON`
+1. Configure: `cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSNEPPX_BUILD_TESTS=ON`
 2. Build: `cmake --build .`
 3. Run: `ctest --output-on-failure -R <test-name>`
 4. Observe: ...
