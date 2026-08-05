@@ -27,7 +27,7 @@ git clone https://github.com/ammar49-cyber/sneppx-alg.git
 cd sneppx-alg
 
 # Configure (Release)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 # Build everything (library + examples + tests)
 cmake --build build --config Release
@@ -40,18 +40,18 @@ ctest -C Release --output-on-failure
 ### Opt-in backends (OFF by default)
 
 ```powershell
-cmake -B build -DSNEPPX_BUILD_VULKAN=ON   # Vulkan reference compute
-cmake -B build -DSNEPPX_BUILD_TPU=ON      # TPU reference compute
-cmake -B build -DSNEPPX_BUILD_HTTP=ON     # HTTP transport (BSD sockets)
-cmake -B build -DSNEPPX_BUILD_ZK=ON       # Zero-knowledge proofs
-cmake -B build -DSNEPPX_BUILD_METAL=ON    # Apple Metal (macOS)
-cmake -B build -DSNEPPX_BUILD_ONEAPI=ON   # Intel oneAPI/SYCL
+cmake -B build -G Ninja -DSNEPPX_BUILD_VULKAN=ON   # Vulkan reference compute
+cmake -B build -G Ninja -DSNEPPX_BUILD_TPU=ON      # TPU reference compute
+cmake -B build -G Ninja -DSNEPPX_BUILD_HTTP=ON     # HTTP transport (BSD sockets)
+cmake -B build -G Ninja -DSNEPPX_BUILD_ZK=ON       # Zero-knowledge proofs
+cmake -B build -G Ninja -DSNEPPX_BUILD_METAL=ON    # Apple Metal (macOS)
+cmake -B build -G Ninja -DSNEPPX_BUILD_ONEAPI=ON   # Intel oneAPI/SYCL
 ```
 
 ### Everything at once
 
 ```powershell
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON `
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON `
   -DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON -DSNEPPX_BUILD_ZK=ON
 cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure

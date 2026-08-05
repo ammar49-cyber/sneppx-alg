@@ -14,7 +14,7 @@ git clone https://github.com/ammar49-cyber/sneppx-alg.git
 cd sneppx-alg
 
 # Build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 
 # Test
