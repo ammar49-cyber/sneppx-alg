@@ -4,6 +4,22 @@
 #include <stddef.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Driver Registry
+ *
+ * WHAT
+ *   Driver Registry.
+ *
+ * CONCEPT
+ *   Provides the Driver Registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
@@ -33,11 +49,55 @@ typedef struct {
     int count;
 } SNEPPXDriverInfo;
 
+/**
+ * @brief Perform Driver Register.
+ *
+ * @param name [in] Name value.
+ * @param entry [out] Entry value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_register(const char* name, SNEPPXDriverEntry* entry);
+/**
+ * @brief Perform Driver Unregister.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_unregister(const char* name);
+/**
+ * @brief Get Driver.
+ *
+ * @param name [in] Name value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXDriverEntry* SNEPPX_driver_get(const char* name);
+/**
+ * @brief Perform Driver Get Info.
+ *
+ * @param info [out] Info value.
+ * @param max_info [in] Max Info value.
+ * @param count [out] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_get_info(SNEPPXDriverInfo* info, size_t max_info, size_t* count);
+/**
+ * @brief Perform Driver Load Library.
+ *
+ * @param name [in] Name value.
+ * @param lib_path [in] Lib Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_load_library(const char* name, const char* lib_path);
+/**
+ * @brief Perform Driver Unload All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_unload_all(void);
 
 #ifdef __cplusplus

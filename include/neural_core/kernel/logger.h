@@ -5,6 +5,22 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Logger
+ *
+ * WHAT
+ *   Logger.
+ *
+ * CONCEPT
+ *   Provides structured logging.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
@@ -43,12 +59,50 @@ typedef struct {
 typedef struct SNEPPX_Logger SNEPPX_Logger;
 
 /* Lifecycle */
+/**
+ * @brief Initialize Logger.
+ *
+ * @param logger [out] Logger value.
+ * @param config [in] Config value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_logger_init(SNEPPX_Logger** logger, const SNEPPX_LogConfig* config);
+/**
+ * @brief Destroy Logger.
+ *
+ * @param logger [out] Logger value.
+ */
 void SNEPPX_logger_destroy(SNEPPX_Logger* logger);
+/**
+ * @brief Perform Logger Set Level.
+ *
+ * @param logger [out] Logger value.
+ * @param level [in] Level value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_logger_set_level(SNEPPX_Logger* logger, SNEPPX_LogLevel level);
+/**
+ * @brief Perform Logger Set Output.
+ *
+ * @param logger [out] Logger value.
+ * @param json_path [in] Json Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_logger_set_output(SNEPPX_Logger* logger, const char* json_path);
 
 /* Core log function */
+/**
+ * @brief Write Log.
+ *
+ * @param logger [out] Logger value.
+ * @param level [in] Level value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ * @param fmt [in] Fmt value.
+ */
 void SNEPPX_log_write(SNEPPX_Logger* logger, SNEPPX_LogLevel level,
                        const char* file, int line,
                        const char* fmt, ...);
@@ -62,6 +116,13 @@ void SNEPPX_log_write(SNEPPX_Logger* logger, SNEPPX_LogLevel level,
 #define SNEPPX_LOG_FATAL(logger, ...)  SNEPPX_log_write(logger, SNEPPX_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 /* Default log level strings */
+/**
+ * @brief Perform Log Level String.
+ *
+ * @param level [in] Level value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_log_level_string(SNEPPX_LogLevel level);
 
 #ifdef __cplusplus

@@ -5,6 +5,22 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Model Zoo
+ *
+ * WHAT
+ *   Model Zoo.
+ *
+ * CONCEPT
+ *   Provides model configuration registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
