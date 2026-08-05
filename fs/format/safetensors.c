@@ -5,6 +5,22 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+/*
+ * SNEPPX - Safetensors
+ *
+ * WHAT
+ *   Safetensors.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Minimal safetensors implementation (little-endian).
  *
  * Layout: uint64 header_length | utf-8 JSON header | byte buffer
@@ -63,6 +79,11 @@ typedef struct {
     size_t w_data_cap;
 } STHandle;
 
+/**
+ * @brief Perform Safetensors Dtype Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_safetensors_dtype_size(int dtype) {
     switch (dtype) {
         case SNEPPX_ST_DTYPE_F64: return 8;
@@ -168,6 +189,13 @@ static STEntry* find_entry(STHandle* h, const char* name) {
     return NULL;
 }
 
+/**
+ * @brief Open Safetensors.
+ *
+ * @param path [in] Path value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_safetensors_open(const char* path, const char* mode) {
     STHandle* h = (STHandle*)calloc(1, sizeof(STHandle));
     if (!h) return NULL;
@@ -286,6 +314,9 @@ void* SNEPPX_safetensors_open(const char* path, const char* mode) {
     return h;
 }
 
+/**
+ * @brief Close Safetensors.
+ */
 void SNEPPX_safetensors_close(void* st) {
     STHandle* h = (STHandle*)st;
     if (!h) return;
@@ -304,12 +335,25 @@ void SNEPPX_safetensors_close(void* st) {
     free(h);
 }
 
+/**
+ * @brief Perform Safetensors Get Tensor Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_safetensors_get_tensor_count(void* st) {
     STHandle* h = (STHandle*)st;
     if (!h) return 0;
     return (int)h->n_entries;
 }
 
+/**
+ * @brief Perform Safetensors Get Tensor Names.
+ *
+ * @param st [out] St value.
+ * @param names [out] Names value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_safetensors_get_tensor_names(void* st, char*** names, size_t* count) {
     STHandle* h = (STHandle*)st;
     if (!h || !names || !count) return -1;
@@ -323,6 +367,16 @@ int SNEPPX_safetensors_get_tensor_names(void* st, char*** names, size_t* count) 
     return 0;
 }
 
+/**
+ * @brief Perform Safetensors Read Tensor.
+ *
+ * @param st [out] St value.
+ * @param name [in] Name value.
+ * @param ndim [out] Ndim value.
+ * @param shape [out] Shape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_safetensors_read_tensor(void* st, const char* name, size_t* ndim, size_t** shape, int* dtype) {
     STHandle* h = (STHandle*)st;
     if (!h || !name) return NULL;
@@ -349,6 +403,17 @@ void* SNEPPX_safetensors_read_tensor(void* st, const char* name, size_t* ndim, s
     return out;
 }
 
+/**
+ * @brief Perform Safetensors Write Tensor.
+ *
+ * @param st [out] St value.
+ * @param name [in] Name value.
+ * @param data [in] Data value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_safetensors_write_tensor(void* st, const char* name, const void* data, const size_t* shape, size_t ndim, int dtype) {
     STHandle* h = (STHandle*)st;
     if (!h || h->mode != 'w' || !name || !data) return -1;
@@ -381,6 +446,11 @@ int SNEPPX_safetensors_write_tensor(void* st, const char* name, const void* data
     return 0;
 }
 
+/**
+ * @brief Save Safetensors.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_safetensors_save(void* st) {
     STHandle* h = (STHandle*)st;
     if (!h || h->mode != 'w' || !h->path) return -1;
@@ -416,6 +486,15 @@ int SNEPPX_safetensors_save(void* st) {
     return 0;
 }
 
+/**
+ * @brief Perform Safetensors Get Metadata.
+ *
+ * @param st [out] St value.
+ * @param key [in] Key value.
+ * @param value [out] Value value.
+ *
+ * @return The result value, or 0 on error.
+ */
 unsigned long long SNEPPX_safetensors_get_metadata(void* st, const char* key, char* value, size_t value_max) {
     STHandle* h = (STHandle*)st;
     if (!h || !h->meta_json || !key) return 0;

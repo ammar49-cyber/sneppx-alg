@@ -1,6 +1,22 @@
 #ifndef SNEPPX_INTERNAL_VMEM_H
 #define SNEPPX_INTERNAL_VMEM_H
 /*
+ * SNEPPX - Vmem
+ *
+ * WHAT
+ *   Vmem.
+ *
+ * CONCEPT
+ *   Provides the Vmem.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Virtual Memory Management — v0.5 (internal to SNEPPX_memory)
  *
  * PURPOSE: Huge-page-aware virtual memory allocator using mmap/map
@@ -48,15 +64,76 @@ typedef struct SNEPPXVMemAllocator {
 } SNEPPXVMemAllocator;
 
 /* ---------- API ---------- */
+/**
+ * @brief Initialize Vmem.
+ *
+ * @param alloc [out] Alloc value.
+ */
 void SNEPPX_vmem_init(SNEPPXVMemAllocator* alloc);
+/**
+ * @brief Perform Vmem Cleanup.
+ *
+ * @param alloc [out] Alloc value.
+ */
 void SNEPPX_vmem_cleanup(SNEPPXVMemAllocator* alloc);
 
+/**
+ * @brief Perform Vmem Reserve.
+ *
+ * @param alloc [out] Alloc value.
+ * @param bytes [in] Bytes value.
+ * @param alignment [in] Alignment value.
+ * @param flags [in] Flags value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_vmem_reserve(SNEPPXVMemAllocator* alloc, size_t bytes, size_t alignment, int flags);
+/**
+ * @brief Perform Vmem Commit.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int   SNEPPX_vmem_commit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes);
+/**
+ * @brief Perform Vmem Decommit.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int   SNEPPX_vmem_decommit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes);
+/**
+ * @brief Perform Vmem Release.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ * @param bytes [in] Bytes value.
+ */
 void  SNEPPX_vmem_release(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes);
 
+/**
+ * @brief Perform Vmem Advise Hugepage.
+ *
+ * @param addr [out] Addr value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int   SNEPPX_vmem_advise_hugepage(void* addr, size_t bytes);
+/**
+ * @brief Perform Vmem Advise Nohugepage.
+ *
+ * @param addr [out] Addr value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int   SNEPPX_vmem_advise_nohugepage(void* addr, size_t bytes);
 
 /* ---------- Eviction (v0.5) ---------- */
@@ -69,7 +146,24 @@ typedef struct SNEPPXEvictStrategy {
     void            (*on_access)(struct SNEPPXEvictStrategy* strat, void* addr);
 } SNEPPXEvictStrategy;
 
+/**
+ * @brief Perform Vmem Register Evict Strategy.
+ *
+ * @param alloc [out] Alloc value.
+ * @param strat [out] Strat value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_register_evict_strategy(SNEPPXVMemAllocator* alloc, SNEPPXEvictStrategy* strat);
+/**
+ * @brief Perform Vmem Evict Page.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ * @param size [in] Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_evict_page(SNEPPXVMemAllocator* alloc, void* addr, size_t size);
 
 /* ---------- OOM callback ---------- */

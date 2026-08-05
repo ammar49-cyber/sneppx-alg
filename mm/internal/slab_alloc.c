@@ -13,6 +13,22 @@
 
 #define SLAB_SIZE (1024UL * 1024UL)
 
+/*
+ * SNEPPX - Slab Alloc
+ *
+ * WHAT
+ *   Slab Alloc.
+ *
+ * CONCEPT
+ *   Provides the Slab Alloc.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void slab_add_page(SNEPPXSlabCache* cache) {
     if (!cache) return;
     void* mem = ALLOC_PAGES(SLAB_SIZE);
@@ -38,6 +54,14 @@ static void slab_add_page(SNEPPXSlabCache* cache) {
     cache->total_objects += slab->num_blocks;
 }
 
+/**
+ * @brief Create Slab Cache.
+ *
+ * @param cache [out] Cache value.
+ * @param block_size [in] Block Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_slab_cache_create(SNEPPXSlabCache** cache, size_t block_size, size_t alignment) {
     if (!cache) return -1;
     if (block_size < sizeof(void*)) block_size = sizeof(void*);
@@ -57,6 +81,9 @@ int SNEPPX_slab_cache_create(SNEPPXSlabCache** cache, size_t block_size, size_t 
     return 0;
 }
 
+/**
+ * @brief Destroy Slab Cache.
+ */
 void SNEPPX_slab_cache_destroy(SNEPPXSlabCache* cache) {
     if (!cache) return;
     SNEPPXSlab* slab = cache->free_list;
@@ -83,6 +110,11 @@ void SNEPPX_slab_cache_destroy(SNEPPXSlabCache* cache) {
     free(cache);
 }
 
+/**
+ * @brief Perform Slab Cache Alloc.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_slab_cache_alloc(SNEPPXSlabCache* cache) {
     if (!cache) return NULL;
     SNEPPXSlab* slab = cache->partial_list;
@@ -112,6 +144,11 @@ void* SNEPPX_slab_cache_alloc(SNEPPXSlabCache* cache) {
     return block;
 }
 
+/**
+ * @brief Free Slab Cache.
+ *
+ * @param cache [out] Cache value.
+ */
 void SNEPPX_slab_cache_free(SNEPPXSlabCache* cache, void* ptr) {
     if (!cache || !ptr) return;
     SNEPPXSlab* slab = NULL;
@@ -141,6 +178,9 @@ void SNEPPX_slab_cache_free(SNEPPXSlabCache* cache, void* ptr) {
     }
 }
 
+/**
+ * @brief Perform Slab Cache Gc.
+ */
 void SNEPPX_slab_cache_gc(SNEPPXSlabCache* cache) {
     if (!cache) return;
     SNEPPXSlab** pprev = &cache->free_list;
@@ -159,10 +199,18 @@ void SNEPPX_slab_cache_gc(SNEPPXSlabCache* cache) {
     }
 }
 
+/**
+ * @brief Initialize Slab Local.
+ *
+ * @param local [out] Local value.
+ */
 void SNEPPX_slab_local_init(SNEPPXSlabLocalCache* local, SNEPPXSlabCache* parent) {
     if (local) { memset(local, 0, sizeof(*local)); local->parent = parent; }
 }
 
+/**
+ * @brief Destroy Slab Local.
+ */
 void SNEPPX_slab_local_destroy(SNEPPXSlabLocalCache* local) {
     if (local) {
         while (local->count > 0) {
@@ -171,18 +219,31 @@ void SNEPPX_slab_local_destroy(SNEPPXSlabLocalCache* local) {
     }
 }
 
+/**
+ * @brief Perform Slab Local Alloc.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_slab_local_alloc(SNEPPXSlabLocalCache* local) {
     if (!local) return NULL;
     if (local->count > 0) return local->free_blocks[--local->count];
     return SNEPPX_slab_cache_alloc(local->parent);
 }
 
+/**
+ * @brief Free Slab Local.
+ *
+ * @param local [out] Local value.
+ */
 void SNEPPX_slab_local_free(SNEPPXSlabLocalCache* local, void* ptr) {
     if (!local || !ptr) return;
     if (local->count < 32) { local->free_blocks[local->count++] = ptr; return; }
     SNEPPX_slab_cache_free(local->parent, ptr);
 }
 
+/**
+ * @brief Perform Slab Local Flush.
+ */
 void SNEPPX_slab_local_flush(SNEPPXSlabLocalCache* local) {
     if (local) {
         while (local->count > 0) SNEPPX_slab_cache_free(local->parent, local->free_blocks[--local->count]);

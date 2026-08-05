@@ -9,6 +9,25 @@
 #include <fcntl.h>
 #endif
 
+/*
+ * SNEPPX - Vmem
+ *
+ * WHAT
+ *   Vmem.
+ *
+ * CONCEPT
+ *   Provides the Vmem.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Initialize Vmem.
+ */
 void SNEPPX_vmem_init(SNEPPXVMemAllocator* alloc) {
     if (alloc) {
         memset(alloc, 0, sizeof(*alloc));
@@ -21,10 +40,22 @@ void SNEPPX_vmem_init(SNEPPXVMemAllocator* alloc) {
     }
 }
 
+/**
+ * @brief Perform Vmem Cleanup.
+ */
 void SNEPPX_vmem_cleanup(SNEPPXVMemAllocator* alloc) {
     (void)alloc;
 }
 
+/**
+ * @brief Perform Vmem Reserve.
+ *
+ * @param alloc [out] Alloc value.
+ * @param bytes [in] Bytes value.
+ * @param alignment [in] Alignment value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_vmem_reserve(SNEPPXVMemAllocator* alloc, size_t bytes, size_t alignment, int flags) {
     if (bytes == 0) return NULL;
     size_t page_size = alloc ? alloc->page_size_default : 4096;
@@ -73,6 +104,14 @@ void* SNEPPX_vmem_reserve(SNEPPXVMemAllocator* alloc, size_t bytes, size_t align
 #endif
 }
 
+/**
+ * @brief Perform Vmem Commit.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_commit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     if (!addr || bytes == 0) return -1;
 #ifdef _WIN32
@@ -86,6 +125,14 @@ int SNEPPX_vmem_commit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     return 0;
 }
 
+/**
+ * @brief Perform Vmem Decommit.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_decommit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     if (!addr || bytes == 0) return -1;
 #ifdef _WIN32
@@ -98,6 +145,12 @@ int SNEPPX_vmem_decommit(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     return 0;
 }
 
+/**
+ * @brief Perform Vmem Release.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ */
 void SNEPPX_vmem_release(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     if (!addr || bytes == 0) return;
 #ifdef _WIN32
@@ -108,6 +161,13 @@ void SNEPPX_vmem_release(SNEPPXVMemAllocator* alloc, void* addr, size_t bytes) {
     if (alloc) { if (bytes > alloc->total_reserved) alloc->total_reserved = 0; else alloc->total_reserved -= bytes; }
 }
 
+/**
+ * @brief Perform Vmem Advise Hugepage.
+ *
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_advise_hugepage(void* addr, size_t bytes) {
 #ifdef _WIN32
     (void)addr; (void)bytes;
@@ -128,6 +188,13 @@ int SNEPPX_vmem_advise_hugepage(void* addr, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Perform Vmem Advise Nohugepage.
+ *
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_advise_nohugepage(void* addr, size_t bytes) {
 #ifdef _WIN32
     (void)addr; (void)bytes; return 0;
@@ -140,12 +207,27 @@ int SNEPPX_vmem_advise_nohugepage(void* addr, size_t bytes) {
 #endif
 }
 
+/**
+ * @brief Perform Vmem Register Evict Strategy.
+ *
+ * @param alloc [out] Alloc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_register_evict_strategy(SNEPPXVMemAllocator* alloc, SNEPPXEvictStrategy* strat) {
     if (!alloc || !strat) return -1;
     alloc->evict_strategy = strat;
     return 0;
 }
 
+/**
+ * @brief Perform Vmem Evict Page.
+ *
+ * @param alloc [out] Alloc value.
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_vmem_evict_page(SNEPPXVMemAllocator* alloc, void* addr, size_t size) {
     if (!alloc || !addr) return -1;
     if (alloc->evict_strategy && alloc->evict_strategy->select_victim) {

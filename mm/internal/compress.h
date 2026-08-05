@@ -1,6 +1,22 @@
 #ifndef SNEPPX_INTERNAL_COMPRESS_H
 #define SNEPPX_INTERNAL_COMPRESS_H
 /*
+ * SNEPPX - Compress
+ *
+ * WHAT
+ *   Compress.
+ *
+ * CONCEPT
+ *   Provides the Compress.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Memory Compression — v0.5 (internal to SNEPPX_memory)
  *
  * PURPOSE: Block-floating-point (BFP) and sparse compression of tensor
@@ -51,18 +67,75 @@ typedef struct {
 } SNEPPXCompressionCodecImpl;
 
 /* ---------- API ---------- */
+/**
+ * @brief Initialize Compress.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_init(void);
+/**
+ * @brief Perform Compress Shutdown.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_shutdown(void);
 
+/**
+ * @brief Perform Compress Register Codec.
+ *
+ * @param codec [in] Codec value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_register_codec(const SNEPPXCompressionCodecImpl* codec);
+/**
+ * @brief Perform Compress Unregister Codec.
+ *
+ * @param codec [in] Codec value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_unregister_codec(SNEPPXCompressionCodec codec);
 
+/**
+ * @brief Apply Compress.
+ *
+ * @param src [in] Src value.
+ * @param src_bytes [in] Src Bytes value.
+ * @param dtype [in] Dtype value.
+ * @param codec [in] Codec value.
+ * @param dst [out] Dst value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_apply(const void* src, size_t src_bytes, int dtype,
                         SNEPPXCompressionCodec codec, SNEPPXCompressedBuffer* dst);
+/**
+ * @brief Perform Compress Decompress.
+ *
+ * @param src [in] Src value.
+ * @param dst [out] Dst value.
+ * @param dst_bytes [in] Dst Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_decompress(const SNEPPXCompressedBuffer* src, void* dst, size_t dst_bytes);
+/**
+ * @brief Destroy Compress Buffer.
+ *
+ * @param buf [out] Buf value.
+ */
 void SNEPPX_compress_buffer_destroy(SNEPPXCompressedBuffer* buf);
 
 /* ---------- BFP helpers ---------- */
+/**
+ * @brief Perform Compress Bfp Block Size.
+ *
+ * @param element_bytes [in] Element Bytes value.
+ * @param block_size [out] Block Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_bfp_block_size(size_t element_bytes, size_t* block_size);
 
 #ifdef __cplusplus

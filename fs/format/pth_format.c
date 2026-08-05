@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Pth Format
+ *
+ * WHAT
+ *   Pth Format.
+ *
+ * CONCEPT
+ *   Provides the Pth Format.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Real PyTorch .bin/.pth reader (torch >= 1.6 zip serialization).
  * Parses the ZIP container, the data.pkl pickle (subset of opcodes used by
  * state_dict checkpoints), and maps storages to the raw bytes in the archive. */
@@ -219,6 +235,13 @@ done:
     return result;
 }
 
+/**
+ * @brief Load Pth.
+ *
+ * @param path [in] Path value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_pth_load(const char* path, const char* device) {
     (void)device;
     unsigned char* pkl = NULL; size_t pkllen = 0;
@@ -265,6 +288,9 @@ void* SNEPPX_pth_load(const char* path, const char* device) {
     return st;
 }
 
+/**
+ * @brief Destroy Pth.
+ */
 void SNEPPX_pth_destroy(void* state) {
     PTHState* st = (PTHState*)state;
     if (!st) return;
@@ -272,6 +298,13 @@ void SNEPPX_pth_destroy(void* state) {
     free(st->items); free(st->keys); free(st);
 }
 
+/**
+ * @brief Perform Pth Get Tensor.
+ *
+ * @param state [out] State value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_pth_get_tensor(void* state, const char* key) {
     PTHState* st = (PTHState*)state;
     if (!st) return NULL;
@@ -279,6 +312,14 @@ void* SNEPPX_pth_get_tensor(void* state, const char* key) {
     return NULL;
 }
 
+/**
+ * @brief Perform Pth Get Keys.
+ *
+ * @param state [out] State value.
+ * @param keys [out] Keys value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pth_get_keys(void* state, char*** keys, size_t* count) {
     PTHState* st = (PTHState*)state;
     if (!st) return -1;
@@ -286,6 +327,17 @@ int SNEPPX_pth_get_keys(void* state, char*** keys, size_t* count) {
     return 0;
 }
 
+/**
+ * @brief Perform Pth Set Tensor.
+ *
+ * @param state [out] State value.
+ * @param key [in] Key value.
+ * @param data [in] Data value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pth_set_tensor(void* state, const char* key, const void* data, const size_t* shape, size_t ndim, int dtype) {
     PTHState* st = (PTHState*)state;
     if (!st) return -1;
@@ -300,6 +352,13 @@ int SNEPPX_pth_set_tensor(void* state, const char* key, const void* data, const 
     return 0;
 }
 
+/**
+ * @brief Save Pth.
+ *
+ * @param state [out] State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pth_save(void* state, const char* path) {
     PTHState* st = (PTHState*)state;
     if (!st || !path) return -1;

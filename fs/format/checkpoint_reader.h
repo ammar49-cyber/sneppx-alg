@@ -1,6 +1,22 @@
 #ifndef SNEPPX_CHECKPOINT_FORMAT_H
 #define SNEPPX_CHECKPOINT_FORMAT_H
 /*
+ * SNEPPX - Checkpoint Reader
+ *
+ * WHAT
+ *   Checkpoint Reader.
+ *
+ * CONCEPT
+ *   Provides checkpointing and fault tolerance.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Checkpoint File Format — v0.5 (training persistence)
  *
  * PURPOSE: Binary format for saving/loading model weights and optimizer
@@ -51,19 +67,102 @@ typedef struct {
 #pragma pack(pop)
 
 /* ---------- Writer ---------- */
+/**
+ * @brief Open Ckpt Write.
+ *
+ * @param path [in] Path value.
+ * @param header [out] Header value.
+ * @param handle [out] Handle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_open(const char* path, SNEPPXCheckpointHeader* header, void** handle);
+/**
+ * @brief Perform Ckpt Write Tensor.
+ *
+ * @param handle [out] Handle value.
+ * @param tensor_data [in] Tensor Data value.
+ * @param record [in] Record value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_tensor(void* handle, const void* tensor_data, const SNEPPXTensorRecord* record);
+/**
+ * @brief Perform Ckpt Write Metadata.
+ *
+ * @param handle [out] Handle value.
+ * @param metadata_json [in] Metadata Json value.
+ * @param json_len [in] Json Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_metadata(void* handle, const char* metadata_json, size_t json_len);
+/**
+ * @brief Close Ckpt Write.
+ *
+ * @param handle [out] Handle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_close(void* handle);
 
 /* ---------- Reader ---------- */
+/**
+ * @brief Open Ckpt Read.
+ *
+ * @param path [in] Path value.
+ * @param header [out] Header value.
+ * @param handle [out] Handle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_open(const char* path, SNEPPXCheckpointHeader* header, void** handle);
+/**
+ * @brief Perform Ckpt Read Tensor.
+ *
+ * @param handle [out] Handle value.
+ * @param tensor_idx [in] Tensor Idx value.
+ * @param tensor_data [out] Tensor Data value.
+ * @param record [out] Record value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_tensor(void* handle, size_t tensor_idx, void* tensor_data, SNEPPXTensorRecord* record);
+/**
+ * @brief Perform Ckpt Read Metadata.
+ *
+ * @param handle [out] Handle value.
+ * @param metadata_json [out] Metadata Json value.
+ * @param json_len [out] Json Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_metadata(void* handle, char** metadata_json, size_t* json_len);
+/**
+ * @brief Close Ckpt Read.
+ *
+ * @param handle [out] Handle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_close(void* handle);
 
 /* ---------- Utility ---------- */
+/**
+ * @brief Perform Ckpt Validate.
+ *
+ * @param path [in] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_ckpt_validate(const char* path);
+/**
+ * @brief Perform Ckpt Supports Version.
+ *
+ * @param version [in] Version value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_ckpt_supports_version(uint32_t version);
 
 #ifdef __cplusplus

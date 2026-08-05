@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Onnx Format
+ *
+ * WHAT
+ *   Onnx Format.
+ *
+ * CONCEPT
+ *   Provides the Onnx Format.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Real ONNX (protobuf wire format) reader + small float32 inference engine.
  * Supports ModelProto parse, input/output inspection, and execution of a
  * practical op subset (Constant, MatMul, Gemm, Add, Sub, Mul, Div, Relu,
@@ -169,6 +185,11 @@ static void parse_graph(const unsigned char* b, size_t len, ONNXModel* m) {
     }
 }
 
+/**
+ * @brief Load Onnx.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_onnx_load(const char* path) {
     FILE* f = fopen(path, "rb");
     if (!f) return NULL;
@@ -195,6 +216,9 @@ void* SNEPPX_onnx_load(const char* path) {
     return m;
 }
 
+/**
+ * @brief Destroy Onnx.
+ */
 void SNEPPX_onnx_destroy(void* model) {
     ONNXModel* m = (ONNXModel*)model;
     if (!m) return;
@@ -207,9 +231,31 @@ void SNEPPX_onnx_destroy(void* model) {
     free(m);
 }
 
+/**
+ * @brief Perform Onnx Get Input Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_get_input_count(void* model) { ONNXModel* m=(ONNXModel*)model; return m ? (int)m->ninputs : 0; }
+/**
+ * @brief Perform Onnx Get Output Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_get_output_count(void* model) { ONNXModel* m=(ONNXModel*)model; return m ? (int)m->noutputs : 0; }
 
+/**
+ * @brief Perform Onnx Get Input Info.
+ *
+ * @param model [out] Model value.
+ * @param idx [in] Idx value.
+ * @param name [out] Name value.
+ * @param name_max [in] Name Max value.
+ * @param shape [out] Shape value.
+ * @param ndim [out] Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_get_input_info(void* model, int idx, char* name, size_t name_max, size_t** shape, size_t* ndim, int* dtype) {
     ONNXModel* m=(ONNXModel*)model;
     if (!m || idx < 0 || (size_t)idx >= m->ninputs) return -1;
@@ -289,6 +335,16 @@ static void exec_node(ONNXModel* m, ORNode* n) {
     if (n->nout && n->nin) { ORTensor* a=ort_get(m,n->in[0]); if(a){ORTensor c=*a; if(a->data) c.data=(float*)malloc(ort_total(a)*sizeof(float)), memcpy(c.data,a->data,ort_total(a)*sizeof(float)); ort_put(m,n->out[0],&c);} }
 }
 
+/**
+ * @brief Run Onnx.
+ *
+ * @param model [out] Model value.
+ * @param inputs [out] Inputs value.
+ * @param num_inputs [in] Num Inputs value.
+ * @param outputs [out] Outputs value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_run(void* model, void** inputs, size_t num_inputs, void** outputs, size_t num_outputs) {
     ONNXModel* m=(ONNXModel*)model;
     if (!m) return -1;
@@ -303,6 +359,17 @@ int SNEPPX_onnx_run(void* model, void** inputs, size_t num_inputs, void** output
     return 0;
 }
 
+/**
+ * @brief Perform Onnx Export.
+ *
+ * @param path [in] Path value.
+ * @param graph [out] Graph value.
+ * @param input_names [in] Input Names value.
+ * @param num_inputs [in] Num Inputs value.
+ * @param output_names [in] Output Names value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_export(const char* path, void* graph, const char** input_names, size_t num_inputs, const char** output_names, size_t num_outputs) {
     (void)graph;
     FILE* f = fopen(path, "wb");
@@ -319,6 +386,14 @@ int SNEPPX_onnx_export(const char* path, void* graph, const char** input_names, 
     return 0;
 }
 
+/**
+ * @brief Perform Onnx Check.
+ *
+ * @param path [in] Path value.
+ * @param error_msg [out] Error Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_onnx_check(const char* path, char* error_msg, size_t error_max) {
     FILE* f = fopen(path, "rb");
     if (!f) { if(error_msg&&error_max) snprintf(error_msg,error_max,"cannot open file"); return -1; }

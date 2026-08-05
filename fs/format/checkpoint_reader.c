@@ -11,6 +11,22 @@
     #define OFF64_T off64_t
 #endif
 
+/*
+ * SNEPPX - Checkpoint Reader
+ *
+ * WHAT
+ *   Checkpoint Reader.
+ *
+ * CONCEPT
+ *   Provides checkpointing and fault tolerance.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     FILE* fp;
     SNEPPXCheckpointHeader header;
@@ -18,6 +34,14 @@ typedef struct {
     uint32_t num_records;
 } SNEPPXCkptHandle;
 
+/**
+ * @brief Open Ckpt Write.
+ *
+ * @param path [in] Path value.
+ * @param header [out] Header value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_open(const char* path, SNEPPXCheckpointHeader* header, void** handle) {
     if (!path || !header || !handle) return -1;
     FILE* fp = fopen(path, "wb");
@@ -45,6 +69,14 @@ int SNEPPX_ckpt_write_open(const char* path, SNEPPXCheckpointHeader* header, voi
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Write Tensor.
+ *
+ * @param handle [out] Handle value.
+ * @param tensor_data [in] Tensor Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_tensor(void* handle, const void* tensor_data, const SNEPPXTensorRecord* record) {
     if (!handle || !tensor_data || !record) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -72,6 +104,14 @@ int SNEPPX_ckpt_write_tensor(void* handle, const void* tensor_data, const SNEPPX
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Write Metadata.
+ *
+ * @param handle [out] Handle value.
+ * @param metadata_json [in] Metadata Json value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_metadata(void* handle, const char* metadata_json, size_t json_len) {
     if (!handle || !metadata_json) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -82,6 +122,11 @@ int SNEPPX_ckpt_write_metadata(void* handle, const char* metadata_json, size_t j
     return 0;
 }
 
+/**
+ * @brief Close Ckpt Write.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_write_close(void* handle) {
     if (!handle) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -101,6 +146,14 @@ int SNEPPX_ckpt_write_close(void* handle) {
     return 0;
 }
 
+/**
+ * @brief Open Ckpt Read.
+ *
+ * @param path [in] Path value.
+ * @param header [out] Header value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_open(const char* path, SNEPPXCheckpointHeader* header, void** handle) {
     if (!path || !header || !handle) return -1;
     FILE* fp = fopen(path, "rb");
@@ -127,6 +180,15 @@ int SNEPPX_ckpt_read_open(const char* path, SNEPPXCheckpointHeader* header, void
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Read Tensor.
+ *
+ * @param handle [out] Handle value.
+ * @param tensor_idx [in] Tensor Idx value.
+ * @param tensor_data [out] Tensor Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_tensor(void* handle, size_t tensor_idx, void* tensor_data, SNEPPXTensorRecord* record) {
     if (!handle || !tensor_data) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -138,6 +200,14 @@ int SNEPPX_ckpt_read_tensor(void* handle, size_t tensor_idx, void* tensor_data, 
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Read Metadata.
+ *
+ * @param handle [out] Handle value.
+ * @param metadata_json [out] Metadata Json value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_metadata(void* handle, char** metadata_json, size_t* json_len) {
     if (!handle || !metadata_json || !json_len) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -152,6 +222,11 @@ int SNEPPX_ckpt_read_metadata(void* handle, char** metadata_json, size_t* json_l
     return 0;
 }
 
+/**
+ * @brief Close Ckpt Read.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_read_close(void* handle) {
     if (!handle) return -1;
     SNEPPXCkptHandle* h = (SNEPPXCkptHandle*)handle;
@@ -161,6 +236,11 @@ int SNEPPX_ckpt_read_close(void* handle) {
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Validate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_validate(const char* path) {
     if (!path) return -1;
     FILE* fp = fopen(path, "rb");
@@ -175,6 +255,11 @@ int SNEPPX_ckpt_validate(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Ckpt Supports Version.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ckpt_supports_version(uint32_t version) {
     return version <= SNEPPX_CKPT_VERSION ? 1 : 0;
 }

@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Numpy Format
+ *
+ * WHAT
+ *   Numpy Format.
+ *
+ * CONCEPT
+ *   Provides the Numpy Format.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Real NumPy .npy / .npz (stored ZIP) reader-writer. Little-endian. */
 
 typedef enum {
@@ -124,6 +140,11 @@ static int parse_npy_header(const char* hdr, size_t hdr_len, int* dtype, size_t*
     return 0;
 }
 
+/**
+ * @brief Load Npy.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_npy_load(const char* path) {
     size_t len = 0;
     char* buf = read_whole(path, &len);
@@ -157,6 +178,9 @@ void* SNEPPX_npy_load(const char* path) {
     return a;
 }
 
+/**
+ * @brief Destroy Npy.
+ */
 void SNEPPX_npy_destroy(void* arr) {
     NPYArray* a = (NPYArray*)arr;
     if (!a) return;
@@ -164,12 +188,47 @@ void SNEPPX_npy_destroy(void* arr) {
     free(a);
 }
 
+/**
+ * @brief Perform Npy Get Data.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_npy_get_data(void* arr) { NPYArray* a = (NPYArray*)arr; return a ? a->data : NULL; }
+/**
+ * @brief Perform Npy Get Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_npy_get_size(void* arr) { NPYArray* a = (NPYArray*)arr; return a ? a->size : 0; }
+/**
+ * @brief Perform Npy Get Ndim.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npy_get_ndim(void* arr) { NPYArray* a = (NPYArray*)arr; return a ? (int)a->ndim : 0; }
+/**
+ * @brief Perform Npy Get Shape.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 const size_t* SNEPPX_npy_get_shape(void* arr) { NPYArray* a = (NPYArray*)arr; return a ? a->shape : NULL; }
+/**
+ * @brief Perform Npy Get Dtype.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npy_get_dtype(void* arr) { NPYArray* a = (NPYArray*)arr; return a ? a->dtype : 0; }
 
+/**
+ * @brief Save Npy.
+ *
+ * @param path [in] Path value.
+ * @param data [in] Data value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npy_save(const char* path, const void* data, const size_t* shape, size_t ndim, int dtype) {
     if (!path || !data) return -1;
     size_t total = npy_esize(dtype);
@@ -231,6 +290,15 @@ static void* npy_from_bytes(const unsigned char* b, size_t blen, int* dtype, siz
     return a;
 }
 
+/**
+ * @brief Load Npz.
+ *
+ * @param path [in] Path value.
+ * @param keys [out] Keys value.
+ * @param arrays [out] Arrays value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npz_load(const char* path, char*** keys, void*** arrays, size_t* count) {
     size_t len = 0;
     char* buf = read_whole(path, &len);
@@ -266,6 +334,18 @@ int SNEPPX_npz_load(const char* path, char*** keys, void*** arrays, size_t* coun
     return (int)n;
 }
 
+/**
+ * @brief Save Npz.
+ *
+ * @param path [in] Path value.
+ * @param keys [in] Keys value.
+ * @param data_ptrs [in] Data Ptrs value.
+ * @param shapes [in] Shapes value.
+ * @param ndims [in] Ndims value.
+ * @param dtypes [in] Dtypes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_npz_save(const char* path, const char** keys, const void** data_ptrs, const size_t** shapes, const size_t* ndims, const int* dtypes, size_t count) {
     FILE* f = fopen(path, "wb");
     if (!f) return -1;
@@ -360,6 +440,12 @@ int SNEPPX_npz_save(const char* path, const char** keys, const void** data_ptrs,
     return 0;
 }
 
+/**
+ * @brief Free Npz.
+ *
+ * @param keys [out] Keys value.
+ * @param arrays [out] Arrays value.
+ */
 void SNEPPX_npz_free(char** keys, void** arrays, size_t count) {
     for (size_t i = 0; i < count; i++) {
         free(keys[i]);

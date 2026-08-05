@@ -4,18 +4,58 @@
 #include <math.h>
 
 #define MAX_CODECS 8
+/*
+ * SNEPPX - Compress
+ *
+ * WHAT
+ *   Compress.
+ *
+ * CONCEPT
+ *   Provides the Compress.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static SNEPPXCompressionCodecImpl* g_codecs[MAX_CODECS] = {NULL};
 static int g_num_codecs = 0;
 
+/**
+ * @brief Initialize Compress.
+ *
+ * @param g_codecs [in] G Codecs value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_init(void) { memset(g_codecs, 0, sizeof(g_codecs)); g_num_codecs = 0; return 0; }
+/**
+ * @brief Perform Compress Shutdown.
+ *
+ * @param g_codecs [in] G Codecs value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_shutdown(void) { memset(g_codecs, 0, sizeof(g_codecs)); g_num_codecs = 0; return 0; }
 
+/**
+ * @brief Perform Compress Register Codec.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_register_codec(const SNEPPXCompressionCodecImpl* codec) {
     if (!codec || g_num_codecs >= MAX_CODECS) return -1;
     g_codecs[g_num_codecs++] = (SNEPPXCompressionCodecImpl*)codec;
     return 0;
 }
 
+/**
+ * @brief Perform Compress Unregister Codec.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_unregister_codec(SNEPPXCompressionCodec codec) {
     for (int i = 0; i < g_num_codecs; i++) {
         if (g_codecs[i] && g_codecs[i]->codec == codec) {
@@ -166,6 +206,16 @@ static int sparse_decompress(const SNEPPXCompressedBuffer* src, void* dst, size_
     return 0;
 }
 
+/**
+ * @brief Apply Compress.
+ *
+ * @param src [in] Src value.
+ * @param src_bytes [in] Src Bytes value.
+ * @param dtype [in] Dtype value.
+ * @param codec [in] Codec value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_apply(const void* src, size_t src_bytes, int dtype,
                          SNEPPXCompressionCodec codec, SNEPPXCompressedBuffer* dst) {
     if (!src || !dst) return -1;
@@ -182,6 +232,14 @@ int SNEPPX_compress_apply(const void* src, size_t src_bytes, int dtype,
     }
 }
 
+/**
+ * @brief Perform Compress Decompress.
+ *
+ * @param src [in] Src value.
+ * @param dst [out] Dst value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_decompress(const SNEPPXCompressedBuffer* src, void* dst, size_t dst_bytes) {
     if (!src || !dst) return -1;
     for (int i = 0; i < g_num_codecs; i++) {
@@ -196,10 +254,20 @@ int SNEPPX_compress_decompress(const SNEPPXCompressedBuffer* src, void* dst, siz
     }
 }
 
+/**
+ * @brief Destroy Compress Buffer.
+ */
 void SNEPPX_compress_buffer_destroy(SNEPPXCompressedBuffer* buf) {
     if (buf) { free(buf->compressed_data); free(buf->metadata); memset(buf, 0, sizeof(*buf)); }
 }
 
+/**
+ * @brief Perform Compress Bfp Block Size.
+ *
+ * @param element_bytes [in] Element Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compress_bfp_block_size(size_t element_bytes, size_t* block_size) {
     if (block_size) *block_size = (element_bytes <= 2) ? 32 : 16;
     return 0;
