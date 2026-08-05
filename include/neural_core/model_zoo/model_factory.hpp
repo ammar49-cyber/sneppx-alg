@@ -14,6 +14,22 @@
 #include "neural_core/model_zoo/registry.h"
 #include "neural_core/kernel/model_zoo.h"
 
+/*
+ * SNEPPX - Model Factory
+ *
+ * WHAT
+ *   Model Factory.
+ *
+ * CONCEPT
+ *   Provides the Model Factory.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace sneppx {
 
 // =========================================================================

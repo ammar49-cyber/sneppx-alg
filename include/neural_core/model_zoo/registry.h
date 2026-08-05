@@ -5,6 +5,22 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Registry
+ *
+ * WHAT
+ *   Registry.
+ *
+ * CONCEPT
+ *   Provides the Registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

@@ -5,6 +5,22 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Model Card
+ *
+ * WHAT
+ *   Model Card.
+ *
+ * CONCEPT
+ *   Provides the Model Card.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

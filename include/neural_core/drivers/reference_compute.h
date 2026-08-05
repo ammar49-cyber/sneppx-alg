@@ -6,6 +6,22 @@
 #include <math.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Reference Compute
+ *
+ * WHAT
+ *   Reference Compute.
+ *
+ * CONCEPT
+ *   Provides the Reference Compute.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
