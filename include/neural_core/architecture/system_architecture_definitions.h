@@ -57,16 +57,88 @@ typedef struct {
     SNEPPXArchConfig config;
 } SNEPPXModel;
 
+/**
+ * @brief Perform Arch Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXArchConfig SNEPPX_arch_config_default(void);
+/**
+ * @brief Perform Arch Has Avx.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_avx(void);
+/**
+ * @brief Perform Arch Has Avx2.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_avx2(void);
+/**
+ * @brief Perform Arch Has Neon.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_neon(void);
+/**
+ * @brief Perform Arch Num Cores.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_num_cores(void);
+/**
+ * @brief Perform Arch Cache Line Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_cache_line_size(void);
+/**
+ * @brief Create Model.
+ *
+ * @param config [in] Config value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXModel* SNEPPX_model_create(const SNEPPXArchConfig* config);
+/**
+ * @brief Destroy Model.
+ *
+ * @param model [out] Model value.
+ */
 void SNEPPX_model_destroy(SNEPPXModel* model);
+/**
+ * @brief Run the forward pass for Model.
+ *
+ * @param model [out] Model value.
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_forward(SNEPPXModel* model, const SNEPPXTensor* input, SNEPPXTensor** output);
+/**
+ * @brief Perform Model Get Params.
+ *
+ * @param model [in] Model value.
+ * @param out_params [out] Out Params value.
+ * @param max_params [in] Max Params value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_model_get_params(const SNEPPXModel* model, SNEPPXTensor** out_params, size_t max_params);
+/**
+ * @brief Perform Model Build Train Graph.
+ *
+ * @param model [out] Model value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ * @param output_var [out] Output Var value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_build_train_graph(SNEPPXModel* model, SNEPPXTape* tape,
                                   SNEPPXVariable* input_var,
                                   SNEPPXVariable** weight_vars, size_t num_weights,
