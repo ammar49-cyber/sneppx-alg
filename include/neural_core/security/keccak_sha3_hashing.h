@@ -34,9 +34,32 @@ typedef struct {
     unsigned int digest_size;
 } SNEPPXSHA3State;
 
+/**
+ * @brief Initialize Sha3 256.
+ *
+ * @param state [out] State value.
+ */
 void SNEPPX_sha3_256_init(SNEPPXSHA3State* state);
+/**
+ * @brief Initialize Sha3 512.
+ *
+ * @param state [out] State value.
+ */
 void SNEPPX_sha3_512_init(SNEPPXSHA3State* state);
+/**
+ * @brief Update Sha3.
+ *
+ * @param state [out] State value.
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_sha3_update(SNEPPXSHA3State* state, const uint8_t* data, size_t len);
+/**
+ * @brief Perform Sha3 Finish.
+ *
+ * @param state [out] State value.
+ * @param hash [out] Hash value.
+ */
 void SNEPPX_sha3_finish(SNEPPXSHA3State* state, uint8_t* hash);
 
 #endif

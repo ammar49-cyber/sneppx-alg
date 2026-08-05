@@ -9,6 +9,22 @@
 #define SNEPPX_SGX_MAX_ENCLAVES 64
 #define SNEPPX_TEE_SESSION_TIMEOUT 30000
 
+/*
+ * SNEPPX - S10 Hardware Security
+ *
+ * WHAT
+ *   S10 Hardware Security.
+ *
+ * CONCEPT
+ *   Provides the S10 Hardware Security.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TEE_NONE,
     SNEPPX_TEE_SGX,

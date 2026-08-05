@@ -25,7 +25,18 @@ typedef struct {
     uint32_t state[16];
 } SNEPPXChaCha20State;
 
+/**
+ * @brief Initialize Chacha20.
+ *
+ * @param state [out] State value.
+ * @param counter [in] Counter value.
+ */
 void SNEPPX_chacha20_init(SNEPPXChaCha20State* state, const uint8_t key[32], const uint8_t nonce[12], uint32_t counter);
+/**
+ * @brief Perform Chacha20 Block.
+ *
+ * @param state [out] State value.
+ */
 void SNEPPX_chacha20_block(SNEPPXChaCha20State* state, uint8_t output[64]);
 /**
  * @brief Encrypt/decrypt with ChaCha20 (XOR stream).

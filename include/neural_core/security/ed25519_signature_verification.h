@@ -35,7 +35,22 @@ typedef struct {
     uint8_t data[SNEPPX_ED25519_SIGNATURE_LEN];
 } SNEPPXEd25519Signature;
 
+/**
+ * @brief Perform Ed25519 Keypair Generate.
+ *
+ * @param kp [out] Kp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_keypair_generate(SNEPPXEd25519Keypair* kp);
+/**
+ * @brief Perform Ed25519 Secret Key Expand.
+ *
+ * @param expanded_sk [out] Expanded Sk value.
+ * @param seed [in] Seed value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_secret_key_expand(uint8_t* expanded_sk, const uint8_t* seed);
 /**
  * @brief Sign a message with Ed25519.
@@ -57,6 +72,15 @@ int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, 
  * @return 0 on success, -1 on error.
  */
 int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig);
+/**
+ * @brief Perform Ed25519 Scalar Multiply.
+ *
+ * @param result [out] Result value.
+ * @param scalar [in] Scalar value.
+ * @param point [in] Point value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point);
 
 #endif

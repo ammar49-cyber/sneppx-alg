@@ -8,6 +8,22 @@
 #define SNEPPX_QKD_MAX_KEY_LEN 4096
 #define SNEPPX_QRNG_MAX_ENTROPY 8192
 
+/*
+ * SNEPPX - S14 Quantum Security
+ *
+ * WHAT
+ *   S14 Quantum Security.
+ *
+ * CONCEPT
+ *   Provides the S14 Quantum Security.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_QRNG_SOURCE_QUANTUM,
     SNEPPX_QRNG_SOURCE_ATOMIC,

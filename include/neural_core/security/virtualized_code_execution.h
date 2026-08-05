@@ -7,6 +7,22 @@
 #include <vector>
 #include <array>
 
+/*
+ * SNEPPX - Virtualized Code Execution
+ *
+ * WHAT
+ *   Virtualized Code Execution.
+ *
+ * CONCEPT
+ *   Provides the Virtualized Code Execution.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 enum class SNEPPXObfBytecode : uint8_t {

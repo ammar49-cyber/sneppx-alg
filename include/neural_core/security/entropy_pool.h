@@ -48,13 +48,72 @@ typedef struct {
     uint64_t last_collection[SNEPPX_ENTROPY_SOURCES];
 } SNEPPXEntropyPool;
 
+/**
+ * @brief Initialize Entropy Pool.
+ *
+ * @param ep [out] Ep value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_init(SNEPPXEntropyPool* ep);
+/**
+ * @brief Add Entropy Pool.
+ *
+ * @param ep [out] Ep value.
+ * @param src [in] Src value.
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_add(SNEPPXEntropyPool* ep, SNEPPXEntropySource src, const uint8_t* data, size_t len);
+/**
+ * @brief Perform Entropy Pool Add Rdtsc.
+ *
+ * @param ep [out] Ep value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_add_rdtsc(SNEPPXEntropyPool* ep);
+/**
+ * @brief Perform Entropy Pool Add Os.
+ *
+ * @param ep [out] Ep value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_add_os(SNEPPXEntropyPool* ep);
+/**
+ * @brief Perform Entropy Pool Collect.
+ *
+ * @param ep [out] Ep value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_collect(SNEPPXEntropyPool* ep);
+/**
+ * @brief Get Entropy Pool.
+ *
+ * @param ep [out] Ep value.
+ * @param out [out] Out value.
+ * @param out_len [in] Out Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_get(SNEPPXEntropyPool* ep, uint8_t* out, size_t out_len);
+/**
+ * @brief Perform Entropy Pool Estimate.
+ *
+ * @param ep [in] Ep value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_entropy_pool_estimate(const SNEPPXEntropyPool* ep);
+/**
+ * @brief Perform Entropy Pool Stir.
+ *
+ * @param ep [out] Ep value.
+ */
 void SNEPPX_entropy_pool_stir(SNEPPXEntropyPool* ep);
 
 #ifdef __cplusplus

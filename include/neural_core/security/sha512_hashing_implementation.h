@@ -31,6 +31,11 @@ typedef struct {
     unsigned int buflen;
 } SNEPPXSHA512Context;
 
+/**
+ * @brief Initialize Sha512.
+ *
+ * @param ctx [out] Ctx value.
+ */
 void SNEPPX_sha512_init(SNEPPXSHA512Context* ctx);
 /**
  * @brief Compute SHA-512 hash of input.

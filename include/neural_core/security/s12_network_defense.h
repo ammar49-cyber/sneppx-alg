@@ -10,6 +10,22 @@
 #define SNEPPX_SANDBOX_MAX_PROCESSES 256
 #define SNEPPX_DEFENDER_MAX_POLICIES 512
 
+/*
+ * SNEPPX - S12 Network Defense
+ *
+ * WHAT
+ *   S12 Network Defense.
+ *
+ * CONCEPT
+ *   Provides the S12 Network Defense.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_NET_ACTION_ALLOW,
     SNEPPX_NET_ACTION_DROP,

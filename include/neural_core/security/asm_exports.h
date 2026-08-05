@@ -5,6 +5,22 @@
 #include <stddef.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Asm Exports
+ *
+ * WHAT
+ *   Asm Exports.
+ *
+ * CONCEPT
+ *   Provides the Asm Exports.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
@@ -39,7 +55,21 @@ int sneppx_poly1305_verify(const uint8_t mac1[16], const uint8_t mac2[16]);
 void sneppx_poly1305_wipe_key(uint32_t key[8]);
 
 // SHA-512
+/**
+ * @brief Hash Sha512.
+ *
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_sha512_hash(const uint8_t *data, size_t len, uint8_t hash[64]);
+/**
+ * @brief Perform Sha512 Hmac.
+ *
+ * @param key [in] Key value.
+ * @param key_len [in] Key Len value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ */
 void SNEPPX_sha512_hmac(const uint8_t *key, size_t key_len, const uint8_t *data, size_t data_len, uint8_t mac[64]);
 
 // Keccak

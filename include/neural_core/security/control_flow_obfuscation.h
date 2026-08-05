@@ -9,6 +9,22 @@
 #include <memory>
 #include <random>
 
+/*
+ * SNEPPX - Control Flow Obfuscation
+ *
+ * WHAT
+ *   Control Flow Obfuscation.
+ *
+ * CONCEPT
+ *   Provides code obfuscation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 enum class SNEPPXObfInstType {

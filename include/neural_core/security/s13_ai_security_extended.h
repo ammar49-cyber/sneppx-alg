@@ -9,6 +9,22 @@
 #define SNEPPX_ADVERSARIAL_MAX_EPS 64
 #define SNEPPX_PRIVACY_MAX_BUDGET 100.0
 
+/*
+ * SNEPPX - S13 Ai Security Extended
+ *
+ * WHAT
+ *   S13 Ai Security Extended.
+ *
+ * CONCEPT
+ *   Provides the S13 Ai Security Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_ATTACK_FGSM,
     SNEPPX_ATTACK_PGD,

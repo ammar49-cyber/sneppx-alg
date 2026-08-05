@@ -35,7 +35,19 @@ typedef struct {
     int d_rounds;
 } SNEPPXSipHash;
 
+/**
+ * @brief Initialize Siphash.
+ *
+ * @param sh [out] Sh value.
+ */
 void SNEPPX_siphash_init(SNEPPXSipHash* sh, const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE]);
+/**
+ * @brief Update Siphash.
+ *
+ * @param sh [out] Sh value.
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_siphash_update(SNEPPXSipHash* sh, const uint8_t* data, size_t len);
 /**
  * @brief Compute SipHash 2-4 of input.
@@ -54,6 +66,11 @@ uint64_t SNEPPX_siphash_finalize(SNEPPXSipHash* sh);
  */
 uint64_t SNEPPX_siphash(const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE], const uint8_t* data, size_t len);
 
+/**
+ * @brief Initialize Siphash 24.
+ *
+ * @param sh [out] Sh value.
+ */
 void SNEPPX_siphash_24_init(SNEPPXSipHash* sh, const uint8_t key[SNEPPX_SIPHASH_KEY_SIZE]);
 /**
  * @brief Compute SipHash 2-4 of input.

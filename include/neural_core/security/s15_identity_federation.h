@@ -9,6 +9,22 @@
 #define SNEPPX_VERIFIABLE_PRESENTATION_MAX 256
 #define SNEPPX_FIDO2_MAX_CREDENTIALS 128
 
+/*
+ * SNEPPX - S15 Identity Federation
+ *
+ * WHAT
+ *   S15 Identity Federation.
+ *
+ * CONCEPT
+ *   Provides the S15 Identity Federation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_IDENTITY_ANONYMOUS,
     SNEPPX_IDENTITY_PSEUDONYMOUS,

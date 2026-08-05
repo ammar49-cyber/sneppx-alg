@@ -1,6 +1,22 @@
 #ifndef SNEPPX_SIGNED_UPDATE_H
 #define SNEPPX_SIGNED_UPDATE_H
 /*
+ * SNEPPX - Signed Update
+ *
+ * WHAT
+ *   Signed Update.
+ *
+ * CONCEPT
+ *   Provides the Signed Update.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * S7 Secure Updates — Signed Update Verification
  * Cryptographic verification of signed delta updates with rollback protection.
  */
@@ -41,13 +57,60 @@ typedef struct {
     int verification_enabled;
 } SNEPPXUpdateVerifier;
 
+/**
+ * @brief Initialize Update Verifier.
+ *
+ * @param uv [out] Uv value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_update_verifier_init(SNEPPXUpdateVerifier* uv);
+/**
+ * @brief Destroy Update Verifier.
+ *
+ * @param uv [out] Uv value.
+ */
 void SNEPPX_update_verifier_destroy(SNEPPXUpdateVerifier* uv);
+/**
+ * @brief Perform Update Verifier Set Min Version.
+ *
+ * @param uv [out] Uv value.
+ * @param major [in] Major value.
+ * @param minor [in] Minor value.
+ * @param patch [in] Patch value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_update_verifier_set_min_version(SNEPPXUpdateVerifier* uv,
                                            uint32_t major, uint32_t minor, uint32_t patch);
+/**
+ * @brief Perform Update Verifier Check.
+ *
+ * @param uv [out] Uv value.
+ * @param update [in] Update value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_update_verifier_check(SNEPPXUpdateVerifier* uv, const SNEPPXSignedUpdate* update);
+/**
+ * @brief Apply Update Verifier.
+ *
+ * @param uv [out] Uv value.
+ * @param update [in] Update value.
+ * @param update_data [in] Update Data value.
+ * @param data_len [in] Data Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_update_verifier_apply(SNEPPXUpdateVerifier* uv, const SNEPPXSignedUpdate* update,
                                  const uint8_t* update_data, size_t data_len);
+/**
+ * @brief Perform Update Verifier Rollback Check.
+ *
+ * @param uv [out] Uv value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_update_verifier_rollback_check(SNEPPXUpdateVerifier* uv, uint32_t target_version[3]);
 
 #ifdef __cplusplus

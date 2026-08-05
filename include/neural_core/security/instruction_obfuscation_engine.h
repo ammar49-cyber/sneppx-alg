@@ -8,6 +8,22 @@
 #include <string>
 #include <unordered_map>
 
+/*
+ * SNEPPX - Instruction Obfuscation Engine
+ *
+ * WHAT
+ *   Instruction Obfuscation Engine.
+ *
+ * CONCEPT
+ *   Provides code obfuscation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 class SNEPPXObfSubst {

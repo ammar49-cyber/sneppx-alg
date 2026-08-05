@@ -4,6 +4,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/*
+ * SNEPPX - Rlhf Safety
+ *
+ * WHAT
+ *   Rlhf Safety.
+ *
+ * CONCEPT
+ *   Provides the Rlhf Safety.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     RLHF_RULE_HARM = 0,
     RLHF_RULE_BIAS,
@@ -55,17 +71,110 @@ typedef struct {
     rlhf_config_t config;
 } rlhf_stats_t;
 
+/**
+ * @brief Perform Rlhf Add Policy.
+ *
+ * @param name [in] Name value.
+ * @param weight [in] Weight value.
+ * @param rule_type [in] Rule Type value.
+ * @param threshold [in] Threshold value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_add_policy(const char *name, double weight, rlhf_rule_type_t rule_type, double threshold);
+/**
+ * @brief Perform Rlhf Remove Policy.
+ *
+ * @param policy_id [in] Policy Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_remove_policy(int policy_id);
+/**
+ * @brief Perform Rlhf Score.
+ *
+ * @param input [in] Input value.
+ * @param output [in] Output value.
+ * @param score [out] Score value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_score(const char *input, const char *output, rlhf_score_t *score);
+/**
+ * @brief Perform Rlhf Check Policies.
+ *
+ * @param text [in] Text value.
+ * @param violations [out] Violations value.
+ * @param max_violations [in] Max Violations value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_check_policies(const char *text, rlhf_violation_t *violations, int max_violations);
+/**
+ * @brief Perform Rlhf Generate Refusal.
+ *
+ * @param out [out] Out value.
+ * @param out_len [in] Out Len value.
+ * @param score [out] Score value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_generate_refusal(char *out, size_t out_len, rlhf_score_t *score);
+/**
+ * @brief Perform Rlhf Generate Critique.
+ *
+ * @param output [in] Output value.
+ * @param critique [out] Critique value.
+ * @param critique_len [in] Critique Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_generate_critique(const char *output, char *critique, size_t critique_len);
+/**
+ * @brief Perform Rlhf Correct Output.
+ *
+ * @param output [in] Output value.
+ * @param corrected [out] Corrected value.
+ * @param corrected_len [in] Corrected Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_correct_output(const char *output, char *corrected, size_t corrected_len);
+/**
+ * @brief Perform Rlhf Update Config.
+ *
+ * @param config [in] Config value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_update_config(const rlhf_config_t *config);
+/**
+ * @brief Perform Rlhf Get Config.
+ *
+ * @param config [out] Config value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_get_config(rlhf_config_t *config);
+/**
+ * @brief Perform Rlhf Get Stats.
+ *
+ * @param stats [out] Stats value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_get_stats(rlhf_stats_t *stats);
+/**
+ * @brief Reset Rlhf.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_reset(void);
+/**
+ * @brief Perform Rlhf Add Default Policies.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rlhf_add_default_policies(void);
 
 #endif

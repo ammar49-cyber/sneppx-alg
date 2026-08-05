@@ -6,6 +6,22 @@
 #include <string>
 #include <functional>
 
+/*
+ * SNEPPX - Anti Debugging Countermeasure
+ *
+ * WHAT
+ *   Anti Debugging Countermeasure.
+ *
+ * CONCEPT
+ *   Provides the Anti Debugging Countermeasure.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 enum class SNEPPXAntiDebugAction {

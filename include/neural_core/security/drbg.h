@@ -73,6 +73,11 @@ int  SNEPPX_drbg_generate(SNEPPXDRBG* ctx, uint8_t* out, size_t out_len);
  * @return void.
  */
 void SNEPPX_drbg_destroy(SNEPPXDRBG* ctx);
+/**
+ * @brief Perform Drbg Self Test.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_drbg_self_test(void);
 
 #ifdef __cplusplus

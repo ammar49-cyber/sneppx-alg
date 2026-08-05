@@ -6,6 +6,22 @@
 
 #define SNEPPX_CRYPTO_VERSION "0.1.0"
 
+/*
+ * SNEPPX - Cryptographic Primitives Bundle
+ *
+ * WHAT
+ *   Cryptographic Primitives Bundle.
+ *
+ * CONCEPT
+ *   Provides the Cryptographic Primitives Bundle.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 #if defined(__x86_64__) || defined(_M_X64)
 #define SNEPPX_CRYPTO_ASM_X86_64 1
 #elif defined(__aarch64__) || defined(_M_ARM64)

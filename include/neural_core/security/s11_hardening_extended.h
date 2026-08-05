@@ -10,6 +10,22 @@
 #define SNEPPX_MEMTAG_TAG_SIZE 4
 #define SNEPPX_MEMTAG_GRANULE_SIZE 16
 
+/*
+ * SNEPPX - S11 Hardening Extended
+ *
+ * WHAT
+ *   S11 Hardening Extended.
+ *
+ * CONCEPT
+ *   Provides the S11 Hardening Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_CFI_SHARED,
     SNEPPX_CFI_PURE_VCALL,

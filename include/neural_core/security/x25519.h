@@ -61,6 +61,9 @@ void SNEPPX_x25519_keygen(uint8_t public_key[SNEPPX_X25519_KEY_SIZE], uint8_t se
  */
 int  SNEPPX_x25519_shared_secret(uint8_t shared[SNEPPX_X25519_SHARED_SIZE], const uint8_t secret_key[SNEPPX_X25519_KEY_SIZE], const uint8_t public_key[SNEPPX_X25519_KEY_SIZE]);
 
+/**
+ * @brief Perform Curve25519 Basepoint.
+ */
 void SNEPPX_curve25519_basepoint(uint8_t out[SNEPPX_X25519_KEY_SIZE]);
 /**
  * @brief Compute X25519 shared secret.

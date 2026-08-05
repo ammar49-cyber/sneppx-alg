@@ -12,6 +12,22 @@
 #include <vector>
 #include <cstdint>
 
+/*
+ * SNEPPX - Code Obfuscation Interface
+ *
+ * WHAT
+ *   Code Obfuscation Interface.
+ *
+ * CONCEPT
+ *   Provides code obfuscation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 enum class SNEPPXObfuscationLevel {
