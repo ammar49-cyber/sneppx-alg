@@ -885,7 +885,7 @@ A runnable demo is provided at `examples/http_server_demo.c`
 
 ```powershell
 # build
-cmake -B build_http -DSNEPPX_BUILD_HTTP=ON
+cmake -B build_http -G Ninja -DSNEPPX_BUILD_HTTP=ON
 cmake --build build_http --config Release --target http_server_demo
 
 # run (port, optional key DB)

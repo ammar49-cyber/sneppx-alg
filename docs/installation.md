@@ -62,7 +62,7 @@ cd build && ctest --output-on-failure
 
 ## Windows
 
-### Native (Visual Studio)
+### Native (Ninja + MSVC)
 
 ```powershell
 # Open "Developer Command Prompt for VS 2022"
@@ -127,12 +127,11 @@ cmake --build build --config Release
 ## CUDA Setup
 
 ```powershell
-cmake -B build -G "Visual Studio 17 2022" -A x64 `
-    -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_CUDA=ON
+cmake -B build -G Ninja -DSNEPPX_BUILD_TESTS=ON -DSNEPPX_BUILD_CUDA=ON
 cmake --build build --config Release
 ```
 
-Requires CUDA Toolkit 12.x with Visual Studio integration.
+Requires CUDA Toolkit 12.x with MSVC integration.
 
 ## Verify Installation
 

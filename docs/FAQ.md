@@ -20,7 +20,7 @@ A: MSVC 2022 (Windows), GCC 11+ (Linux), Clang 14+ (Linux/macOS). C11 required.
 A: No. The C core has zero dependencies. Python wrappers are pure Python (stdlib only).
 
 **Q: How do I enable CUDA?**  
-A: `cmake -B build -DSNEPPX_BUILD_CUDA=ON`. Requires CUDA Toolkit 12.x. CUDA optimizer is an opt-in feature for SGD/AdamW acceleration.
+A: `cmake -B build -G Ninja -DSNEPPX_BUILD_CUDA=ON`. Requires CUDA Toolkit 12.x. CUDA optimizer is an opt-in feature for SGD/AdamW acceleration.
 
 ## Architecture
 
