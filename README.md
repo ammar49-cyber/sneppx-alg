@@ -68,7 +68,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 ## Quick build
 
 ```powershell
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure
 ```
@@ -78,18 +78,18 @@ genuine computation via the shared reference-compute path and reports
 `DRIVER_UNSUPPORTED` when its flag is off:
 
 ```powershell
-cmake -B build -DSNEPPX_BUILD_VULKAN=ON   # Vulkan — real GEMM / elementwise reference compute
-cmake -B build -DSNEPPX_BUILD_TPU=ON      # TPU — real GEMM reference + device emulation
-cmake -B build -DSNEPPX_BUILD_HTTP=ON     # HTTP — real BSD-socket transport (GET/POST)
-cmake -B build -DSNEPPX_BUILD_ZK=ON       # ZK — real Schnorr proof over Curve25519 (p = 2^255 - 19)
-cmake -B build -DSNEPPX_BUILD_METAL=ON    # Apple Metal reference backend
-cmake -B build -DSNEPPX_BUILD_ONEAPI=ON   # Intel oneAPI/SYCL reference backend
+cmake -B build -G Ninja -DSNEPPX_BUILD_VULKAN=ON   # Vulkan — real GEMM / elementwise reference compute
+cmake -B build -G Ninja -DSNEPPX_BUILD_TPU=ON      # TPU — real GEMM reference + device emulation
+cmake -B build -G Ninja -DSNEPPX_BUILD_HTTP=ON     # HTTP — real BSD-socket transport (GET/POST)
+cmake -B build -G Ninja -DSNEPPX_BUILD_ZK=ON       # ZK — real Schnorr proof over Curve25519 (p = 2^255 - 19)
+cmake -B build -G Ninja -DSNEPPX_BUILD_METAL=ON    # Apple Metal reference backend
+cmake -B build -G Ninja -DSNEPPX_BUILD_ONEAPI=ON   # Intel oneAPI/SYCL reference backend
 ```
 
 Build everything (all opt-in backends + tests) and run the full suite:
 
 ```powershell
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON `
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON `
   -DSNEPPX_BUILD_VULKAN=ON -DSNEPPX_BUILD_TPU=ON -DSNEPPX_BUILD_HTTP=ON -DSNEPPX_BUILD_ZK=ON
 cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure
