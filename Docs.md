@@ -12,7 +12,7 @@ git clone https://github.com/ammar49-cyber/sneppx-alg.git
 cd sneppx-alg
 
 # Configure build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 # Build everything
 cmake --build build --config Release -j$(nproc)
@@ -155,14 +155,14 @@ fn main() {
 **Debug Build (for development):**
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ```
 
 **Release Build (for production):**
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release -j$(nproc)
 ```
 
@@ -170,19 +170,19 @@ cmake --build build --config Release -j$(nproc)
 
 ```bash
 # Build with Python bindings
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_PYTHON=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_PYTHON=ON
 
 # Build with CUDA support
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=ON
 
 # Build with all security layers
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_SECURITY=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_SECURITY=ON
 
 # Build opt-in reference backends (real computation; OFF by default)
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_VULKAN=ON
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TPU=ON
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_HTTP=ON
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_ZK=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_VULKAN=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TPU=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_HTTP=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_ZK=ON
 
 # Build with tests
 -DSNEPPX_BUILD_TESTS=ON
@@ -559,7 +559,7 @@ apt-get update && apt-get install g++
 
 ```bash
 # Error: No CUDA device
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=OFF
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=OFF
 ```
 
 ### Getting Help
