@@ -6,6 +6,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Tensor Parallel
+ *
+ * WHAT
+ *   Tensor Parallel.
+ *
+ * CONCEPT
+ *   Provides tensor/expert parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Tensor Parallelism (Row/Column Split Linear)
 // ============================================================================

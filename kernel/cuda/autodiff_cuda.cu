@@ -3,6 +3,22 @@
 #include <cublas_v2.h>
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Autodiff Cuda
+ *
+ * WHAT
+ *   Autodiff Cuda.
+ *
+ * CONCEPT
+ *   Provides the Autodiff Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // ============================================================================

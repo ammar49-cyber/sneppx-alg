@@ -25,16 +25,37 @@
  * to discard the real ones. Only the helpers unique to this interface layer
  * are kept below. */
 
+/**
+ * @brief Perform Calloc.
+ *
+ * @param count [in] Count value.
+ * @param size [in] Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_calloc(size_t count, size_t size, size_t alignment) {
     (void)alignment;
     return calloc(count, size);
 }
 
+/**
+ * @brief Perform Allocated Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_allocated_size(const void* ptr) {
     (void)ptr;
     return 0;
 }
 
+/**
+ * @brief Perform Malloc Stats.
+ *
+ * @param total_allocated [out] Total Allocated value.
+ * @param peak_allocated [out] Peak Allocated value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_malloc_stats(size_t* total_allocated, size_t* peak_allocated, size_t* num_allocs) {
     (void)total_allocated; (void)peak_allocated; (void)num_allocs;
     return 0;

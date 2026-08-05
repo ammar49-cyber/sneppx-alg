@@ -5,6 +5,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Pipeline
+ *
+ * WHAT
+ *   Pipeline.
+ *
+ * CONCEPT
+ *   Provides pipeline parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Pipeline Parallelism (1F1B Schedule)
 // ============================================================================

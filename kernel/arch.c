@@ -7,11 +7,32 @@
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+/*
+ * SNEPPX - Arch
+ *
+ * WHAT
+ *   Arch.
+ *
+ * CONCEPT
+ *   Provides neural architecture.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 #elif defined(__linux__)
 #include <unistd.h>
 #include <stdio.h>
 #endif
 
+/**
+ * @brief Perform Arch Has Avx.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_avx(void) {
 #if defined(__AVX__)
     return 1;
@@ -22,6 +43,11 @@ int SNEPPX_arch_has_avx(void) {
 #endif
 }
 
+/**
+ * @brief Perform Arch Has Avx2.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_avx2(void) {
 #if defined(__AVX2__)
     return 1;
@@ -32,6 +58,11 @@ int SNEPPX_arch_has_avx2(void) {
 #endif
 }
 
+/**
+ * @brief Perform Arch Has Neon.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_has_neon(void) {
 #if defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
     return 1;
@@ -40,6 +71,11 @@ int SNEPPX_arch_has_neon(void) {
 #endif
 }
 
+/**
+ * @brief Perform Arch Num Cores.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_num_cores(void) {
 #if defined(_WIN32)
     SYSTEM_INFO sysinfo;
@@ -69,10 +105,20 @@ int SNEPPX_arch_num_cores(void) {
 
 }
 
+/**
+ * @brief Perform Arch Cache Line Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_arch_cache_line_size(void) {
     return 64;
 }
 
+/**
+ * @brief Perform Arch Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXArchConfig SNEPPX_arch_config_default(void) {
     SNEPPXArchConfig cfg;
     memset(&cfg, 0, sizeof(cfg));
@@ -95,6 +141,11 @@ SNEPPXArchConfig SNEPPX_arch_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Model.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXModel* SNEPPX_model_create(const SNEPPXArchConfig* config) {
     if (!config) return NULL;
     SNEPPXModel* model = (SNEPPXModel*)SNEPPX_malloc(sizeof(SNEPPXModel), 64);
@@ -184,6 +235,9 @@ SNEPPXModel* SNEPPX_model_create(const SNEPPXArchConfig* config) {
     return model;
 }
 
+/**
+ * @brief Destroy Model.
+ */
 void SNEPPX_model_destroy(SNEPPXModel* model) {
     if (!model) return;
     if (model->hss_model) SNEPPX_hss_model_destroy(model->hss_model);
@@ -198,6 +252,14 @@ void SNEPPX_model_destroy(SNEPPXModel* model) {
     SNEPPX_free(model, sizeof(SNEPPXModel));
 }
 
+/**
+ * @brief Run the forward pass for Model.
+ *
+ * @param model [out] Model value.
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_forward(SNEPPXModel* model, const SNEPPXTensor* input, SNEPPXTensor** output) {
     if (!model || !input || !output) return 1;
 
@@ -302,6 +364,14 @@ int SNEPPX_model_forward(SNEPPXModel* model, const SNEPPXTensor* input, SNEPPXTe
     return current ? 0 : 1;
 }
 
+/**
+ * @brief Perform Model Get Params.
+ *
+ * @param model [in] Model value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_model_get_params(const SNEPPXModel* model, SNEPPXTensor** out, size_t max_out) {
     if (!model) return 0;
     size_t total = 0;
@@ -360,6 +430,17 @@ size_t SNEPPX_model_get_params(const SNEPPXModel* model, SNEPPXTensor** out, siz
     return total;
 }
 
+/**
+ * @brief Perform Model Build Train Graph.
+ *
+ * @param model [out] Model value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_build_train_graph(SNEPPXModel* model, SNEPPXTape* tape,
                                   SNEPPXVariable* input_var,
                                   SNEPPXVariable** weight_vars, size_t num_weights,

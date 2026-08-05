@@ -5,6 +5,34 @@
 #include <math.h>
 #include <float.h>
 
+/*
+ * SNEPPX - Tensor Ops Impl
+ *
+ * WHAT
+ *   Tensor Ops Impl.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Perform Tensor Strided Copy.
+ *
+ * @param dst [out] Dst value.
+ * @param src [in] Src value.
+ * @param dst_strides [in] Dst Strides value.
+ * @param src_strides [in] Src Strides value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_strided_copy(void* dst, const void* src,
                               const size_t* dst_strides, const size_t* src_strides,
                               const size_t* shape, size_t ndim, size_t elem_size) {
@@ -30,6 +58,16 @@ int SNEPPX_tensor_strided_copy(void* dst, const void* src,
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Broadcast Strides.
+ *
+ * @param src_shape [in] Src Shape value.
+ * @param src_ndim [in] Src Ndim value.
+ * @param dst_shape [in] Dst Shape value.
+ * @param dst_ndim [in] Dst Ndim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_broadcast_strides(const size_t* src_shape, size_t src_ndim,
                                   const size_t* dst_shape, size_t dst_ndim,
                                   size_t* out_strides) {
@@ -52,6 +90,17 @@ static int is_reduced_dim(size_t d, const size_t* reduce_dims, size_t num_dims) 
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Reduce Sum F32.
+ *
+ * @param src [in] Src value.
+ * @param dst [out] Dst value.
+ * @param src_shape [in] Src Shape value.
+ * @param src_ndim [in] Src Ndim value.
+ * @param reduce_dims [in] Reduce Dims value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_reduce_sum_f32(const float* src, float* dst,
                                 const size_t* src_shape, size_t src_ndim,
                                 const size_t* reduce_dims, size_t num_dims) {
@@ -94,6 +143,17 @@ int SNEPPX_tensor_reduce_sum_f32(const float* src, float* dst,
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Reduce Mean F32.
+ *
+ * @param src [in] Src value.
+ * @param dst [out] Dst value.
+ * @param src_shape [in] Src Shape value.
+ * @param src_ndim [in] Src Ndim value.
+ * @param reduce_dims [in] Reduce Dims value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_reduce_mean_f32(const float* src, float* dst,
                                  const size_t* src_shape, size_t src_ndim,
                                  const size_t* reduce_dims, size_t num_dims) {
@@ -121,6 +181,17 @@ int SNEPPX_tensor_reduce_mean_f32(const float* src, float* dst,
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Reduce Max F32.
+ *
+ * @param src [in] Src value.
+ * @param dst [out] Dst value.
+ * @param src_shape [in] Src Shape value.
+ * @param src_ndim [in] Src Ndim value.
+ * @param reduce_dims [in] Reduce Dims value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_reduce_max_f32(const float* src, float* dst,
                                 const size_t* src_shape, size_t src_ndim,
                                 const size_t* reduce_dims, size_t num_dims) {
@@ -169,6 +240,16 @@ static int dtype_size(int dtype) {
     }
 }
 
+/**
+ * @brief Perform Tensor Convert Dtype.
+ *
+ * @param dst [out] Dst value.
+ * @param dst_dtype [in] Dst Dtype value.
+ * @param src [in] Src value.
+ * @param src_dtype [in] Src Dtype value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_convert_dtype(void* dst, int dst_dtype, const void* src, int src_dtype, size_t num_elements) {
     if (!dst || !src || num_elements == 0) return 0;
     if (src_dtype == dst_dtype) { memcpy(dst, src, num_elements * (size_t)dtype_size(src_dtype)); return 0; }
@@ -198,24 +279,58 @@ int SNEPPX_tensor_convert_dtype(void* dst, int dst_dtype, const void* src, int s
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Add F32.
+ *
+ * @param a [in] A value.
+ * @param b [in] B value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_add_f32(const float* a, const float* b, float* out, size_t n) {
     if (!a || !b || !out) return -1;
     for (size_t i = 0; i < n; i++) out[i] = a[i] + b[i];
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Mul F32.
+ *
+ * @param a [in] A value.
+ * @param b [in] B value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_mul_f32(const float* a, const float* b, float* out, size_t n) {
     if (!a || !b || !out) return -1;
     for (size_t i = 0; i < n; i++) out[i] = a[i] * b[i];
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Relu F32.
+ *
+ * @param a [in] A value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_relu_f32(const float* a, float* out, size_t n) {
     if (!a || !out) return -1;
     for (size_t i = 0; i < n; i++) out[i] = a[i] > 0.0f ? a[i] : 0.0f;
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Sigmoid F32.
+ *
+ * @param a [in] A value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_sigmoid_f32(const float* a, float* out, size_t n) {
     if (!a || !out) return -1;
     for (size_t i = 0; i < n; i++) {
@@ -227,6 +342,15 @@ int SNEPPX_tensor_sigmoid_f32(const float* a, float* out, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Parallel For.
+ *
+ * @param kernel [in] Kernel value.
+ * @param ctx [out] Ctx value.
+ * @param total_work [in] Total Work value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_parallel_for(SNEPPXTensorKernel1D kernel, void* ctx,
                               size_t total_work, size_t min_grain) {
     if (!kernel || total_work == 0) return 0;

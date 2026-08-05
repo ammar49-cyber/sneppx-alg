@@ -7,6 +7,22 @@
 #include <stdint.h>
 #include <float.h>
 
+/*
+ * SNEPPX - Tensor
+ *
+ * WHAT
+ *   Tensor.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static size_t compute_offset(const SNEPPXTensor* tensor, const size_t* indices) {
     size_t offset = 0;
     for (size_t i = 0; i < tensor->ndim; i++) {
@@ -41,6 +57,11 @@ static void* aligned_alloc_wrapper(size_t size, size_t alignment) {
 
 /* ===== SNEPPXStorage implementation ===== */
 
+/**
+ * @brief Create Storage.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXStorage* SNEPPX_storage_create(size_t num_bytes) {
     SNEPPXStorage* s = (SNEPPXStorage*)aligned_alloc_wrapper(sizeof(SNEPPXStorage), 64);
     if (!s) return NULL;
@@ -54,10 +75,16 @@ SNEPPXStorage* SNEPPX_storage_create(size_t num_bytes) {
     return s;
 }
 
+/**
+ * @brief Perform Storage Retain.
+ */
 void SNEPPX_storage_retain(SNEPPXStorage* s) {
     if (s) s->ref_count++;
 }
 
+/**
+ * @brief Perform Storage Release.
+ */
 void SNEPPX_storage_release(SNEPPXStorage* s) {
     if (!s) return;
     if (--s->ref_count <= 0) {
@@ -83,6 +110,16 @@ static SNEPPXTensor* tensor_view_alloc(const SNEPPXTensor* src) {
     return t;
 }
 
+/**
+ * @brief Perform Tensor As Strided.
+ *
+ * @param src [in] Src value.
+ * @param offset [in] Offset value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_as_strided(const SNEPPXTensor* src, size_t offset, const size_t* shape, size_t ndim, const size_t* strides) {
     if (!src) return NULL;
     SNEPPXTensor* t = tensor_view_alloc(src);
@@ -108,6 +145,15 @@ SNEPPXTensor* SNEPPX_tensor_as_strided(const SNEPPXTensor* src, size_t offset, c
     return t;
 }
 
+/**
+ * @brief Perform Tensor Narrow.
+ *
+ * @param src [in] Src value.
+ * @param dim [in] Dim value.
+ * @param start [in] Start value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_narrow(const SNEPPXTensor* src, size_t dim, size_t start, size_t size) {
     if (!src || dim >= src->ndim || start + size > src->shape[dim]) return NULL;
     size_t new_shape[16], new_strides[16];
@@ -135,6 +181,11 @@ static SNEPPXStorage* ensure_storage(SNEPPXTensor* t) {
     return t->storage;
 }
 
+/**
+ * @brief Perform Tensor Fill Scalar.
+ *
+ * @param t [out] T value.
+ */
 static void SNEPPX_tensor_fill_scalar(SNEPPXTensor* t, double value) {
     unsigned char* data = (unsigned char*)t->data;
     size_t n = t->size;
@@ -155,6 +206,14 @@ static void SNEPPX_tensor_fill_scalar(SNEPPXTensor* t, double value) {
     }
 }
 
+/**
+ * @brief Create Tensor.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_create(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     if (ndim > 0 && !shape) return NULL;
     SNEPPXTensor* tensor = (SNEPPXTensor*)aligned_alloc_wrapper(sizeof(SNEPPXTensor), 64);
@@ -208,6 +267,9 @@ SNEPPXTensor* SNEPPX_tensor_create(const size_t* shape, size_t ndim, SNEPPXDtype
     return tensor;
 }
 
+/**
+ * @brief Destroy Tensor.
+ */
 void SNEPPX_tensor_destroy(SNEPPXTensor* tensor) {
     if (!tensor) return;
     SNEPPX_storage_release(tensor->storage);
@@ -217,82 +279,173 @@ void SNEPPX_tensor_destroy(SNEPPXTensor* tensor) {
     SNEPPX_free(tensor, sizeof(SNEPPXTensor));
 }
 
+/**
+ * @brief Perform Tensor Get F32.
+ *
+ * @param tensor [in] Tensor value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tensor_get_f32(const SNEPPXTensor* tensor, const size_t* indices) {
     if (tensor->dtype != SNEPPX_FLOAT32) return 0.0f;
     size_t offset = compute_offset(tensor, indices);
     return ((float*)tensor->data)[offset];
 }
 
+/**
+ * @brief Perform Tensor Set F32.
+ *
+ * @param tensor [out] Tensor value.
+ * @param indices [in] Indices value.
+ */
 void SNEPPX_tensor_set_f32(SNEPPXTensor* tensor, const size_t* indices, float value) {
     if (tensor->dtype != SNEPPX_FLOAT32) return;
     size_t offset = compute_offset(tensor, indices);
     ((float*)tensor->data)[offset] = value;
 }
 
+/**
+ * @brief Perform Tensor Get F64.
+ *
+ * @param tensor [in] Tensor value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_tensor_get_f64(const SNEPPXTensor* tensor, const size_t* indices) {
     if (tensor->dtype != SNEPPX_FLOAT64) return 0.0;
     size_t offset = compute_offset(tensor, indices);
     return ((double*)tensor->data)[offset];
 }
 
+/**
+ * @brief Perform Tensor Set F64.
+ *
+ * @param tensor [out] Tensor value.
+ * @param indices [in] Indices value.
+ */
 void SNEPPX_tensor_set_f64(SNEPPXTensor* tensor, const size_t* indices, double value) {
     if (tensor->dtype != SNEPPX_FLOAT64) return;
     size_t offset = compute_offset(tensor, indices);
     ((double*)tensor->data)[offset] = value;
 }
 
+/**
+ * @brief Perform Tensor Get I32.
+ *
+ * @param tensor [in] Tensor value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int32_t SNEPPX_tensor_get_i32(const SNEPPXTensor* tensor, const size_t* indices) {
     if (tensor->dtype != SNEPPX_INT32) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((int32_t*)tensor->data)[offset];
 }
 
+/**
+ * @brief Perform Tensor Set I32.
+ *
+ * @param tensor [out] Tensor value.
+ * @param indices [in] Indices value.
+ */
 void SNEPPX_tensor_set_i32(SNEPPXTensor* tensor, const size_t* indices, int32_t value) {
     if (tensor->dtype != SNEPPX_INT32) return;
     size_t offset = compute_offset(tensor, indices);
     ((int32_t*)tensor->data)[offset] = value;
 }
 
+/**
+ * @brief Perform Tensor Get I64.
+ *
+ * @param tensor [in] Tensor value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int64_t SNEPPX_tensor_get_i64(const SNEPPXTensor* tensor, const size_t* indices) {
     if (tensor->dtype != SNEPPX_INT64) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((int64_t*)tensor->data)[offset];
 }
 
+/**
+ * @brief Perform Tensor Set I64.
+ *
+ * @param tensor [out] Tensor value.
+ * @param indices [in] Indices value.
+ */
 void SNEPPX_tensor_set_i64(SNEPPXTensor* tensor, const size_t* indices, int64_t value) {
     if (tensor->dtype != SNEPPX_INT64) return;
     size_t offset = compute_offset(tensor, indices);
     ((int64_t*)tensor->data)[offset] = value;
 }
 
+/**
+ * @brief Perform Tensor Get Bool.
+ *
+ * @param tensor [in] Tensor value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint8_t SNEPPX_tensor_get_bool(const SNEPPXTensor* tensor, const size_t* indices) {
     if (tensor->dtype != SNEPPX_BOOL) return 0;
     size_t offset = compute_offset(tensor, indices);
     return ((uint8_t*)tensor->data)[offset];
 }
 
+/**
+ * @brief Perform Tensor Set Bool.
+ *
+ * @param tensor [out] Tensor value.
+ * @param indices [in] Indices value.
+ */
 void SNEPPX_tensor_set_bool(SNEPPXTensor* tensor, const size_t* indices, uint8_t value) {
     if (tensor->dtype != SNEPPX_BOOL) return;
     size_t offset = compute_offset(tensor, indices);
     ((uint8_t*)tensor->data)[offset] = value ? 1 : 0;
 }
 
+/**
+ * @brief Perform Tensor Fill F32.
+ *
+ * @param tensor [out] Tensor value.
+ */
 void SNEPPX_tensor_fill_f32(SNEPPXTensor* tensor, float value) {
     if (!tensor || tensor->dtype != SNEPPX_FLOAT32) return;
     float* data = (float*)tensor->data;
     for (size_t i = 0; i < tensor->size; i++) data[i] = value;
 }
 
+/**
+ * @brief Perform Tensor Fill F64.
+ *
+ * @param tensor [out] Tensor value.
+ */
 void SNEPPX_tensor_fill_f64(SNEPPXTensor* tensor, double value) {
     if (!tensor || tensor->dtype != SNEPPX_FLOAT64) return;
     double* data = (double*)tensor->data;
     for (size_t i = 0; i < tensor->size; i++) data[i] = value;
 }
 
+/**
+ * @brief Perform Tensor Empty.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_empty(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     return SNEPPX_tensor_create(shape, ndim, dtype);
 }
 
+/**
+ * @brief Perform Tensor Zeros.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_zeros(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
@@ -300,6 +453,14 @@ SNEPPXTensor* SNEPPX_tensor_zeros(const size_t* shape, size_t ndim, SNEPPXDtype 
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Ones.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_ones(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
@@ -316,6 +477,15 @@ SNEPPXTensor* SNEPPX_tensor_ones(const size_t* shape, size_t ndim, SNEPPXDtype d
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Full.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ * @param dtype [in] Dtype value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_full(const size_t* shape, size_t ndim, SNEPPXDtype dtype, const void* value) {
     SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor || !value) return tensor;
@@ -327,6 +497,15 @@ SNEPPXTensor* SNEPPX_tensor_full(const size_t* shape, size_t ndim, SNEPPXDtype d
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Arange.
+ *
+ * @param start [in] Start value.
+ * @param stop [in] Stop value.
+ * @param step [in] Step value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_arange(float start, float stop, float step, SNEPPXDtype dtype) {
     if (step == 0.0f) return NULL;
     if ((step > 0.0f && start >= stop) || (step < 0.0f && start <= stop)) return NULL;
@@ -350,6 +529,15 @@ SNEPPXTensor* SNEPPX_tensor_arange(float start, float stop, float step, SNEPPXDt
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Linspace.
+ *
+ * @param start [in] Start value.
+ * @param stop [in] Stop value.
+ * @param steps [in] Steps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_linspace(float start, float stop, size_t steps, SNEPPXDtype dtype) {
     if (steps == 0) return NULL;
     size_t shape[] = {steps};
@@ -366,6 +554,13 @@ SNEPPXTensor* SNEPPX_tensor_linspace(float start, float stop, size_t steps, SNEP
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Eye.
+ *
+ * @param n [in] N value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_eye(size_t n, SNEPPXDtype dtype) {
     size_t shape[] = {n, n};
     SNEPPXTensor* tensor = SNEPPX_tensor_zeros(shape, 2, dtype);
@@ -391,6 +586,14 @@ static float uniform_01(void) {
     return (float)((lcg_state >> 16) & 0x7FFF) / 32767.0f;
 }
 
+/**
+ * @brief Perform Tensor Randn.
+ *
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_randn(const size_t* shape, size_t ndim, SNEPPXDtype dtype) {
     SNEPPXTensor* tensor = SNEPPX_tensor_create(shape, ndim, dtype);
     if (!tensor) return NULL;
@@ -408,6 +611,11 @@ SNEPPXTensor* SNEPPX_tensor_randn(const size_t* shape, size_t ndim, SNEPPXDtype 
     return tensor;
 }
 
+/**
+ * @brief Perform Tensor Copy.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_copy(const SNEPPXTensor* src) {
     if (!src) return NULL;
     SNEPPXTensor* dst = SNEPPX_tensor_create(src->shape, src->ndim, src->dtype);
@@ -416,15 +624,37 @@ SNEPPXTensor* SNEPPX_tensor_copy(const SNEPPXTensor* src) {
     return dst;
 }
 
+/**
+ * @brief Perform Tensor Clone.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_clone(const SNEPPXTensor* src) {
     return SNEPPX_tensor_copy(src);
 }
 
+/**
+ * @brief Perform Tensor Slice.
+ *
+ * @param src [in] Src value.
+ * @param dim [in] Dim value.
+ * @param start [in] Start value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_slice(const SNEPPXTensor* src, size_t dim, size_t start, size_t end) {
     if (!src || dim >= src->ndim || start >= end || end > src->shape[dim]) return NULL;
     return SNEPPX_tensor_narrow(src, dim, start, end - start);
 }
 
+/**
+ * @brief Perform Tensor Reshape.
+ *
+ * @param src [in] Src value.
+ * @param new_shape [in] New Shape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_reshape(const SNEPPXTensor* src, const size_t* new_shape, size_t new_ndim) {
     if (!src) return NULL;
     size_t new_size = 1;
@@ -455,6 +685,13 @@ SNEPPXTensor* SNEPPX_tensor_reshape(const SNEPPXTensor* src, const size_t* new_s
     return result;
 }
 
+/**
+ * @brief Perform Tensor Permute.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_permute(const SNEPPXTensor* src, const size_t* axes) {
     if (!src) return NULL;
     size_t new_shape[16], new_strides[16];
@@ -465,6 +702,14 @@ SNEPPXTensor* SNEPPX_tensor_permute(const SNEPPXTensor* src, const size_t* axes)
     return SNEPPX_tensor_as_strided(src, src->offset, new_shape, src->ndim, new_strides);
 }
 
+/**
+ * @brief Perform Tensor Expand.
+ *
+ * @param src [in] Src value.
+ * @param new_shape [in] New Shape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_expand(const SNEPPXTensor* src, const size_t* new_shape, size_t new_ndim) {
     if (!src || new_ndim < src->ndim) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_empty(new_shape, new_ndim, src->dtype);
@@ -496,6 +741,13 @@ SNEPPXTensor* SNEPPX_tensor_expand(const SNEPPXTensor* src, const size_t* new_sh
     return result;
 }
 
+/**
+ * @brief Perform Tensor Squeeze.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_squeeze(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim || src->shape[dim] != 1) return SNEPPX_tensor_copy(src);
     size_t new_ndim = src->ndim - 1;
@@ -511,6 +763,13 @@ SNEPPXTensor* SNEPPX_tensor_squeeze(const SNEPPXTensor* src, size_t dim) {
     return SNEPPX_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
 }
 
+/**
+ * @brief Perform Tensor Unsqueeze.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_unsqueeze(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim > src->ndim) return NULL;
     size_t new_ndim = src->ndim + 1;
@@ -529,6 +788,14 @@ SNEPPXTensor* SNEPPX_tensor_unsqueeze(const SNEPPXTensor* src, size_t dim) {
     return SNEPPX_tensor_as_strided(src, src->offset, new_shape, new_ndim, new_strides);
 }
 
+/**
+ * @brief Perform Tensor Concat.
+ *
+ * @param tensors [in] Tensors value.
+ * @param num_tensors [in] Num Tensors value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_concat(const SNEPPXTensor** tensors, size_t num_tensors, size_t dim) {
     if (!tensors || num_tensors == 0) return NULL;
     const SNEPPXTensor* first = tensors[0];
@@ -560,6 +827,14 @@ SNEPPXTensor* SNEPPX_tensor_concat(const SNEPPXTensor** tensors, size_t num_tens
     return result;
 }
 
+/**
+ * @brief Perform Tensor Split.
+ *
+ * @param src [in] Src value.
+ * @param num_splits [in] Num Splits value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor** SNEPPX_tensor_split(const SNEPPXTensor* src, size_t num_splits, size_t dim) {
     if (!src || num_splits == 0 || dim >= src->ndim || src->shape[dim] % num_splits != 0) return NULL;
     size_t split_size = src->shape[dim] / num_splits;
@@ -577,6 +852,14 @@ SNEPPXTensor** SNEPPX_tensor_split(const SNEPPXTensor* src, size_t num_splits, s
     return results;
 }
 
+/**
+ * @brief Perform Tensor Tile.
+ *
+ * @param src [in] Src value.
+ * @param reps [in] Reps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_tile(const SNEPPXTensor* src, const size_t* reps, size_t reps_ndim) {
     if (!src || !reps) return NULL;
     size_t out_ndim = (src->ndim > reps_ndim) ? src->ndim : reps_ndim;
@@ -611,6 +894,14 @@ SNEPPXTensor* SNEPPX_tensor_tile(const SNEPPXTensor* src, const size_t* reps, si
     return result;
 }
 
+/**
+ * @brief Perform Tensor Repeat.
+ *
+ * @param src [in] Src value.
+ * @param repeats [in] Repeats value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_repeat(const SNEPPXTensor* src, size_t repeats, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     size_t* reps = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
@@ -621,6 +912,14 @@ SNEPPXTensor* SNEPPX_tensor_repeat(const SNEPPXTensor* src, size_t repeats, size
     return result;
 }
 
+/**
+ * @brief Perform Tensor Gather.
+ *
+ * @param src [in] Src value.
+ * @param dim [in] Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_gather(const SNEPPXTensor* src, size_t dim, const SNEPPXTensor* indices) {
     if (!src || !indices || dim >= src->ndim || indices->ndim != src->ndim) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_empty(indices->shape, indices->ndim, src->dtype);
@@ -647,6 +946,15 @@ SNEPPXTensor* SNEPPX_tensor_gather(const SNEPPXTensor* src, size_t dim, const SN
     return result;
 }
 
+/**
+ * @brief Perform Tensor Scatter.
+ *
+ * @param dest [out] Dest value.
+ * @param dim [in] Dim value.
+ * @param indices [in] Indices value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_scatter(SNEPPXTensor* dest, size_t dim, const SNEPPXTensor* indices, const SNEPPXTensor* src) {
     if (!dest || !indices || !src || dim >= dest->ndim) return NULL;
     unsigned char* src_data = (unsigned char*)src->data;
@@ -670,6 +978,13 @@ SNEPPXTensor* SNEPPX_tensor_scatter(SNEPPXTensor* dest, size_t dim, const SNEPPX
     return dest;
 }
 
+/**
+ * @brief Perform Tensor Masked Select.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_masked_select(const SNEPPXTensor* src, const SNEPPXTensor* mask) {
     if (!src || !mask || src->size != mask->size) return NULL;
     unsigned char* mask_data = (unsigned char*)mask->data;
@@ -693,6 +1008,14 @@ SNEPPXTensor* SNEPPX_tensor_masked_select(const SNEPPXTensor* src, const SNEPPXT
     return result;
 }
 
+/**
+ * @brief Perform Tensor Masked Fill.
+ *
+ * @param src [out] Src value.
+ * @param mask [in] Mask value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_masked_fill(SNEPPXTensor* src, const SNEPPXTensor* mask, const void* value) {
     if (!src || !mask || !value || src->size != mask->size) return src;
     unsigned char* mask_data = (unsigned char*)mask->data;
@@ -706,6 +1029,14 @@ SNEPPXTensor* SNEPPX_tensor_masked_fill(SNEPPXTensor* src, const SNEPPXTensor* m
     return src;
 }
 
+/**
+ * @brief Perform Tensor Where.
+ *
+ * @param condition [in] Condition value.
+ * @param x [in] X value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_where(const SNEPPXTensor* condition, const SNEPPXTensor* x, const SNEPPXTensor* y) {
     if (!condition || !x || !y) return NULL;
     size_t n = x->size < y->size ? x->size : y->size;
@@ -724,6 +1055,13 @@ SNEPPXTensor* SNEPPX_tensor_where(const SNEPPXTensor* condition, const SNEPPXTen
     return result;
 }
 
+/**
+ * @brief Perform Tensor Cast.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cast(const SNEPPXTensor* src, SNEPPXDtype dtype) {
     if (!src || dtype == src->dtype) return SNEPPX_tensor_copy(src);
     SNEPPXTensor* result = SNEPPX_tensor_empty(src->shape, src->ndim, dtype);
@@ -752,6 +1090,13 @@ SNEPPXTensor* SNEPPX_tensor_cast(const SNEPPXTensor* src, SNEPPXDtype dtype) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor To Device.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_to_device(const SNEPPXTensor* src, SNEPPXDevice device) {
     (void)device;
     if (!src) return NULL;
@@ -761,6 +1106,13 @@ SNEPPXTensor* SNEPPX_tensor_to_device(const SNEPPXTensor* src, SNEPPXDevice devi
     return dst;
 }
 
+/**
+ * @brief Perform Tensor To Layout.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_to_layout(const SNEPPXTensor* src, SNEPPXLayout layout) {
     if (!src) return NULL;
     if (src->layout == layout) return SNEPPX_tensor_copy(src);
@@ -780,6 +1132,13 @@ SNEPPXTensor* SNEPPX_tensor_to_layout(const SNEPPXTensor* src, SNEPPXLayout layo
     return dst;
 }
 
+/**
+ * @brief Save Tensor.
+ *
+ * @param src [in] Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_save(const SNEPPXTensor* src, const char* path) {
     if (!src || !path) return -1;
     FILE* f = fopen(path, "wb");
@@ -801,6 +1160,11 @@ int SNEPPX_tensor_save(const SNEPPXTensor* src, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Load Tensor.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_load(const char* path) {
     if (!path) return NULL;
     FILE* f = fopen(path, "rb");
@@ -852,11 +1216,65 @@ static int cmp_le(float a, float b) { return a <= b; }
 static int cmp_gt(float a, float b) { return a > b; }
 static int cmp_ge(float a, float b) { return a >= b; }
 
+/**
+ * @brief Perform Tensor Eq.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_eq(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_eq); }
+/**
+ * @brief Perform Tensor Ne.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_ne(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_ne); }
+/**
+ * @brief Perform Tensor Lt.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_lt(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_lt); }
+/**
+ * @brief Perform Tensor Le.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_le(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_le); }
+/**
+ * @brief Perform Tensor Gt.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_gt(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_gt); }
+/**
+ * @brief Perform Tensor Ge.
+ *
+ * @param a [in] A value.
+ * @param a [in] A value.
+ * @param b [in] B value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_ge(const SNEPPXTensor* a, const SNEPPXTensor* b) { return compare_op(a, b, cmp_ge); }
 
 /* Helper: binary op with contiguity support */
@@ -878,6 +1296,13 @@ SNEPPXTensor* SNEPPX_tensor_ge(const SNEPPXTensor* a, const SNEPPXTensor* b) { r
 }
 
 /* add has broadcasting support */
+/**
+ * @brief Add Tensor.
+ *
+ * @param a [in] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_add(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b) return NULL;
     SNEPPXTensor* ta = NULL, *tb = NULL;
@@ -933,26 +1358,166 @@ static SNEPPXTensor* unary_op_f32(const SNEPPXTensor* src, float (*op)(float)) {
 static float negate_f32(float x) { return -x; }
 static float sign_f32(float x) { return (x > 0) ? 1.0f : (x < 0) ? -1.0f : 0.0f; }
 
+/**
+ * @brief Perform Tensor Neg.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_neg(const SNEPPXTensor* src) { return unary_op_f32(src, negate_f32); }
+/**
+ * @brief Perform Tensor Abs.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_abs(const SNEPPXTensor* src) { return unary_op_f32(src, fabsf); }
+/**
+ * @brief Sign Tensor.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sign(const SNEPPXTensor* src) { return unary_op_f32(src, sign_f32); }
+/**
+ * @brief Perform Tensor Floor.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_floor(const SNEPPXTensor* src) { return unary_op_f32(src, floorf); }
+/**
+ * @brief Perform Tensor Ceil.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_ceil(const SNEPPXTensor* src) { return unary_op_f32(src, ceilf); }
+/**
+ * @brief Perform Tensor Round.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_round(const SNEPPXTensor* src) { return unary_op_f32(src, roundf); }
+/**
+ * @brief Perform Tensor Trunc.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_trunc(const SNEPPXTensor* src) { return unary_op_f32(src, truncf); }
+/**
+ * @brief Perform Tensor Exp.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_exp(const SNEPPXTensor* src) { return unary_op_f32(src, expf); }
+/**
+ * @brief Perform Tensor Log.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_log(const SNEPPXTensor* src) { return unary_op_f32(src, logf); }
+/**
+ * @brief Perform Tensor Sqrt.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sqrt(const SNEPPXTensor* src) { return unary_op_f32(src, sqrtf); }
+/**
+ * @brief Perform Tensor Sin.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sin(const SNEPPXTensor* src) { return unary_op_f32(src, sinf); }
+/**
+ * @brief Perform Tensor Cos.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cos(const SNEPPXTensor* src) { return unary_op_f32(src, cosf); }
+/**
+ * @brief Perform Tensor Tan.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_tan(const SNEPPXTensor* src) { return unary_op_f32(src, tanf); }
+/**
+ * @brief Perform Tensor Asin.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_asin(const SNEPPXTensor* src) { return unary_op_f32(src, asinf); }
+/**
+ * @brief Perform Tensor Acos.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_acos(const SNEPPXTensor* src) { return unary_op_f32(src, acosf); }
+/**
+ * @brief Perform Tensor Atan.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_atan(const SNEPPXTensor* src) { return unary_op_f32(src, atanf); }
+/**
+ * @brief Perform Tensor Sinh.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sinh(const SNEPPXTensor* src) { return unary_op_f32(src, sinhf); }
+/**
+ * @brief Perform Tensor Cosh.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cosh(const SNEPPXTensor* src) { return unary_op_f32(src, coshf); }
+/**
+ * @brief Perform Tensor Tanh.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_tanh(const SNEPPXTensor* src) { return unary_op_f32(src, tanhf); }
 
+/**
+ * @brief Perform Tensor Sum.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sum(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* tmp = NULL;
@@ -978,6 +1543,13 @@ SNEPPXTensor* SNEPPX_tensor_sum(const SNEPPXTensor* src, size_t dim) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Mean.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_mean(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* sum = SNEPPX_tensor_sum(src, dim);
@@ -988,6 +1560,13 @@ SNEPPXTensor* SNEPPX_tensor_mean(const SNEPPXTensor* src, size_t dim) {
     return sum;
 }
 
+/**
+ * @brief Perform Tensor Var.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_var(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* tmp = NULL;
@@ -1017,6 +1596,13 @@ SNEPPXTensor* SNEPPX_tensor_var(const SNEPPXTensor* src, size_t dim) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Std.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_std(const SNEPPXTensor* src, size_t dim) {
     SNEPPXTensor* v = SNEPPX_tensor_var(src, dim);
     if (!v) return NULL;
@@ -1025,6 +1611,11 @@ SNEPPXTensor* SNEPPX_tensor_std(const SNEPPXTensor* src, size_t dim) {
     return v;
 }
 
+/**
+ * @brief Perform Tensor Min.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tensor_min(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0.0f;
     SNEPPXTensor* tmp = NULL;
@@ -1036,6 +1627,11 @@ float SNEPPX_tensor_min(const SNEPPXTensor* src) {
     return val;
 }
 
+/**
+ * @brief Perform Tensor Max.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tensor_max(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0.0f;
     SNEPPXTensor* tmp = NULL;
@@ -1047,6 +1643,11 @@ float SNEPPX_tensor_max(const SNEPPXTensor* src) {
     return val;
 }
 
+/**
+ * @brief Perform Tensor Argmin.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_tensor_argmin(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0;
     SNEPPXTensor* tmp = NULL;
@@ -1058,6 +1659,11 @@ size_t SNEPPX_tensor_argmin(const SNEPPXTensor* src) {
     return idx;
 }
 
+/**
+ * @brief Perform Tensor Argmax.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_tensor_argmax(const SNEPPXTensor* src) {
     if (!src || src->size == 0) return 0;
     SNEPPXTensor* tmp = NULL;
@@ -1069,6 +1675,13 @@ size_t SNEPPX_tensor_argmax(const SNEPPXTensor* src) {
     return idx;
 }
 
+/**
+ * @brief Perform Tensor Cumsum.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cumsum(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1088,6 +1701,13 @@ SNEPPXTensor* SNEPPX_tensor_cumsum(const SNEPPXTensor* src, size_t dim) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Cumprod.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cumprod(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1107,6 +1727,13 @@ SNEPPXTensor* SNEPPX_tensor_cumprod(const SNEPPXTensor* src, size_t dim) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Dot.
+ *
+ * @param a [in] A value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tensor_dot(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b || a->size != b->size) return 0.0f;
     float* ad = (float*)a->data;
@@ -1116,6 +1743,13 @@ float SNEPPX_tensor_dot(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     return sum;
 }
 
+/**
+ * @brief Perform Tensor Matmul.
+ *
+ * @param a [in] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b) {
     if (!a || !b || a->ndim < 1 || a->ndim > 8 || b->ndim < 1 || b->ndim > 8) return NULL;
     SNEPPXTensor* ta = NULL, *tb = NULL;
@@ -1192,6 +1826,14 @@ SNEPPXTensor* SNEPPX_tensor_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b)
     return result;
 }
 
+/**
+ * @brief Perform Tensor Transpose.
+ *
+ * @param src [in] Src value.
+ * @param dim1 [in] Dim1 value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_transpose(const SNEPPXTensor* src, size_t dim1, size_t dim2) {
     if (!src || dim1 >= src->ndim || dim2 >= src->ndim) return NULL;
     size_t* axes = (size_t*)aligned_alloc_wrapper(src->ndim * sizeof(size_t), 64);
@@ -1204,6 +1846,11 @@ SNEPPXTensor* SNEPPX_tensor_transpose(const SNEPPXTensor* src, size_t dim1, size
     return result;
 }
 
+/**
+ * @brief Perform Tensor Inverse.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_inverse(const SNEPPXTensor* src) {
     if (!src || src->ndim != 2 || src->shape[0] != src->shape[1]) return NULL;
     size_t n = src->shape[0];
@@ -1239,6 +1886,11 @@ SNEPPXTensor* SNEPPX_tensor_inverse(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Det.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tensor_det(const SNEPPXTensor* src) {
     if (!src || src->ndim != 2 || src->shape[0] != src->shape[1]) return 0.0f;
     size_t n = src->shape[0];
@@ -1267,6 +1919,15 @@ float SNEPPX_tensor_det(const SNEPPXTensor* src) {
     return det;
 }
 
+/**
+ * @brief Perform Tensor Conv1d.
+ *
+ * @param input [in] Input value.
+ * @param kernel [in] Kernel value.
+ * @param stride [in] Stride value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_conv1d(const SNEPPXTensor* input, const SNEPPXTensor* kernel, size_t stride, size_t padding) {
     if (!input || !kernel || stride == 0) return NULL;
     size_t L = input->shape[input->ndim - 1];
@@ -1303,6 +1964,17 @@ SNEPPXTensor* SNEPPX_tensor_conv1d(const SNEPPXTensor* input, const SNEPPXTensor
     return result;
 }
 
+/**
+ * @brief Perform Tensor Conv2d.
+ *
+ * @param input [in] Input value.
+ * @param kernel [in] Kernel value.
+ * @param stride_h [in] Stride H value.
+ * @param stride_w [in] Stride W value.
+ * @param pad_h [in] Pad H value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_conv2d(const SNEPPXTensor* input, const SNEPPXTensor* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w) {
     if (!input || !kernel || stride_h == 0 || stride_w == 0) return NULL;
     size_t H = input->shape[input->ndim - 2], W = input->shape[input->ndim - 1];
@@ -1347,6 +2019,14 @@ SNEPPXTensor* SNEPPX_tensor_conv2d(const SNEPPXTensor* input, const SNEPPXTensor
     return result;
 }
 
+/**
+ * @brief Perform Tensor Pool1d.
+ *
+ * @param src [in] Src value.
+ * @param kernel_size [in] Kernel Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_pool1d(const SNEPPXTensor* src, size_t kernel_size, size_t stride) {
     if (!src || kernel_size == 0 || stride == 0) return NULL;
     size_t L = src->shape[src->ndim - 1];
@@ -1376,6 +2056,16 @@ SNEPPXTensor* SNEPPX_tensor_pool1d(const SNEPPXTensor* src, size_t kernel_size, 
     return result;
 }
 
+/**
+ * @brief Perform Tensor Pool2d.
+ *
+ * @param src [in] Src value.
+ * @param kernel_h [in] Kernel H value.
+ * @param kernel_w [in] Kernel W value.
+ * @param stride_h [in] Stride H value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_pool2d(const SNEPPXTensor* src, size_t kernel_h, size_t kernel_w, size_t stride_h, size_t stride_w) {
     if (!src || kernel_h == 0 || kernel_w == 0 || stride_h == 0 || stride_w == 0) return NULL;
     size_t H = src->shape[src->ndim - 2], W = src->shape[src->ndim - 1];
@@ -1410,6 +2100,13 @@ SNEPPXTensor* SNEPPX_tensor_pool2d(const SNEPPXTensor* src, size_t kernel_h, siz
     return result;
 }
 
+/**
+ * @brief Perform Tensor Softmax.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_softmax(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1440,6 +2137,13 @@ SNEPPXTensor* SNEPPX_tensor_softmax(const SNEPPXTensor* src, size_t dim) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Log Softmax.
+ *
+ * @param src [in] Src value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_log_softmax(const SNEPPXTensor* src, size_t dim) {
     if (!src || dim >= src->ndim) return NULL;
     SNEPPXTensor* sm = SNEPPX_tensor_softmax(src, dim);
@@ -1449,6 +2153,11 @@ SNEPPXTensor* SNEPPX_tensor_log_softmax(const SNEPPXTensor* src, size_t dim) {
     return sm;
 }
 
+/**
+ * @brief Perform Tensor Relu.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_relu(const SNEPPXTensor* src) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1458,6 +2167,11 @@ SNEPPXTensor* SNEPPX_tensor_relu(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Gelu.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_gelu(const SNEPPXTensor* src) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1470,6 +2184,11 @@ SNEPPXTensor* SNEPPX_tensor_gelu(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Silu.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_silu(const SNEPPXTensor* src) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1482,6 +2201,11 @@ SNEPPXTensor* SNEPPX_tensor_silu(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Sigmoid.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_sigmoid(const SNEPPXTensor* src) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1493,6 +2217,14 @@ SNEPPXTensor* SNEPPX_tensor_sigmoid(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Dropout.
+ *
+ * @param src [in] Src value.
+ * @param rate [in] Rate value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_dropout(const SNEPPXTensor* src, float rate, unsigned int seed) {
     (void)seed;
     if (!src) return NULL;
@@ -1510,6 +2242,15 @@ SNEPPXTensor* SNEPPX_tensor_dropout(const SNEPPXTensor* src, float rate, unsigne
     return result;
 }
 
+/**
+ * @brief Perform Tensor Layer Norm.
+ *
+ * @param src [in] Src value.
+ * @param gamma [in] Gamma value.
+ * @param beta [in] Beta value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_layer_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, float eps) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1536,6 +2277,17 @@ SNEPPXTensor* SNEPPX_tensor_layer_norm(const SNEPPXTensor* src, const SNEPPXTens
     return result;
 }
 
+/**
+ * @brief Perform Tensor Batch Norm.
+ *
+ * @param src [in] Src value.
+ * @param gamma [in] Gamma value.
+ * @param beta [in] Beta value.
+ * @param running_mean [in] Running Mean value.
+ * @param running_var [in] Running Var value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_batch_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, const SNEPPXTensor* running_mean, const SNEPPXTensor* running_var, float eps) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1563,6 +2315,16 @@ SNEPPXTensor* SNEPPX_tensor_batch_norm(const SNEPPXTensor* src, const SNEPPXTens
     return result;
 }
 
+/**
+ * @brief Perform Tensor Group Norm.
+ *
+ * @param src [in] Src value.
+ * @param gamma [in] Gamma value.
+ * @param beta [in] Beta value.
+ * @param num_groups [in] Num Groups value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_group_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, size_t num_groups, float eps) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1602,6 +2364,15 @@ SNEPPXTensor* SNEPPX_tensor_group_norm(const SNEPPXTensor* src, const SNEPPXTens
     return result;
 }
 
+/**
+ * @brief Perform Tensor Instance Norm.
+ *
+ * @param src [in] Src value.
+ * @param gamma [in] Gamma value.
+ * @param beta [in] Beta value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_instance_norm(const SNEPPXTensor* src, const SNEPPXTensor* gamma, const SNEPPXTensor* beta, float eps) {
     if (!src) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_copy(src);
@@ -1642,6 +2413,13 @@ static size_t read_index(const SNEPPXTensor* t, size_t i) {
     }
 }
 
+/**
+ * @brief Perform Tensor Embedding.
+ *
+ * @param weight [in] Weight value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_embedding(const SNEPPXTensor* weight, const SNEPPXTensor* indices) {
     if (!weight || !indices || weight->ndim != 2) return NULL;
     size_t num_embeddings = weight->shape[0];
@@ -1661,6 +2439,13 @@ SNEPPXTensor* SNEPPX_tensor_embedding(const SNEPPXTensor* weight, const SNEPPXTe
     return result;
 }
 
+/**
+ * @brief Perform Tensor Cross Entropy.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_cross_entropy(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target) return NULL;
     size_t n = pred->size / pred->shape[pred->ndim - 1];
@@ -1682,6 +2467,13 @@ SNEPPXTensor* SNEPPX_tensor_cross_entropy(const SNEPPXTensor* pred, const SNEPPX
     return result;
 }
 
+/**
+ * @brief Perform Tensor Mse Loss.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_mse_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
@@ -1696,6 +2488,13 @@ SNEPPXTensor* SNEPPX_tensor_mse_loss(const SNEPPXTensor* pred, const SNEPPXTenso
     return result;
 }
 
+/**
+ * @brief Perform Tensor Mae Loss.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_mae_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
@@ -1710,6 +2509,13 @@ SNEPPXTensor* SNEPPX_tensor_mae_loss(const SNEPPXTensor* pred, const SNEPPXTenso
     return result;
 }
 
+/**
+ * @brief Perform Tensor Nll Loss.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_nll_loss(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target) return NULL;
     size_t n = pred->size / pred->shape[pred->ndim - 1];
@@ -1730,6 +2536,13 @@ SNEPPXTensor* SNEPPX_tensor_nll_loss(const SNEPPXTensor* pred, const SNEPPXTenso
     return result;
 }
 
+/**
+ * @brief Perform Tensor Kl Div.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_kl_div(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
@@ -1746,6 +2559,13 @@ SNEPPXTensor* SNEPPX_tensor_kl_div(const SNEPPXTensor* pred, const SNEPPXTensor*
     return result;
 }
 
+/**
+ * @brief Perform Tensor Binary Cross Entropy.
+ *
+ * @param pred [in] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_binary_cross_entropy(const SNEPPXTensor* pred, const SNEPPXTensor* target) {
     if (!pred || !target || pred->size != target->size) return NULL;
     size_t shape[] = {1};
@@ -1762,6 +2582,9 @@ SNEPPXTensor* SNEPPX_tensor_binary_cross_entropy(const SNEPPXTensor* pred, const
     return result;
 }
 
+/**
+ * @brief Perform Tensor Print.
+ */
 void SNEPPX_tensor_print(const SNEPPXTensor* tensor) {
     if (!tensor) return;
     printf("Tensor shape: [");
@@ -1794,6 +2617,11 @@ void SNEPPX_tensor_print(const SNEPPXTensor* tensor) {
     }
 }
 
+/**
+ * @brief Perform Tensor Contiguous.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tensor_contiguous(const SNEPPXTensor* src) {
     if (!src) return NULL;
     if (SNEPPX_tensor_is_contiguous(src)) {
@@ -1824,6 +2652,11 @@ SNEPPXTensor* SNEPPX_tensor_contiguous(const SNEPPXTensor* src) {
     return result;
 }
 
+/**
+ * @brief Perform Tensor Dtype Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_tensor_dtype_size(SNEPPXDtype dtype) {
     switch (dtype) {
         case SNEPPX_FLOAT8:    return 1;
@@ -1843,11 +2676,21 @@ size_t SNEPPX_tensor_dtype_size(SNEPPXDtype dtype) {
     return 0;
 }
 
+/**
+ * @brief Perform Tensor Numel.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_tensor_numel(const SNEPPXTensor* tensor) {
     if (!tensor) return 0;
     return tensor->size;
 }
 
+/**
+ * @brief Perform Tensor Is Contiguous.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tensor_is_contiguous(const SNEPPXTensor* tensor) {
     if (!tensor || tensor->ndim == 0) return 1;
     size_t expected = 1;
@@ -1858,6 +2701,11 @@ int SNEPPX_tensor_is_contiguous(const SNEPPXTensor* tensor) {
     return 1;
 }
 
+/**
+ * @brief Perform Tensor Dtype Name.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_tensor_dtype_name(SNEPPXDtype dtype) {
     switch (dtype) {
         case SNEPPX_FLOAT8:    return "float8";

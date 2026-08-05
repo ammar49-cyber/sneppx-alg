@@ -20,6 +20,16 @@
 
 
 
+/**
+ * @brief Run the forward pass for Gated Activation.
+ *
+ * @param x [in] X value.
+ * @param gate [in] Gate value.
+ * @param output [out] Output value.
+ * @param act [in] Act value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gated_activation_forward(const float* x, const float* gate, float* output, SNEPPXGatedActType act, size_t n) {
     if (!x || !gate || !output) return -1;
     for (size_t i = 0; i < n; i++) {
@@ -45,6 +55,18 @@ int SNEPPX_gated_activation_forward(const float* x, const float* gate, float* ou
     return 0;
 }
 
+/**
+ * @brief Run the backward pass for Gated Activation.
+ *
+ * @param x [in] X value.
+ * @param gate [in] Gate value.
+ * @param grad_out [in] Grad Out value.
+ * @param grad_x [out] Grad X value.
+ * @param grad_gate [out] Grad Gate value.
+ * @param act [in] Act value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gated_activation_backward(const float* x, const float* gate, const float* grad_out, float* grad_x, float* grad_gate, SNEPPXGatedActType act, size_t n) {
     if (!x || !gate || !grad_out || !grad_x || !grad_gate) return -1;
     for (size_t i = 0; i < n; i++) {
@@ -80,6 +102,19 @@ int SNEPPX_gated_activation_backward(const float* x, const float* gate, const fl
     return 0;
 }
 
+/**
+ * @brief Run the forward pass for Gated Ffn.
+ *
+ * @param x [in] X value.
+ * @param w1 [in] W1 value.
+ * @param w2 [in] W2 value.
+ * @param w3 [in] W3 value.
+ * @param output [out] Output value.
+ * @param act [in] Act value.
+ * @param dim [in] Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gated_ffn_forward(const float* x, const float* w1, const float* w2, const float* w3, float* output, SNEPPXGatedActType act, size_t dim, size_t hidden_dim) {
     if (!x || !w1 || !w2 || !w3 || !output || dim == 0 || hidden_dim == 0) return -1;
     float* hidden = (float*)malloc((hidden_dim * 2) * sizeof(float));

@@ -9,6 +9,22 @@
 
 #ifdef SNEPPX_HAS_CUDA
 
+/*
+ * SNEPPX - Zero
+ *
+ * WHAT
+ *   Zero.
+ *
+ * CONCEPT
+ *   Provides ZeRO optimizer state partitioning.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // ZeRO Stage 1: Optimizer State Partitioning
 // ============================================================================

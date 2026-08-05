@@ -6,6 +6,22 @@
 
 #if defined(_MSC_VER)
 #include <intrin.h>
+/*
+ * SNEPPX - Simd Gemm
+ *
+ * WHAT
+ *   Simd Gemm.
+ *
+ * CONCEPT
+ *   Provides the Simd Gemm.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 #elif defined(__GNUC__) || defined(__clang__)
 #include <cpuid.h>
 #if defined(__AVX2__)
@@ -17,6 +33,11 @@
  * Runtime SIMD detection
  * ========================================================================= */
 
+/**
+ * @brief Perform Simd Detect.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXSimdLevel SNEPPX_simd_detect(void) {
 #if defined(__AVX512F__)
     return SNEPPX_SIMD_AVX512;
@@ -66,6 +87,11 @@ SNEPPXSimdLevel SNEPPX_simd_detect(void) {
 #endif
 }
 
+/**
+ * @brief Perform Simd Level Name.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_simd_level_name(SNEPPXSimdLevel lvl) {
     switch (lvl) {
         case SNEPPX_SIMD_SCALAR: return "scalar";
@@ -84,6 +110,17 @@ const char* SNEPPX_simd_level_name(SNEPPXSimdLevel lvl) {
 #define SNEPPX_GEMM_BLOCK 64
 #endif
 
+/**
+ * @brief Perform Gemm Scalar.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_scalar(const float* A, const float* B, float* C,
                          int M, int N, int K, float alpha, float beta) {
     /* Zero / scale C */
@@ -118,6 +155,17 @@ void SNEPPX_gemm_scalar(const float* A, const float* B, float* C,
 
 #if defined(__AVX2__)
 
+/**
+ * @brief Perform Gemm Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_avx2(const float* A, const float* B, float* C,
                       int M, int N, int K, float alpha, float beta) {
     for (int i = 0; i < M * N; i++) C[i] *= beta;
@@ -149,6 +197,13 @@ void SNEPPX_gemm_avx2(const float* A, const float* B, float* C,
     }
 }
 
+/**
+ * @brief Perform Elem Add Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_add_avx2(const float* A, const float* B, float* C, size_t n) {
     size_t i = 0;
     for (; i + 8 <= n; i += 8) {
@@ -159,6 +214,13 @@ void SNEPPX_elem_add_avx2(const float* A, const float* B, float* C, size_t n) {
     for (; i < n; i++) C[i] = A[i] + B[i];
 }
 
+/**
+ * @brief Perform Elem Mul Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_mul_avx2(const float* A, const float* B, float* C, size_t n) {
     size_t i = 0;
     for (; i + 8 <= n; i += 8) {
@@ -175,6 +237,12 @@ static inline float sneppx_gelu_scalar(float x) {
     return 0.5f * x * (1.0f + tanhf(c * (x + 0.044715f * x * x * x)));
 }
 
+/**
+ * @brief Perform Elem Gelu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_gelu_avx2(const float* A, float* C, size_t n) {
     size_t i;
     for (i = 0; i + 8 <= n; i += 8) {
@@ -188,6 +256,12 @@ void SNEPPX_elem_gelu_avx2(const float* A, float* C, size_t n) {
     for (; i < n; i++) C[i] = sneppx_gelu_scalar(A[i]);
 }
 
+/**
+ * @brief Perform Elem Relu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_relu_avx2(const float* A, float* C, size_t n) {
     size_t i;
     __m256 zero = _mm256_setzero_ps();
@@ -198,6 +272,12 @@ void SNEPPX_elem_relu_avx2(const float* A, float* C, size_t n) {
     for (; i < n; i++) C[i] = A[i] > 0 ? A[i] : 0;
 }
 
+/**
+ * @brief Perform Elem Silu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_silu_avx2(const float* A, float* C, size_t n) {
     size_t i;
     for (i = 0; i + 8 <= n; i += 8) {
@@ -209,6 +289,12 @@ void SNEPPX_elem_silu_avx2(const float* A, float* C, size_t n) {
     for (; i < n; i++) C[i] = A[i] / (1.0f + expf(-A[i]));
 }
 
+/**
+ * @brief Perform Elem Tanh Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_tanh_avx2(const float* A, float* C, size_t n) {
     size_t i;
     for (i = 0; i + 8 <= n; i += 8) {
@@ -221,6 +307,17 @@ void SNEPPX_elem_tanh_avx2(const float* A, float* C, size_t n) {
     for (; i < n; i++) C[i] = tanhf(A[i]);
 }
 
+/**
+ * @brief Perform Fused Linear Bias Avx2.
+ *
+ * @param A [in] A value.
+ * @param W [in] W value.
+ * @param bias [in] Bias value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ */
 void SNEPPX_fused_linear_bias_avx2(const float* A, const float* W,
                                    const float* bias, float* C,
                                    int M, int N, int K, int act) {
@@ -239,6 +336,13 @@ void SNEPPX_fused_linear_bias_avx2(const float* A, const float* W,
     }
 }
 
+/**
+ * @brief Perform Reduce Sum Avx2.
+ *
+ * @param A [in] A value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_reduce_sum_avx2(const float* A, size_t n) {
     float sum = 0.0f;
     size_t i;
@@ -251,6 +355,13 @@ float SNEPPX_reduce_sum_avx2(const float* A, size_t n) {
     return sum;
 }
 
+/**
+ * @brief Perform Reduce Max Avx2.
+ *
+ * @param A [in] A value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_reduce_max_avx2(const float* A, size_t n) {
     float m = -1e30f;
     size_t i;
@@ -263,11 +374,25 @@ float SNEPPX_reduce_max_avx2(const float* A, size_t n) {
     return m;
 }
 
+/**
+ * @brief Perform Reduce Rowmax Avx2.
+ *
+ * @param A [in] A value.
+ * @param out [out] Out value.
+ * @param rows [in] Rows value.
+ */
 void SNEPPX_reduce_rowmax_avx2(const float* A, float* out, int rows, int cols) {
     for (int r = 0; r < rows; r++)
         out[r] = SNEPPX_reduce_max_avx2(&A[(size_t)r * cols], cols);
 }
 
+/**
+ * @brief Perform Reduce Rowsum Exp Avx2.
+ *
+ * @param A [in] A value.
+ * @param out [out] Out value.
+ * @param rows [in] Rows value.
+ */
 void SNEPPX_reduce_rowsum_exp_avx2(const float* A, float* out, int rows, int cols) {
     for (int r = 0; r < rows; r++) {
         float s = 0.0f;
@@ -278,31 +403,91 @@ void SNEPPX_reduce_rowsum_exp_avx2(const float* A, float* out, int rows, int col
 
 #else /* No AVX2: provide scalar fallbacks */
 
+/**
+ * @brief Perform Gemm Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_avx2(const float* A, const float* B, float* C,
                       int M, int N, int K, float alpha, float beta) {
     SNEPPX_gemm_scalar(A, B, C, M, N, K, alpha, beta);
 }
+/**
+ * @brief Perform Elem Add Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_add_avx2(const float* A, const float* B, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) C[i] = A[i] + B[i];
 }
+/**
+ * @brief Perform Elem Mul Avx2.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_mul_avx2(const float* A, const float* B, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) C[i] = A[i] * B[i];
 }
+/**
+ * @brief Perform Elem Gelu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_gelu_avx2(const float* A, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) {
         float c = 0.7978845608f;
         C[i] = 0.5f * A[i] * (1.0f + tanhf(c * (A[i] + 0.044715f * A[i]*A[i]*A[i])));
     }
 }
+/**
+ * @brief Perform Elem Relu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_relu_avx2(const float* A, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) C[i] = A[i] > 0 ? A[i] : 0;
 }
+/**
+ * @brief Perform Elem Silu Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_silu_avx2(const float* A, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) C[i] = A[i] / (1.0f + expf(-A[i]));
 }
+/**
+ * @brief Perform Elem Tanh Avx2.
+ *
+ * @param A [in] A value.
+ * @param C [out] C value.
+ */
 void SNEPPX_elem_tanh_avx2(const float* A, float* C, size_t n) {
     for (size_t i = 0; i < n; i++) C[i] = tanhf(A[i]);
 }
+/**
+ * @brief Perform Fused Linear Bias Avx2.
+ *
+ * @param A [in] A value.
+ * @param W [in] W value.
+ * @param bias [in] Bias value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ */
 void SNEPPX_fused_linear_bias_avx2(const float* A, const float* W,
                                    const float* bias, float* C,
                                    int M, int N, int K, int act) {
@@ -320,15 +505,43 @@ void SNEPPX_fused_linear_bias_avx2(const float* A, const float* W,
         }
     }
 }
+/**
+ * @brief Perform Reduce Sum Avx2.
+ *
+ * @param A [in] A value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_reduce_sum_avx2(const float* A, size_t n) {
     float s = 0; for (size_t i = 0; i < n; i++) s += A[i]; return s;
 }
+/**
+ * @brief Perform Reduce Max Avx2.
+ *
+ * @param A [in] A value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_reduce_max_avx2(const float* A, size_t n) {
     float m = -1e30f; for (size_t i = 0; i < n; i++) m = (A[i]>m)?A[i]:m; return m;
 }
+/**
+ * @brief Perform Reduce Rowmax Avx2.
+ *
+ * @param A [in] A value.
+ * @param out [out] Out value.
+ * @param rows [in] Rows value.
+ */
 void SNEPPX_reduce_rowmax_avx2(const float* A, float* out, int rows, int cols) {
     for (int r = 0; r < rows; r++) out[r] = SNEPPX_reduce_max_avx2(&A[(size_t)r*cols], cols);
 }
+/**
+ * @brief Perform Reduce Rowsum Exp Avx2.
+ *
+ * @param A [in] A value.
+ * @param out [out] Out value.
+ * @param rows [in] Rows value.
+ */
 void SNEPPX_reduce_rowsum_exp_avx2(const float* A, float* out, int rows, int cols) {
     for (int r = 0; r < rows; r++) { float s = 0; for (int c=0;c<cols;c++) s+=expf(A[(size_t)r*cols+c]); out[r]=s; }
 }
@@ -356,11 +569,33 @@ void SNEPPX_reduce_rowsum_exp_avx2(const float* A, float* out, int rows, int col
  * SSE42 / AVX512 shims (use AVX2 or scalar; real SSE/AVX512 kept minimal)
  * ========================================================================= */
 
+/**
+ * @brief Perform Gemm Sse42.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_sse42(const float* A, const float* B, float* C,
                        int M, int N, int K, float alpha, float beta) {
     SNEPPX_gemm_avx2(A, B, C, M, N, K, alpha, beta);
 }
 
+/**
+ * @brief Perform Gemm Avx512.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_avx512(const float* A, const float* B, float* C,
                         int M, int N, int K, float alpha, float beta) {
     SNEPPX_gemm_avx2(A, B, C, M, N, K, alpha, beta);
@@ -370,11 +605,34 @@ void SNEPPX_gemm_avx512(const float* A, const float* B, float* C,
  * Dispatch + batched
  * ========================================================================= */
 
+/**
+ * @brief Perform Gemm.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm(const float* A, const float* B, float* C,
                  int M, int N, int K, float alpha, float beta) {
     SNEPPX_gemm_avx2(A, B, C, M, N, K, alpha, beta);
 }
 
+/**
+ * @brief Perform Gemm Batched.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param batch [in] Batch value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_batched(const float* A, const float* B, float* C,
                          int batch, int M, int N, int K,
                          float alpha, float beta) {
@@ -387,6 +645,21 @@ void SNEPPX_gemm_batched(const float* A, const float* B, float* C,
     }
 }
 
+/**
+ * @brief Perform Gemm Batched Strided.
+ *
+ * @param A [in] A value.
+ * @param B [in] B value.
+ * @param C [out] C value.
+ * @param batch [in] Batch value.
+ * @param M [in] M value.
+ * @param N [in] N value.
+ * @param K [in] K value.
+ * @param stride_a [in] Stride A value.
+ * @param stride_b [in] Stride B value.
+ * @param stride_c [in] Stride C value.
+ * @param alpha [in] Alpha value.
+ */
 void SNEPPX_gemm_batched_strided(const float* A, const float* B, float* C,
                                  int batch, int M, int N, int K,
                                  int stride_a, int stride_b, int stride_c,

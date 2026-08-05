@@ -19,6 +19,13 @@
 
 
 
+/**
+ * @brief Create Variable.
+ *
+ * @param data [out] Data value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_variable_create(SNEPPXTensor* data, int requires_grad) {
     SNEPPXVariable* var = (SNEPPXVariable*)SNEPPX_malloc(sizeof(SNEPPXVariable), 64);
     if (!var) return NULL;
@@ -38,6 +45,9 @@ SNEPPXVariable* SNEPPX_variable_create(SNEPPXTensor* data, int requires_grad) {
     return var;
 }
 
+/**
+ * @brief Destroy Variable.
+ */
 void SNEPPX_variable_destroy(SNEPPXVariable* var) {
     if (!var) return;
     if (var->data) SNEPPX_tensor_destroy(var->data);
@@ -47,11 +57,21 @@ void SNEPPX_variable_destroy(SNEPPXVariable* var) {
     SNEPPX_free(var, sizeof(SNEPPXVariable));
 }
 
+/**
+ * @brief Perform Variable Set Requires Grad.
+ *
+ * @param var [out] Var value.
+ */
 void SNEPPX_variable_set_requires_grad(SNEPPXVariable* var, int requires_grad) {
     if (!var) return;
     var->requires_grad = requires_grad;
 }
 
+/**
+ * @brief Perform Variable Detach.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_variable_detach(SNEPPXVariable* var) {
     if (!var || !var->data) return NULL;
     SNEPPXVariable* out = SNEPPX_variable_create(
@@ -62,6 +82,11 @@ SNEPPXVariable* SNEPPX_variable_detach(SNEPPXVariable* var) {
     return out;
 }
 
+/**
+ * @brief Perform Variable Copy.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_variable_copy(SNEPPXVariable* var) {
     if (!var || !var->data) return NULL;
     SNEPPXVariable* out = SNEPPX_variable_create(
@@ -76,16 +101,29 @@ SNEPPXVariable* SNEPPX_variable_copy(SNEPPXVariable* var) {
     return out;
 }
 
+/**
+ * @brief Perform Variable Zero Grad.
+ */
 void SNEPPX_variable_zero_grad(SNEPPXVariable* var) {
     if (!var) return;
     if (var->grad) { SNEPPX_tensor_destroy(var->grad); var->grad = NULL; }
 }
 
+/**
+ * @brief Perform Variable Item.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_variable_item(SNEPPXVariable* var) {
     if (!var || !var->data || var->data->size == 0) return 0.0f;
     return ((float*)var->data->data)[0];
 }
 
+/**
+ * @brief Perform Variable Numel.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_variable_numel(SNEPPXVariable* var) {
     if (!var || !var->data) return 0;
     return var->data->size;

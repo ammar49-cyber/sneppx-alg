@@ -21,6 +21,11 @@
 
 
 
+/**
+ * @brief Perform Optimizer Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXOptimizerConfig SNEPPX_optimizer_config_default(void) {
     SNEPPXOptimizerConfig cfg;
     cfg.learning_rate = 0.01f;
@@ -54,6 +59,11 @@ static void free_bufs(SNEPPXTensor** bufs, size_t n) {
     SNEPPX_free(bufs, n * sizeof(SNEPPXTensor*));
 }
 
+/**
+ * @brief Create Optimizer.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_optimizer_create(const SNEPPXOptimizerConfig* config) {
     if (!config) return NULL;
     SNEPPXOptimizer* opt = (SNEPPXOptimizer*)SNEPPX_malloc(sizeof(SNEPPXOptimizer), 64);
@@ -78,6 +88,9 @@ SNEPPXOptimizer* SNEPPX_optimizer_create(const SNEPPXOptimizerConfig* config) {
     return opt;
 }
 
+/**
+ * @brief Destroy Optimizer.
+ */
 void SNEPPX_optimizer_destroy(SNEPPXOptimizer* opt) {
     if (!opt) return;
     free_bufs(opt->momentum_buffers, opt->num_params);
@@ -275,6 +288,13 @@ static void step_adadelta(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTen
     }
 }
 
+/**
+ * @brief Perform Optimizer Step.
+ *
+ * @param opt [out] Opt value.
+ * @param params [out] Params value.
+ * @param grads [out] Grads value.
+ */
 void SNEPPX_optimizer_step(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t num_params) {
     if (!opt || !params || !grads || num_params == 0) return;
     ensure_bufs(opt, params, num_params);
@@ -292,6 +312,14 @@ void SNEPPX_optimizer_step(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTe
     }
 }
 
+/**
+ * @brief Perform Lr Scheduler Step Lr.
+ *
+ * @param lr_ptr [out] Lr Ptr value.
+ * @param gamma [in] Gamma value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXLRScheduler* SNEPPX_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_t step_size) {
     if (!lr_ptr) return NULL;
     SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
@@ -305,6 +333,13 @@ SNEPPXLRScheduler* SNEPPX_lr_scheduler_step_lr(float* lr_ptr, float gamma, size_
     return s;
 }
 
+/**
+ * @brief Perform Lr Scheduler Exponential.
+ *
+ * @param lr_ptr [out] Lr Ptr value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXLRScheduler* SNEPPX_lr_scheduler_exponential(float* lr_ptr, float gamma) {
     if (!lr_ptr) return NULL;
     SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
@@ -317,6 +352,15 @@ SNEPPXLRScheduler* SNEPPX_lr_scheduler_exponential(float* lr_ptr, float gamma) {
     return s;
 }
 
+/**
+ * @brief Perform Lr Scheduler Cosine.
+ *
+ * @param lr_ptr [out] Lr Ptr value.
+ * @param min_lr [in] Min Lr value.
+ * @param max_lr [in] Max Lr value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXLRScheduler* SNEPPX_lr_scheduler_cosine(float* lr_ptr, float min_lr, float max_lr, size_t total_steps) {
     if (!lr_ptr) return NULL;
     SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
@@ -331,6 +375,15 @@ SNEPPXLRScheduler* SNEPPX_lr_scheduler_cosine(float* lr_ptr, float min_lr, float
     return s;
 }
 
+/**
+ * @brief Perform Lr Scheduler Reduce On Plateau.
+ *
+ * @param lr_ptr [out] Lr Ptr value.
+ * @param factor [in] Factor value.
+ * @param patience [in] Patience value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXLRScheduler* SNEPPX_lr_scheduler_reduce_on_plateau(float* lr_ptr, float factor, size_t patience, int mode_min) {
     if (!lr_ptr) return NULL;
     SNEPPXLRScheduler* s = (SNEPPXLRScheduler*)SNEPPX_malloc(sizeof(SNEPPXLRScheduler), 64);
@@ -345,10 +398,21 @@ SNEPPXLRScheduler* SNEPPX_lr_scheduler_reduce_on_plateau(float* lr_ptr, float fa
     return s;
 }
 
+/**
+ * @brief Destroy Lr Scheduler.
+ */
 void SNEPPX_lr_scheduler_destroy(SNEPPXLRScheduler* sched) {
     SNEPPX_free(sched, sizeof(SNEPPXLRScheduler));
 }
 
+/**
+ * @brief Create Sgd.
+ *
+ * @param lr [in] Lr value.
+ * @param momentum [in] Momentum value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_sgd_create(float lr, float momentum, float weight_decay) {
     SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
     cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_SGD;
@@ -356,6 +420,16 @@ SNEPPXOptimizer* SNEPPX_sgd_create(float lr, float momentum, float weight_decay)
     return SNEPPX_optimizer_create(&cfg);
 }
 
+/**
+ * @brief Create Adam.
+ *
+ * @param lr [in] Lr value.
+ * @param beta1 [in] Beta1 value.
+ * @param beta2 [in] Beta2 value.
+ * @param eps [in] Eps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_adam_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
     SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
     cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAM;
@@ -363,6 +437,16 @@ SNEPPXOptimizer* SNEPPX_adam_create(float lr, float beta1, float beta2, float ep
     return SNEPPX_optimizer_create(&cfg);
 }
 
+/**
+ * @brief Create Adamw.
+ *
+ * @param lr [in] Lr value.
+ * @param beta1 [in] Beta1 value.
+ * @param beta2 [in] Beta2 value.
+ * @param eps [in] Eps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_adamw_create(float lr, float beta1, float beta2, float eps, float weight_decay) {
     SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
     cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAMW;
@@ -370,6 +454,16 @@ SNEPPXOptimizer* SNEPPX_adamw_create(float lr, float beta1, float beta2, float e
     return SNEPPX_optimizer_create(&cfg);
 }
 
+/**
+ * @brief Create Rmsprop.
+ *
+ * @param lr [in] Lr value.
+ * @param alpha [in] Alpha value.
+ * @param eps [in] Eps value.
+ * @param momentum [in] Momentum value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_rmsprop_create(float lr, float alpha, float eps, float momentum, float weight_decay) {
     SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
     cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_RMSPROP;
@@ -377,6 +471,14 @@ SNEPPXOptimizer* SNEPPX_rmsprop_create(float lr, float alpha, float eps, float m
     return SNEPPX_optimizer_create(&cfg);
 }
 
+/**
+ * @brief Create Adagrad.
+ *
+ * @param lr [in] Lr value.
+ * @param eps [in] Eps value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXOptimizer* SNEPPX_adagrad_create(float lr, float eps, float weight_decay) {
     SNEPPXOptimizerConfig cfg = SNEPPX_optimizer_config_default();
     cfg.learning_rate = lr; cfg.type = SNEPPX_OPTIMIZER_ADAGRAD;
@@ -384,6 +486,11 @@ SNEPPXOptimizer* SNEPPX_adagrad_create(float lr, float eps, float weight_decay) 
     return SNEPPX_optimizer_create(&cfg);
 }
 
+/**
+ * @brief Perform Lr Scheduler Step.
+ *
+ * @param sched [out] Sched value.
+ */
 void SNEPPX_lr_scheduler_step(SNEPPXLRScheduler* sched, float current_loss) {
     if (!sched || !sched->lr_ptr) return;
     sched->last_epoch++;

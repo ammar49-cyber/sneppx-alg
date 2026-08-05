@@ -92,6 +92,17 @@ static float _compute_best_scale(const float* w, size_t col, size_t cols,
     return best_s;
 }
 
+/**
+ * @brief Perform Awq Scale Weights.
+ *
+ * @param weights [out] Weights value.
+ * @param rows [in] Rows value.
+ * @param cols [in] Cols value.
+ * @param act_scales [in] Act Scales value.
+ * @param scale_out [out] Scale Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_awq_scale_weights(float* weights, size_t rows, size_t cols,
                               const float* act_scales, float* scale_out)
 {
@@ -108,6 +119,19 @@ int SNEPPX_awq_scale_weights(float* weights, size_t rows, size_t cols,
     return 0;
 }
 
+/**
+ * @brief Quantize Awq.
+ *
+ * @param weights [in] Weights value.
+ * @param qweight [out] Qweight value.
+ * @param act_scales [in] Act Scales value.
+ * @param scales [out] Scales value.
+ * @param rows [in] Rows value.
+ * @param cols [in] Cols value.
+ * @param group_size [in] Group Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_awq_quantize(const float* weights, int8_t* qweight,
                          const float* act_scales, float* scales,
                          size_t rows, size_t cols, int group_size)
@@ -136,6 +160,14 @@ int SNEPPX_awq_quantize(const float* weights, int8_t* qweight,
     return 0;
 }
 
+/**
+ * @brief Create Quant Params.
+ *
+ * @param params [out] Params value.
+ * @param mode [in] Mode value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quant_params_create(SNEPPXQuantParams* params, SNEPPXQuantMode mode)
 {
     if (!params) return -1;
@@ -168,6 +200,13 @@ int SNEPPX_quant_params_create(SNEPPXQuantParams* params, SNEPPXQuantMode mode)
     return 0;
 }
 
+/**
+ * @brief Perform Quant Mode Name.
+ *
+ * @param mode [in] Mode value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_quant_mode_name(SNEPPXQuantMode mode)
 {
     switch (mode) {

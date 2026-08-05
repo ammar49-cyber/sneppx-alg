@@ -6,6 +6,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Differential Attention
+ *
+ * WHAT
+ *   Differential Attention.
+ *
+ * CONCEPT
+ *   Provides attention mechanisms.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Differential Attention: attn = (QK^T - lambda * rotated_Q * rotated_K^T) / sqrt(d)
 // ============================================================================

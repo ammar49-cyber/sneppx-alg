@@ -7,6 +7,22 @@
 #include <windows.h>
 #include <intrin.h>
 #pragma intrinsic(_InterlockedExchangeAdd)
+/*
+ * SNEPPX - Threadpool
+ *
+ * WHAT
+ *   Threadpool.
+ *
+ * CONCEPT
+ *   Provides the Threadpool.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef HANDLE            SNEPPX_thread_t;
 typedef CRITICAL_SECTION  SNEPPX_mutex_t;
 typedef CONDITION_VARIABLE SNEPPX_cond_t;
@@ -161,6 +177,11 @@ struct SNEPPXFuture {
     SNEPPX_cond_t   cond;
 };
 
+/**
+ * @brief Create Future.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXFuture* SNEPPX_future_create(void) {
     SNEPPXFuture* fut = (SNEPPXFuture*)malloc(sizeof(SNEPPXFuture));
     if (!fut) return NULL;
@@ -171,6 +192,9 @@ SNEPPXFuture* SNEPPX_future_create(void) {
     return fut;
 }
 
+/**
+ * @brief Destroy Future.
+ */
 void SNEPPX_future_destroy(SNEPPXFuture* fut) {
     if (!fut) return;
     SNEPPX_cond_destroy(&fut->cond);
@@ -178,6 +202,11 @@ void SNEPPX_future_destroy(SNEPPXFuture* fut) {
     free(fut);
 }
 
+/**
+ * @brief Perform Future Set Result.
+ *
+ * @param fut [out] Fut value.
+ */
 void SNEPPX_future_set_result(SNEPPXFuture* fut, void* result) {
     SNEPPX_mutex_lock(&fut->lock);
     fut->result  = result;
@@ -186,6 +215,9 @@ void SNEPPX_future_set_result(SNEPPXFuture* fut, void* result) {
     SNEPPX_cond_broadcast(&fut->cond);
 }
 
+/**
+ * @brief Perform Future Wait.
+ */
 void SNEPPX_future_wait(SNEPPXFuture* fut) {
     SNEPPX_mutex_lock(&fut->lock);
     while (!fut->ready)
@@ -193,10 +225,20 @@ void SNEPPX_future_wait(SNEPPXFuture* fut) {
     SNEPPX_mutex_unlock(&fut->lock);
 }
 
+/**
+ * @brief Perform Future Is Ready.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_future_is_ready(SNEPPXFuture* fut) {
     return fut->ready;
 }
 
+/**
+ * @brief Perform Future Get Result.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_future_get_result(SNEPPXFuture* fut) {
     SNEPPX_future_wait(fut);
     return fut->result;
@@ -234,6 +276,11 @@ static __thread int g_thread_id = -1;
 #endif
 
 static void set_thread_id(int id) { g_thread_id = id; }
+/**
+ * @brief Perform Thread Id.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_thread_id(void)         { return g_thread_id; }
 
 /* Worker thread entry point */
@@ -286,6 +333,11 @@ static void* worker_entry(void* arg)
     return 0;
 }
 
+/**
+ * @brief Create Threadpool.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXThreadPool* SNEPPX_threadpool_create(size_t num_threads) {
     if (num_threads == 0) num_threads = SNEPPX_threadpool_default_count();
 
@@ -340,6 +392,9 @@ fail:
     return NULL;
 }
 
+/**
+ * @brief Destroy Threadpool.
+ */
 void SNEPPX_threadpool_destroy(SNEPPXThreadPool* pool) {
     if (!pool) return;
     pool->shutdown = 1;
@@ -358,6 +413,13 @@ void SNEPPX_threadpool_destroy(SNEPPXThreadPool* pool) {
 /* Submit a task to a thread's queue (round-robin via atomic index or random). */
 static volatile long g_rr_counter = 0;
 
+/**
+ * @brief Perform Threadpool Submit.
+ *
+ * @param pool [out] Pool value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threadpool_submit(SNEPPXThreadPool* pool, SNEPPXTask task) {
     size_t idx;
     if (g_thread_id >= 0) {
@@ -395,6 +457,14 @@ static void future_wrapper_func(void* arg) {
     free(fw);
 }
 
+/**
+ * @brief Perform Threadpool Submit Future.
+ *
+ * @param pool [out] Pool value.
+ * @param task [in] Task value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threadpool_submit_future(SNEPPXThreadPool* pool, SNEPPXTask task, SNEPPXFuture* fut) {
     if (!fut) return SNEPPX_threadpool_submit(pool, task);
     FutureWrapper* fw = (FutureWrapper*)malloc(sizeof(FutureWrapper));
@@ -407,6 +477,9 @@ int SNEPPX_threadpool_submit_future(SNEPPXThreadPool* pool, SNEPPXTask task, SNE
     return SNEPPX_threadpool_submit(pool, wrapper);
 }
 
+/**
+ * @brief Perform Threadpool Wait.
+ */
 void SNEPPX_threadpool_wait(SNEPPXThreadPool* pool) {
     /* Busy-wait until all tasks are done.  Workers are guaranteed to wake
      * for every submitted task because the predicate-based cond_wait loop
@@ -428,6 +501,11 @@ void SNEPPX_threadpool_wait(SNEPPXThreadPool* pool) {
     }
 }
 
+/**
+ * @brief Perform Threadpool Default Count.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_threadpool_default_count(void) {
 #ifdef _WIN32
     SYSTEM_INFO info;
@@ -475,6 +553,14 @@ static void for_task_func(void* arg) {
     free(fta);
 }
 
+/**
+ * @brief Perform Parallel For.
+ *
+ * @param pool [out] Pool value.
+ * @param start [in] Start value.
+ * @param end [in] End value.
+ * @param func [in] Func value.
+ */
 void SNEPPX_parallel_for(SNEPPXThreadPool* pool,
                        size_t start, size_t end,
                        SNEPPXRangeFunc func, void* arg) {
@@ -533,6 +619,18 @@ static void reduce_task_func(void* arg) {
     free(rta);
 }
 
+/**
+ * @brief Perform Parallel Reduce.
+ *
+ * @param pool [out] Pool value.
+ * @param start [in] Start value.
+ * @param end [in] End value.
+ * @param init [out] Init value.
+ * @param elem_size [in] Elem Size value.
+ * @param reduce_func [in] Reduce Func value.
+ * @param combine_func [in] Combine Func value.
+ * @param result [out] Result value.
+ */
 void SNEPPX_parallel_reduce(SNEPPXThreadPool* pool,
                           size_t start, size_t end,
                           void* init, size_t elem_size,

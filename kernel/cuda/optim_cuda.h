@@ -6,6 +6,22 @@
 #include "common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Optim Cuda
+ *
+ * WHAT
+ *   Optim Cuda.
+ *
+ * CONCEPT
+ *   Provides the Optim Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

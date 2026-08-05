@@ -4,6 +4,30 @@
 #include <string.h>
 #include <float.h>
 
+/*
+ * SNEPPX - Sparse Attention
+ *
+ * WHAT
+ *   Sparse Attention.
+ *
+ * CONCEPT
+ *   Provides attention mechanisms.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Perform Sparse Attn Build Mask.
+ *
+ * @param mask [out] Mask value.
+ * @param cfg [in] Cfg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sparse_attn_build_mask(int* mask, const SNEPPXSparseAttnConfig* cfg, int seq) {
     if (!mask || !cfg || seq <= 0) return -1;
     memset(mask, 0, (size_t)seq * seq * sizeof(int));
@@ -48,6 +72,21 @@ int SNEPPX_sparse_attn_build_mask(int* mask, const SNEPPXSparseAttnConfig* cfg, 
     return 0;
 }
 
+/**
+ * @brief Run the forward pass for Sparse Attn.
+ *
+ * @param q [in] Q value.
+ * @param k [in] K value.
+ * @param v [in] V value.
+ * @param output [out] Output value.
+ * @param cfg [in] Cfg value.
+ * @param batch [in] Batch value.
+ * @param heads [in] Heads value.
+ * @param seq [in] Seq value.
+ * @param dim [in] Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sparse_attn_forward(const float* q, const float* k, const float* v, float* output, const SNEPPXSparseAttnConfig* cfg, int batch, int heads, int seq, int dim, float scale) {
     if (!q || !k || !v || !output || !cfg || batch <= 0 || heads <= 0 || seq <= 0 || dim <= 0) return -1;
     int* mask = (int*)malloc((size_t)seq * seq * sizeof(int));

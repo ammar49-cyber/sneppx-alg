@@ -3,6 +3,30 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Optimizer Impl
+ *
+ * WHAT
+ *   Optimizer Impl.
+ *
+ * CONCEPT
+ *   Provides optimizer implementations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Initialize Optimizer State.
+ *
+ * @param state [out] State value.
+ * @param num_params [in] Num Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_optimizer_state_init(SNEPPXOptimizerState* state, size_t num_params, size_t param_size) {
     if (!state) return -1;
     memset(state, 0, sizeof(*state));
@@ -25,6 +49,9 @@ int SNEPPX_optimizer_state_init(SNEPPXOptimizerState* state, size_t num_params, 
     return 0;
 }
 
+/**
+ * @brief Destroy Optimizer State.
+ */
 void SNEPPX_optimizer_state_destroy(SNEPPXOptimizerState* state) {
     if (!state) return;
     for (size_t i = 0; i < state->num_params; i++) {
@@ -45,6 +72,11 @@ static float* get_or_create(void*** buf, size_t idx, size_t param_size) {
     return (float*)(*buf)[idx];
 }
 
+/**
+ * @brief Perform Optimizer Sgd Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_optimizer_sgd_step(SNEPPXOptimizerState* state) {
     if (!state) return -1;
     float lr = state->lr;
@@ -64,6 +96,11 @@ int SNEPPX_optimizer_sgd_step(SNEPPXOptimizerState* state) {
     return 0;
 }
 
+/**
+ * @brief Perform Optimizer Adam Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_optimizer_adam_step(SNEPPXOptimizerState* state) {
     if (!state) return -1;
     float lr = state->lr;
@@ -94,6 +131,11 @@ int SNEPPX_optimizer_adam_step(SNEPPXOptimizerState* state) {
     return 0;
 }
 
+/**
+ * @brief Perform Optimizer Adamw Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_optimizer_adamw_step(SNEPPXOptimizerState* state) {
     if (!state) return -1;
     float lr = state->lr;
@@ -123,6 +165,11 @@ int SNEPPX_optimizer_adamw_step(SNEPPXOptimizerState* state) {
     return 0;
 }
 
+/**
+ * @brief Perform Optimizer Lamb Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_optimizer_lamb_step(SNEPPXOptimizerState* state) {
     if (!state) return -1;
     float lr = state->lr;
@@ -170,6 +217,15 @@ int SNEPPX_optimizer_lamb_step(SNEPPXOptimizerState* state) {
     return 0;
 }
 
+/**
+ * @brief Perform Gradient Clip Norm.
+ *
+ * @param grads [out] Grads value.
+ * @param num_params [in] Num Params value.
+ * @param param_size [in] Param Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gradient_clip_norm(void** grads, size_t num_params, size_t param_size, float max_norm) {
     if (!grads || num_params == 0 || param_size == 0) return 0;
     float total_norm = 0.0f;
@@ -190,6 +246,16 @@ int SNEPPX_gradient_clip_norm(void** grads, size_t num_params, size_t param_size
     return 0;
 }
 
+/**
+ * @brief Perform Gradient Clip Value.
+ *
+ * @param grads [out] Grads value.
+ * @param num_params [in] Num Params value.
+ * @param param_size [in] Param Size value.
+ * @param min_val [in] Min Val value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gradient_clip_value(void** grads, size_t num_params, size_t param_size, float min_val, float max_val) {
     if (!grads || num_params == 0 || param_size == 0) return 0;
     size_t n = param_size / sizeof(float);
@@ -204,6 +270,13 @@ int SNEPPX_gradient_clip_value(void** grads, size_t num_params, size_t param_siz
     return 0;
 }
 
+/**
+ * @brief Initialize Lr Scheduler.
+ *
+ * @param sched [out] Sched value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lr_scheduler_init(SNEPPXLRScheduler* sched, SNEPPXLRSchedule type) {
     if (!sched) return -1;
     memset(sched, 0, sizeof(*sched));
@@ -217,6 +290,11 @@ int SNEPPX_lr_scheduler_init(SNEPPXLRScheduler* sched, SNEPPXLRSchedule type) {
     return 0;
 }
 
+/**
+ * @brief Perform Impl Lr Scheduler Step.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_impl_lr_scheduler_step(SNEPPXLRScheduler* sched) {
     if (!sched) return 0.0f;
     size_t step = sched->step_count;
@@ -257,6 +335,9 @@ float SNEPPX_impl_lr_scheduler_step(SNEPPXLRScheduler* sched) {
     return sched->current_lr;
 }
 
+/**
+ * @brief Reset Lr Scheduler.
+ */
 void SNEPPX_lr_scheduler_reset(SNEPPXLRScheduler* sched) {
     if (sched) { sched->step_count = 0; sched->current_lr = sched->base_lr; }
 }

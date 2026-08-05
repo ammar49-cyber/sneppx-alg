@@ -28,6 +28,11 @@
 
 static int g_next_id = 1;
 
+/**
+ * @brief Create Expr Graph.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprGraph* SNEPPX_expr_graph_create(int enable_fusion) {
     SNEPPXExprGraph* g = (SNEPPXExprGraph*)calloc(1, sizeof(SNEPPXExprGraph));
     if (!g) return NULL;
@@ -41,6 +46,9 @@ SNEPPXExprGraph* SNEPPX_expr_graph_create(int enable_fusion) {
     return g;
 }
 
+/**
+ * @brief Destroy Expr Graph.
+ */
 void SNEPPX_expr_graph_destroy(SNEPPXExprGraph* g) {
     if (!g) return;
     for (int i = 0; i < g->num_nodes; i++) {
@@ -84,6 +92,15 @@ static void carry_shape(SNEPPXExprNode* dst, const int* shape, int ndim) {
     for (int i = 0; i < ndim; i++) dst->shape[i] = shape[i];
 }
 
+/**
+ * @brief Perform Expr Input.
+ *
+ * @param g [out] G value.
+ * @param shape [in] Shape value.
+ * @param ndim [in] Ndim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_input(SNEPPXExprGraph* g, const int* shape, int ndim, void* data) {
     SNEPPXExprNode* n = new_node(g, SNEPPX_EXPR_INPUT, 0);
     if (!n) return NULL;
@@ -94,6 +111,15 @@ SNEPPXExprNode* SNEPPX_expr_input(SNEPPXExprGraph* g, const int* shape, int ndim
     return n;
 }
 
+/**
+ * @brief Perform Expr Const.
+ *
+ * @param g [out] G value.
+ * @param value [in] Value value.
+ * @param shape [in] Shape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_const(SNEPPXExprGraph* g, float value, const int* shape, int ndim) {
     SNEPPXExprNode* n = new_node(g, SNEPPX_EXPR_CONST, 0);
     if (!n) return NULL;
@@ -103,6 +129,15 @@ SNEPPXExprNode* SNEPPX_expr_const(SNEPPXExprGraph* g, float value, const int* sh
     return n;
 }
 
+/**
+ * @brief Perform Expr Binary.
+ *
+ * @param g [out] G value.
+ * @param op [in] Op value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_binary(SNEPPXExprGraph* g, SNEPPXExprOp op,
                                     SNEPPXExprNode* a, SNEPPXExprNode* b) {
     SNEPPXExprNode* n = new_node(g, op, 2);
@@ -115,6 +150,14 @@ SNEPPXExprNode* SNEPPX_expr_binary(SNEPPXExprGraph* g, SNEPPXExprOp op,
     return n;
 }
 
+/**
+ * @brief Perform Expr Unary.
+ *
+ * @param g [out] G value.
+ * @param op [in] Op value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_unary(SNEPPXExprGraph* g, SNEPPXExprOp op, SNEPPXExprNode* a) {
     SNEPPXExprNode* n = new_node(g, op, 1);
     if (!n) return NULL;
@@ -128,6 +171,14 @@ SNEPPXExprNode* SNEPPX_expr_unary(SNEPPXExprGraph* g, SNEPPXExprOp op, SNEPPXExp
     return n;
 }
 
+/**
+ * @brief Perform Expr Matmul.
+ *
+ * @param g [out] G value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_matmul(SNEPPXExprGraph* g, SNEPPXExprNode* a, SNEPPXExprNode* b) {
     SNEPPXExprNode* n = new_node(g, SNEPPX_EXPR_MATMUL, 2);
     if (!n) return NULL;
@@ -140,6 +191,15 @@ SNEPPXExprNode* SNEPPX_expr_matmul(SNEPPXExprGraph* g, SNEPPXExprNode* a, SNEPPX
     return n;
 }
 
+/**
+ * @brief Perform Expr Activation.
+ *
+ * @param g [out] G value.
+ * @param op [in] Op value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_activation(SNEPPXExprGraph* g, SNEPPXExprOp op,
                                        SNEPPXExprNode* a, int act_kind) {
     SNEPPXExprNode* n = SNEPPX_expr_unary(g, op, a);
@@ -147,6 +207,15 @@ SNEPPXExprNode* SNEPPX_expr_activation(SNEPPXExprGraph* g, SNEPPXExprOp op,
     return n;
 }
 
+/**
+ * @brief Perform Expr Reduction.
+ *
+ * @param g [out] G value.
+ * @param op [in] Op value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_reduction(SNEPPXExprGraph* g, SNEPPXExprOp op,
                                        SNEPPXExprNode* a, int axis) {
     SNEPPXExprNode* n = new_node(g, op, 1);
@@ -164,6 +233,16 @@ SNEPPXExprNode* SNEPPX_expr_reduction(SNEPPXExprGraph* g, SNEPPXExprOp op,
     return n;
 }
 
+/**
+ * @brief Perform Expr Fused Linear Bias.
+ *
+ * @param g [out] G value.
+ * @param a [out] A value.
+ * @param w [out] W value.
+ * @param bias [out] Bias value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXExprNode* SNEPPX_expr_fused_linear_bias(SNEPPXExprGraph* g,
                                               SNEPPXExprNode* a, SNEPPXExprNode* w,
                                               SNEPPXExprNode* bias, int act_kind) {
@@ -185,6 +264,11 @@ SNEPPXExprNode* SNEPPX_expr_fused_linear_bias(SNEPPXExprGraph* g,
  * Fusion planner: greedily group chains of fuseable elementwise ops
  * ========================================================================= */
 
+/**
+ * @brief Perform Expr Plan Fusions.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_expr_plan_fusions(SNEPPXExprGraph* g) {
     if (!g->enable_fusion) { g->fused_kernel_count = g->num_nodes; return g->num_nodes; }
     int group = 0;
@@ -215,6 +299,9 @@ int SNEPPX_expr_plan_fusions(SNEPPXExprGraph* g) {
     return group;
 }
 
+/**
+ * @brief Perform Expr Print Plan.
+ */
 void SNEPPX_expr_print_plan(const SNEPPXExprGraph* g) {
     if (!g) return;
     printf("ExprGraph: %d nodes, fusion=%d -> %d fused kernels\n",
@@ -361,6 +448,16 @@ static void eval_node(SNEPPXExprGraph* g, SNEPPXExprNode* n) {
     }
 }
 
+/**
+ * @brief Perform Expr Eval.
+ *
+ * @param g [out] G value.
+ * @param node [out] Node value.
+ * @param out_data [out] Out Data value.
+ * @param out_shape [out] Out Shape value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_expr_eval(SNEPPXExprGraph* g, SNEPPXExprNode* node, float** out_data,
                      int* out_shape, int* out_ndim) {
     if (!g || !node) return -1;
@@ -371,6 +468,14 @@ int SNEPPX_expr_eval(SNEPPXExprGraph* g, SNEPPXExprNode* node, float** out_data,
     return 0;
 }
 
+/**
+ * @brief Perform Expr Toposort.
+ *
+ * @param g [in] G value.
+ * @param order [out] Order value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_expr_toposort(const SNEPPXExprGraph* g, int* order, int max_order) {
     if (!g) return 0;
     int count = 0;
@@ -381,6 +486,11 @@ int SNEPPX_expr_toposort(const SNEPPXExprGraph* g, int* order, int max_order) {
     return count;
 }
 
+/**
+ * @brief Perform Expr Mem Estimate.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_expr_mem_estimate(const SNEPPXExprGraph* g) {
     if (!g) return 0;
     size_t total = 0;

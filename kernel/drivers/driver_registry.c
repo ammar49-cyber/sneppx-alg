@@ -9,10 +9,33 @@
 
 #define MAX_ENTRIES SNEPPX_DRIVER_MAX_REGISTERED
 
+/*
+ * SNEPPX - Driver Registry
+ *
+ * WHAT
+ *   Driver Registry.
+ *
+ * CONCEPT
+ *   Provides the Driver Registry.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static SNEPPXDriverEntry g_registry[MAX_ENTRIES];
 static char g_names[MAX_ENTRIES][SNEPPX_DRIVER_MAX_NAME];
 static int g_count = 0;
 
+/**
+ * @brief Perform Driver Register.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_register(const char* name, SNEPPXDriverEntry* entry) {
     if (!name || !entry || g_count >= MAX_ENTRIES) return -1;
     for (int i = 0; i < g_count; i++)
@@ -24,6 +47,11 @@ int SNEPPX_driver_register(const char* name, SNEPPXDriverEntry* entry) {
     return 0;
 }
 
+/**
+ * @brief Perform Driver Unregister.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_unregister(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_count; i++) {
@@ -41,6 +69,11 @@ int SNEPPX_driver_unregister(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Get Driver.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXDriverEntry* SNEPPX_driver_get(const char* name) {
     if (!name) return NULL;
     for (int i = 0; i < g_count; i++)
@@ -49,6 +82,14 @@ SNEPPXDriverEntry* SNEPPX_driver_get(const char* name) {
     return NULL;
 }
 
+/**
+ * @brief Perform Driver Get Info.
+ *
+ * @param info [out] Info value.
+ * @param max_info [in] Max Info value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_get_info(SNEPPXDriverInfo* info, size_t max_info, size_t* count) {
     if (!info || !count) return -1;
     size_t n = g_count < (int)max_info ? (size_t)g_count : max_info;
@@ -61,6 +102,13 @@ int SNEPPX_driver_get_info(SNEPPXDriverInfo* info, size_t max_info, size_t* coun
     return 0;
 }
 
+/**
+ * @brief Perform Driver Load Library.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_load_library(const char* name, const char* lib_path) {
     if (!name || !lib_path) return -1;
     if (SNEPPX_driver_get(name)) return -1;
@@ -104,6 +152,11 @@ int SNEPPX_driver_load_library(const char* name, const char* lib_path) {
     return SNEPPX_driver_register(name, &entry);
 }
 
+/**
+ * @brief Perform Driver Unload All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_driver_unload_all(void) {
     for (int i = 0; i < g_count; i++) {
 #ifdef _WIN32

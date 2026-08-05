@@ -8,6 +8,22 @@
 #include <stdatomic.h>
 #endif
 
+/*
+ * SNEPPX - Pool Impl
+ *
+ * WHAT
+ *   Pool Impl.
+ *
+ * CONCEPT
+ *   Provides the Pool Impl.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct TreiberNode { struct TreiberNode* next; } TreiberNode;
 typedef struct { TreiberNode* top; } TreiberStack;
 
@@ -17,6 +33,13 @@ typedef struct { TreiberNode* top; } TreiberStack;
 #define CAS_PTR(dest, comp, exch) __sync_val_compare_and_swap((void*volatile*)(dest), (comp), (exch))
 #endif
 
+/**
+ * @brief Create Mem Chunk.
+ *
+ * @param chunk [out] Chunk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_chunk_create(SNEPPXMemChunk** chunk, size_t min_size) {
     if (!chunk) return -1;
     size_t sz = min_size < 65536 ? 65536 : (min_size + 4095) & ~(size_t)4095;
@@ -30,10 +53,21 @@ int SNEPPX_mem_chunk_create(SNEPPXMemChunk** chunk, size_t min_size) {
     return 0;
 }
 
+/**
+ * @brief Destroy Mem Chunk.
+ */
 void SNEPPX_mem_chunk_destroy(SNEPPXMemChunk* chunk) {
     if (chunk) { free(chunk->mem); free(chunk); }
 }
 
+/**
+ * @brief Perform Mem Chunk Carve.
+ *
+ * @param chunk [out] Chunk value.
+ * @param block_size [in] Block Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_mem_chunk_carve(SNEPPXMemChunk* chunk, size_t block_size, size_t alignment) {
     if (!chunk || !chunk->mem || block_size == 0) return NULL;
     if (alignment == 0) alignment = 16;
@@ -52,6 +86,13 @@ void* SNEPPX_mem_chunk_carve(SNEPPXMemChunk* chunk, size_t block_size, size_t al
     return (void*)aligned;
 }
 
+/**
+ * @brief Perform Mem Chunk Has Space.
+ *
+ * @param chunk [in] Chunk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_chunk_has_space(const SNEPPXMemChunk* chunk, size_t block_size) {
     if (!chunk) return 0;
     size_t used = 0;
@@ -60,6 +101,11 @@ int SNEPPX_mem_chunk_has_space(const SNEPPXMemChunk* chunk, size_t block_size) {
     return (used + slab_sz <= chunk->size) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Lockfree Stack Push.
+ *
+ * @param stack_ptr [out] Stack Ptr value.
+ */
 void SNEPPX_lockfree_stack_push(void* stack_ptr, void* node_ptr) {
     if (!stack_ptr || !node_ptr) return;
     TreiberStack* stack = (TreiberStack*)stack_ptr;
@@ -71,6 +117,11 @@ void SNEPPX_lockfree_stack_push(void* stack_ptr, void* node_ptr) {
     } while (CAS_PTR(&stack->top, old_top, node) != old_top);
 }
 
+/**
+ * @brief Perform Lockfree Stack Pop.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_lockfree_stack_pop(void* stack_ptr) {
     if (!stack_ptr) return NULL;
     TreiberStack* stack = (TreiberStack*)stack_ptr;
@@ -84,6 +135,11 @@ void* SNEPPX_lockfree_stack_pop(void* stack_ptr) {
     return old_top;
 }
 
+/**
+ * @brief Perform Lockfree Stack Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lockfree_stack_count(const void* stack_ptr) {
     if (!stack_ptr) return 0;
     const TreiberStack* stack = (const TreiberStack*)stack_ptr;
@@ -99,8 +155,25 @@ static __declspec(thread) void* tls_cache = NULL;
 static __thread void* tls_cache = NULL;
 #endif
 
+/**
+ * @brief Initialize Mem Tls.
+ */
 void SNEPPX_mem_tls_init(void) { tls_cache = NULL; }
+/**
+ * @brief Perform Mem Tls Cleanup.
+ */
 void SNEPPX_mem_tls_cleanup(void) { tls_cache = NULL; }
+/**
+ * @brief Get Mem Tls.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_mem_tls_get(void) { return tls_cache; }
+/**
+ * @brief Set Mem Tls.
+ */
 void SNEPPX_mem_tls_set(void* cache) { tls_cache = cache; }
+/**
+ * @brief Perform Mem Tls Flush.
+ */
 void SNEPPX_mem_tls_flush(void) { tls_cache = NULL; }

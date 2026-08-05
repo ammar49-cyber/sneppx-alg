@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Episodic
+ *
+ * WHAT
+ *   Episodic.
+ *
+ * CONCEPT
+ *   Provides the Episodic.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     SNEPPXTensor* state;
     SNEPPXTensor* action;

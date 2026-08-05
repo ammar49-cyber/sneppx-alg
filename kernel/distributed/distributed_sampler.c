@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Distributed Sampler
+ *
+ * WHAT
+ *   Distributed Sampler.
+ *
+ * CONCEPT
+ *   Provides distributed training.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Distributed Sampler (sharded data loading)
 // ============================================================================

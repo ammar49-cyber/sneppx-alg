@@ -5,6 +5,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Expert Parallel
+ *
+ * WHAT
+ *   Expert Parallel.
+ *
+ * CONCEPT
+ *   Provides tensor/expert parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Expert Parallelism (Distributed MoE via All-to-All)
 // ============================================================================

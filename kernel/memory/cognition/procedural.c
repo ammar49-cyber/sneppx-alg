@@ -3,6 +3,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Procedural
+ *
+ * WHAT
+ *   Procedural.
+ *
+ * CONCEPT
+ *   Provides the Procedural.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     SNEPPXTensor* state_pattern;
     SNEPPXTensor* skill_output;

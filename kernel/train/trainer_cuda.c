@@ -7,6 +7,22 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+/*
+ * SNEPPX - Trainer Cuda
+ *
+ * WHAT
+ *   Trainer Cuda.
+ *
+ * CONCEPT
+ *   Provides the Trainer Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* CUDA state for trainer */
 static struct {
     void** d_params;
@@ -23,6 +39,11 @@ static struct {
 
 #endif
 
+/**
+ * @brief Perform Trainer Cuda Available.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_cuda_available(void) {
 #if defined(SNEPPX_HAS_CUDA)
     int count = 0;
@@ -33,6 +54,13 @@ int SNEPPX_trainer_cuda_available(void) {
 #endif
 }
 
+/**
+ * @brief Initialize Trainer Cuda.
+ *
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_cuda_init(SNEPPXTensor** params, size_t n) {
 #if defined(SNEPPX_HAS_CUDA)
     if (g_trainer_cuda.initialized) return 0;
@@ -101,6 +129,9 @@ int SNEPPX_trainer_cuda_init(SNEPPXTensor** params, size_t n) {
 #endif
 }
 
+/**
+ * @brief Perform Trainer Cuda Shutdown.
+ */
 void SNEPPX_trainer_cuda_shutdown(void) {
 #if defined(SNEPPX_HAS_CUDA)
     if (g_trainer_cuda.initialized && g_trainer_cuda.stream) {
@@ -124,6 +155,13 @@ void SNEPPX_trainer_cuda_shutdown(void) {
 #endif
 }
 
+/**
+ * @brief Perform Trainer Cuda Transfer To Device.
+ *
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_cuda_transfer_to_device(SNEPPXTensor** params, size_t n) {
 #if defined(SNEPPX_HAS_CUDA)
     if (!g_trainer_cuda.initialized || !params) return -1;
@@ -142,6 +180,13 @@ int SNEPPX_trainer_cuda_transfer_to_device(SNEPPXTensor** params, size_t n) {
 #endif
 }
 
+/**
+ * @brief Perform Trainer Cuda Transfer To Host.
+ *
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_cuda_transfer_to_host(SNEPPXTensor** params, size_t n) {
 #if defined(SNEPPX_HAS_CUDA)
     if (!g_trainer_cuda.initialized || !params) return -1;
@@ -161,6 +206,15 @@ int SNEPPX_trainer_cuda_transfer_to_host(SNEPPXTensor** params, size_t n) {
 #endif
 }
 
+/**
+ * @brief Perform Trainer Cuda Optimizer Step.
+ *
+ * @param opt [out] Opt value.
+ * @param params [out] Params value.
+ * @param grads [out] Grads value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_cuda_optimizer_step(SNEPPXOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t n) {
 #if defined(SNEPPX_HAS_CUDA)
     if (!g_trainer_cuda.initialized || !opt || !params || !grads) return -1;

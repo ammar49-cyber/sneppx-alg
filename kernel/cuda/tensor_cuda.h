@@ -7,6 +7,22 @@
 #include "common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Tensor Cuda
+ *
+ * WHAT
+ *   Tensor Cuda.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

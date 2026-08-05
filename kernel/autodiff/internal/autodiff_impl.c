@@ -2,6 +2,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Autodiff Impl
+ *
+ * WHAT
+ *   Autodiff Impl.
+ *
+ * CONCEPT
+ *   Provides the Autodiff Impl.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Initialize Grad Graph.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_graph_init(SNEPPXGradGraph* graph) {
     if (!graph) return -1;
     memset(graph, 0, sizeof(*graph));
@@ -13,6 +34,9 @@ int SNEPPX_grad_graph_init(SNEPPXGradGraph* graph) {
     return 0;
 }
 
+/**
+ * @brief Destroy Grad Graph.
+ */
 void SNEPPX_grad_graph_destroy(SNEPPXGradGraph* graph) {
     if (!graph) return;
     for (size_t i = 0; i < graph->num_nodes; i++)
@@ -24,6 +48,13 @@ void SNEPPX_grad_graph_destroy(SNEPPXGradGraph* graph) {
 
 static uint64_t g_next_id = 1;
 
+/**
+ * @brief Create Grad Node.
+ *
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_node_create(SNEPPXGradNodeType type, SNEPPXGradNode** node) {
     if (!node) return -1;
     *node = (SNEPPXGradNode*)calloc(1, sizeof(SNEPPXGradNode));
@@ -34,6 +65,9 @@ int SNEPPX_grad_node_create(SNEPPXGradNodeType type, SNEPPXGradNode** node) {
     return 0;
 }
 
+/**
+ * @brief Destroy Grad Node.
+ */
 void SNEPPX_grad_node_destroy(SNEPPXGradNode* node) {
     if (!node) return;
     free(node->inputs);
@@ -42,6 +76,11 @@ void SNEPPX_grad_node_destroy(SNEPPXGradNode* node) {
     free(node);
 }
 
+/**
+ * @brief Perform Grad Node Add Input.
+ *
+ * @param node [out] Node value.
+ */
 void SNEPPX_grad_node_add_input(SNEPPXGradNode* node, SNEPPXGradNode* input) {
     if (!node || !input) return;
     int n = node->num_inputs;
@@ -53,6 +92,11 @@ void SNEPPX_grad_node_add_input(SNEPPXGradNode* node, SNEPPXGradNode* input) {
     if (input) input->ref_count++;
 }
 
+/**
+ * @brief Perform Grad Node Add Consumer.
+ *
+ * @param node [out] Node value.
+ */
 void SNEPPX_grad_node_add_consumer(SNEPPXGradNode* node, SNEPPXGradNode* consumer) {
     if (!node || !consumer) return;
     int n = node->num_consumers;
@@ -78,6 +122,11 @@ static void toposort_dfs(SNEPPXGradNode* node, SNEPPXGradNode*** order, size_t* 
         (*order)[(*count)++] = node;
 }
 
+/**
+ * @brief Perform Grad Graph Toposort.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_graph_toposort(SNEPPXGradGraph* graph) {
     if (!graph || graph->num_nodes == 0) return 0;
     free(graph->topological_order);
@@ -95,6 +144,13 @@ int SNEPPX_grad_graph_toposort(SNEPPXGradGraph* graph) {
     return 0;
 }
 
+/**
+ * @brief Run the backward pass for Grad Graph.
+ *
+ * @param graph [out] Graph value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_graph_backward(SNEPPXGradGraph* graph, SNEPPXGradNode* root) {
     if (!graph || !root) return -1;
     if (graph->needs_rebuild) SNEPPX_grad_graph_toposort(graph);
@@ -108,12 +164,26 @@ int SNEPPX_grad_graph_backward(SNEPPXGradGraph* graph, SNEPPXGradNode* root) {
     return 0;
 }
 
+/**
+ * @brief Perform Grad Save Tensor.
+ *
+ * @param node [out] Node value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_save_tensor(SNEPPXGradNode* node, void* tensor) {
     if (!node) return -1;
     node->saved_tensors = tensor;
     return 0;
 }
 
+/**
+ * @brief Perform Grad Restore Tensor.
+ *
+ * @param node [out] Node value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_grad_restore_tensor(SNEPPXGradNode* node, int idx) {
     (void)idx;
     if (!node) return NULL;

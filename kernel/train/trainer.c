@@ -28,6 +28,11 @@
 
 
 
+/**
+ * @brief Perform Train Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXTrainConfig SNEPPX_train_config_default(void) {
     SNEPPXTrainConfig cfg;
     cfg.num_epochs = 10;
@@ -40,6 +45,13 @@ SNEPPXTrainConfig SNEPPX_train_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Trainer.
+ *
+ * @param model [out] Model value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTrainer* SNEPPX_trainer_create(SNEPPXModel* model, const SNEPPXTrainConfig* config) {
     if (!model || !config) return NULL;
     SNEPPXTrainer* trainer = (SNEPPXTrainer*)SNEPPX_malloc(sizeof(SNEPPXTrainer), 64);
@@ -80,6 +92,9 @@ SNEPPXTrainer* SNEPPX_trainer_create(SNEPPXModel* model, const SNEPPXTrainConfig
     return trainer;
 }
 
+/**
+ * @brief Destroy Trainer.
+ */
 void SNEPPX_trainer_destroy(SNEPPXTrainer* trainer) {
     if (!trainer) return;
     if (trainer->optimizer) SNEPPX_optimizer_destroy(trainer->optimizer);
@@ -88,6 +103,14 @@ void SNEPPX_trainer_destroy(SNEPPXTrainer* trainer) {
     SNEPPX_free(trainer, sizeof(SNEPPXTrainer));
 }
 
+/**
+ * @brief Perform Trainer Train Step.
+ *
+ * @param trainer [out] Trainer value.
+ * @param batch_input [in] Batch Input value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_trainer_train_step(SNEPPXTrainer* trainer, const SNEPPXTensor* batch_input, const SNEPPXTensor* batch_target) {
     if (!trainer || !batch_input || !batch_target) return -1.0f;
 
@@ -206,6 +229,14 @@ float SNEPPX_trainer_train_step(SNEPPXTrainer* trainer, const SNEPPXTensor* batc
     return loss_val;
 }
 
+/**
+ * @brief Perform Trainer Evaluate.
+ *
+ * @param trainer [out] Trainer value.
+ * @param val_input [in] Val Input value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_trainer_evaluate(SNEPPXTrainer* trainer, const SNEPPXTensor* val_input, const SNEPPXTensor* val_target) {
     if (!trainer || !val_input || !val_target) return -1.0f;
 
@@ -228,6 +259,13 @@ float SNEPPX_trainer_evaluate(SNEPPXTrainer* trainer, const SNEPPXTensor* val_in
     return loss;
 }
 
+/**
+ * @brief Perform Trainer Save Checkpoint.
+ *
+ * @param trainer [out] Trainer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_save_checkpoint(SNEPPXTrainer* trainer, const char* path) {
     if (!trainer || !path) return 1;
     FILE* f = fopen(path, "wb");
@@ -262,6 +300,13 @@ int SNEPPX_trainer_save_checkpoint(SNEPPXTrainer* trainer, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Trainer Load Checkpoint.
+ *
+ * @param trainer [out] Trainer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_trainer_load_checkpoint(SNEPPXTrainer* trainer, const char* path) {
     if (!trainer || !path) return 1;
     FILE* f = fopen(path, "rb");

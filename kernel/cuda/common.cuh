@@ -11,6 +11,22 @@
 #include <cstdlib>
 #include <cmath>
 
+/*
+ * SNEPPX - Common
+ *
+ * WHAT
+ *   Common.
+ *
+ * CONCEPT
+ *   Provides the Common.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Architecture Detection & Feature Flags
 // ============================================================================

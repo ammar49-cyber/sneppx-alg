@@ -27,6 +27,11 @@ struct SNEPPXInferenceEngine {
     // Stub - real implementation would have model state
 };
 
+/**
+ * @brief Create Inference Engine.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXInferenceEngine* SNEPPX_inference_engine_create(unsigned int seed) {
     SNEPPXInferenceEngine* engine = (SNEPPXInferenceEngine*)SNEPPX_malloc(sizeof(SNEPPXInferenceEngine), 64);
     if (!engine) return NULL;
@@ -34,21 +39,39 @@ SNEPPXInferenceEngine* SNEPPX_inference_engine_create(unsigned int seed) {
     return engine;
 }
 
+/**
+ * @brief Destroy Inference Engine.
+ */
 void SNEPPX_inference_engine_destroy(SNEPPXInferenceEngine* engine) {
     if (!engine) return;
     SNEPPX_free(engine, sizeof(SNEPPXInferenceEngine));
 }
 
+/**
+ * @brief Run Inference Engine.
+ *
+ * @param engine [out] Engine value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_inference_engine_run(SNEPPXInferenceEngine* engine, const SNEPPXTensor* input) {
     if (!engine || !input) return NULL;
     // Stub - returns a copy of input
     return SNEPPX_tensor_copy(input);
 }
 
+/**
+ * @brief Reset Inference Engine.
+ */
 void SNEPPX_inference_engine_reset(SNEPPXInferenceEngine* engine) {
     (void)engine;  // Stub - no state to reset
 }
 
+/**
+ * @brief Perform Generation Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXGenerationConfig SNEPPX_generation_config_default(void) {
     SNEPPXGenerationConfig cfg;
     cfg.temperature = 1.0f;
@@ -59,6 +82,13 @@ SNEPPXGenerationConfig SNEPPX_generation_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Perform Argmax.
+ *
+ * @param logits [in] Logits value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_argmax(const float* logits, size_t n) {
     if (!logits || n == 0) return -1;
     size_t best = 0;
@@ -68,6 +98,14 @@ int SNEPPX_argmax(const float* logits, size_t n) {
     return (int)best;
 }
 
+/**
+ * @brief Perform Sample From Logits.
+ *
+ * @param logits [in] Logits value.
+ * @param vocab_size [in] Vocab Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sample_from_logits(const float* logits, size_t vocab_size, SNEPPXGenerationConfig* cfg) {
     if (!logits || vocab_size == 0 || !cfg) return -1;
 
@@ -144,6 +182,19 @@ int SNEPPX_sample_from_logits(const float* logits, size_t vocab_size, SNEPPXGene
     return result;
 }
 
+/**
+ * @brief Perform Generate Tokens.
+ *
+ * @param embed_weight [out] Embed Weight value.
+ * @param unembed_weight [out] Unembed Weight value.
+ * @param attn [out] Attn value.
+ * @param input_ids [in] Input Ids value.
+ * @param input_len [in] Input Len value.
+ * @param output_ids [out] Output Ids value.
+ * @param max_output_len [in] Max Output Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_generate_tokens(SNEPPXTensor* embed_weight, SNEPPXTensor* unembed_weight,
                          SNEPPXAttentionWeights* attn,
                          const int* input_ids, size_t input_len,
@@ -232,6 +283,17 @@ int SNEPPX_generate_tokens(SNEPPXTensor* embed_weight, SNEPPXTensor* unembed_wei
     return (int)generated;
 }
 
+/**
+ * @brief Perform Generate.
+ *
+ * @param embed_weight [out] Embed Weight value.
+ * @param unembed_weight [out] Unembed Weight value.
+ * @param attn [out] Attn value.
+ * @param tok [out] Tok value.
+ * @param prompt [in] Prompt value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 char* SNEPPX_generate(SNEPPXTensor* embed_weight, SNEPPXTensor* unembed_weight,
                     SNEPPXAttentionWeights* attn, SNEPPXTokenizer* tok,
                     const char* prompt, SNEPPXGenerationConfig* cfg) {

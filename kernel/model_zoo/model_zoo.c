@@ -185,6 +185,14 @@ static const SNEPPXDeepSeekV2Config deepseek_v2_full = {
  * API: create config from family + size name
  * ========================================================================= */
 
+/**
+ * @brief Perform Llm Config From Name.
+ *
+ * @param family [in] Family value.
+ * @param size [in] Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_llm_config_from_name(const char* family, const char* size,
                                  SNEPPXLLMConfig* out) {
     if (!family || !size || !out) return -1;
@@ -253,6 +261,11 @@ static void json_escape(char* out, size_t out_size, const char* in) {
     out[j] = '\0';
 }
 
+/**
+ * @brief Perform Llm Config To Json.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 char* SNEPPX_llm_config_to_json(const SNEPPXLLMConfig* cfg) {
     if (!cfg) return NULL;
     char buf[4096];
@@ -386,6 +399,13 @@ static int parse_field_int(const char* json, const char* key, int* out) {
     return 0;
 }
 
+/**
+ * @brief Perform Llm Config From Json.
+ *
+ * @param json [in] Json value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_llm_config_from_json(const char* json, SNEPPXLLMConfig* out) {
     if (!json || !out) return -1;
     memset(out, 0, sizeof(SNEPPXLLMConfig));
@@ -479,6 +499,13 @@ int SNEPPX_llm_config_from_json(const char* json, SNEPPXLLMConfig* out) {
  * API: extend context with NTK-aware / YaRN RoPE scaling
  * ========================================================================= */
 
+/**
+ * @brief Perform Llm Config Extend Context.
+ *
+ * @param cfg [out] Cfg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_llm_config_extend_context(SNEPPXLLMConfig* cfg, size_t target_len) {
     if (!cfg || target_len == 0) return -1;
 
@@ -528,6 +555,11 @@ int SNEPPX_llm_config_extend_context(SNEPPXLLMConfig* cfg, size_t target_len) {
  * API: weight name prefix helpers
  * ========================================================================= */
 
+/**
+ * @brief Perform Llm Weight Prefix.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_llm_weight_prefix(SNEPPXModelFamily family) {
     switch (family) {
         case SNEPPX_MODEL_LLAMA_2:
@@ -539,6 +571,13 @@ const char* SNEPPX_llm_weight_prefix(SNEPPXModelFamily family) {
     }
 }
 
+/**
+ * @brief Perform Llm Num Weight Tensors.
+ *
+ * @param family [in] Family value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_llm_num_weight_tensors(SNEPPXModelFamily family, size_t num_layers) {
     (void)family;
     return (int)(num_layers * 8 + 2);

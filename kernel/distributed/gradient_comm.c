@@ -6,6 +6,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Gradient Comm
+ *
+ * WHAT
+ *   Gradient Comm.
+ *
+ * CONCEPT
+ *   Provides the Gradient Comm.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Hierarchical All-Reduce (NVLink intra-node + RDMA inter-node)
 // ============================================================================

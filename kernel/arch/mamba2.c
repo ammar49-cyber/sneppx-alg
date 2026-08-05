@@ -6,6 +6,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Mamba2
+ *
+ * WHAT
+ *   Mamba2.
+ *
+ * CONCEPT
+ *   Provides the Mamba2.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Mamba-2: Selective State Space Model
 // torch.nn.Conv1d + selective scan with discretized SSM

@@ -43,6 +43,11 @@ struct SNEPPXDataPipeline {
     int owns_buffers;
 };
 
+/**
+ * @brief Create Data Pipeline.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXDataPipeline* SNEPPX_data_pipeline_create(size_t batch_size) {
     if (batch_size == 0) return NULL;
     SNEPPXDataPipeline* pipe = (SNEPPXDataPipeline*)SNEPPX_malloc(sizeof(SNEPPXDataPipeline), 64);
@@ -59,6 +64,9 @@ SNEPPXDataPipeline* SNEPPX_data_pipeline_create(size_t batch_size) {
     return pipe;
 }
 
+/**
+ * @brief Destroy Data Pipeline.
+ */
 void SNEPPX_data_pipeline_destroy(SNEPPXDataPipeline* pipe) {
     if (!pipe) return;
     if (pipe->owns_buffers) {
@@ -84,6 +92,15 @@ static int parse_csv_line(const char* line, float* out, size_t max_cols) {
     return (int)col;
 }
 
+/**
+ * @brief Load Data Pipeline.
+ *
+ * @param path [in] Path value.
+ * @param pipe [out] Pipe value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_pipeline_load(const char* path, SNEPPXDataPipeline* pipe, SNEPPXTensor** data, SNEPPXTensor** labels) {
     if (!path || !pipe) return -1;
     FILE* f = fopen(path, "rb");
@@ -178,6 +195,14 @@ int SNEPPX_data_pipeline_load(const char* path, SNEPPXDataPipeline* pipe, SNEPPX
     return 0;
 }
 
+/**
+ * @brief Perform Data Pipeline Get Batch.
+ *
+ * @param pipe [out] Pipe value.
+ * @param batch [out] Batch value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_pipeline_get_batch(SNEPPXDataPipeline* pipe, SNEPPXTensor** batch, SNEPPXTensor** labels) {
     if (!pipe || !pipe->data_buffer || !batch || !labels) return -1;
     if (pipe->num_samples == 0) return -1;
@@ -215,6 +240,9 @@ int SNEPPX_data_pipeline_get_batch(SNEPPXDataPipeline* pipe, SNEPPXTensor** batc
     return 0;
 }
 
+/**
+ * @brief Perform Data Pipeline Shuffle.
+ */
 void SNEPPX_data_pipeline_shuffle(SNEPPXDataPipeline* pipe) {
     if (!pipe || !pipe->shuffle_indices || pipe->num_samples < 2) return;
     for (size_t i = pipe->num_samples - 1; i > 0; i--) {
@@ -227,6 +255,11 @@ void SNEPPX_data_pipeline_shuffle(SNEPPXDataPipeline* pipe) {
     pipe->current_pos = 0;
 }
 
+/**
+ * @brief Perform Data Pipeline Get Batch Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_data_pipeline_get_batch_size(const SNEPPXDataPipeline* pipe) {
     return pipe ? pipe->batch_size : 0;
 }
@@ -240,6 +273,15 @@ struct SNEPPXTextDataset {
     SNEPPXTokenizer* tok;
 };
 
+/**
+ * @brief Create Text Dataset.
+ *
+ * @param path [in] Path value.
+ * @param tok [out] Tok value.
+ * @param seq_len [in] Seq Len value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTextDataset* SNEPPX_text_dataset_create(const char* path, SNEPPXTokenizer* tok,
                                            size_t seq_len, int line_by_line) {
     if (!path || !tok || seq_len == 0) return NULL;
@@ -309,16 +351,34 @@ SNEPPXTextDataset* SNEPPX_text_dataset_create(const char* path, SNEPPXTokenizer*
     return ds;
 }
 
+/**
+ * @brief Destroy Text Dataset.
+ */
 void SNEPPX_text_dataset_destroy(SNEPPXTextDataset* ds) {
     if (!ds) return;
     SNEPPX_free(ds->token_data, ds->alloc_size);
     SNEPPX_free(ds, sizeof(SNEPPXTextDataset));
 }
 
+/**
+ * @brief Perform Text Dataset Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_text_dataset_size(const SNEPPXTextDataset* ds) {
     return ds ? ds->num_samples : 0;
 }
 
+/**
+ * @brief Perform Text Dataset Get Batch.
+ *
+ * @param ds [in] Ds value.
+ * @param start_idx [in] Start Idx value.
+ * @param batch_size [in] Batch Size value.
+ * @param input_ids [out] Input Ids value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_text_dataset_get_batch(const SNEPPXTextDataset* ds, size_t start_idx, size_t batch_size,
                                  SNEPPXTensor** input_ids, SNEPPXTensor** target_ids) {
     if (!ds || !input_ids || !target_ids) return 1;

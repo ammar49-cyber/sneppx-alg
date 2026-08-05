@@ -3,6 +3,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Cognitive Manager
+ *
+ * WHAT
+ *   Cognitive Manager.
+ *
+ * CONCEPT
+ *   Provides the Cognitive Manager.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct SNEPPXEpisodicBuffer SNEPPXEpisodicBuffer;
 typedef struct SNEPPXSemanticGraph SNEPPXSemanticGraph;
 typedef struct SNEPPXWorkingMemory SNEPPXWorkingMemory;
@@ -63,6 +79,11 @@ static float frand(unsigned int* seed) {
     return (float)((*seed >> 16) & 0x7FFF) / 32767.0f;
 }
 
+/**
+ * @brief Perform Cognitive Memory Config Default.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXCognitiveMemoryConfig SNEPPX_cognitive_memory_config_default(void) {
     SNEPPXCognitiveMemoryConfig cfg;
     cfg.episodic.capacity = 1000;
@@ -81,6 +102,13 @@ SNEPPXCognitiveMemoryConfig SNEPPX_cognitive_memory_config_default(void) {
     return cfg;
 }
 
+/**
+ * @brief Create Cognitive Memory.
+ *
+ * @param config [in] Config value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXCognitiveMemory* SNEPPX_cognitive_memory_create(
     const SNEPPXCognitiveMemoryConfig* config, unsigned int seed) {
     if (!config) return NULL;
@@ -118,6 +146,9 @@ SNEPPXCognitiveMemory* SNEPPX_cognitive_memory_create(
     return cmem;
 }
 
+/**
+ * @brief Destroy Cognitive Memory.
+ */
 void SNEPPX_cognitive_memory_destroy(SNEPPXCognitiveMemory* cmem) {
     if (!cmem) return;
     if (cmem->episodic) sneppx_episodic_destroy(cmem->episodic);
@@ -127,6 +158,14 @@ void SNEPPX_cognitive_memory_destroy(SNEPPXCognitiveMemory* cmem) {
     SNEPPX_free(cmem, sizeof(SNEPPXCognitiveMemory));
 }
 
+/**
+ * @brief Run the forward pass for Cognitive Memory.
+ *
+ * @param cmem [out] Cmem value.
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cognitive_memory_forward(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* input,
@@ -185,6 +224,16 @@ int SNEPPX_cognitive_memory_forward(
     return 0;
 }
 
+/**
+ * @brief Perform Episodic Record.
+ *
+ * @param cmem [out] Cmem value.
+ * @param state [in] State value.
+ * @param action [in] Action value.
+ * @param reward [in] Reward value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_episodic_record(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* state,
@@ -195,6 +244,15 @@ int SNEPPX_episodic_record(
     return sneppx_episodic_record(cmem->episodic, state, action, reward, next_state);
 }
 
+/**
+ * @brief Perform Episodic Retrieve.
+ *
+ * @param cmem [out] Cmem value.
+ * @param time_start [in] Time Start value.
+ * @param time_end [in] Time End value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_episodic_retrieve(
     SNEPPXCognitiveMemory* cmem,
     uint64_t time_start,
@@ -204,6 +262,17 @@ int SNEPPX_episodic_retrieve(
     return sneppx_episodic_retrieve(cmem->episodic, time_start, time_end, output);
 }
 
+/**
+ * @brief Perform Episodic Sample.
+ *
+ * @param cmem [out] Cmem value.
+ * @param batch_size [in] Batch Size value.
+ * @param states [out] States value.
+ * @param actions [out] Actions value.
+ * @param rewards [out] Rewards value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_episodic_sample(
     SNEPPXCognitiveMemory* cmem,
     size_t batch_size,
@@ -216,11 +285,24 @@ int SNEPPX_episodic_sample(
                                   actions, rewards, next_states);
 }
 
+/**
+ * @brief Perform Episodic Consolidate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_episodic_consolidate(SNEPPXCognitiveMemory* cmem) {
     if (!cmem || !cmem->episodic) return -1;
     return sneppx_episodic_consolidate(cmem->episodic);
 }
 
+/**
+ * @brief Perform Semantic Store.
+ *
+ * @param cmem [out] Cmem value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_store(
     SNEPPXCognitiveMemory* cmem,
     const char* key,
@@ -229,6 +311,16 @@ int SNEPPX_semantic_store(
     return sneppx_semantic_store(cmem->semantic, key, embedding);
 }
 
+/**
+ * @brief Perform Semantic Retrieve.
+ *
+ * @param cmem [out] Cmem value.
+ * @param query [in] Query value.
+ * @param top_k [in] Top K value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_retrieve(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* query,
@@ -239,6 +331,15 @@ int SNEPPX_semantic_retrieve(
     return sneppx_semantic_retrieve(cmem->semantic, query, top_k, output, out_keys);
 }
 
+/**
+ * @brief Perform Semantic Relate.
+ *
+ * @param cmem [out] Cmem value.
+ * @param from_key [in] From Key value.
+ * @param to_key [in] To Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_relate(
     SNEPPXCognitiveMemory* cmem,
     const char* from_key,
@@ -248,6 +349,13 @@ int SNEPPX_semantic_relate(
     return sneppx_semantic_relate(cmem->semantic, from_key, to_key, weight);
 }
 
+/**
+ * @brief Get Semantic For.
+ *
+ * @param cmem [out] Cmem value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_forget(
     SNEPPXCognitiveMemory* cmem,
     const char* key) {
@@ -255,6 +363,14 @@ int SNEPPX_semantic_forget(
     return sneppx_semantic_forget(cmem->semantic, key);
 }
 
+/**
+ * @brief Write Working.
+ *
+ * @param cmem [out] Cmem value.
+ * @param slot_index [in] Slot Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_working_write(
     SNEPPXCognitiveMemory* cmem,
     size_t slot_index,
@@ -263,6 +379,14 @@ int SNEPPX_working_write(
     return sneppx_working_write(cmem->working, slot_index, content);
 }
 
+/**
+ * @brief Read Working.
+ *
+ * @param cmem [out] Cmem value.
+ * @param slot_index [in] Slot Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_working_read(
     SNEPPXCognitiveMemory* cmem,
     size_t slot_index,
@@ -271,6 +395,14 @@ int SNEPPX_working_read(
     return sneppx_working_read(cmem->working, slot_index, output);
 }
 
+/**
+ * @brief Perform Working Attend.
+ *
+ * @param cmem [out] Cmem value.
+ * @param query [in] Query value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_working_attend(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* query,
@@ -279,11 +411,24 @@ int SNEPPX_working_attend(
     return sneppx_working_attend(cmem->working, query, output);
 }
 
+/**
+ * @brief Clear Working.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_working_clear(SNEPPXCognitiveMemory* cmem) {
     if (!cmem || !cmem->working) return -1;
     return sneppx_working_clear(cmem->working);
 }
 
+/**
+ * @brief Perform Procedural Learn.
+ *
+ * @param cmem [out] Cmem value.
+ * @param state [in] State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_procedural_learn(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* state,
@@ -292,6 +437,14 @@ int SNEPPX_procedural_learn(
     return sneppx_procedural_learn(cmem->procedural, state, skill);
 }
 
+/**
+ * @brief Perform Procedural Recall.
+ *
+ * @param cmem [out] Cmem value.
+ * @param state [in] State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_procedural_recall(
     SNEPPXCognitiveMemory* cmem,
     const SNEPPXTensor* state,
@@ -300,11 +453,24 @@ int SNEPPX_procedural_recall(
     return sneppx_procedural_recall(cmem->procedural, state, output);
 }
 
+/**
+ * @brief Perform Procedural Compile.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_procedural_compile(SNEPPXCognitiveMemory* cmem) {
     if (!cmem || !cmem->procedural) return -1;
     return sneppx_procedural_compile(cmem->procedural);
 }
 
+/**
+ * @brief Perform Cognitive Memory Get Params.
+ *
+ * @param cmem [in] Cmem value.
+ * @param out [out] Out value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_cognitive_memory_get_params(
     const SNEPPXCognitiveMemory* cmem,
     SNEPPXTensor** out,
@@ -316,6 +482,17 @@ size_t SNEPPX_cognitive_memory_get_params(
     return 0;
 }
 
+/**
+ * @brief Perform Cognitive Memory Build Train Graph.
+ *
+ * @param cmem [out] Cmem value.
+ * @param tape [out] Tape value.
+ * @param input_var [out] Input Var value.
+ * @param weight_vars [out] Weight Vars value.
+ * @param num_weights [in] Num Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cognitive_memory_build_train_graph(
     SNEPPXCognitiveMemory* cmem,
     SNEPPXTape* tape,

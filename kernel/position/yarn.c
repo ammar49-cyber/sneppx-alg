@@ -18,6 +18,19 @@
 
 
 
+/**
+ * @brief Compute Yarn Pre.
+ *
+ * @param cos [out] Cos value.
+ * @param sin [out] Sin value.
+ * @param max_seq [in] Max Seq value.
+ * @param dim [in] Dim value.
+ * @param base [in] Base value.
+ * @param scale [in] Scale value.
+ * @param alpha [in] Alpha value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_yarn_precompute(float* cos, float* sin, int max_seq, int dim, float base, float scale, float alpha, float beta) {
     if (!cos || !sin || max_seq <= 0 || dim <= 0) return -1;
     (void)scale;
@@ -34,6 +47,21 @@ int SNEPPX_yarn_precompute(float* cos, float* sin, int max_seq, int dim, float b
     return 0;
 }
 
+/**
+ * @brief Apply Yarn.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param cos [in] Cos value.
+ * @param sin [in] Sin value.
+ * @param batch [in] Batch value.
+ * @param seq [in] Seq value.
+ * @param heads [in] Heads value.
+ * @param dim [in] Dim value.
+ * @param alpha [in] Alpha value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_yarn_apply(const float* x, float* output, const float* cos, const float* sin, int batch, int seq, int heads, int dim, float alpha, float beta) {
     if (!x || !output || !cos || !sin || batch <= 0 || seq <= 0 || heads <= 0 || dim <= 0) return -1;
     int half_dim = dim / 2;

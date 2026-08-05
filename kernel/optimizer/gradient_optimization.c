@@ -68,6 +68,14 @@ static void ensure_buffers(SNEPPXGradientOptimizer* opt, size_t num_params) {
     }
 }
 
+/**
+ * @brief Create Grad Opt.
+ *
+ * @param type [in] Type value.
+ * @param lr [in] Lr value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXGradientOptimizer* SNEPPX_grad_opt_create(SNEPPXOptimizerType type, double lr, double weight_decay) {
     SNEPPXGradientOptimizer* opt = (SNEPPXGradientOptimizer*)calloc(1, sizeof(SNEPPXGradientOptimizer));
     if (!opt) return NULL;
@@ -86,6 +94,9 @@ SNEPPXGradientOptimizer* SNEPPX_grad_opt_create(SNEPPXOptimizerType type, double
     return opt;
 }
 
+/**
+ * @brief Destroy Grad Opt.
+ */
 void SNEPPX_grad_opt_destroy(SNEPPXGradientOptimizer* opt) {
     if (!opt) return;
     free(opt->buf);
@@ -93,6 +104,15 @@ void SNEPPX_grad_opt_destroy(SNEPPXGradientOptimizer* opt) {
     free(opt);
 }
 
+/**
+ * @brief Perform Grad Opt Step.
+ *
+ * @param opt [out] Opt value.
+ * @param params [out] Params value.
+ * @param grads [out] Grads value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_step(SNEPPXGradientOptimizer* opt, SNEPPXTensor** params, SNEPPXTensor** grads, size_t num_params) {
     if (!opt || !params || !grads) return -1;
     ensure_buffers(opt, num_params);
@@ -141,6 +161,14 @@ int SNEPPX_grad_opt_step(SNEPPXGradientOptimizer* opt, SNEPPXTensor** params, SN
     return 0;
 }
 
+/**
+ * @brief Perform Grad Opt Zero Grad.
+ *
+ * @param opt [out] Opt value.
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_zero_grad(SNEPPXGradientOptimizer* opt, SNEPPXTensor** params, size_t num_params) {
     (void)opt;
     if (!params) return -1;
@@ -152,16 +180,38 @@ int SNEPPX_grad_opt_zero_grad(SNEPPXGradientOptimizer* opt, SNEPPXTensor** param
     return 0;
 }
 
+/**
+ * @brief Perform Grad Opt Set Lr.
+ *
+ * @param opt [out] Opt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_set_lr(SNEPPXGradientOptimizer* opt, double lr) {
     if (!opt) return -1;
     opt->lr = lr;
     return 0;
 }
 
+/**
+ * @brief Perform Grad Opt Get Lr.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_grad_opt_get_lr(const SNEPPXGradientOptimizer* opt) {
     return opt ? opt->lr : 0.001;
 }
 
+/**
+ * @brief Perform Grad Opt Add Param Group.
+ *
+ * @param opt [out] Opt value.
+ * @param params [out] Params value.
+ * @param num_params [in] Num Params value.
+ * @param lr [in] Lr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_add_param_group(SNEPPXGradientOptimizer* opt, SNEPPXTensor** params, size_t num_params, double lr, double weight_decay) {
     (void)params; (void)num_params;
     if (!opt) return -1;
@@ -170,6 +220,14 @@ int SNEPPX_grad_opt_add_param_group(SNEPPXGradientOptimizer* opt, SNEPPXTensor**
     return 0;
 }
 
+/**
+ * @brief Perform Grad Opt Clip Grad Norm.
+ *
+ * @param grads [out] Grads value.
+ * @param num_grads [in] Num Grads value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_clip_grad_norm(SNEPPXTensor** grads, size_t num_grads, double max_norm) {
     if (!grads) return -1;
     double total = 0.0;
@@ -190,6 +248,15 @@ int SNEPPX_grad_opt_clip_grad_norm(SNEPPXTensor** grads, size_t num_grads, doubl
     return 0;
 }
 
+/**
+ * @brief Perform Grad Opt Clip Grad Value.
+ *
+ * @param grads [out] Grads value.
+ * @param num_grads [in] Num Grads value.
+ * @param min_val [in] Min Val value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grad_opt_clip_grad_value(SNEPPXTensor** grads, size_t num_grads, double min_val, double max_val) {
     if (!grads) return -1;
     for (size_t g = 0; g < num_grads; g++) {

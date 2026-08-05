@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Quantize Cuda
+ *
+ * WHAT
+ *   Quantize Cuda.
+ *
+ * CONCEPT
+ *   Provides the Quantize Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /**
  * SNEPPX CUDA Quantization Kernels
  * 

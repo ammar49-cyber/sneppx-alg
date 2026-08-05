@@ -20,6 +20,16 @@
 
 
 
+/**
+ * @brief Initialize Sf Adamw.
+ *
+ * @param state [out] State value.
+ * @param size [in] Size value.
+ * @param lr [in] Lr value.
+ * @param beta1 [in] Beta1 value.
+ * @param beta2 [in] Beta2 value.
+ * @param eps [in] Eps value.
+ */
 void SNEPPX_sf_adamw_init(SNEPPXSFRAdamWState* state, size_t size, float lr, float beta1, float beta2, float eps, float weight_decay) {
     if (!state) return;
     memset(state, 0, sizeof(SNEPPXSFRAdamWState));
@@ -38,6 +48,14 @@ void SNEPPX_sf_adamw_init(SNEPPXSFRAdamWState* state, size_t size, float lr, flo
     state->size = size;
 }
 
+/**
+ * @brief Perform Sf Adamw Step.
+ *
+ * @param state [out] State value.
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sf_adamw_step(SNEPPXSFRAdamWState* state, float* params, const float* grads) {
     if (!state || !params || !grads) return -1;
     if (!state->z || !state->m || !state->v) return -1;
@@ -59,6 +77,9 @@ int SNEPPX_sf_adamw_step(SNEPPXSFRAdamWState* state, float* params, const float*
     return 0;
 }
 
+/**
+ * @brief Destroy Sf Adamw.
+ */
 void SNEPPX_sf_adamw_destroy(SNEPPXSFRAdamWState* state) {
     if (!state) return;
     if (state->z) SNEPPX_free(state->z, state->size * sizeof(float));

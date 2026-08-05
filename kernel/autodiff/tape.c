@@ -22,6 +22,11 @@
 
 
 
+/**
+ * @brief Create Tape.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTape* SNEPPX_tape_create(void) {
     SNEPPXTape* tape = (SNEPPXTape*)SNEPPX_malloc(sizeof(SNEPPXTape), 64);
     if (!tape) return NULL;
@@ -34,6 +39,9 @@ SNEPPXTape* SNEPPX_tape_create(void) {
     return tape;
 }
 
+/**
+ * @brief Destroy Tape.
+ */
 void SNEPPX_tape_destroy(SNEPPXTape* tape) {
     if (!tape) return;
     for (size_t i = 0; i < tape->num_vars; i++) {
@@ -43,6 +51,11 @@ void SNEPPX_tape_destroy(SNEPPXTape* tape) {
     SNEPPX_free(tape, sizeof(SNEPPXTape));
 }
 
+/**
+ * @brief Perform Tape Record.
+ *
+ * @param tape [out] Tape value.
+ */
 void SNEPPX_tape_record(SNEPPXTape* tape, SNEPPXVariable* var) {
     if (!tape || !var) return;
     if (tape->num_vars >= tape->capacity) {
@@ -61,10 +74,16 @@ void SNEPPX_tape_record(SNEPPXTape* tape, SNEPPXVariable* var) {
     }
 }
 
+/**
+ * @brief Perform Tape Checkpoint Begin.
+ */
 void SNEPPX_tape_checkpoint_begin(SNEPPXTape* tape) {
     if (tape) tape->checkpointing = 1;
 }
 
+/**
+ * @brief Perform Tape Checkpoint End.
+ */
 void SNEPPX_tape_checkpoint_end(SNEPPXTape* tape) {
     if (tape) tape->checkpointing = 0;
 }
@@ -143,6 +162,11 @@ static void tape_topological_sort(SNEPPXTape* tape, SNEPPXVariable** sorted, siz
     SNEPPX_free(visited, n * sizeof(int));
 }
 
+/**
+ * @brief Run the backward pass for Tape.
+ *
+ * @param tape [out] Tape value.
+ */
 void SNEPPX_tape_backward(SNEPPXTape* tape, SNEPPXVariable* loss) {
     if (!tape || !loss) return;
 
@@ -181,6 +205,9 @@ void SNEPPX_tape_backward(SNEPPXTape* tape, SNEPPXVariable* loss) {
     if (sorted) SNEPPX_free(sorted, n * sizeof(SNEPPXVariable*));
 }
 
+/**
+ * @brief Perform Tape Zero Grad.
+ */
 void SNEPPX_tape_zero_grad(SNEPPXTape* tape) {
     if (!tape) return;
     for (size_t i = 0; i < tape->num_vars; i++) {
@@ -191,6 +218,11 @@ void SNEPPX_tape_zero_grad(SNEPPXTape* tape) {
     }
 }
 
+/**
+ * @brief Perform Tape Global Norm.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_tape_global_norm(SNEPPXTape* tape) {
     if (!tape) return 0.0f;
     float sum_sq = 0.0f;
@@ -206,10 +238,26 @@ float SNEPPX_tape_global_norm(SNEPPXTape* tape) {
 
 /* ---------- no_grad context ---------- */
 static int g_no_grad_depth = 0;
+/**
+ * @brief Perform No Grad Enter.
+ */
 void SNEPPX_no_grad_enter(void) { g_no_grad_depth++; }
+/**
+ * @brief Perform No Grad Exit.
+ */
 void SNEPPX_no_grad_exit(void) { if (g_no_grad_depth > 0) g_no_grad_depth--; }
+/**
+ * @brief Perform No Grad Is Active.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_no_grad_is_active(void) { return g_no_grad_depth > 0; }
 
+/**
+ * @brief Perform Tape Clip Grad Norm.
+ *
+ * @param tape [out] Tape value.
+ */
 void SNEPPX_tape_clip_grad_norm(SNEPPXTape* tape, float max_norm) {
     if (!tape || max_norm <= 0.0f) return;
     float total_norm = SNEPPX_tape_global_norm(tape);

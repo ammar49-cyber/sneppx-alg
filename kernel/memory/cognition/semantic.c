@@ -4,6 +4,22 @@
 #include <stdlib.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Semantic
+ *
+ * WHAT
+ *   Semantic.
+ *
+ * CONCEPT
+ *   Provides the Semantic.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char key[SNEPPX_MAX_CONCEPT_KEY_LEN];
     SNEPPXTensor* embedding;

@@ -4,6 +4,22 @@
 #include <cooperative_groups.h>
 #include <cuda_pipeline_primitives.h>
 
+/*
+ * SNEPPX - Attention Cuda
+ *
+ * WHAT
+ *   Attention Cuda.
+ *
+ * CONCEPT
+ *   Provides attention mechanisms.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 // ============================================================================

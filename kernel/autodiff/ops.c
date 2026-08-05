@@ -112,21 +112,69 @@ static SNEPPXVariable* op_zero_grad(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXV
 }
 
 /* ===== Comparison ops backward (zero gradient - no gradient through comparisons) ===== */
+/**
+ * @brief Perform Eq.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_eq(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_eq);
 }
+/**
+ * @brief Perform Ne.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_ne(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_ne);
 }
+/**
+ * @brief Perform Lt.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_lt(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_lt);
 }
+/**
+ * @brief Perform Le.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_le(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_le);
 }
+/**
+ * @brief Perform Gt.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_gt(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_gt);
 }
+/**
+ * @brief Perform Ge.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_ge(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     return op_zero_grad(tape, a, b, SNEPPX_tensor_ge);
 }
@@ -188,6 +236,16 @@ static void backward_conv1d(void* ctx, SNEPPXTensor* grad_output) {
     }
 }
 
+/**
+ * @brief Perform Conv1d.
+ *
+ * @param tape [out] Tape value.
+ * @param input [out] Input value.
+ * @param kernel [out] Kernel value.
+ * @param stride [in] Stride value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_conv1d(SNEPPXTape* tape, SNEPPXVariable* input, SNEPPXVariable* kernel, size_t stride, size_t padding) {
     int rg = requires_grad(input, kernel);
     if (!input || !kernel || !input->data || !kernel->data) return NULL;
@@ -242,6 +300,14 @@ static void backward_cumsum(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, g);
 }
+/**
+ * @brief Perform Cumsum.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_cumsum(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -291,6 +357,14 @@ static void backward_cumprod(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, g);
 }
+/**
+ * @brief Perform Cumprod.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_cumprod(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -329,6 +403,14 @@ static void backward_add(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, g);
     }
 }
+/**
+ * @brief Add Add.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_add(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -368,6 +450,14 @@ static void backward_sub(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, g);
     }
 }
+/**
+ * @brief Perform Sub.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sub(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -407,6 +497,14 @@ static void backward_mul(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, gb);
     }
 }
+/**
+ * @brief Perform Mul.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_mul(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -452,6 +550,14 @@ static void backward_div(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, gb);
     }
 }
+/**
+ * @brief Perform Div.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_div(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -510,6 +616,14 @@ static void backward_pow(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, gb);
     }
 }
+/**
+ * @brief Perform Pow.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_pow(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -540,6 +654,13 @@ static void backward_neg(void* ctx, SNEPPXTensor* grad_output) {
     NegCtx* c = (NegCtx*)ctx;
     if (c->a->requires_grad) grad_accum(&c->a->grad, SNEPPX_tensor_neg(grad_output));
 }
+/**
+ * @brief Perform Neg.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_neg(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -591,6 +712,14 @@ static void backward_matmul(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->b->grad, gb);
     }
 }
+/**
+ * @brief Perform Matmul.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_matmul(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -628,6 +757,14 @@ static void backward_mse_loss(void* ctx, SNEPPXTensor* grad_output) {
     for (size_t i = 0; i < diff->size; i++) dd[i] *= scale * go[i % grad_output->size];
     grad_accum(&c->pred->grad, diff);
 }
+/**
+ * @brief Perform Mse Loss.
+ *
+ * @param tape [out] Tape value.
+ * @param pred [out] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_mse_loss(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
     int rg = requires_grad1(pred);
     if (!pred || !target || !pred->data || !target->data) return NULL;
@@ -664,6 +801,13 @@ static void backward_relu(void* ctx, SNEPPXTensor* grad_output) {
         if (ad[i] <= 0.0f) gad[i] = 0.0f;
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Relu.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_relu(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -707,6 +851,13 @@ static void backward_gelu(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Gelu.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_gelu(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -746,6 +897,13 @@ static void backward_silu(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Silu.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_silu(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -783,6 +941,13 @@ static void backward_sigmoid(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Sigmoid.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sigmoid(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -820,6 +985,13 @@ static void backward_tanh(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Tanh.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_tanh(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -868,6 +1040,14 @@ static void backward_softmax(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPX_tensor_destroy(expanded);
     SNEPPX_tensor_destroy(sub);
 }
+/**
+ * @brief Perform Softmax.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_softmax(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -901,6 +1081,13 @@ static void backward_exp(void* ctx, SNEPPXTensor* grad_output) {
     grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(e);
 }
+/**
+ * @brief Perform Exp.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_exp(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -932,6 +1119,13 @@ static void backward_log(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPXTensor* ga = SNEPPX_tensor_div(grad_output, c->a->data);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Log.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_log(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -972,6 +1166,14 @@ static void backward_sum(void* ctx, SNEPPXTensor* grad_output) {
                 gd[o * dim_size * inner + d * inner + i] = go[o * inner + i];
     grad_accum(&c->a->grad, g);
 }
+/**
+ * @brief Perform Sum.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sum(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1015,6 +1217,14 @@ static void backward_mean(void* ctx, SNEPPXTensor* grad_output) {
     }
     SNEPPX_tensor_destroy(go);
 }
+/**
+ * @brief Perform Mean.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_mean(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1045,6 +1255,15 @@ static void backward_transpose(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPXTensor* ga = SNEPPX_tensor_transpose(grad_output, c->dim1, c->dim2);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Transpose.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ * @param dim1 [in] Dim1 value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_transpose(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim1, size_t dim2) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1076,6 +1295,15 @@ static void backward_reshape(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPXTensor* ga = SNEPPX_tensor_reshape(grad_output, c->a->data->shape, c->a->data->ndim);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Reshape.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ * @param shape [in] Shape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_reshape(SNEPPXTape* tape, SNEPPXVariable* a, const size_t* shape, size_t ndim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1128,6 +1356,15 @@ static void backward_dropout(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPXTensor* ga = SNEPPX_tensor_mul(c->mask, grad_output);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Dropout.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ * @param rate [in] Rate value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_dropout(SNEPPXTape* tape, SNEPPXVariable* a, float rate, unsigned int seed) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1228,6 +1465,16 @@ static void backward_layer_norm(void* ctx, SNEPPXTensor* grad_output) {
         }
     }
 }
+/**
+ * @brief Perform Layer Norm.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ * @param gamma [out] Gamma value.
+ * @param beta [out] Beta value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_layer_norm(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* gamma, SNEPPXVariable* beta, float eps) {
     int rg = requires_grad(a, gamma) || (beta && beta->requires_grad);
     if (!a || !a->data) return NULL;
@@ -1320,6 +1567,18 @@ static void backward_conv2d(void* ctx, SNEPPXTensor* grad_output) {
         grad_accum(&c->kernel->grad, gk);
     }
 }
+/**
+ * @brief Perform Conv2d.
+ *
+ * @param tape [out] Tape value.
+ * @param input [out] Input value.
+ * @param kernel [out] Kernel value.
+ * @param stride_h [in] Stride H value.
+ * @param stride_w [in] Stride W value.
+ * @param pad_h [in] Pad H value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_conv2d(SNEPPXTape* tape, SNEPPXVariable* input, SNEPPXVariable* kernel, size_t stride_h, size_t stride_w, size_t pad_h, size_t pad_w) {
     int rg = requires_grad(input, kernel);
     if (!input || !kernel || !input->data || !kernel->data) return NULL;
@@ -1379,6 +1638,15 @@ static void backward_concat(void* ctx, SNEPPXTensor* grad_output) {
         offset += sz;
     }
 }
+/**
+ * @brief Perform Concat.
+ *
+ * @param tape [out] Tape value.
+ * @param vars [out] Vars value.
+ * @param num_vars [in] Num Vars value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_concat(SNEPPXTape* tape, SNEPPXVariable** vars, size_t num_vars, size_t dim) {
     if (!vars || num_vars == 0) return NULL;
     int rg = 0;
@@ -1442,6 +1710,14 @@ static void backward_embedding(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->weight->grad, gw_t);
 }
+/**
+ * @brief Perform Embedding.
+ *
+ * @param tape [out] Tape value.
+ * @param weight [out] Weight value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_embedding(SNEPPXTape* tape, SNEPPXVariable* weight, SNEPPXVariable* indices) {
     int rg = requires_grad1(weight);
     if (!weight || !indices || !weight->data || !indices->data) return NULL;
@@ -1487,6 +1763,14 @@ static void backward_cross_entropy(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->pred->grad, sm);
 }
+/**
+ * @brief Perform Cross Entropy.
+ *
+ * @param tape [out] Tape value.
+ * @param pred [out] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_cross_entropy(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
     int rg = requires_grad1(pred);
     if (!pred || !target || !pred->data || !target->data) return NULL;
@@ -1523,6 +1807,13 @@ static void backward_sqrt(void* ctx, SNEPPXTensor* grad_output) {
     for (size_t i = 0; i < ga->size; i++) gad[i] *= 0.5f / sqrtf(ad[i]);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Sqrt.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sqrt(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1557,6 +1848,13 @@ static void backward_abs(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(s);
 }
+/**
+ * @brief Perform Abs.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_abs(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1604,6 +1902,14 @@ static void backward_log_softmax(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPX_tensor_destroy(expanded);
     SNEPPX_tensor_destroy(term);
 }
+/**
+ * @brief Perform Log Softmax.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_log_softmax(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1657,6 +1963,14 @@ static void backward_min(void* ctx, SNEPPXTensor* grad_output) {
         }
     }
 }
+/**
+ * @brief Perform Minimum.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_minimum(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -1711,6 +2025,14 @@ static void backward_max(void* ctx, SNEPPXTensor* grad_output) {
         }
     }
 }
+/**
+ * @brief Perform Maximum.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_maximum(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* b) {
     int rg = requires_grad(a, b);
     if (!a || !b || !a->data || !b->data) return NULL;
@@ -1748,6 +2070,14 @@ static void backward_rope(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(inv_table);
 }
+/**
+ * @brief Perform Rope.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_rope(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXTensor* cos_table) {
     int rg = requires_grad1(a);
     if (!a || !a->data || !cos_table) return NULL;
@@ -1789,6 +2119,14 @@ static void backward_var(void* ctx, SNEPPXTensor* grad_output) {
     grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(centered);
 }
+/**
+ * @brief Perform Var.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_var(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1834,6 +2172,14 @@ static void backward_std(void* ctx, SNEPPXTensor* grad_output) {
     SNEPPX_tensor_destroy(centered);
     SNEPPX_tensor_destroy(std_t);
 }
+/**
+ * @brief Perform Std.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_std(SNEPPXTape* tape, SNEPPXVariable* a, size_t dim) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1868,6 +2214,13 @@ static void backward_sin(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(cos_t);
 }
+/**
+ * @brief Perform Sin.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sin(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1904,6 +2257,13 @@ static void backward_cos(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(sin_t);
 }
+/**
+ * @brief Perform Cos.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_cos(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1940,6 +2300,13 @@ static void backward_tan(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(cos_t);
 }
+/**
+ * @brief Perform Tan.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_tan(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -1975,6 +2342,13 @@ static void backward_asin(void* ctx, SNEPPXTensor* grad_output) {
     for (size_t i = 0; i < ga->size; i++) gad[i] /= sqrtf(1.0f - ad[i] * ad[i] + 1e-12f);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Asin.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_asin(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -2010,6 +2384,13 @@ static void backward_acos(void* ctx, SNEPPXTensor* grad_output) {
     for (size_t i = 0; i < ga->size; i++) gad[i] /= -sqrtf(1.0f - ad[i] * ad[i] + 1e-12f);
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Acos.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_acos(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -2045,6 +2426,13 @@ static void backward_atan(void* ctx, SNEPPXTensor* grad_output) {
     for (size_t i = 0; i < ga->size; i++) gad[i] /= 1.0f + ad[i] * ad[i];
     grad_accum(&c->a->grad, ga);
 }
+/**
+ * @brief Perform Atan.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_atan(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -2079,6 +2467,13 @@ static void backward_sinh(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(cosh_t);
 }
+/**
+ * @brief Perform Sinh.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sinh(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -2113,6 +2508,13 @@ static void backward_cosh(void* ctx, SNEPPXTensor* grad_output) {
     if (ga) grad_accum(&c->a->grad, ga);
     SNEPPX_tensor_destroy(sinh_t);
 }
+/**
+ * @brief Perform Cosh.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_cosh(SNEPPXTape* tape, SNEPPXVariable* a) {
     int rg = requires_grad1(a);
     if (!a || !a->data) return NULL;
@@ -2130,6 +2532,13 @@ SNEPPXVariable* SNEPPX_cosh(SNEPPXTape* tape, SNEPPXVariable* a) {
 }
 
 /* ===== sign (non-differentiable, zero gradient) ===== */
+/**
+ * @brief Sign Sign.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_sign(SNEPPXTape* tape, SNEPPXVariable* a) {
     if (!a || !a->data) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_sign(a->data);
@@ -2141,6 +2550,13 @@ SNEPPXVariable* SNEPPX_sign(SNEPPXTape* tape, SNEPPXVariable* a) {
 }
 
 /* ===== floor (non-differentiable, zero gradient) ===== */
+/**
+ * @brief Perform Floor.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_floor(SNEPPXTape* tape, SNEPPXVariable* a) {
     if (!a || !a->data) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_floor(a->data);
@@ -2152,6 +2568,13 @@ SNEPPXVariable* SNEPPX_floor(SNEPPXTape* tape, SNEPPXVariable* a) {
 }
 
 /* ===== ceil (non-differentiable, zero gradient) ===== */
+/**
+ * @brief Perform Ceil.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_ceil(SNEPPXTape* tape, SNEPPXVariable* a) {
     if (!a || !a->data) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_ceil(a->data);
@@ -2163,6 +2586,13 @@ SNEPPXVariable* SNEPPX_ceil(SNEPPXTape* tape, SNEPPXVariable* a) {
 }
 
 /* ===== round (non-differentiable, zero gradient) ===== */
+/**
+ * @brief Perform Round.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_round(SNEPPXTape* tape, SNEPPXVariable* a) {
     if (!a || !a->data) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_round(a->data);
@@ -2174,6 +2604,13 @@ SNEPPXVariable* SNEPPX_round(SNEPPXTape* tape, SNEPPXVariable* a) {
 }
 
 /* ===== trunc (non-differentiable, zero gradient) ===== */
+/**
+ * @brief Perform Trunc.
+ *
+ * @param tape [out] Tape value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_trunc(SNEPPXTape* tape, SNEPPXVariable* a) {
     if (!a || !a->data) return NULL;
     SNEPPXTensor* result = SNEPPX_tensor_trunc(a->data);
@@ -2210,6 +2647,14 @@ static void backward_nll_loss(void* ctx, SNEPPXTensor* grad_output) {
     }
     grad_accum(&c->pred->grad, g);
 }
+/**
+ * @brief Perform Nll Loss.
+ *
+ * @param tape [out] Tape value.
+ * @param pred [out] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_nll_loss(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
     int rg = requires_grad1(pred);
     if (!pred || !target || !pred->data || !target->data) return NULL;
@@ -2250,6 +2695,14 @@ static void backward_bce_loss(void* ctx, SNEPPXTensor* grad_output) {
         gd[i] = scale * (pd[i] - td[i]);
     grad_accum(&c->pred->grad, g);
 }
+/**
+ * @brief Perform Bce Loss.
+ *
+ * @param tape [out] Tape value.
+ * @param pred [out] Pred value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_bce_loss(SNEPPXTape* tape, SNEPPXVariable* pred, SNEPPXVariable* target) {
     int rg = requires_grad1(pred);
     if (!pred || !target || !pred->data || !target->data) return NULL;
@@ -2365,6 +2818,18 @@ static void backward_batch_norm(void* ctx, SNEPPXTensor* grad_output) {
         }
     }
 }
+/**
+ * @brief Perform Batch Norm.
+ *
+ * @param tape [out] Tape value.
+ * @param a [out] A value.
+ * @param gamma [out] Gamma value.
+ * @param beta [out] Beta value.
+ * @param running_mean [out] Running Mean value.
+ * @param running_var [out] Running Var value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXVariable* SNEPPX_batch_norm(SNEPPXTape* tape, SNEPPXVariable* a, SNEPPXVariable* gamma, SNEPPXVariable* beta, SNEPPXVariable* running_mean, SNEPPXVariable* running_var, float eps) {
     int rg = requires_grad(a, gamma) || (beta && beta->requires_grad);
     if (!a || !a->data || !gamma || !gamma->data || !beta || !beta->data || !running_mean || !running_mean->data || !running_var || !running_var->data) return NULL;

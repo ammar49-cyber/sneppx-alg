@@ -19,6 +19,15 @@
 
 
 
+/**
+ * @brief Run the forward pass for Act.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param act [in] Act value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_forward(const float* x, float* output, SNEPPXActivationType act, size_t n) {
     if (!x || !output || n == 0) return -1;
     switch (act) {
@@ -55,6 +64,16 @@ int SNEPPX_act_forward(const float* x, float* output, SNEPPXActivationType act, 
     }
 }
 
+/**
+ * @brief Run the backward pass for Act.
+ *
+ * @param x [in] X value.
+ * @param grad_out [in] Grad Out value.
+ * @param grad_in [out] Grad In value.
+ * @param act [in] Act value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_backward(const float* x, const float* grad_out, float* grad_in, SNEPPXActivationType act, size_t n) {
     if (!x || !grad_out || !grad_in || n == 0) return -1;
     for (size_t i = 0; i < n; i++) {
@@ -97,6 +116,14 @@ int SNEPPX_act_backward(const float* x, const float* grad_out, float* grad_in, S
     return 0;
 }
 
+/**
+ * @brief Perform Act Softmax Stable.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_softmax_stable(const float* x, float* output, size_t n) {
     if (!x || !output || n == 0) return -1;
     float maxv = -FLT_MAX;
@@ -107,6 +134,14 @@ int SNEPPX_act_softmax_stable(const float* x, float* output, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Act Log Softmax.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_log_softmax(const float* x, float* output, size_t n) {
     if (!x || !output || n == 0) return -1;
     if (SNEPPX_act_softmax_stable(x, output, n) != 0) return -1;
@@ -114,24 +149,59 @@ int SNEPPX_act_log_softmax(const float* x, float* output, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Act Leaky Relu.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param alpha [in] Alpha value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_leaky_relu(const float* x, float* output, float alpha, size_t n) {
     if (!x || !output || n == 0) return -1;
     for (size_t i = 0; i < n; i++) output[i] = x[i] > 0.0f ? x[i] : alpha * x[i];
     return 0;
 }
 
+/**
+ * @brief Perform Act Prelu.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param alpha [in] Alpha value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_prelu(const float* x, float* output, const float* alpha, size_t n) {
     if (!x || !output || !alpha || n == 0) return -1;
     for (size_t i = 0; i < n; i++) output[i] = x[i] > 0.0f ? x[i] : alpha[i % n] * x[i];
     return 0;
 }
 
+/**
+ * @brief Perform Act Elu.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param alpha [in] Alpha value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_elu(const float* x, float* output, float alpha, size_t n) {
     if (!x || !output || n == 0) return -1;
     for (size_t i = 0; i < n; i++) output[i] = x[i] > 0.0f ? x[i] : alpha * (expf(x[i]) - 1.0f);
     return 0;
 }
 
+/**
+ * @brief Perform Act Selu.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_selu(const float* x, float* output, size_t n) {
     if (!x || !output || n == 0) return -1;
     const float lambda = 1.0507009873554805f;
@@ -141,6 +211,14 @@ int SNEPPX_act_selu(const float* x, float* output, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Act Gelu Tanh.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_gelu_tanh(const float* x, float* output, size_t n) {
     if (!x || !output || n == 0) return -1;
     float c = 0.7978845608028654f;
@@ -151,6 +229,14 @@ int SNEPPX_act_gelu_tanh(const float* x, float* output, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Act Gelu Erf.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_act_gelu_erf(const float* x, float* output, size_t n) {
     if (!x || !output || n == 0) return -1;
     float rsqrt2 = 0.7071067811865475f;

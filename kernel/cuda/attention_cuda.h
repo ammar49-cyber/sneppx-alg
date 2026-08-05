@@ -6,6 +6,22 @@
 #include "common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Attention Cuda
+ *
+ * WHAT
+ *   Attention Cuda.
+ *
+ * CONCEPT
+ *   Provides attention mechanisms.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

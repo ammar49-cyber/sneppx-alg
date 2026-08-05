@@ -4,6 +4,37 @@
 #include <string.h>
 #include <float.h>
 
+/*
+ * SNEPPX - Swa
+ *
+ * WHAT
+ *   Swa.
+ *
+ * CONCEPT
+ *   Provides the Swa.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Run the forward pass for Swa.
+ *
+ * @param q [in] Q value.
+ * @param k [in] K value.
+ * @param v [in] V value.
+ * @param output [out] Output value.
+ * @param batch [in] Batch value.
+ * @param heads [in] Heads value.
+ * @param seq [in] Seq value.
+ * @param dim [in] Dim value.
+ * @param window_size [in] Window Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_swa_forward(const float* q, const float* k, const float* v, float* output, int batch, int heads, int seq, int dim, int window_size, float scale) {
     if (!q || !k || !v || !output || batch <= 0 || heads <= 0 || seq <= 0 || dim <= 0 || window_size <= 0) return -1;
     memset(output, 0, (size_t)batch * heads * seq * dim * sizeof(float));
@@ -50,6 +81,24 @@ int SNEPPX_swa_forward(const float* q, const float* k, const float* v, float* ou
     return 0;
 }
 
+/**
+ * @brief Run the backward pass for Swa.
+ *
+ * @param q [in] Q value.
+ * @param k [in] K value.
+ * @param v [in] V value.
+ * @param grad_out [in] Grad Out value.
+ * @param grad_q [out] Grad Q value.
+ * @param grad_k [out] Grad K value.
+ * @param grad_v [out] Grad V value.
+ * @param batch [in] Batch value.
+ * @param heads [in] Heads value.
+ * @param seq [in] Seq value.
+ * @param dim [in] Dim value.
+ * @param window_size [in] Window Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_swa_backward(const float* q, const float* k, const float* v, const float* grad_out, float* grad_q, float* grad_k, float* grad_v, int batch, int heads, int seq, int dim, int window_size, float scale) {
     (void)q; (void)k; (void)v; (void)grad_out; (void)grad_q; (void)grad_k; (void)grad_v;
     (void)batch; (void)heads; (void)seq; (void)dim; (void)window_size; (void)scale;

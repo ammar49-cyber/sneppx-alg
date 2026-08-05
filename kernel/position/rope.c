@@ -19,6 +19,16 @@
 
 
 
+/**
+ * @brief Perform Rope Precompute Freqs.
+ *
+ * @param cos [out] Cos value.
+ * @param sin [out] Sin value.
+ * @param max_seq [in] Max Seq value.
+ * @param dim [in] Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rope_precompute_freqs(float* cos, float* sin, int max_seq, int dim, float base) {
     if (!cos || !sin || max_seq <= 0 || dim <= 0) return -1;
     int half_dim = dim / 2;
@@ -32,6 +42,19 @@ int SNEPPX_rope_precompute_freqs(float* cos, float* sin, int max_seq, int dim, f
     return 0;
 }
 
+/**
+ * @brief Perform Rope Apply Freqs.
+ *
+ * @param x [in] X value.
+ * @param output [out] Output value.
+ * @param cos [in] Cos value.
+ * @param sin [in] Sin value.
+ * @param batch [in] Batch value.
+ * @param seq [in] Seq value.
+ * @param heads [in] Heads value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rope_apply_freqs(const float* x, float* output, const float* cos, const float* sin, int batch, int seq, int heads, int dim) {
     if (!x || !output || !cos || !sin || batch <= 0 || seq <= 0 || heads <= 0 || dim <= 0) return -1;
     int half_dim = dim / 2;
@@ -53,10 +76,30 @@ int SNEPPX_rope_apply_freqs(const float* x, float* output, const float* cos, con
     return 0;
 }
 
+/**
+ * @brief Perform Rope Apply Freqs Inplace.
+ *
+ * @param x [out] X value.
+ * @param cos [in] Cos value.
+ * @param sin [in] Sin value.
+ * @param batch [in] Batch value.
+ * @param seq [in] Seq value.
+ * @param heads [in] Heads value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rope_apply_freqs_inplace(float* x, const float* cos, const float* sin, int batch, int seq, int heads, int dim) {
     return SNEPPX_rope_apply_freqs(x, x, cos, sin, batch, seq, heads, dim);
 }
 
+/**
+ * @brief Perform Rope Precompute Tensor.
+ *
+ * @param max_seq [in] Max Seq value.
+ * @param dim [in] Dim value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 float* SNEPPX_rope_precompute_tensor(int max_seq, int dim, float base) {
     int half_dim = dim / 2;
     float* cache = (float*)malloc((size_t)max_seq * half_dim * 2 * sizeof(float));

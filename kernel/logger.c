@@ -11,6 +11,22 @@
 #include <sys/time.h>
 #endif
 
+/*
+ * SNEPPX - Logger
+ *
+ * WHAT
+ *   Logger.
+ *
+ * CONCEPT
+ *   Provides structured logging.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ANSI color codes */
 #define COLOR_RESET   "\033[0m"
 #define COLOR_RED     "\033[31m"
@@ -39,6 +55,11 @@ static const char* level_strings[] = {
     [SNEPPX_LOG_FATAL] = "FATAL"
 };
 
+/**
+ * @brief Perform Log Level String.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_log_level_string(SNEPPX_LogLevel level) {
     if (level > SNEPPX_LOG_FATAL) return "UNKNOWN";
     return level_strings[level];
@@ -78,6 +99,13 @@ static int64_t snepx_log_ns(void) {
 
 }
 
+/**
+ * @brief Initialize Logger.
+ *
+ * @param logger [out] Logger value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_logger_init(SNEPPX_Logger** logger, const SNEPPX_LogConfig* config) {
     if (!logger) return -1;
     SNEPPX_Logger* log = (SNEPPX_Logger*)calloc(1, sizeof(SNEPPX_Logger));
@@ -104,6 +132,9 @@ int SNEPPX_logger_init(SNEPPX_Logger** logger, const SNEPPX_LogConfig* config) {
     return 0;
 }
 
+/**
+ * @brief Destroy Logger.
+ */
 void SNEPPX_logger_destroy(SNEPPX_Logger* logger) {
     if (!logger) return;
     if (logger->json_fp) {
@@ -113,12 +144,26 @@ void SNEPPX_logger_destroy(SNEPPX_Logger* logger) {
     free(logger);
 }
 
+/**
+ * @brief Perform Logger Set Level.
+ *
+ * @param logger [out] Logger value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_logger_set_level(SNEPPX_Logger* logger, SNEPPX_LogLevel level) {
     if (!logger) return -1;
     logger->config.min_level = level;
     return 0;
 }
 
+/**
+ * @brief Perform Logger Set Output.
+ *
+ * @param logger [out] Logger value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_logger_set_output(SNEPPX_Logger* logger, const char* json_path) {
     if (!logger) return -1;
     if (logger->json_fp) {
@@ -136,6 +181,15 @@ int SNEPPX_logger_set_output(SNEPPX_Logger* logger, const char* json_path) {
     return 0;
 }
 
+/**
+ * @brief Write Log.
+ *
+ * @param logger [out] Logger value.
+ * @param level [in] Level value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ * @param fmt [in] Fmt value.
+ */
 void SNEPPX_log_write(SNEPPX_Logger* logger, SNEPPX_LogLevel level,
                        const char* file, int line,
                        const char* fmt, ...) {

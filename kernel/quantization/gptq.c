@@ -42,6 +42,16 @@
  *             Pre-trained Transformers" (Frantar et al., 2023)
  */
 
+/**
+ * @brief Perform Gptq Compute Hessian.
+ *
+ * @param hessian [out] Hessian value.
+ * @param activation [in] Activation value.
+ * @param n [in] N value.
+ * @param dim [in] Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gptq_compute_hessian(float* hessian, const float* activation,
                                  size_t n, size_t dim)
 {
@@ -107,6 +117,20 @@ static int _cholesky_inv(float* h, size_t dim)
     return 0;
 }
 
+/**
+ * @brief Perform Gptq Quantize Block.
+ *
+ * @param w [out] W value.
+ * @param h_inv [out] H Inv value.
+ * @param qw [out] Qw value.
+ * @param scale [out] Scale value.
+ * @param zero [out] Zero value.
+ * @param block_size [in] Block Size value.
+ * @param bits [in] Bits value.
+ * @param sym [in] Sym value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gptq_quantize_block(float* w, float* h_inv,
                                 float* qw, float* scale, int32_t* zero,
                                 size_t block_size, int bits, int sym)
@@ -147,6 +171,21 @@ int SNEPPX_gptq_quantize_block(float* w, float* h_inv,
     return 0;
 }
 
+/**
+ * @brief Quantize Gptq.
+ *
+ * @param weights [out] Weights value.
+ * @param rows [in] Rows value.
+ * @param cols [in] Cols value.
+ * @param group_size [in] Group Size value.
+ * @param bits [in] Bits value.
+ * @param qweight [out] Qweight value.
+ * @param scales [out] Scales value.
+ * @param zeros [out] Zeros value.
+ * @param sym [in] Sym value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_gptq_quantize(float* weights, size_t rows, size_t cols,
                           int group_size, int bits,
                           SNEPPXDtype* qweight, float* scales,

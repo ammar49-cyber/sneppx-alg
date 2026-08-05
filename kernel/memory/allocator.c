@@ -13,6 +13,22 @@
 #include <errno.h>
 #endif
 
+/*
+ * SNEPPX - Allocator
+ *
+ * WHAT
+ *   Allocator.
+ *
+ * CONCEPT
+ *   Provides the Allocator.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ==================================================================
  *  Platform-abstracted atomic operations  (macros for MSVC compat)
  * ================================================================== */
@@ -50,6 +66,13 @@
  *  Core Memory Functions (unchanged)
  * ================================================================== */
 
+/**
+ * @brief Perform Malloc.
+ *
+ * @param size [in] Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_malloc(size_t size, size_t alignment) {
     void* ptr = NULL;
 #ifdef _WIN32
@@ -67,6 +90,11 @@ void* SNEPPX_malloc(size_t size, size_t alignment) {
     return ptr;
 }
 
+/**
+ * @brief Free Free.
+ *
+ * @param ptr [out] Ptr value.
+ */
 void SNEPPX_free(void* ptr, size_t size) {
     if (!ptr) return;
     SNEPPX_secure_zero(ptr, size);
@@ -77,6 +105,15 @@ void SNEPPX_free(void* ptr, size_t size) {
 #endif
 }
 
+/**
+ * @brief Perform Realloc.
+ *
+ * @param ptr [out] Ptr value.
+ * @param old_size [in] Old Size value.
+ * @param new_size [in] New Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_realloc(void* ptr, size_t old_size, size_t new_size, size_t alignment) {
     void* new_ptr = SNEPPX_malloc(new_size, alignment);
     if (!new_ptr) return NULL;
@@ -86,6 +123,11 @@ void* SNEPPX_realloc(void* ptr, size_t old_size, size_t new_size, size_t alignme
     return new_ptr;
 }
 
+/**
+ * @brief Perform Secure Zero.
+ *
+ * @param ptr [out] Ptr value.
+ */
 void SNEPPX_secure_zero(void* ptr, size_t size) {
     if (!ptr) return;
     volatile unsigned char* p = (volatile unsigned char*)ptr;
@@ -94,6 +136,12 @@ void SNEPPX_secure_zero(void* ptr, size_t size) {
     }
 }
 
+/**
+ * @brief Perform Secure Copy.
+ *
+ * @param dst [out] Dst value.
+ * @param src [in] Src value.
+ */
 void SNEPPX_secure_copy(void* dst, const void* src, size_t size) {
     if (!dst || !src) return;
     memcpy(dst, src, size);
@@ -124,6 +172,11 @@ static const size_t g_size_classes[SNEPPX_NUM_SIZE_CLASSES] = {
 };
 
 /* Given a size, return the pool index (0-based) or -1. */
+/**
+ * @brief Perform Pool Size Class.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_pool_size_class(size_t size) {
     if (size == 0 || size > SNEPPX_POOL_MAX_SIZE) return -1;
     if (size <= 16)   return 0;
@@ -245,6 +298,11 @@ static volatile int g_active_tls_caches = 0;
  *  SNEPPX_mem_pool_init  –  one-shot initialisation
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Initialize Mem Pool.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pool_init(void) {
     /* Idempotent  –  only the first call does any work. */
     if (SNEPPX_ATOMIC_XCHG_INT(&g_pool_initialized, 1) != 0)
@@ -295,6 +353,9 @@ static int pool_grow(SNEPPXMemPool* pool) {
  *  TLS cache helpers
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Initialize Tls Cache.
+ */
 void SNEPPX_tls_cache_init(void) {
     if (g_tls_cache) return;
     g_tls_cache = (SNEPPXTlsCache*)malloc(sizeof(SNEPPXTlsCache));
@@ -307,6 +368,9 @@ void SNEPPX_tls_cache_init(void) {
     SNEPPX_ATOMIC_ADD_INT(&g_active_tls_caches, 1);
 }
 
+/**
+ * @brief Destroy Tls Cache.
+ */
 void SNEPPX_tls_cache_destroy(void) {
     if (!g_tls_cache) return;
     /* Flush all entries back to their respective pools */
@@ -328,6 +392,11 @@ void SNEPPX_tls_cache_destroy(void) {
  *  SNEPPX_pool_alloc  –  fast path: TLS → global stack → grow
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Perform Pool Alloc.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_pool_alloc(size_t size) {
     if (size > SNEPPX_POOL_MAX_SIZE)
         return SNEPPX_malloc(size, 16);
@@ -370,6 +439,11 @@ void* SNEPPX_pool_alloc(size_t size) {
  *  SNEPPX_pool_free  –  return to TLS (or fall back to global)
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Free Pool.
+ *
+ * @param ptr [out] Ptr value.
+ */
 void SNEPPX_pool_free(void* ptr, size_t size) {
     if (!ptr) return;
 
@@ -407,6 +481,9 @@ void SNEPPX_pool_free(void* ptr, size_t size) {
  *  SNEPPX_mem_pool_destroy  –  tear down everything
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Destroy Mem Pool.
+ */
 void SNEPPX_mem_pool_destroy(void) {
     /* Destroy the calling thread's TLS cache first (flushes entries to pool) */
     if (g_tls_cache) SNEPPX_tls_cache_destroy();
@@ -438,6 +515,9 @@ void SNEPPX_mem_pool_destroy(void) {
  *  Statistics
  * ------------------------------------------------------------------ */
 
+/**
+ * @brief Perform Mem Pool Stats.
+ */
 void SNEPPX_mem_pool_stats(SNEPPXMemStats* stats) {
     if (!stats) return;
     stats->total_pool_allocated = g_total_pool_allocated;
@@ -453,6 +533,9 @@ void SNEPPX_mem_pool_stats(SNEPPXMemStats* stats) {
     }
 }
 
+/**
+ * @brief Perform Mem Pool Print Stats.
+ */
 void SNEPPX_mem_pool_print_stats(void) {
     SNEPPXMemStats s;
     SNEPPX_mem_pool_stats(&s);

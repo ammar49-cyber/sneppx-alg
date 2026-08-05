@@ -20,6 +20,15 @@
 
 
 
+/**
+ * @brief Initialize Radam.
+ *
+ * @param state [out] State value.
+ * @param size [in] Size value.
+ * @param lr [in] Lr value.
+ * @param beta1 [in] Beta1 value.
+ * @param beta2 [in] Beta2 value.
+ */
 void SNEPPX_radam_init(SNEPPXRAdamState* state, size_t size, float lr, float beta1, float beta2, float eps) {
     if (!state) return;
     memset(state, 0, sizeof(SNEPPXRAdamState));
@@ -35,6 +44,14 @@ void SNEPPX_radam_init(SNEPPXRAdamState* state, size_t size, float lr, float bet
     state->size = size;
 }
 
+/**
+ * @brief Perform Radam Step.
+ *
+ * @param state [out] State value.
+ * @param params [out] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_radam_step(SNEPPXRAdamState* state, float* params, const float* grads) {
     if (!state || !params || !grads) return -1;
     if (!state->m || !state->v) return -1;
@@ -71,6 +88,9 @@ int SNEPPX_radam_step(SNEPPXRAdamState* state, float* params, const float* grads
     return 0;
 }
 
+/**
+ * @brief Destroy Radam.
+ */
 void SNEPPX_radam_destroy(SNEPPXRAdamState* state) {
     if (!state) return;
     if (state->m) SNEPPX_free(state->m, state->size * sizeof(float));

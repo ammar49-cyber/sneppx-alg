@@ -6,6 +6,22 @@
 #include "common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Autodiff Cuda
+ *
+ * WHAT
+ *   Autodiff Cuda.
+ *
+ * CONCEPT
+ *   Provides the Autodiff Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

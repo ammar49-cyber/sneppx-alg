@@ -6,6 +6,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Flex Attention
+ *
+ * WHAT
+ *   Flex Attention.
+ *
+ * CONCEPT
+ *   Provides attention mechanisms.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // FlexAttention: Block-sparse attention with mask modulation
 // ============================================================================

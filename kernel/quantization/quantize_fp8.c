@@ -31,6 +31,13 @@
  */
 
 /* ---- E4M3 ---- */
+/**
+ * @brief Perform Float To Fp8 E4m3.
+ *
+ * @param value [in] Value value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint8_t SNEPPX_float_to_fp8_e4m3(float value)
 {
     uint32_t b;
@@ -61,6 +68,13 @@ uint8_t SNEPPX_float_to_fp8_e4m3(float value)
     return e4m3;
 }
 
+/**
+ * @brief Perform Fp8 E4m3 To Float.
+ *
+ * @param fp8 [in] Fp8 value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_fp8_e4m3_to_float(uint8_t fp8)
 {
     uint32_t sign = (uint32_t)((fp8 >> 7) & 1);
@@ -85,6 +99,15 @@ float SNEPPX_fp8_e4m3_to_float(uint8_t fp8)
     return result;
 }
 
+/**
+ * @brief Perform Quantize Fp8 E4m3.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_fp8_e4m3(const float* input, uint8_t* output, size_t n)
 {
     if (!input || !output) return -1;
@@ -94,6 +117,15 @@ int SNEPPX_quantize_fp8_e4m3(const float* input, uint8_t* output, size_t n)
     return 0;
 }
 
+/**
+ * @brief Perform Dequantize Fp8 E4m3.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dequantize_fp8_e4m3(const uint8_t* input, float* output, size_t n)
 {
     if (!input || !output) return -1;
@@ -104,6 +136,13 @@ int SNEPPX_dequantize_fp8_e4m3(const uint8_t* input, float* output, size_t n)
 }
 
 /* ---- E5M2 ---- */
+/**
+ * @brief Perform Float To Fp8 E5m2.
+ *
+ * @param value [in] Value value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint8_t SNEPPX_float_to_fp8_e5m2(float value)
 {
     uint32_t b;
@@ -131,6 +170,13 @@ uint8_t SNEPPX_float_to_fp8_e5m2(float value)
     return e5m2;
 }
 
+/**
+ * @brief Perform Fp8 E5m2 To Float.
+ *
+ * @param fp8 [in] Fp8 value.
+ *
+ * @return The result value, or 0 on error.
+ */
 float SNEPPX_fp8_e5m2_to_float(uint8_t fp8)
 {
     uint32_t sign = (uint32_t)((fp8 >> 7) & 1);
@@ -154,6 +200,15 @@ float SNEPPX_fp8_e5m2_to_float(uint8_t fp8)
     return result;
 }
 
+/**
+ * @brief Perform Quantize Fp8 E5m2.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_fp8_e5m2(const float* input, uint8_t* output, size_t n)
 {
     if (!input || !output) return -1;
@@ -163,6 +218,15 @@ int SNEPPX_quantize_fp8_e5m2(const float* input, uint8_t* output, size_t n)
     return 0;
 }
 
+/**
+ * @brief Perform Dequantize Fp8 E5m2.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dequantize_fp8_e5m2(const uint8_t* input, float* output, size_t n)
 {
     if (!input || !output) return -1;

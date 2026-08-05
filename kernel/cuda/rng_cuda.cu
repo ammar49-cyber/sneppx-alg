@@ -3,6 +3,22 @@
 #include <curand_kernel.h>
 #include <cooperative_groups.h>
 
+/*
+ * SNEPPX - Rng Cuda
+ *
+ * WHAT
+ *   Rng Cuda.
+ *
+ * CONCEPT
+ *   Provides random number generation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace cg = cooperative_groups;
 
 __global__ void init_rng_states_kernel(

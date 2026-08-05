@@ -38,6 +38,22 @@
 #define ATOMIC_LOAD(p) __sync_fetch_and_add(p, 0)
 #endif
 
+/*
+ * SNEPPX - Thread Impl
+ *
+ * WHAT
+ *   Thread Impl.
+ *
+ * CONCEPT
+ *   Provides the Thread Impl.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static const size_t INITIAL_DEQUE_CAPACITY = 256;
 
 static THREAD_RET worker_thread_main(THREAD_ARG arg) {
@@ -90,6 +106,13 @@ static THREAD_RET worker_thread_main(THREAD_ARG arg) {
     return 0;
 }
 
+/**
+ * @brief Initialize Scheduler.
+ *
+ * @param sched [out] Sched value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_init(SNEPPXThreadScheduler* sched, int num_workers) {
     if (!sched) return -1;
     memset(sched, 0, sizeof(*sched));
@@ -120,6 +143,9 @@ int SNEPPX_scheduler_init(SNEPPXThreadScheduler* sched, int num_workers) {
     return 0;
 }
 
+/**
+ * @brief Destroy Scheduler.
+ */
 void SNEPPX_scheduler_destroy(SNEPPXThreadScheduler* sched) {
     if (!sched) return;
     sched->shutdown_flag = 1;
@@ -142,6 +168,11 @@ void SNEPPX_scheduler_destroy(SNEPPXThreadScheduler* sched) {
     sched->global_lock = NULL;
 }
 
+/**
+ * @brief Start Scheduler.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_start(SNEPPXThreadScheduler* sched) {
     if (!sched) return -1;
     sched->shutdown_flag = 0;
@@ -163,6 +194,11 @@ int SNEPPX_scheduler_start(SNEPPXThreadScheduler* sched) {
     return 0;
 }
 
+/**
+ * @brief Stop Scheduler.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_stop(SNEPPXThreadScheduler* sched) {
     if (!sched) return -1;
     sched->shutdown_flag = 1;
@@ -178,6 +214,15 @@ int SNEPPX_scheduler_stop(SNEPPXThreadScheduler* sched) {
     return 0;
 }
 
+/**
+ * @brief Perform Scheduler Submit.
+ *
+ * @param sched [out] Sched value.
+ * @param fn [in] Fn value.
+ * @param arg [out] Arg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_submit(SNEPPXThreadScheduler* sched, SNEPPXTaskFn fn, void* arg, int priority) {
     if (!sched || !fn) return -1;
     SNEPPXTask task;
@@ -192,10 +237,25 @@ int SNEPPX_scheduler_submit(SNEPPXThreadScheduler* sched, SNEPPXTaskFn fn, void*
     return SNEPPX_worker_push_task(sched->workers[best_idx], task);
 }
 
+/**
+ * @brief Perform Scheduler Submit Stealable.
+ *
+ * @param sched [out] Sched value.
+ * @param fn [in] Fn value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_submit_stealable(SNEPPXThreadScheduler* sched, SNEPPXTaskFn fn, void* arg) {
     return SNEPPX_scheduler_submit(sched, fn, arg, 0);
 }
 
+/**
+ * @brief Initialize Worker.
+ *
+ * @param worker [out] Worker value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_worker_init(SNEPPXWorker* worker, int id) {
     if (!worker) return -1;
     memset(worker, 0, sizeof(*worker));
@@ -212,6 +272,9 @@ int SNEPPX_worker_init(SNEPPXWorker* worker, int id) {
     return 0;
 }
 
+/**
+ * @brief Destroy Worker.
+ */
 void SNEPPX_worker_destroy(SNEPPXWorker* worker) {
     if (worker) {
         worker->is_running = 0;
@@ -220,6 +283,13 @@ void SNEPPX_worker_destroy(SNEPPXWorker* worker) {
     }
 }
 
+/**
+ * @brief Perform Worker Push Task.
+ *
+ * @param worker [out] Worker value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_worker_push_task(SNEPPXWorker* worker, SNEPPXTask task) {
     if (!worker) return -1;
     size_t tail = worker->deque_tail;
@@ -242,6 +312,14 @@ int SNEPPX_worker_push_task(SNEPPXWorker* worker, SNEPPXTask task) {
     return 0;
 }
 
+/**
+ * @brief Perform Worker Steal Task.
+ *
+ * @param thief [out] Thief value.
+ * @param victim [out] Victim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_worker_steal_task(SNEPPXWorker* thief, SNEPPXWorker* victim, SNEPPXTask* out) {
     if (!thief || !victim || !out) return -1;
     if (victim->deque_head >= victim->deque_tail) return -1;
@@ -252,6 +330,9 @@ int SNEPPX_worker_steal_task(SNEPPXWorker* thief, SNEPPXWorker* victim, SNEPPXTa
     return 0;
 }
 
+/**
+ * @brief Perform Scheduler Wait Idle.
+ */
 void SNEPPX_scheduler_wait_idle(SNEPPXThreadScheduler* sched) {
     if (!sched) return;
     int all_idle = 0;
@@ -274,6 +355,11 @@ void SNEPPX_scheduler_wait_idle(SNEPPXThreadScheduler* sched) {
     }
 }
 
+/**
+ * @brief Perform Scheduler Worker Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_scheduler_worker_count(const SNEPPXThreadScheduler* sched) {
     return sched ? sched->num_workers : 0;
 }

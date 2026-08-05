@@ -32,6 +32,17 @@ typedef struct SNEPPXMultiHeadAttention {
     int is_causal;
 } SNEPPXMultiHeadAttention;
 
+/**
+ * @brief Create Mha.
+ *
+ * @param num_heads [in] Num Heads value.
+ * @param head_dim [in] Head Dim value.
+ * @param hidden_dim [in] Hidden Dim value.
+ * @param dropout [in] Dropout value.
+ * @param is_causal [in] Is Causal value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXMultiHeadAttention* SNEPPX_mha_create(int num_heads, int head_dim, int hidden_dim, int dropout, int is_causal, int use_flash) {
     (void)use_flash;
     SNEPPXMultiHeadAttention* mha = (SNEPPXMultiHeadAttention*)calloc(1, sizeof(SNEPPXMultiHeadAttention));
@@ -44,10 +55,23 @@ SNEPPXMultiHeadAttention* SNEPPX_mha_create(int num_heads, int head_dim, int hid
     return mha;
 }
 
+/**
+ * @brief Destroy Mha.
+ */
 void SNEPPX_mha_destroy(SNEPPXMultiHeadAttention* mha) {
     free(mha);
 }
 
+/**
+ * @brief Run the forward pass for Mha.
+ *
+ * @param mha [out] Mha value.
+ * @param query [in] Query value.
+ * @param key [in] Key value.
+ * @param value [in] Value value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_mha_forward(SNEPPXMultiHeadAttention* mha, const SNEPPXTensor* query, const SNEPPXTensor* key, const SNEPPXTensor* value, const SNEPPXTensor* mask) {
     if (!mha || !query || !key || !value) return NULL;
     int num_heads = mha->num_heads;
@@ -120,6 +144,11 @@ SNEPPXTensor* SNEPPX_mha_forward(SNEPPXMultiHeadAttention* mha, const SNEPPXTens
     return output;
 }
 
+/**
+ * @brief Perform Mha Get Output Dim.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mha_get_output_dim(const SNEPPXMultiHeadAttention* mha) {
     return mha ? mha->num_heads * mha->head_dim : 0;
 }

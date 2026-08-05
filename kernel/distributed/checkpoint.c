@@ -15,6 +15,22 @@
 
 #ifdef _WIN32
 #include <windows.h>
+/*
+ * SNEPPX - Checkpoint
+ *
+ * WHAT
+ *   Checkpoint.
+ *
+ * CONCEPT
+ *   Provides checkpointing and fault tolerance.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef HANDLE snepx_thread_t;
 typedef DWORD (WINAPI *snepx_thread_fn)(LPVOID);
 static DWORD WINAPI snepx_thread_wrapper(LPVOID arg) {
@@ -124,6 +140,18 @@ static int snepx_ckpt_write_file(const char* path, const void* data,
  * Public API
  * ========================================================================= */
 
+/**
+ * @brief Initialize Checkpoint.
+ *
+ * @param cp [out] Cp value.
+ * @param dir [in] Dir value.
+ * @param world_size [in] World Size value.
+ * @param rank [in] Rank value.
+ * @param save_interval [in] Save Interval value.
+ * @param keep_last [in] Keep Last value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_checkpoint_init(SNEPPX_CheckpointCoord** cp,
                             const char* dir, int world_size, int rank,
                             int save_interval, int keep_last,

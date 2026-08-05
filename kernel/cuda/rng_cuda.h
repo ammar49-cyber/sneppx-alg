@@ -7,6 +7,22 @@
 #include "common.cuh"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Rng Cuda
+ *
+ * WHAT
+ *   Rng Cuda.
+ *
+ * CONCEPT
+ *   Provides random number generation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

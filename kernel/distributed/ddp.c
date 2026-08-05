@@ -6,6 +6,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Ddp
+ *
+ * WHAT
+ *   Ddp.
+ *
+ * CONCEPT
+ *   Provides distributed data parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // Distributed Data Parallel (DDP)
 // ============================================================================

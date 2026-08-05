@@ -36,6 +36,16 @@ static int64_t snepx_ns_now_elastic(void) {
 
 }
 
+/**
+ * @brief Initialize Elastic.
+ *
+ * @param et [out] Et value.
+ * @param world_size [in] World Size value.
+ * @param rank [in] Rank value.
+ * @param num_nodes [in] Num Nodes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_init(SNEPPXElasticTraining** et, int world_size, int rank,
                          int num_nodes, int ranks_per_node) {
     if (!et || world_size <= 0 || rank < 0 || rank >= world_size) return -1;
@@ -65,6 +75,14 @@ int SNEPPX_elastic_init(SNEPPXElasticTraining** et, int world_size, int rank,
     return 0;
 }
 
+/**
+ * @brief Perform Elastic Join.
+ *
+ * @param et [out] Et value.
+ * @param new_rank [in] New Rank value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_join(SNEPPXElasticTraining* et, int new_rank,
                          const char* addr) {
     if (!et || new_rank < 0 || addr == NULL) return -1;
@@ -86,6 +104,13 @@ int SNEPPX_elastic_join(SNEPPXElasticTraining* et, int new_rank,
     return 0;
 }
 
+/**
+ * @brief Perform Elastic Leave.
+ *
+ * @param et [out] Et value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_leave(SNEPPXElasticTraining* et, int leaving_rank) {
     if (!et || leaving_rank < 0 || leaving_rank >= et->world_size) return -1;
     et->state = SNEPPX_ELASTIC_LEAVING;
@@ -109,6 +134,13 @@ int SNEPPX_elastic_leave(SNEPPXElasticTraining* et, int leaving_rank) {
     return 0;
 }
 
+/**
+ * @brief Perform Elastic Handle Failure.
+ *
+ * @param et [out] Et value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_handle_failure(SNEPPXElasticTraining* et, int failed_rank) {
     if (!et || failed_rank < 0 || failed_rank >= et->world_size) return -1;
     printf("[SNEPPX Elastic] Rank %d: handling failure of rank %d\n",
@@ -131,6 +163,11 @@ int SNEPPX_elastic_handle_failure(SNEPPXElasticTraining* et, int failed_rank) {
     return 0;
 }
 
+/**
+ * @brief Perform Elastic Reconfigure.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_reconfigure(SNEPPXElasticTraining* et) {
     if (!et) return -1;
     printf("[SNEPPX Elastic] Reconfiguring topology (v%d)...\n", et->version);
@@ -150,6 +187,14 @@ int SNEPPX_elastic_reconfigure(SNEPPXElasticTraining* et) {
     return alive_count;
 }
 
+/**
+ * @brief Perform Elastic Get New Topology.
+ *
+ * @param et [out] Et value.
+ * @param new_world_size [out] New World Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_elastic_get_new_topology(SNEPPXElasticTraining* et,
                                      int* new_world_size, int* new_rank) {
     if (!et || !new_world_size || !new_rank) return -1;
@@ -172,16 +217,29 @@ int SNEPPX_elastic_get_new_topology(SNEPPXElasticTraining* et,
     return 0;
 }
 
+/**
+ * @brief Perform Elastic Set Barrier.
+ *
+ * @param et [out] Et value.
+ */
 void SNEPPX_elastic_set_barrier(SNEPPXElasticTraining* et,
                                 int (*fn)(void)) {
     if (et) et->barrier_fn = fn;
 }
 
+/**
+ * @brief Perform Elastic Set Checkpoint Restore.
+ *
+ * @param et [out] Et value.
+ */
 void SNEPPX_elastic_set_checkpoint_restore(SNEPPXElasticTraining* et,
                                            int (*fn)(int version)) {
     if (et) et->checkpoint_restore_fn = fn;
 }
 
+/**
+ * @brief Destroy Elastic.
+ */
 void SNEPPX_elastic_destroy(SNEPPXElasticTraining* et) {
     if (!et) return;
     free(et->global_ranks);

@@ -4,6 +4,22 @@
 #include <cublas_v2.h>
 #include <cmath>
 
+/*
+ * SNEPPX - Tensor Cuda
+ *
+ * WHAT
+ *   Tensor Cuda.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // GEMM Kernel: C = alpha * A * B + beta * C + bias, then activation
 // ============================================================================

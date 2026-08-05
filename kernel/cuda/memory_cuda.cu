@@ -3,6 +3,22 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 
+/*
+ * SNEPPX - Memory Cuda
+ *
+ * WHAT
+ *   Memory Cuda.
+ *
+ * CONCEPT
+ *   Provides memory management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // CUBLAS Handle (TLS singleton)
 // ============================================================================

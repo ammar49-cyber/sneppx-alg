@@ -6,6 +6,22 @@
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
+/*
+ * SNEPPX - Heartbeat
+ *
+ * WHAT
+ *   Heartbeat.
+ *
+ * CONCEPT
+ *   Provides heartbeat monitoring.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int winsock_init_count = 0;
 #endif
 
@@ -21,6 +37,16 @@ static int64_t snepx_ns_now(void) {
 #endif
 }
 
+/**
+ * @brief Initialize Heartbeat.
+ *
+ * @param hb [out] Hb value.
+ * @param world_size [in] World Size value.
+ * @param rank [in] Rank value.
+ * @param interval_ms [in] Interval Ms value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_init(SNEPPXHeartbeat** hb, int world_size, int rank,
                            int interval_ms, int timeout_ms) {
     if (!hb || world_size <= 0 || rank < 0 || rank >= world_size) return -1;
@@ -50,6 +76,14 @@ int SNEPPX_heartbeat_init(SNEPPXHeartbeat** hb, int world_size, int rank,
     return 0;
 }
 
+/**
+ * @brief Perform Heartbeat Listen.
+ *
+ * @param hb [out] Hb value.
+ * @param addr [in] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_listen(SNEPPXHeartbeat* hb, const char* addr, int port) {
     if (!hb) return -1;
 #ifdef _WIN32
@@ -77,6 +111,15 @@ int SNEPPX_heartbeat_listen(SNEPPXHeartbeat* hb, const char* addr, int port) {
     return 0;
 }
 
+/**
+ * @brief Perform Heartbeat Connect.
+ *
+ * @param hb [out] Hb value.
+ * @param peer_rank [in] Peer Rank value.
+ * @param addr [in] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_connect(SNEPPXHeartbeat* hb, int peer_rank,
                               const char* addr, int port) {
     if (!hb || !addr || peer_rank < 0 || peer_rank >= hb->world_size) return -1;
@@ -88,6 +131,14 @@ int SNEPPX_heartbeat_connect(SNEPPXHeartbeat* hb, int peer_rank,
     return 0;
 }
 
+/**
+ * @brief Perform Heartbeat Send.
+ *
+ * @param hb [out] Hb value.
+ * @param peer_rank [in] Peer Rank value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_send(SNEPPXHeartbeat* hb, int peer_rank,
                            SNEPPXHeartbeatStatus status) {
     if (!hb || peer_rank < 0 || peer_rank >= hb->world_size) return -1;
@@ -104,6 +155,14 @@ int SNEPPX_heartbeat_send(SNEPPXHeartbeat* hb, int peer_rank,
     return ret > 0 ? 0 : -1;
 }
 
+/**
+ * @brief Perform Heartbeat Recv.
+ *
+ * @param hb [out] Hb value.
+ * @param msg [out] Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_recv(SNEPPXHeartbeat* hb, SNEPPXHeartbeatMessage* msg,
                            int timeout_ms) {
     if (!hb || !msg) return -1;
@@ -122,6 +181,11 @@ int SNEPPX_heartbeat_recv(SNEPPXHeartbeat* hb, SNEPPXHeartbeatMessage* msg,
     return 0;
 }
 
+/**
+ * @brief Perform Heartbeat Check Alive.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_check_alive(SNEPPXHeartbeat* hb) {
     if (!hb) return 0;
     int64_t now = snepx_ns_now();
@@ -145,6 +209,14 @@ int SNEPPX_heartbeat_check_alive(SNEPPXHeartbeat* hb) {
     return alive_count;
 }
 
+/**
+ * @brief Perform Heartbeat Get Alive Ranks.
+ *
+ * @param hb [out] Hb value.
+ * @param alive_ranks [out] Alive Ranks value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heartbeat_get_alive_ranks(SNEPPXHeartbeat* hb, int* alive_ranks,
                                       int max_count) {
     if (!hb || !alive_ranks) return 0;
@@ -157,6 +229,9 @@ int SNEPPX_heartbeat_get_alive_ranks(SNEPPXHeartbeat* hb, int* alive_ranks,
     return count;
 }
 
+/**
+ * @brief Destroy Heartbeat.
+ */
 void SNEPPX_heartbeat_destroy(SNEPPXHeartbeat* hb) {
     if (!hb) return;
     hb->running = 0;

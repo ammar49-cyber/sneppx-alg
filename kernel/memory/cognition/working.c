@@ -3,6 +3,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Working
+ *
+ * WHAT
+ *   Working.
+ *
+ * CONCEPT
+ *   Provides the Working.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     SNEPPXTensor* content;
     float attention_weight;

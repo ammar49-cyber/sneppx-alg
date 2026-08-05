@@ -30,6 +30,16 @@
 
 
 
+/**
+ * @brief Perform Quantize Int8 Sym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale_out [out] Scale Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_int8_sym(const float* input, int8_t* output,
                               size_t n, float* scale_out)
 {
@@ -54,6 +64,16 @@ int SNEPPX_quantize_int8_sym(const float* input, int8_t* output,
     return 0;
 }
 
+/**
+ * @brief Perform Dequantize Int8 Sym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale [in] Scale value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dequantize_int8_sym(const int8_t* input, float* output,
                                 size_t n, float scale)
 {
@@ -64,6 +84,17 @@ int SNEPPX_dequantize_int8_sym(const int8_t* input, float* output,
     return 0;
 }
 
+/**
+ * @brief Perform Quantize Int8 Asym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale_out [out] Scale Out value.
+ * @param zp_out [out] Zp Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_int8_asym(const float* input, int8_t* output,
                                size_t n, float* scale_out, int32_t* zp_out)
 {
@@ -91,6 +122,17 @@ int SNEPPX_quantize_int8_asym(const float* input, int8_t* output,
     return 0;
 }
 
+/**
+ * @brief Perform Dequantize Int8 Asym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale [in] Scale value.
+ * @param zp [in] Zp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dequantize_int8_asym(const int8_t* input, float* output,
                                  size_t n, float scale, int32_t zp)
 {
@@ -101,6 +143,17 @@ int SNEPPX_dequantize_int8_asym(const int8_t* input, float* output,
     return 0;
 }
 
+/**
+ * @brief Perform Quantize Int8 Channel.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param rows [in] Rows value.
+ * @param cols [in] Cols value.
+ * @param scales_out [out] Scales Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_int8_channel(const float* input, int8_t* output,
                                   size_t rows, size_t cols,
                                   float* scales_out)
@@ -123,6 +176,16 @@ int SNEPPX_quantize_int8_channel(const float* input, int8_t* output,
     return 0;
 }
 
+/**
+ * @brief Perform Quantize Int4 Sym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale_out [out] Scale Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quantize_int4_sym(const float* input, uint8_t* output,
                               size_t n, float* scale_out)
 {
@@ -154,6 +217,16 @@ int SNEPPX_quantize_int4_sym(const float* input, uint8_t* output,
     return 0;
 }
 
+/**
+ * @brief Perform Dequantize Int4 Sym.
+ *
+ * @param input [in] Input value.
+ * @param output [out] Output value.
+ * @param n [in] N value.
+ * @param scale [in] Scale value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dequantize_int4_sym(const uint8_t* input, float* output,
                                 size_t n, float scale)
 {

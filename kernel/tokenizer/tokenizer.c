@@ -75,6 +75,11 @@ static int intarr_push(IntArray* a, int id) {
     return 0;
 }
 
+/**
+ * @brief Create Tokenizer.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTokenizer* SNEPPX_tokenizer_create(int vocab_size) {
     SNEPPXTokenizer* tok = SNEPPX_malloc(sizeof(SNEPPXTokenizer), 64);
     if (!tok) return NULL;
@@ -100,6 +105,9 @@ SNEPPXTokenizer* SNEPPX_tokenizer_create(int vocab_size) {
     return tok;
 }
 
+/**
+ * @brief Destroy Tokenizer.
+ */
 void SNEPPX_tokenizer_destroy(SNEPPXTokenizer* tok) {
     if (!tok) return;
     SNEPPX_free(tok->token_bytes, (size_t)tok->capacity * MAX_TOKEN_LEN);
@@ -108,8 +116,23 @@ void SNEPPX_tokenizer_destroy(SNEPPXTokenizer* tok) {
     SNEPPX_free(tok, sizeof(SNEPPXTokenizer));
 }
 
+/**
+ * @brief Perform Tokenizer Vocab Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tokenizer_vocab_size(const SNEPPXTokenizer* tok) { return tok ? tok->vocab_size : 0; }
+/**
+ * @brief Perform Tokenizer Special.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXSpecialTokens SNEPPX_tokenizer_special(const SNEPPXTokenizer* tok) { return tok ? tok->special : (SNEPPXSpecialTokens){-1,-1,-1,-1}; }
+/**
+ * @brief Perform Tokenizer Set Special.
+ *
+ * @param tok [out] Tok value.
+ */
 void SNEPPX_tokenizer_set_special(SNEPPXTokenizer* tok, SNEPPXSpecialTokens sp) { if (tok) tok->special = sp; }
 
 static int find_token(const SNEPPXTokenizer* tok, const char* bytes, int len) {
@@ -119,6 +142,14 @@ static int find_token(const SNEPPXTokenizer* tok, const char* bytes, int len) {
     return -1;
 }
 
+/**
+ * @brief Perform Tokenizer Add Token.
+ *
+ * @param tok [out] Tok value.
+ * @param token [in] Token value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tokenizer_add_token(SNEPPXTokenizer* tok, const char* token, int id) {
     if (!tok || id < 0 || id >= tok->capacity) return -1;
     int len = (int)strlen(token);
@@ -130,6 +161,15 @@ int SNEPPX_tokenizer_add_token(SNEPPXTokenizer* tok, const char* token, int id) 
     return 0;
 }
 
+/**
+ * @brief Perform Tokenizer Encode.
+ *
+ * @param tok [in] Tok value.
+ * @param text [in] Text value.
+ * @param out_ids [out] Out Ids value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tokenizer_encode(const SNEPPXTokenizer* tok, const char* text, int* out_ids, size_t max_len) {
     if (!tok || !text || !out_ids || max_len == 0) return -1;
     size_t text_len = strlen(text);
@@ -166,6 +206,14 @@ int SNEPPX_tokenizer_encode(const SNEPPXTokenizer* tok, const char* text, int* o
     return result;
 }
 
+/**
+ * @brief Perform Tokenizer Decode.
+ *
+ * @param tok [in] Tok value.
+ * @param ids [in] Ids value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 char* SNEPPX_tokenizer_decode(const SNEPPXTokenizer* tok, const int* ids, size_t len) {
     if (!tok || !ids || len == 0) return NULL;
     size_t total = 0;
@@ -224,6 +272,14 @@ static void count_pairs(IntArray** corpus, size_t num_texts, long long* pair_cou
     }
 }
 
+/**
+ * @brief Perform Tokenizer Train Bpe.
+ *
+ * @param texts [in] Texts value.
+ * @param num_texts [in] Num Texts value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTokenizer* SNEPPX_tokenizer_train_bpe(const char** texts, size_t num_texts, size_t target_vocab) {
     if (!texts || num_texts == 0 || target_vocab <= 256) return NULL;
     SNEPPXTokenizer* tok = SNEPPX_tokenizer_create((int)target_vocab + 256);
@@ -286,6 +342,13 @@ SNEPPXTokenizer* SNEPPX_tokenizer_train_bpe(const char** texts, size_t num_texts
     return tok;
 }
 
+/**
+ * @brief Save Tokenizer.
+ *
+ * @param tok [in] Tok value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tokenizer_save(const SNEPPXTokenizer* tok, const char* path) {
     if (!tok || !path) return -1;
     FILE* f = fopen(path, "wb");
@@ -310,6 +373,11 @@ int SNEPPX_tokenizer_save(const SNEPPXTokenizer* tok, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Load Tokenizer.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTokenizer* SNEPPX_tokenizer_load(const char* path) {
     if (!path) return NULL;
     FILE* f = fopen(path, "rb");
@@ -349,6 +417,14 @@ SNEPPXTokenizer* SNEPPX_tokenizer_load(const char* path) {
     return tok;
 }
 
+/**
+ * @brief Perform Tokenizer Ids To Tensor.
+ *
+ * @param tok [in] Tok value.
+ * @param ids [in] Ids value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTensor* SNEPPX_tokenizer_ids_to_tensor(const SNEPPXTokenizer* tok, const int* ids, size_t len) {
     (void)tok;
     size_t shape[] = {1, len};
@@ -358,6 +434,13 @@ SNEPPXTensor* SNEPPX_tokenizer_ids_to_tensor(const SNEPPXTokenizer* tok, const i
     return t;
 }
 
+/**
+ * @brief Perform Tokenizer Tensor To Ids.
+ *
+ * @param t [in] T value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int* SNEPPX_tokenizer_tensor_to_ids(const SNEPPXTensor* t, size_t* out_len) {
     if (!t || t->dtype != SNEPPX_INT32) return NULL;
     size_t n = t->size;
