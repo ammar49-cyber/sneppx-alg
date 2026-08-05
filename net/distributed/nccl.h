@@ -6,6 +6,22 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Nccl
+ *
+ * WHAT
+ *   Nccl.
+ *
+ * CONCEPT
+ *   Provides NCCL communication layer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 

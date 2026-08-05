@@ -3,6 +3,27 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Topology
+ *
+ * WHAT
+ *   Topology.
+ *
+ * CONCEPT
+ *   Provides the Topology.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Perform Topology Create Ring.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTopology* SNEPPX_topology_create_ring(int world_size) {
     if (world_size < 1) return NULL;
     SNEPPXTopology* t = (SNEPPXTopology*)calloc(1, sizeof(SNEPPXTopology));
@@ -23,6 +44,13 @@ SNEPPXTopology* SNEPPX_topology_create_ring(int world_size) {
     return t;
 }
 
+/**
+ * @brief Perform Topology Create Tree.
+ *
+ * @param world_size [in] World Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTopology* SNEPPX_topology_create_tree(int world_size, int branching_factor) {
     if (world_size < 1 || branching_factor < 1) return NULL;
     SNEPPXTopology* t = (SNEPPXTopology*)calloc(1, sizeof(SNEPPXTopology));
@@ -52,6 +80,13 @@ SNEPPXTopology* SNEPPX_topology_create_tree(int world_size, int branching_factor
     return t;
 }
 
+/**
+ * @brief Perform Topology Create Graph.
+ *
+ * @param world_size [in] World Size value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXTopology* SNEPPX_topology_create_graph(int world_size, const int* adjacency_matrix) {
     if (world_size < 1 || !adjacency_matrix) return NULL;
     SNEPPXTopology* t = (SNEPPXTopology*)calloc(1, sizeof(SNEPPXTopology));
@@ -77,6 +112,9 @@ SNEPPXTopology* SNEPPX_topology_create_graph(int world_size, const int* adjacenc
     return t;
 }
 
+/**
+ * @brief Destroy Topology.
+ */
 void SNEPPX_topology_destroy(SNEPPXTopology* topo) {
     if (topo) {
         free(topo->nodes);
@@ -84,6 +122,13 @@ void SNEPPX_topology_destroy(SNEPPXTopology* topo) {
     }
 }
 
+/**
+ * @brief Perform Topology Get Prev.
+ *
+ * @param topo [in] Topo value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_topology_get_prev(const SNEPPXTopology* topo, int rank) {
     if (!topo || rank < 0 || rank >= topo->world_size) return -1;
     if (topo->type == SNEPPX_TOPOLOGY_RING) {
@@ -92,6 +137,13 @@ int SNEPPX_topology_get_prev(const SNEPPXTopology* topo, int rank) {
     return (rank > 0) ? rank - 1 : -1;
 }
 
+/**
+ * @brief Perform Topology Get Next.
+ *
+ * @param topo [in] Topo value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_topology_get_next(const SNEPPXTopology* topo, int rank) {
     if (!topo || rank < 0 || rank >= topo->world_size) return -1;
     if (topo->type == SNEPPX_TOPOLOGY_RING) {
@@ -100,11 +152,27 @@ int SNEPPX_topology_get_next(const SNEPPXTopology* topo, int rank) {
     return (rank < topo->world_size - 1) ? rank + 1 : -1;
 }
 
+/**
+ * @brief Perform Topology Get Parent.
+ *
+ * @param topo [in] Topo value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_topology_get_parent(const SNEPPXTopology* topo, int rank) {
     if (!topo || rank < 0 || rank >= topo->world_size) return -1;
     return topo->nodes[rank].parent_rank;
 }
 
+/**
+ * @brief Perform Topology Get Children.
+ *
+ * @param topo [in] Topo value.
+ * @param rank [in] Rank value.
+ * @param children [out] Children value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_topology_get_children(const SNEPPXTopology* topo, int rank, int** children, int* count) {
     if (!topo || rank < 0 || rank >= topo->world_size) return -1;
     if (children) {
@@ -164,6 +232,16 @@ static int find_route_tree(const SNEPPXTopology* topo, int src, int dst, int** p
     return 0;
 }
 
+/**
+ * @brief Perform Topology Compute Route.
+ *
+ * @param topo [in] Topo value.
+ * @param src [in] Src value.
+ * @param dst [in] Dst value.
+ * @param path [out] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_topology_compute_route(const SNEPPXTopology* topo, int src, int dst, int** path, int* path_len) {
     if (!topo || !path || !path_len) return -1;
     if (src < 0 || src >= topo->world_size || dst < 0 || dst >= topo->world_size) return -1;
@@ -189,4 +267,7 @@ int SNEPPX_topology_compute_route(const SNEPPXTopology* topo, int src, int dst, 
     return -1;
 }
 
+/**
+ * @brief Perform Topology Free Route.
+ */
 void SNEPPX_topology_free_route(int* path) { free(path); }

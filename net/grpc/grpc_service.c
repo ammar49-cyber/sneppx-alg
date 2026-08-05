@@ -7,6 +7,22 @@
   #include <winsock2.h>
   #include <ws2tcpip.h>
   #pragma comment(lib, "ws2_32.lib")
+/*
+ * SNEPPX - Grpc Service
+ *
+ * WHAT
+ *   Grpc Service.
+ *
+ * CONCEPT
+ *   Provides the Grpc Service.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
   typedef int socklen_t;
   #define CLOSE_SOCKET closesocket
   #define ISVALIDSOCK(s) ((s) != INVALID_SOCKET)
@@ -111,6 +127,13 @@ static int recv_message(SOCKET sock, uint32_t* type, void** payload, uint32_t* l
 
 static SOCKET gRPC_listen_sock = -1;
 
+/**
+ * @brief Start Grpc Server.
+ *
+ * @param server [out] Server value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_server_start(SNEPPXGRPCServer** server, int port) {
     if (!server) return -1;
     if (init_winsock() != 0) return -1;
@@ -141,6 +164,9 @@ int SNEPPX_grpc_server_start(SNEPPXGRPCServer** server, int port) {
     return 0;
 }
 
+/**
+ * @brief Stop Grpc Server.
+ */
 void SNEPPX_grpc_server_stop(SNEPPXGRPCServer* server) {
     if (!server) return;
     server->is_running = 0;
@@ -151,6 +177,9 @@ void SNEPPX_grpc_server_stop(SNEPPXGRPCServer* server) {
     free(server);
 }
 
+/**
+ * @brief Perform Grpc Server Wait.
+ */
 void SNEPPX_grpc_server_wait(SNEPPXGRPCServer* server) {
     if (!server || !ISVALIDSOCK(gRPC_listen_sock)) return;
     while (server->is_running) {
@@ -169,6 +198,11 @@ void SNEPPX_grpc_server_wait(SNEPPXGRPCServer* server) {
     }
 }
 
+/**
+ * @brief Create Grpc Stub.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXGRPCStub* SNEPPX_grpc_stub_create(const char* target) {
     if (!target) return NULL;
     if (init_winsock() != 0) return NULL;
@@ -182,6 +216,9 @@ SNEPPXGRPCStub* SNEPPX_grpc_stub_create(const char* target) {
     return stub;
 }
 
+/**
+ * @brief Destroy Grpc Stub.
+ */
 void SNEPPX_grpc_stub_destroy(SNEPPXGRPCStub* stub) {
     if (!stub) return;
     if (stub->channel) CLOSE_SOCKET((SOCKET)(size_t)stub->channel);
@@ -214,6 +251,13 @@ static int stub_connect(SNEPPXGRPCStub* stub) {
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Register Node.
+ *
+ * @param stub [out] Stub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_register_node(SNEPPXGRPCStub* stub, const SNEPPXGRPCNodeInfo* info) {
     if (!stub || !info) return -1;
     if (stub_connect(stub) != 0) { stub->connected = 0; return -1; }
@@ -226,6 +270,13 @@ int SNEPPX_grpc_register_node(SNEPPXGRPCStub* stub, const SNEPPXGRPCNodeInfo* in
     return ok;
 }
 
+/**
+ * @brief Perform Grpc Get World Size.
+ *
+ * @param stub [out] Stub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_get_world_size(SNEPPXGRPCStub* stub, int* size) {
     if (!stub || !size) return -1;
     if (!stub->connected) { *size = 1; return 0; }
@@ -239,6 +290,13 @@ int SNEPPX_grpc_get_world_size(SNEPPXGRPCStub* stub, int* size) {
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Get Rank.
+ *
+ * @param stub [out] Stub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_get_rank(SNEPPXGRPCStub* stub, int* rank) {
     if (!stub || !rank) return -1;
     if (!stub->connected) { *rank = 0; return 0; }
@@ -252,6 +310,11 @@ int SNEPPX_grpc_get_rank(SNEPPXGRPCStub* stub, int* rank) {
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Barrier.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_barrier(SNEPPXGRPCStub* stub) {
     if (!stub) return -1;
     if (!stub->connected) return 0;
@@ -263,6 +326,15 @@ int SNEPPX_grpc_barrier(SNEPPXGRPCStub* stub) {
     return (type == (MSG_BARRIER | MSG_ACK)) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Grpc All Gather.
+ *
+ * @param stub [out] Stub value.
+ * @param send_buf [in] Send Buf value.
+ * @param recv_buf [out] Recv Buf value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_all_gather(SNEPPXGRPCStub* stub, const void* send_buf, void** recv_buf, size_t elem_size) {
     if (!stub || !recv_buf) return -1;
     if (!stub->connected) {
@@ -290,6 +362,14 @@ int SNEPPX_grpc_all_gather(SNEPPXGRPCStub* stub, const void* send_buf, void** re
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Send Tensor.
+ *
+ * @param stub [out] Stub value.
+ * @param tensor [in] Tensor value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_send_tensor(SNEPPXGRPCStub* stub, const void* tensor, int dest_rank) {
     if (!stub || !tensor) return -1;
     (void)dest_rank;
@@ -302,6 +382,14 @@ int SNEPPX_grpc_send_tensor(SNEPPXGRPCStub* stub, const void* tensor, int dest_r
     return (type == (MSG_SEND_TENSOR | MSG_ACK)) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Grpc Recv Tensor.
+ *
+ * @param stub [out] Stub value.
+ * @param tensor [out] Tensor value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_recv_tensor(SNEPPXGRPCStub* stub, void** tensor, int src_rank) {
     if (!stub || !tensor) return -1;
     (void)src_rank;
@@ -320,6 +408,13 @@ int SNEPPX_grpc_recv_tensor(SNEPPXGRPCStub* stub, void** tensor, int src_rank) {
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Set Auth Token.
+ *
+ * @param stub [out] Stub value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_set_auth_token(SNEPPXGRPCStub* stub, const char* token) {
     if (!stub || !token) return -1;
     if (!stub->connected) return 0;
@@ -332,6 +427,11 @@ int SNEPPX_grpc_set_auth_token(SNEPPXGRPCStub* stub, const char* token) {
     return (type == (MSG_SET_AUTH | MSG_ACK)) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Grpc Status String.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_grpc_status_string(SNEPPXGRPCStatus status) {
     switch (status) {
         case SNEPPX_GRPC_OK: return "OK";

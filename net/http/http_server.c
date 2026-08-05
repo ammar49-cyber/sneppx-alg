@@ -7,6 +7,22 @@
   #include <winsock2.h>
   #include <ws2tcpip.h>
   #pragma comment(lib, "ws2_32.lib")
+/*
+ * SNEPPX - Http Server
+ *
+ * WHAT
+ *   Http Server.
+ *
+ * CONCEPT
+ *   Provides the Http Server.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
   typedef SOCKET sock_t;
   #define SNEPPX_INVALID_SOCKET INVALID_SOCKET
   #define snepx_close closesocket
@@ -386,6 +402,13 @@ static void* worker_thread(void* arg) {
 
 /* ---- API Implementation ---- */
 
+/**
+ * @brief Create Http Server.
+ *
+ * @param port [in] Port value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPX_HttpServer* SNEPPX_http_server_create(int port, int num_threads) {
     SNEPPX_HttpServer* srv = (SNEPPX_HttpServer*)calloc(1, sizeof(*srv));
     if (!srv) return NULL;
@@ -396,6 +419,11 @@ SNEPPX_HttpServer* SNEPPX_http_server_create(int port, int num_threads) {
     return srv;
 }
 
+/**
+ * @brief Start Http Server.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_start(SNEPPX_HttpServer* srv) {
     if (!srv) return -1;
 #ifdef _WIN32
@@ -458,6 +486,9 @@ int SNEPPX_http_server_start(SNEPPX_HttpServer* srv) {
     return 0;
 }
 
+/**
+ * @brief Stop Http Server.
+ */
 void SNEPPX_http_server_stop(SNEPPX_HttpServer* srv) {
     if (!srv) return;
     srv->running = 0;
@@ -467,6 +498,9 @@ void SNEPPX_http_server_stop(SNEPPX_HttpServer* srv) {
     }
 }
 
+/**
+ * @brief Destroy Http Server.
+ */
 void SNEPPX_http_server_destroy(SNEPPX_HttpServer* srv) {
     if (!srv) return;
     SNEPPX_http_server_stop(srv);
@@ -476,6 +510,16 @@ void SNEPPX_http_server_destroy(SNEPPX_HttpServer* srv) {
     free(srv);
 }
 
+/**
+ * @brief Perform Http Server Add Route.
+ *
+ * @param srv [out] Srv value.
+ * @param method [in] Method value.
+ * @param path [in] Path value.
+ * @param handler [in] Handler value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_add_route(SNEPPX_HttpServer* srv, const char* method, const char* path,
                                   SNEPPX_http_handler_fn handler, void* userdata) {
     if (!srv || srv->num_routes >= MAX_ROUTES) return -1;
@@ -489,6 +533,14 @@ int SNEPPX_http_server_add_route(SNEPPX_HttpServer* srv, const char* method, con
     return 0;
 }
 
+/**
+ * @brief Perform Http Server Add Static Dir.
+ *
+ * @param srv [out] Srv value.
+ * @param url_prefix [in] Url Prefix value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_add_static_dir(SNEPPX_HttpServer* srv, const char* url_prefix, const char* dir_path) {
     if (!srv || srv->num_static_dirs >= MAX_ROUTES) return -1;
     int i = srv->num_static_dirs++;
@@ -499,6 +551,14 @@ int SNEPPX_http_server_add_static_dir(SNEPPX_HttpServer* srv, const char* url_pr
     return 0;
 }
 
+/**
+ * @brief Perform Http Server Add Middleware.
+ *
+ * @param srv [out] Srv value.
+ * @param mw [in] Mw value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_server_add_middleware(SNEPPX_HttpServer* srv, SNEPPX_http_middleware_fn mw, void* userdata) {
     if (!srv || srv->num_middleware >= MAX_MIDDLEWARE) return -1;
     int i = srv->num_middleware++;
@@ -509,10 +569,42 @@ int SNEPPX_http_server_add_middleware(SNEPPX_HttpServer* srv, SNEPPX_http_middle
 
 /* ---- Request accessors ---- */
 
+/**
+ * @brief Perform Http Request Method.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_method(SNEPPX_HttpRequest* req) { return req->method; }
+/**
+ * @brief Perform Http Request Path.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_path(SNEPPX_HttpRequest* req) { return req->path; }
+/**
+ * @brief Perform Http Request Header.
+ *
+ * @param req [out] Req value.
+ * @param req [in] Req value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_header(SNEPPX_HttpRequest* req, const char* name) { return find_header(req, name); }
+/**
+ * @brief Perform Http Request Body.
+ *
+ * @param req [out] Req value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_body(SNEPPX_HttpRequest* req, size_t* len) { if (len) *len = req->body_len; return req->body; }
+/**
+ * @brief Perform Http Request Query.
+ *
+ * @param req [out] Req value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_query(SNEPPX_HttpRequest* req, const char* key) {
     if (!req->query[0] || !key) return NULL;
     const char* q = req->query;
@@ -529,7 +621,19 @@ const char* SNEPPX_http_request_query(SNEPPX_HttpRequest* req, const char* key) 
     }
     return NULL;
 }
+/**
+ * @brief Perform Http Request Userdata.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_http_request_userdata(SNEPPX_HttpRequest* req) { return req->userdata; }
+/**
+ * @brief Perform Http Request Param.
+ *
+ * @param req [out] Req value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_http_request_param(SNEPPX_HttpRequest* req, const char* name) {
     if (!req || !name) return NULL;
     for (int i = 0; i < req->num_params; i++) {
@@ -541,19 +645,46 @@ const char* SNEPPX_http_request_param(SNEPPX_HttpRequest* req, const char* name)
 
 /* ---- Response setters ---- */
 
+/**
+ * @brief Perform Http Response Set Status.
+ *
+ * @param resp [out] Resp value.
+ */
 void SNEPPX_http_response_set_status(SNEPPX_HttpResponse* resp, int status_code) { resp->status_code = status_code; }
+/**
+ * @brief Perform Http Response Set Header.
+ *
+ * @param resp [out] Resp value.
+ * @param name [in] Name value.
+ */
 void SNEPPX_http_response_set_header(SNEPPX_HttpResponse* resp, const char* name, const char* value) {
     add_header(resp, name, value);
 }
+/**
+ * @brief Perform Http Response Set Body.
+ *
+ * @param resp [out] Resp value.
+ * @param data [in] Data value.
+ */
 void SNEPPX_http_response_set_body(SNEPPX_HttpResponse* resp, const char* data, size_t len) {
     if (len > BUF_SIZE - 1) len = BUF_SIZE - 1;
     memcpy(resp->body, data, len);
     resp->body[len] = '\0';
     resp->body_len = len;
 }
+/**
+ * @brief Perform Http Response Set Body Str.
+ *
+ * @param resp [out] Resp value.
+ */
 void SNEPPX_http_response_set_body_str(SNEPPX_HttpResponse* resp, const char* str) {
     SNEPPX_http_response_set_body(resp, str, strlen(str));
 }
+/**
+ * @brief Perform Http Response Set Json.
+ *
+ * @param resp [out] Resp value.
+ */
 void SNEPPX_http_response_set_json(SNEPPX_HttpResponse* resp, const char* json_str) {
     add_header(resp, "Content-Type", "application/json");
     SNEPPX_http_response_set_body_str(resp, json_str);

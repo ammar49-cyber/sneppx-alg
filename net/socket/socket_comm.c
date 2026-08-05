@@ -7,6 +7,22 @@
 #ifdef _WIN32
   #include <winsock2.h>
   #include <ws2tcpip.h>
+/*
+ * SNEPPX - Socket Comm
+ *
+ * WHAT
+ *   Socket Comm.
+ *
+ * CONCEPT
+ *   Provides the Socket Comm.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
   typedef int socklen_t;
   #define CLOSE_SOCKET(fd) closesocket(fd)
   #define ISVALIDSOCK(fd) ((fd) != INVALID_SOCKET)
@@ -42,6 +58,11 @@ static int ensure_wsa(void) {
     return 0;
 }
 
+/**
+ * @brief Create Socket.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXSocket* SNEPPX_socket_create(SNEPPXSocketType type) {
     if (ensure_wsa() != 0) return NULL;
     SNEPPXSocket* sock = (SNEPPXSocket*)calloc(1, sizeof(SNEPPXSocket));
@@ -55,12 +76,22 @@ SNEPPXSocket* SNEPPX_socket_create(SNEPPXSocketType type) {
     return sock;
 }
 
+/**
+ * @brief Destroy Socket.
+ */
 void SNEPPX_socket_destroy(SNEPPXSocket* sock) {
     if (!sock) return;
     if (ISVALIDSOCK(sock->fd)) CLOSE_SOCKET(sock->fd);
     free(sock);
 }
 
+/**
+ * @brief Perform Socket Bind.
+ *
+ * @param sock [out] Sock value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_bind(SNEPPXSocket* sock, int port) {
     if (!sock || !ISVALIDSOCK(sock->fd)) return -1;
     struct sockaddr_in addr;
@@ -75,6 +106,13 @@ int SNEPPX_socket_bind(SNEPPXSocket* sock, int port) {
     return 0;
 }
 
+/**
+ * @brief Perform Socket Listen.
+ *
+ * @param sock [out] Sock value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_listen(SNEPPXSocket* sock, int backlog) {
     if (!sock || !ISVALIDSOCK(sock->fd)) return -1;
     if (listen(sock->fd, backlog > 0 ? backlog : 5) == SOCKET_ERROR) return -1;
@@ -82,6 +120,11 @@ int SNEPPX_socket_listen(SNEPPXSocket* sock, int backlog) {
     return 0;
 }
 
+/**
+ * @brief Perform Socket Accept.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXSocket* SNEPPX_socket_accept(SNEPPXSocket* server_sock) {
     if (!server_sock || !ISVALIDSOCK(server_sock->fd)) return NULL;
     struct sockaddr_in client_addr;
@@ -99,6 +142,14 @@ SNEPPXSocket* SNEPPX_socket_accept(SNEPPXSocket* server_sock) {
     return client;
 }
 
+/**
+ * @brief Perform Socket Connect.
+ *
+ * @param sock [out] Sock value.
+ * @param host [in] Host value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_connect(SNEPPXSocket* sock, const char* host, int port) {
     if (!sock || !ISVALIDSOCK(sock->fd) || !host) return -1;
     struct sockaddr_in addr;
@@ -145,6 +196,14 @@ static int recv_all(int fd, void* buf, size_t len) {
     return 0;
 }
 
+/**
+ * @brief Perform Socket Send.
+ *
+ * @param sock [out] Sock value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_send(SNEPPXSocket* sock, const void* data, size_t len) {
     if (!sock || !ISVALIDSOCK(sock->fd) || !data) return -1;
     if (send_all(sock->fd, data, len) != 0) return -1;
@@ -152,6 +211,14 @@ int SNEPPX_socket_send(SNEPPXSocket* sock, const void* data, size_t len) {
     return (int)len;
 }
 
+/**
+ * @brief Perform Socket Recv.
+ *
+ * @param sock [out] Sock value.
+ * @param buf [out] Buf value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_recv(SNEPPXSocket* sock, void* buf, size_t len) {
     if (!sock || !ISVALIDSOCK(sock->fd) || !buf) return -1;
     int n = (int)recv(sock->fd, (char*)buf, (int)len, 0);
@@ -160,6 +227,14 @@ int SNEPPX_socket_recv(SNEPPXSocket* sock, void* buf, size_t len) {
     return n;
 }
 
+/**
+ * @brief Perform Socket Send Message.
+ *
+ * @param sock [out] Sock value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_send_message(SNEPPXSocket* sock, const void* data, size_t len) {
     if (!sock || !data) return -1;
     uint32_t nlen = (uint32_t)len;
@@ -168,6 +243,14 @@ int SNEPPX_socket_send_message(SNEPPXSocket* sock, const void* data, size_t len)
     return SNEPPX_socket_send(sock, data, len);
 }
 
+/**
+ * @brief Perform Socket Recv Message.
+ *
+ * @param sock [out] Sock value.
+ * @param buf [out] Buf value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_recv_message(SNEPPXSocket* sock, void** buf, size_t* len) {
     if (!sock || !buf || !len) return -1;
     uint32_t nlen;
@@ -180,6 +263,9 @@ int SNEPPX_socket_recv_message(SNEPPXSocket* sock, void** buf, size_t* len) {
     return 0;
 }
 
+/**
+ * @brief Close Socket.
+ */
 void SNEPPX_socket_close(SNEPPXSocket* sock) {
     if (!sock) return;
     if (ISVALIDSOCK(sock->fd)) {
@@ -190,18 +276,39 @@ void SNEPPX_socket_close(SNEPPXSocket* sock) {
     sock->is_listening = 0;
 }
 
+/**
+ * @brief Perform Socket Send Tensor.
+ *
+ * @param sock [out] Sock value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_send_tensor(SNEPPXSocket* sock, const void* tensor_handle) {
     (void)tensor_handle;
     if (!sock || !sock->is_connected) return -1;
     return 0;
 }
 
+/**
+ * @brief Perform Socket Recv Tensor.
+ *
+ * @param sock [out] Sock value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_recv_tensor(SNEPPXSocket* sock, void** tensor_handle) {
     if (!sock || !tensor_handle) return -1;
     *tensor_handle = NULL;
     return 0;
 }
 
+/**
+ * @brief Perform Socket Set Timeout.
+ *
+ * @param sock [out] Sock value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_socket_set_timeout(SNEPPXSocket* sock, int ms) {
     if (!sock || !ISVALIDSOCK(sock->fd)) return -1;
     struct timeval tv;
@@ -213,6 +320,11 @@ int SNEPPX_socket_set_timeout(SNEPPXSocket* sock, int ms) {
     return 0;
 }
 
+/**
+ * @brief Perform Socket Error String.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_socket_error_string(int err) {
     (void)err;
 #ifdef _WIN32

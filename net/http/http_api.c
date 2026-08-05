@@ -5,6 +5,22 @@
 #include <string.h>
 #include <time.h>
 
+/*
+ * SNEPPX - Http Api
+ *
+ * WHAT
+ *   Http Api.
+ *
+ * CONCEPT
+ *   Provides the Http Api.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ---- Known model presets ---- */
 
 typedef struct {
@@ -275,6 +291,11 @@ static int generate_handler(SNEPPX_HttpRequest* req, SNEPPX_HttpResponse* resp, 
 
 /* ---- Public API ---- */
 
+/**
+ * @brief Create Http Api.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPX_HttpApi* SNEPPX_http_api_create(const char* version) {
     SNEPPX_HttpApi* api = (SNEPPX_HttpApi*)calloc(1, sizeof(*api));
     if (!api) return NULL;
@@ -286,10 +307,20 @@ SNEPPX_HttpApi* SNEPPX_http_api_create(const char* version) {
     return api;
 }
 
+/**
+ * @brief Destroy Http Api.
+ */
 void SNEPPX_http_api_destroy(SNEPPX_HttpApi* api) {
     free(api);
 }
 
+/**
+ * @brief Perform Http Api Register.
+ *
+ * @param srv [out] Srv value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_api_register(SNEPPX_HttpServer* srv, SNEPPX_HttpApi* api) {
     if (!srv || !api) return -1;
     if (SNEPPX_http_server_add_route(srv, "GET", "/v1/health", health_handler, api) != 0) return -1;
@@ -299,6 +330,11 @@ int SNEPPX_http_api_register(SNEPPX_HttpServer* srv, SNEPPX_HttpApi* api) {
     return 0;
 }
 
+/**
+ * @brief Perform Http Api Model Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_api_model_count(SNEPPX_HttpApi* api) {
     (void)api;
     return NUM_PRESETS;

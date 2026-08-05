@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Nccl
+ *
+ * WHAT
+ *   Nccl.
+ *
+ * CONCEPT
+ *   Provides NCCL communication layer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // ============================================================================
 // NCCL Backend Abstraction
 //

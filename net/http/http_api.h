@@ -4,6 +4,22 @@
 #include "http_server.h"
 
 #ifdef __cplusplus
+/*
+ * SNEPPX - Http Api
+ *
+ * WHAT
+ *   Http Api.
+ *
+ * CONCEPT
+ *   Provides the Http Api.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #endif
 
@@ -23,16 +39,43 @@ typedef struct SNEPPX_HttpApi SNEPPX_HttpApi;
 
 /* Create API state. version is copied into the state (may be NULL -> "dev").
  * start time is captured for uptime reporting. */
+/**
+ * @brief Create Http Api.
+ *
+ * @param version [in] Version value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPX_HttpApi* SNEPPX_http_api_create(const char* version);
 
 /* Destroy API state. */
+/**
+ * @brief Destroy Http Api.
+ *
+ * @param api [out] Api value.
+ */
 void SNEPPX_http_api_destroy(SNEPPX_HttpApi* api);
 
 /* Register all /v1/* endpoints on an existing server.
  * Returns 0 on success, -1 if a route could not be registered. */
+/**
+ * @brief Perform Http Api Register.
+ *
+ * @param srv [out] Srv value.
+ * @param api [out] Api value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_api_register(SNEPPX_HttpServer* srv, SNEPPX_HttpApi* api);
 
 /* Number of known model presets reported by /v1/models. */
+/**
+ * @brief Perform Http Api Model Count.
+ *
+ * @param api [out] Api value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_api_model_count(SNEPPX_HttpApi* api);
 
 #ifdef __cplusplus

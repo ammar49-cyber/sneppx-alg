@@ -12,6 +12,22 @@
 #define MAX_PUBLIC_PATHS 32
 #define MAX_HASHED_KEYS 256
 
+/*
+ * SNEPPX - Http Auth
+ *
+ * WHAT
+ *   Http Auth.
+ *
+ * CONCEPT
+ *   Provides the Http Auth.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ---- SQLite3 forward declarations (lightweight integration) ---- */
 
 /* We use a minimal inline SQLite binding to avoid external dependency.
@@ -185,6 +201,11 @@ static int auth_middleware_impl(SNEPPX_HttpRequest* req, SNEPPX_HttpResponse* re
 
 /* ---- Public API ---- */
 
+/**
+ * @brief Create Http Auth.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPX_HttpAuth* SNEPPX_http_auth_create(const char* db_path) {
     SNEPPX_HttpAuth* auth = (SNEPPX_HttpAuth*)calloc(1, sizeof(*auth));
     if (!auth) return NULL;
@@ -193,15 +214,30 @@ SNEPPX_HttpAuth* SNEPPX_http_auth_create(const char* db_path) {
     return auth;
 }
 
+/**
+ * @brief Destroy Http Auth.
+ */
 void SNEPPX_http_auth_destroy(SNEPPX_HttpAuth* auth) {
     free(auth);
 }
 
+/**
+ * @brief Perform Http Auth Middleware.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPX_http_middleware_fn SNEPPX_http_auth_middleware(SNEPPX_HttpAuth* auth) {
     (void)auth;
     return auth_middleware_impl;
 }
 
+/**
+ * @brief Perform Http Auth Add Public Path.
+ *
+ * @param auth [out] Auth value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_http_auth_add_public_path(SNEPPX_HttpAuth* auth, const char* path_prefix) {
     if (!auth || auth->num_public_paths >= MAX_PUBLIC_PATHS) return -1;
     strncpy(auth->public_paths[auth->num_public_paths], path_prefix, 127);
