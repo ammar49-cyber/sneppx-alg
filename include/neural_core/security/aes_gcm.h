@@ -44,11 +44,35 @@ typedef struct {
     int mode;
 } SNEPPXAESGCM;
 
+/**
+ * @brief Expand Aes256.
+ */
 void SNEPPX_aes256_key_expansion(const uint8_t key[SNEPPX_AES256_KEY_SIZE], uint32_t rk[60]);
+/**
+ * @brief Encrypt a single block with Aes256.
+ */
 void SNEPPX_aes256_encrypt_block(const uint32_t rk[60], const uint8_t in[SNEPPX_AES_BLOCK_SIZE], uint8_t out[SNEPPX_AES_BLOCK_SIZE]);
+/**
+ * @brief Decrypt a single block with Aes256.
+ */
 void SNEPPX_aes256_decrypt_block(const uint32_t rk[60], const uint8_t in[SNEPPX_AES_BLOCK_SIZE], uint8_t out[SNEPPX_AES_BLOCK_SIZE]);
 
+/**
+ * @brief Initialize Aes Gcm.
+ *
+ * @param ctx [out] Ctx value.
+ * @param encrypt [in] Encrypt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_aes_gcm_init(SNEPPXAESGCM* ctx, const uint8_t key[SNEPPX_AES256_KEY_SIZE], const uint8_t iv[SNEPPX_GCM_IV_SIZE], int encrypt);
+/**
+ * @brief Perform Aes Gcm Update Aad.
+ *
+ * @param ctx [out] Ctx value.
+ * @param aad [in] Aad value.
+ * @param aad_len [in] Aad Len value.
+ */
 void SNEPPX_aes_gcm_update_aad(SNEPPXAESGCM* ctx, const uint8_t* aad, size_t aad_len);
 /**
  * @brief Encrypt plaintext with AES-GCM.
@@ -78,7 +102,19 @@ void SNEPPX_aes_gcm_encrypt(SNEPPXAESGCM* ctx, const uint8_t* plaintext, uint8_t
  * @return 0 on success, -1 on error.
  */
 int  SNEPPX_aes_gcm_decrypt(SNEPPXAESGCM* ctx, const uint8_t* ciphertext, uint8_t* plaintext, size_t len);
+/**
+ * @brief Perform Aes Gcm Finalize.
+ *
+ * @param ctx [out] Ctx value.
+ */
 void SNEPPX_aes_gcm_finalize(SNEPPXAESGCM* ctx, uint8_t tag[SNEPPX_GCM_TAG_SIZE]);
+/**
+ * @brief Perform Aes Gcm Verify Tag.
+ *
+ * @param ctx [out] Ctx value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int  SNEPPX_aes_gcm_verify_tag(SNEPPXAESGCM* ctx, const uint8_t expected_tag[SNEPPX_GCM_TAG_SIZE]);
 
 #ifdef __cplusplus
