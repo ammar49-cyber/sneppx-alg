@@ -23,10 +23,10 @@ SNEPPX Algo is a cognitive processing system implementing neural architecture se
 ## Build Commands
 ```powershell
 # Configure (debug)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 
 # Configure (release)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 # Build a specific target
 cmake --build build --config Release --target neural_security_c

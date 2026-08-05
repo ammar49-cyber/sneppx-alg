@@ -342,7 +342,7 @@ source .venv/bin/activate  # Linux/macOS
 pip install pytest pytest-cov coverage
 
 # Run quick test suite (C/C++ requires CMake build first)
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_TESTS=ON
 cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure
 
