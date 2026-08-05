@@ -59,6 +59,16 @@ if (Test-Tool "sneppx-format") {
     }
 }
 
+# 2b. Documentation coverage (docs/COMMENTING.md Layers 1 & 4)
+if (Test-Tool "sneppx-format") {
+    Check "Documentation coverage (sneppx-format --docs)" {
+        & sneppx-format --docs --no-color kernel > "$ROOT\.sneppx\docs-kernel.log" 2>&1
+        & sneppx-format --docs --no-color algorithms > "$ROOT\.sneppx\docs-algorithms.log" 2>&1
+        & sneppx-format --docs --no-color security > "$ROOT\.sneppx\docs-security.log" 2>&1
+        & sneppx-format --docs --no-color net > "$ROOT\.sneppx\docs-net.log" 2>&1
+    }
+}
+
 # 3. Circular dependencies
 if (Test-Tool "sneppx-deps") {
     Check "Circular dependency check" {

@@ -41,3 +41,13 @@ repos:
     hooks:
       - id: shellcheck
         args: [--severity=warning]
+
+  # Local hook: SNEPPX documentation coverage (docs/COMMENTING.md Layers 1 & 4)
+  - repo: local
+    hooks:
+      - id: sneppx-docs
+        name: sneppx-format --docs (Layer 1/4 doc coverage)
+        entry: sneppx-format --docs --no-color
+        language: system
+        types: [c, cpp, cuda]
+        fail_fast: false
