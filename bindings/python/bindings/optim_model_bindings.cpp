@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Optim Model Bindings
+ *
+ * WHAT
+ *   Optim Model Bindings.
+ *
+ * CONCEPT
+ *   Provides the Optim Model Bindings.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // Optimizer + LRScheduler + Model wrappers — extracted from bindings.cpp lines 605–800, 1445–1595
 #pragma once
 

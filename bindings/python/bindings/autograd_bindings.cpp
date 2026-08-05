@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Autograd Bindings
+ *
+ * WHAT
+ *   Autograd Bindings.
+ *
+ * CONCEPT
+ *   Provides automatic differentiation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // Variable + Tape wrappers — extracted from bindings.cpp lines 503–600, 1398–1443
 #pragma once
 

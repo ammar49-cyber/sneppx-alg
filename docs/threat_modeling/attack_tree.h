@@ -7,6 +7,22 @@
 #define SNEPPX_AT_MAX_CHILDREN 32
 #define SNEPPX_AT_MAX_TREE_DEPTH 16
 
+/*
+ * SNEPPX - Attack Tree
+ *
+ * WHAT
+ *   Attack Tree.
+ *
+ * CONCEPT
+ *   Provides the Attack Tree.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_AT_GOAL,
     SNEPPX_AT_OR_NODE,

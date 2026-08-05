@@ -3,6 +3,22 @@
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 
+/*
+ * SNEPPX - Bindings
+ *
+ * WHAT
+ *   Bindings.
+ *
+ * CONCEPT
+ *   Provides the Bindings.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
 #include "multidimensional_tensor_engine.h"
 #include "polymorphic_memory_allocator.h"
@@ -30,6 +46,11 @@ namespace py = pybind11;
 // ---------------------------------------------------------------------------
 // Helper: map SNEPPXDtype to NumPy dtype string
 // ---------------------------------------------------------------------------
+/**
+ * @brief Perform Dtype To Numpy.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_dtype_to_numpy(SNEPPXDtype d) {
     switch (d) {
         case SNEPPX_FLOAT32:   return "float32";
@@ -49,6 +70,11 @@ const char* SNEPPX_dtype_to_numpy(SNEPPXDtype d) {
     }
 }
 
+/**
+ * @brief Perform Dtype.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXDtype numpy_to_SNEPPX_dtype(const std::string& dt) {
     if (dt == "float32")   return SNEPPX_FLOAT32;
     if (dt == "float64")   return SNEPPX_FLOAT64;
@@ -66,6 +92,11 @@ SNEPPXDtype numpy_to_SNEPPX_dtype(const std::string& dt) {
     throw std::runtime_error("unsupported numpy dtype: " + dt);
 }
 
+/**
+ * @brief Perform Dtype Itemsize.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_dtype_itemsize(SNEPPXDtype d) {
     return SNEPPX_tensor_dtype_size(d);
 }

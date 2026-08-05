@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Crypto Bindings
+ *
+ * WHAT
+ *   Crypto Bindings.
+ *
+ * CONCEPT
+ *   Provides the Crypto Bindings.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // Crypto wrappers — extracted from bindings.cpp lines 988–1127, 1657–1672
 #pragma once
 

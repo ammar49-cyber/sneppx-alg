@@ -7,6 +7,22 @@
 #define SNEPPX_TM_MAX_THREATS 2048
 #define SNEPPX_TM_MAX_MITIGATIONS 64
 
+/*
+ * SNEPPX - Stride Model Core
+ *
+ * WHAT
+ *   Stride Model Core.
+ *
+ * CONCEPT
+ *   Provides the Stride Model Core.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TM_SPOOFING,
     SNEPPX_TM_TAMPERING,

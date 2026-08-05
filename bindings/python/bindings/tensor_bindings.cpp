@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Tensor Bindings
+ *
+ * WHAT
+ *   Tensor Bindings.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // Tensor wrapper — extracted from bindings.cpp lines 86–498, 1252–1396
 #pragma once
 

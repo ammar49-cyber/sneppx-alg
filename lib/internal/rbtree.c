@@ -2,6 +2,22 @@
 #include "polymorphic_memory_allocator.h"
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Rbtree
+ *
+ * WHAT
+ *   Rbtree.
+ *
+ * CONCEPT
+ *   Provides the Rbtree.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int default_compare(uint64_t a, uint64_t b) {
     return (a > b) - (a < b);
 }
@@ -85,6 +101,11 @@ static void insert_fixup(SNEPPXRBTree* tree, SNEPPXRBNode* z) {
     tree->root->color = SNEPPX_RBTREE_BLACK;
 }
 
+/**
+ * @brief Create Rbtree.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXRBTree* SNEPPX_rbtree_create(void) {
     SNEPPXRBTree* tree = (SNEPPXRBTree*)SNEPPX_malloc(sizeof(SNEPPXRBTree), 16);
     if (!tree) return NULL;
@@ -94,6 +115,9 @@ SNEPPXRBTree* SNEPPX_rbtree_create(void) {
     return tree;
 }
 
+/**
+ * @brief Destroy Rbtree.
+ */
 void SNEPPX_rbtree_destroy(SNEPPXRBTree* tree) {
     if (!tree) return;
     SNEPPXRBNode* stack[1024];
@@ -113,6 +137,14 @@ void SNEPPX_rbtree_destroy(SNEPPXRBTree* tree) {
     SNEPPX_free(tree, sizeof(SNEPPXRBTree));
 }
 
+/**
+ * @brief Perform Rbtree Insert.
+ *
+ * @param tree [out] Tree value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rbtree_insert(SNEPPXRBTree* tree, uint64_t key, void* value) {
     if (!tree) return -1;
     if (!tree->compare) tree->compare = default_compare;
@@ -152,6 +184,13 @@ static SNEPPXRBNode* tree_search(SNEPPXRBNode* root, uint64_t key, int (*compare
     return NULL;
 }
 
+/**
+ * @brief Perform Rbtree Search.
+ *
+ * @param tree [in] Tree value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_rbtree_search(const SNEPPXRBTree* tree, uint64_t key) {
     if (!tree) return NULL;
     if (!tree->compare) return NULL;
@@ -228,6 +267,13 @@ static void delete_fixup(SNEPPXRBTree* tree, SNEPPXRBNode* x) {
     if (x) x->color = SNEPPX_RBTREE_BLACK;
 }
 
+/**
+ * @brief Perform Rbtree Delete.
+ *
+ * @param tree [out] Tree value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rbtree_delete(SNEPPXRBTree* tree, uint64_t key) {
     if (!tree || !tree->root) return -1;
     
@@ -267,6 +313,11 @@ int SNEPPX_rbtree_delete(SNEPPXRBTree* tree, uint64_t key) {
     return 0;
 }
 
+/**
+ * @brief Perform Rbtree Min.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_rbtree_min(const SNEPPXRBTree* tree) {
     if (!tree || !tree->root) return 0;
     SNEPPXRBNode* node = tree->root;
@@ -274,6 +325,11 @@ uint64_t SNEPPX_rbtree_min(const SNEPPXRBTree* tree) {
     return node->key;
 }
 
+/**
+ * @brief Perform Rbtree Max.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_rbtree_max(const SNEPPXRBTree* tree) {
     if (!tree || !tree->root) return 0;
     SNEPPXRBNode* node = tree->root;
@@ -281,6 +337,13 @@ uint64_t SNEPPX_rbtree_max(const SNEPPXRBTree* tree) {
     return node->key;
 }
 
+/**
+ * @brief Perform Rbtree Successor.
+ *
+ * @param tree [in] Tree value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_rbtree_successor(const SNEPPXRBTree* tree, uint64_t key) {
     if (!tree || !tree->root) return 0;
     SNEPPXRBNode* node = tree_search(tree->root, key, tree->compare ? tree->compare : default_compare);
@@ -295,6 +358,13 @@ uint64_t SNEPPX_rbtree_successor(const SNEPPXRBTree* tree, uint64_t key) {
     return p ? p->key : 0;
 }
 
+/**
+ * @brief Perform Rbtree Predecessor.
+ *
+ * @param tree [in] Tree value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_rbtree_predecessor(const SNEPPXRBTree* tree, uint64_t key) {
     if (!tree || !tree->root) return 0;
     SNEPPXRBNode* node = tree_search(tree->root, key, tree->compare ? tree->compare : default_compare);

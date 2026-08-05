@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Npe Extra Bindings
+ *
+ * WHAT
+ *   Npe Extra Bindings.
+ *
+ * CONCEPT
+ *   Provides the Npe Extra Bindings.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // NPE, FM, Trainer, Memory, ThreadPool — extracted from bindings.cpp lines 802–983, 1597–1645
 #pragma once
 

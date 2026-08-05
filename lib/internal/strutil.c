@@ -5,6 +5,27 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+/*
+ * SNEPPX - Strutil
+ *
+ * WHAT
+ *   Strutil.
+ *
+ * CONCEPT
+ *   Provides the Strutil.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Create Strbuf.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 SNEPPXStringBuf* SNEPPX_strbuf_create(size_t capacity) {
     SNEPPXStringBuf* sb = (SNEPPXStringBuf*)SNEPPX_malloc(sizeof(SNEPPXStringBuf), 16);
     if (!sb) return NULL;
@@ -16,6 +37,9 @@ SNEPPXStringBuf* SNEPPX_strbuf_create(size_t capacity) {
     return sb;
 }
 
+/**
+ * @brief Destroy Strbuf.
+ */
 void SNEPPX_strbuf_destroy(SNEPPXStringBuf* sb) {
     if (!sb) return;
     SNEPPX_free(sb->buf, sb->capacity);
@@ -33,6 +57,13 @@ static int strbuf_ensure_capacity(SNEPPXStringBuf* sb, size_t needed) {
     return 0;
 }
 
+/**
+ * @brief Perform Strbuf Append.
+ *
+ * @param sb [out] Sb value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_strbuf_append(SNEPPXStringBuf* sb, const char* src) {
     if (!sb || !src) return -1;
     size_t len = strlen(src);
@@ -42,6 +73,14 @@ int SNEPPX_strbuf_append(SNEPPXStringBuf* sb, const char* src) {
     return 0;
 }
 
+/**
+ * @brief Perform Strbuf Append N.
+ *
+ * @param sb [out] Sb value.
+ * @param src [in] Src value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_strbuf_append_n(SNEPPXStringBuf* sb, const char* src, size_t n) {
     if (!sb || !src) return -1;
     if (strbuf_ensure_capacity(sb, n) != 0) return -1;
@@ -51,6 +90,14 @@ int SNEPPX_strbuf_append_n(SNEPPXStringBuf* sb, const char* src, size_t n) {
     return 0;
 }
 
+/**
+ * @brief Perform Strbuf Format.
+ *
+ * @param sb [out] Sb value.
+ * @param fmt [in] Fmt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_strbuf_format(SNEPPXStringBuf* sb, const char* fmt, ...) {
     if (!sb || !fmt) return -1;
     va_list args;
@@ -67,6 +114,9 @@ int SNEPPX_strbuf_format(SNEPPXStringBuf* sb, const char* fmt, ...) {
     return 0;
 }
 
+/**
+ * @brief Clear Strbuf.
+ */
 void SNEPPX_strbuf_clear(SNEPPXStringBuf* sb) {
     if (sb) {
         sb->length = 0;
@@ -74,6 +124,14 @@ void SNEPPX_strbuf_clear(SNEPPXStringBuf* sb) {
     }
 }
 
+/**
+ * @brief Perform Strlcpy.
+ *
+ * @param dst [out] Dst value.
+ * @param src [in] Src value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_strlcpy(char* dst, const char* src, size_t dst_cap) {
     if (!dst || dst_cap == 0) return src ? strlen(src) : 0;
     size_t src_len = src ? strlen(src) : 0;
@@ -83,6 +141,14 @@ size_t SNEPPX_strlcpy(char* dst, const char* src, size_t dst_cap) {
     return src_len;
 }
 
+/**
+ * @brief Perform Strlcat.
+ *
+ * @param dst [out] Dst value.
+ * @param src [in] Src value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_strlcat(char* dst, const char* src, size_t dst_cap) {
     if (!dst || dst_cap == 0) return src ? strlen(src) : 0;
     size_t dst_len = strlen(dst);
@@ -95,6 +161,13 @@ size_t SNEPPX_strlcat(char* dst, const char* src, size_t dst_cap) {
     return dst_len + src_len;
 }
 
+/**
+ * @brief Perform Strcmp.
+ *
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_strcmp(const char* a, const char* b) {
     if (!a && !b) return 0;
     if (!a) return -1;
@@ -102,6 +175,11 @@ int SNEPPX_strcmp(const char* a, const char* b) {
     return strcmp(a, b);
 }
 
+/**
+ * @brief Perform Strdup S.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 char* SNEPPX_strdup_s(const char* src) {
     if (!src) return NULL;
     size_t len = strlen(src);
@@ -111,6 +189,15 @@ char* SNEPPX_strdup_s(const char* src) {
     return dst;
 }
 
+/**
+ * @brief Perform Strsplit.
+ *
+ * @param str [in] Str value.
+ * @param delimiter [in] Delimiter value.
+ * @param out_tokens [out] Out Tokens value.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_strsplit(const char* str, char delimiter, char*** out_tokens, size_t max_tokens) {
     if (!str || !out_tokens) return 0;
     
@@ -176,6 +263,14 @@ size_t SNEPPX_strsplit(const char* str, char delimiter, char*** out_tokens, size
     return count;
 }
 
+/**
+ * @brief Perform Strjoin.
+ *
+ * @param tokens [in] Tokens value.
+ * @param num_tokens [in] Num Tokens value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 char* SNEPPX_strjoin(const char** tokens, size_t num_tokens, char delimiter) {
     if (!tokens || num_tokens == 0) return SNEPPX_strdup_s("");
     
