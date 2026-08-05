@@ -3,6 +3,22 @@
 #include <stdlib.h>
 #include "cryptographic_random_generator.h"
 
+/*
+ * SNEPPX - Test Random
+ *
+ * WHAT
+ *   Test Random.
+ *
+ * CONCEPT
+ *   Provides randomness generation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

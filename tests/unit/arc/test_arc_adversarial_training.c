@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Arc Adversarial Training
+ *
+ * WHAT
+ *   Test Arc Adversarial Training.
+ *
+ * CONCEPT
+ *   Provides the Test Arc Adversarial Training.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

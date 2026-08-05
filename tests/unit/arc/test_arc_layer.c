@@ -3,6 +3,22 @@
 #include <math.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Arc Layer
+ *
+ * WHAT
+ *   Test Arc Layer.
+ *
+ * CONCEPT
+ *   Provides the Test Arc Layer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 #define ASSERT(cond, msg) do { if (!(cond)) { printf("FAIL: %s (%s)\n", msg, #cond); tests_failed++; return; } } while(0)
 static void run_test(const char* name, void (*fn)(void)) {

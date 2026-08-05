@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Kyber
+ *
+ * WHAT
+ *   Test Kyber.
+ *
+ * CONCEPT
+ *   Provides Kyber post-quantum KEM (FIPS 203).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     uint8_t pk[KYBER_PUBLICKEYBYTES], sk[KYBER_SECRETKEYBYTES];
     uint8_t ct[KYBER_CIPHERTEXTBYTES], ss1[KYBER_SSBYTES], ss2[KYBER_SSBYTES];

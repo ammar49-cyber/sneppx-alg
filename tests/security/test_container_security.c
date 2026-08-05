@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Container Security
+ *
+ * WHAT
+ *   Test Container Security.
+ *
+ * CONCEPT
+ *   Provides the Test Container Security.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     container_manifest_t manifest;
     uint8_t test_manifest[] = "{\"mediaType\":\"application/vnd.oci.image.manifest.v1+json\",\"schemaVersion\":2,\"config\":{}}";

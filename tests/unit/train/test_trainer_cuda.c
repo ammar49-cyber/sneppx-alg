@@ -5,6 +5,22 @@
 #include <stdlib.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Trainer Cuda
+ *
+ * WHAT
+ *   Test Trainer Cuda.
+ *
+ * CONCEPT
+ *   Provides the Test Trainer Cuda.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

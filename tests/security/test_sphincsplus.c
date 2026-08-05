@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Sphincsplus
+ *
+ * WHAT
+ *   Test Sphincsplus.
+ *
+ * CONCEPT
+ *   Provides SPHINCS+ stateless hash signatures (FIPS 205).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     uint8_t pk[SPHINCS_PUBLICKEYBYTES], sk[SPHINCS_SECRETKEYBYTES];
     uint8_t sig[SPHINCS_SIGBYTES];

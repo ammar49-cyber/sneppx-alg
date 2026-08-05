@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Analyzer
+ *
+ * WHAT
+ *   Test Analyzer.
+ *
+ * CONCEPT
+ *   Provides the Test Analyzer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_create_ioc(void) {
     SNEPPXTIIoC ioc;
     memset(&ioc, 0, sizeof(ioc));

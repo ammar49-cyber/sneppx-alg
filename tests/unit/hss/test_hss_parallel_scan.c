@@ -5,6 +5,22 @@
 #include <stdlib.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Hss Parallel Scan
+ *
+ * WHAT
+ *   Test Hss Parallel Scan.
+ *
+ * CONCEPT
+ *   Provides tensor/expert parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

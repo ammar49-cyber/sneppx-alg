@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Fault Injection
+ *
+ * WHAT
+ *   Test Fault Injection.
+ *
+ * CONCEPT
+ *   Provides the Test Fault Injection.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_experiment_create(void) {
     SNEPPXChaosExperiment exp;
     memset(&exp, 0, sizeof(exp));

@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Test Security Common
+ *
+ * WHAT
+ *   Test Security Common.
+ *
+ * CONCEPT
+ *   Provides the Test Security Common.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Security Unit Tests — SKELETON
  * VERSION: v0.5
  *

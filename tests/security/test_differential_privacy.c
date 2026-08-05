@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Differential Privacy
+ *
+ * WHAT
+ *   Test Differential Privacy.
+ *
+ * CONCEPT
+ *   Provides the Test Differential Privacy.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     dp_stats_t stats;
     double val = SNEPPX_dp_laplace_mech(10.0, 1.0, 1.0);

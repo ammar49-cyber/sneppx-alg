@@ -3,6 +3,22 @@
 #include <stdlib.h>
 #include "authenticated_encryption_module.h"
 
+/*
+ * SNEPPX - Test Aead
+ *
+ * WHAT
+ *   Test Aead.
+ *
+ * CONCEPT
+ *   Provides the Test Aead.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Npe Jit Pipeline
+ *
+ * WHAT
+ *   Test Npe Jit Pipeline.
+ *
+ * CONCEPT
+ *   Provides pipeline parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

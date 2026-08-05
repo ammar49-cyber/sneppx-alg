@@ -5,7 +5,24 @@
 #include <string>
 #include <iostream>
 
+/*
+ * SNEPPX - Test Obf String
+ *
+ * WHAT
+ *   Test Obf String.
+ *
+ * CONCEPT
+ *   Provides the Test Obf String.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
+/** @brief Securely zero a memory buffer. */
 void SNEPPX_secure_zero(void* ptr, size_t len);
 }
 

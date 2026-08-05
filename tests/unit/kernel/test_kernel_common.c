@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Test Kernel Common
+ *
+ * WHAT
+ *   Test Kernel Common.
+ *
+ * CONCEPT
+ *   Provides compute kernel.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Kernel Unit Tests — SKELETON
  * VERSION: v0.5
  *

@@ -8,6 +8,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Complete Stack
+ *
+ * WHAT
+ *   Test Complete Stack.
+ *
+ * CONCEPT
+ *   Provides the Test Complete Stack.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 #define ASSERT(cond, msg) do { if (!(cond)) { printf("FAIL: %s (%s)\n", msg, #cond); tests_failed++; return; } } while(0)
 static void run_test(const char* name, void (*fn)(void)) {

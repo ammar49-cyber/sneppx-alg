@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <stdint.h>
 
+/*
+ * SNEPPX - Test Power
+ *
+ * WHAT
+ *   Test Power.
+ *
+ * CONCEPT
+ *   Provides power analysis mitigation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

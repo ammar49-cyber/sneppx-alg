@@ -7,6 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Inference
+ *
+ * WHAT
+ *   Test Inference.
+ *
+ * CONCEPT
+ *   Provides the Test Inference.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ===== Data Pipeline Tests ===== */
 
 static void test_dataset_create(void) {

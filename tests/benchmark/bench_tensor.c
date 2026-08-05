@@ -1,6 +1,22 @@
 #include "bench_common.h"
 #include "multidimensional_tensor_engine.h"
 
+/*
+ * SNEPPX - Bench Tensor
+ *
+ * WHAT
+ *   Bench Tensor.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void bench_create_ops(void) {
     BENCH_INIT(bs);
     printf("  Tensor create:\n");

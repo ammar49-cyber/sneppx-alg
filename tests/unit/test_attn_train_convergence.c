@@ -5,6 +5,22 @@
 #include <math.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Attn Train Convergence
+ *
+ * WHAT
+ *   Test Attn Train Convergence.
+ *
+ * CONCEPT
+ *   Provides the Test Attn Train Convergence.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define ASSERT(cond, msg) do { \

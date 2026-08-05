@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <stdint.h>
 
+/*
+ * SNEPPX - Test Ddos Mitigation
+ *
+ * WHAT
+ *   Test Ddos Mitigation.
+ *
+ * CONCEPT
+ *   Provides the Test Ddos Mitigation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     ddos_stats_t stats;
     int blocked = SNEPPX_ddos_detect_syn_flood(0xC0A80001, 0xC0A80002);

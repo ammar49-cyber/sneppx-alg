@@ -6,6 +6,22 @@
 #include "stack_canary_protection.h"
 #include "timing_attack_countermeasure.h"
 
+/*
+ * SNEPPX - Security Stress
+ *
+ * WHAT
+ *   Security Stress.
+ *
+ * CONCEPT
+ *   Provides the Security Stress.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     printf("=== SNEPPX S1 Secure Memory Stress Test ===\n\n");
 

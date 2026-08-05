@@ -2,6 +2,22 @@
 #include "control_flow_obfuscation.h"
 #include <stdio.h>
 
+/*
+ * SNEPPX - Test Obf Pipeline
+ *
+ * WHAT
+ *   Test Obf Pipeline.
+ *
+ * CONCEPT
+ *   Provides pipeline parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -9,6 +9,22 @@
 #include <stdint.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Backend Full
+ *
+ * WHAT
+ *   Test Backend Full.
+ *
+ * CONCEPT
+ *   Provides the Test Backend Full.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int pass = 0, fail = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); fail++; } else { pass++; } } while (0)
 static int nearf(float a, float b) { return fabsf(a - b) < 0.05f; }

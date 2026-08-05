@@ -3,6 +3,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Hss Model
+ *
+ * WHAT
+ *   Test Hss Model.
+ *
+ * CONCEPT
+ *   Provides the Test Hss Model.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -3,6 +3,22 @@
 #include <stdlib.h>
 #include "keccak_sha3_hashing.h"
 
+/*
+ * SNEPPX - Test Sha3
+ *
+ * WHAT
+ *   Test Sha3.
+ *
+ * CONCEPT
+ *   Provides SHA hash family.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -2,6 +2,22 @@
 #include <string.h>
 #include "constant_time_operations.h"
 
+/*
+ * SNEPPX - Test Ct
+ *
+ * WHAT
+ *   Test Ct.
+ *
+ * CONCEPT
+ *   Provides the Test Ct.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

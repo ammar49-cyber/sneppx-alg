@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test S6 Ui
+ *
+ * WHAT
+ *   Test S6 Ui.
+ *
+ * CONCEPT
+ *   Provides the Test S6 Ui.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

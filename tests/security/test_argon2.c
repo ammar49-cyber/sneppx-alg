@@ -3,6 +3,22 @@
 #include "memory_hard_key_derivation.h"
 #include "constant_time_operations.h"
 
+/*
+ * SNEPPX - Test Argon2
+ *
+ * WHAT
+ *   Test Argon2.
+ *
+ * CONCEPT
+ *   Provides the Test Argon2.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

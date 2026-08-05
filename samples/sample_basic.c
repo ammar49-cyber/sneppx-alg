@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Sample Basic
+ *
+ * WHAT
+ *   Sample Basic.
+ *
+ * CONCEPT
+ *   Provides the Sample Basic.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Basic SNEPPX-Algo Sample — SKELETON
  * VERSION: v0.5
  *

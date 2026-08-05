@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Kyber Extended
+ *
+ * WHAT
+ *   Test Kyber Extended.
+ *
+ * CONCEPT
+ *   Provides Kyber post-quantum KEM (FIPS 203).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_kyber_keygen(void) {
     SNEPPXKyberKeypair kp;
     memset(&kp, 0, sizeof(kp));

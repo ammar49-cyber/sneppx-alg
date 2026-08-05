@@ -6,6 +6,22 @@
 #include <math.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Train Integration
+ *
+ * WHAT
+ *   Test Train Integration.
+ *
+ * CONCEPT
+ *   Provides the Test Train Integration.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define ASSERT(cond, msg) do { \

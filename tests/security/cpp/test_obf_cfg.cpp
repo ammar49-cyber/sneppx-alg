@@ -3,6 +3,22 @@
 #include <cassert>
 #include <iostream>
 
+/*
+ * SNEPPX - Test Obf Cfg
+ *
+ * WHAT
+ *   Test Obf Cfg.
+ *
+ * CONCEPT
+ *   Provides the Test Obf Cfg.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

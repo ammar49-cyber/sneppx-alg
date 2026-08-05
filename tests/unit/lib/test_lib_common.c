@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Test Lib Common
+ *
+ * WHAT
+ *   Test Lib Common.
+ *
+ * CONCEPT
+ *   Provides the Test Lib Common.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Library Unit Tests — SKELETON
  * VERSION: v0.5
  *

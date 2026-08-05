@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Playbook
+ *
+ * WHAT
+ *   Test Playbook.
+ *
+ * CONCEPT
+ *   Provides the Test Playbook.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_playbook_create(void) {
     SNEPPXIRPlaybook pb;
     memset(&pb, 0, sizeof(pb));

@@ -1,6 +1,22 @@
 #include "bench_common.h"
 #include "neural_programming_engine.h"
 
+/*
+ * SNEPPX - Bench Npe
+ *
+ * WHAT
+ *   Bench Npe.
+ *
+ * CONCEPT
+ *   Provides the Bench Npe.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void bench_npe_create(void) {
     BENCH_INIT(bs);
     printf("  NPE create:\n");

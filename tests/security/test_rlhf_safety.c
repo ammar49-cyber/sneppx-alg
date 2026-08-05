@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Rlhf Safety
+ *
+ * WHAT
+ *   Test Rlhf Safety.
+ *
+ * CONCEPT
+ *   Provides the Test Rlhf Safety.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     SNEPPX_rlhf_add_default_policies();
     rlhf_score_t score;

@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <cassert>
 
+/*
+ * SNEPPX - Test Instruction Substitution
+ *
+ * WHAT
+ *   Test Instruction Substitution.
+ *
+ * CONCEPT
+ *   Provides the Test Instruction Substitution.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

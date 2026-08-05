@@ -1,6 +1,22 @@
 #include "synchronization_lock_interface.h"
 #include <stdio.h>
 
+/*
+ * SNEPPX - Test Lock
+ *
+ * WHAT
+ *   Test Lock.
+ *
+ * CONCEPT
+ *   Provides the Test Lock.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

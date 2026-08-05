@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Dilithium
+ *
+ * WHAT
+ *   Test Dilithium.
+ *
+ * CONCEPT
+ *   Provides ML-DSA lattice signatures (FIPS 204).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     uint8_t pk[DILITHIUM_PUBLICKEYBYTES], sk[DILITHIUM_SECRETKEYBYTES];
     uint8_t sig[DILITHIUM_SIGBYTES];

@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Backend Sgx
+ *
+ * WHAT
+ *   Test Backend Sgx.
+ *
+ * CONCEPT
+ *   Provides the Test Backend Sgx.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int pass = 0, fail = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); fail++; } else { pass++; } } while (0)
 

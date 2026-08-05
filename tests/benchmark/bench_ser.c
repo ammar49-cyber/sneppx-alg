@@ -1,6 +1,22 @@
 #include "bench_common.h"
 #include "sparse_expert_routing.h"
 
+/*
+ * SNEPPX - Bench Ser
+ *
+ * WHAT
+ *   Bench Ser.
+ *
+ * CONCEPT
+ *   Provides the Bench Ser.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void bench_ser_create(void) {
     BENCH_INIT(bs);
     printf("  SER create:\n");

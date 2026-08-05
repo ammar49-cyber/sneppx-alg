@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Network Fuzzer
+ *
+ * WHAT
+ *   Test Network Fuzzer.
+ *
+ * CONCEPT
+ *   Provides the Test Network Fuzzer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     fuzz_stats_t stats;
     SNEPPX_fuzzer_init(FUZZ_PROTO_RAW);

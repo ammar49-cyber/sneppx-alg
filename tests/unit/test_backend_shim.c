@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Backend Shim
+ *
+ * WHAT
+ *   Test Backend Shim.
+ *
+ * CONCEPT
+ *   Provides the Test Backend Shim.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int pass = 0, fail = 0;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); fail++; } else { pass++; } } while (0)
 

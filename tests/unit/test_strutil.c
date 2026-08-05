@@ -3,6 +3,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Strutil
+ *
+ * WHAT
+ *   Test Strutil.
+ *
+ * CONCEPT
+ *   Provides the Test Strutil.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

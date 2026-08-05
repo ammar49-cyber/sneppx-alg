@@ -9,6 +9,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test E2e Training Loop
+ *
+ * WHAT
+ *   Test E2e Training Loop.
+ *
+ * CONCEPT
+ *   Provides the Test E2e Training Loop.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

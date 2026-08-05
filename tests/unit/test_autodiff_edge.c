@@ -1,6 +1,22 @@
 #include "test_common.h"
 #include "automatic_differentiation_framework.h"
 
+/*
+ * SNEPPX - Test Autodiff Edge
+ *
+ * WHAT
+ *   Test Autodiff Edge.
+ *
+ * CONCEPT
+ *   Provides the Test Autodiff Edge.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_variable_null_data(void) {
     SNEPPXVariable* v = SNEPPX_variable_create(NULL, 1);
     ASSERT_NOT_NULL(v, "var with NULL data is allowed");

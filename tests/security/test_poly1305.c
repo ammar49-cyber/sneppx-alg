@@ -2,6 +2,22 @@
 #include <string.h>
 #include "polynomial_authentication_mac.h"
 
+/*
+ * SNEPPX - Test Poly1305
+ *
+ * WHAT
+ *   Test Poly1305.
+ *
+ * CONCEPT
+ *   Provides the Test Poly1305.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Cuda Test Suite
+ *
+ * WHAT
+ *   Cuda Test Suite.
+ *
+ * CONCEPT
+ *   Provides the Cuda Test Suite.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 // SNEPPX CUDA Test Suite
 // Compile: nvcc -o cuda_test_suite cuda_test_suite.cu -lcublas -lcurand -I../kernel/cuda
 // Run: ./cuda_test_suite

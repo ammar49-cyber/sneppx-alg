@@ -1,6 +1,22 @@
 #include "bench_common.h"
 #include "hierarchical_state_space.h"
 
+/*
+ * SNEPPX - Bench Hss
+ *
+ * WHAT
+ *   Bench Hss.
+ *
+ * CONCEPT
+ *   Provides the Bench Hss.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void bench_hss_create(void) {
     BENCH_INIT(bs);
     printf("  HSS create:\n");

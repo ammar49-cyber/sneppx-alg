@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Gradient Check
+ *
+ * WHAT
+ *   Test Gradient Check.
+ *
+ * CONCEPT
+ *   Provides the Test Gradient Check.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define ASSERT(cond, msg) do { \

@@ -3,6 +3,22 @@
 #include <stdint.h>
 #include "secure_cache_management.h"
 
+/*
+ * SNEPPX - Test Cache
+ *
+ * WHAT
+ *   Test Cache.
+ *
+ * CONCEPT
+ *   Provides cache timing protection.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define TEST(name, expr) do { \

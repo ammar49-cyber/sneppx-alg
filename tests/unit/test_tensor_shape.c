@@ -2,6 +2,22 @@
 #include "multidimensional_tensor_engine.h"
 #include "polymorphic_memory_allocator.h"
 
+/*
+ * SNEPPX - Test Tensor Shape
+ *
+ * WHAT
+ *   Test Tensor Shape.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_copy_independent(void) {
     SNEPPXTensor* a = SNEPPX_tensor_arange(0.0f, 6.0f, 1.0f, SNEPPX_FLOAT32);
     ASSERT_NOT_NULL(a, "copy src not null");

@@ -1,6 +1,22 @@
 #include "address_space_randomization.h"
 #include <stdio.h>
 
+/*
+ * SNEPPX - Test Aslr
+ *
+ * WHAT
+ *   Test Aslr.
+ *
+ * CONCEPT
+ *   Provides address space layout randomization.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

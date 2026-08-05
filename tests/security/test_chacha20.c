@@ -3,6 +3,22 @@
 #include <stdint.h>
 #include "chacha20_stream_cipher.h"
 
+/*
+ * SNEPPX - Test Chacha20
+ *
+ * WHAT
+ *   Test Chacha20.
+ *
+ * CONCEPT
+ *   Provides ChaCha20 stream cipher (RFC 8439).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

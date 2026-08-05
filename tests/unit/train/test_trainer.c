@@ -5,6 +5,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Test Trainer
+ *
+ * WHAT
+ *   Test Trainer.
+ *
+ * CONCEPT
+ *   Provides the Test Trainer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0, tests_skipped = 0;
 static int g_skip = 0;
 #define ASSERT(cond, msg) do { if (!(cond)) { printf("FAIL: %s (%s)\n", msg, #cond); tests_failed++; return; } } while(0)

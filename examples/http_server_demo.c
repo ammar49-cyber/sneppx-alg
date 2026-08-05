@@ -13,6 +13,22 @@
   #define snepx_sleep_ms(ms) usleep((ms) * 1000)
 #endif
 
+/*
+ * SNEPPX - Http Server Demo
+ *
+ * WHAT
+ *   Http Server Demo.
+ *
+ * CONCEPT
+ *   Provides the Http Server Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* Demo: run the SneppX C HTTP server with the standard /v1/* REST endpoints.
  *
  * Usage:

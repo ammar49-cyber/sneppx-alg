@@ -5,6 +5,22 @@
 #include "protected_memory_manager.h"
 #include "stack_canary_protection.h"
 
+/*
+ * SNEPPX - Test Secure Mem
+ *
+ * WHAT
+ *   Test Secure Mem.
+ *
+ * CONCEPT
+ *   Provides the Test Secure Mem.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define TEST(name, expr) do { \

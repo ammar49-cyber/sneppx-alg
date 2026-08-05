@@ -4,6 +4,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Npe Demo
+ *
+ * WHAT
+ *   Npe Demo.
+ *
+ * CONCEPT
+ *   Provides the Npe Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     printf("=== NPE Demo: MLP Execution ===\n");
     size_t dim = 8, hidden = 16;

@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Ser Gating
+ *
+ * WHAT
+ *   Test Ser Gating.
+ *
+ * CONCEPT
+ *   Provides the Test Ser Gating.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

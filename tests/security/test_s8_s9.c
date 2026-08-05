@@ -5,6 +5,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test S8 S9
+ *
+ * WHAT
+ *   Test S8 S9.
+ *
+ * CONCEPT
+ *   Provides the Test S8 S9.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

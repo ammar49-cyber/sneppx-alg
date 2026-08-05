@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Hss Demo
+ *
+ * WHAT
+ *   Hss Demo.
+ *
+ * CONCEPT
+ *   Provides the Hss Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     SNEPPXHSSConfig cfg = SNEPPX_hss_config_default();
     cfg.state_dim = 4;

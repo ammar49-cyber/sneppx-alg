@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Ser Expert
+ *
+ * WHAT
+ *   Test Ser Expert.
+ *
+ * CONCEPT
+ *   Provides the Test Ser Expert.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

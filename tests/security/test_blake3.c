@@ -2,6 +2,22 @@
 #include <string.h>
 #include "cryptographic_hashing_blake3.h"
 
+/*
+ * SNEPPX - Test Blake3
+ *
+ * WHAT
+ *   Test Blake3.
+ *
+ * CONCEPT
+ *   Provides the Test Blake3.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

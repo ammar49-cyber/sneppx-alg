@@ -3,6 +3,22 @@
 #include <math.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Ser Demo
+ *
+ * WHAT
+ *   Ser Demo.
+ *
+ * CONCEPT
+ *   Provides the Ser Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     SNEPPXSERConfig cfg = SNEPPX_ser_config_default();
     cfg.num_experts = 4; cfg.num_active = 2; cfg.input_dim = 16;

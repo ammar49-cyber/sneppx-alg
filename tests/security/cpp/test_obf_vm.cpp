@@ -4,6 +4,22 @@
 #include <iostream>
 #include <vector>
 
+/*
+ * SNEPPX - Test Obf Vm
+ *
+ * WHAT
+ *   Test Obf Vm.
+ *
+ * CONCEPT
+ *   Provides the Test Obf Vm.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Hss Hierarchical
+ *
+ * WHAT
+ *   Test Hss Hierarchical.
+ *
+ * CONCEPT
+ *   Provides neural architecture.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

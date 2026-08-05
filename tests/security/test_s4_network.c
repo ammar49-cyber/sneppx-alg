@@ -3,6 +3,22 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test S4 Network
+ *
+ * WHAT
+ *   Test S4 Network.
+ *
+ * CONCEPT
+ *   Provides the Test S4 Network.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

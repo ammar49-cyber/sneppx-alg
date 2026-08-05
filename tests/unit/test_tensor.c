@@ -3,6 +3,22 @@
 #include <math.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Tensor
+ *
+ * WHAT
+ *   Test Tensor.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

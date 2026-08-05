@@ -4,6 +4,22 @@
 #include <chrono>
 #include <iostream>
 
+/*
+ * SNEPPX - Obf Demo
+ *
+ * WHAT
+ *   Obf Demo.
+ *
+ * CONCEPT
+ *   Provides the Obf Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int original_add(int a, int b) {
     return a + b;
 }

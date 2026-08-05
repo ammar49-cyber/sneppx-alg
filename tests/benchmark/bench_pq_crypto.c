@@ -5,6 +5,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Bench Pq Crypto
+ *
+ * WHAT
+ *   Bench Pq Crypto.
+ *
+ * CONCEPT
+ *   Provides the Bench Pq Crypto.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* ------------------------------------------------------------------ */
 /*  Kyber KEM benchmarks                                               */
 /* ------------------------------------------------------------------ */

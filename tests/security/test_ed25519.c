@@ -4,6 +4,22 @@
 #include "ed25519_signature_verification.h"
 #include "cryptographic_random_generator.h"
 
+/*
+ * SNEPPX - Test Ed25519
+ *
+ * WHAT
+ *   Test Ed25519.
+ *
+ * CONCEPT
+ *   Provides Ed25519 signatures (RFC 8032).
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

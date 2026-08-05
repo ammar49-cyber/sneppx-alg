@@ -3,6 +3,22 @@
 #include <math.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Arc Demo
+ *
+ * WHAT
+ *   Arc Demo.
+ *
+ * CONCEPT
+ *   Provides the Arc Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main(void) {
     SNEPPXARCConfig cfg = SNEPPX_arc_config_default();
     SNEPPXARCLayer* layer = SNEPPX_arc_layer_create(&cfg, 16, 16, 42);

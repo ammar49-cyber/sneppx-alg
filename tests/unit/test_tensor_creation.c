@@ -1,6 +1,22 @@
 #include "test_common.h"
 #include "multidimensional_tensor_engine.h"
 
+/*
+ * SNEPPX - Test Tensor Creation
+ *
+ * WHAT
+ *   Test Tensor Creation.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_empty_2d(void) {
     size_t shape[] = {2, 3};
     SNEPPXTensor* t = SNEPPX_tensor_empty(shape, 2, SNEPPX_FLOAT32);

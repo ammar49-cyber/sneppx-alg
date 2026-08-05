@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Cognitive Memory
+ *
+ * WHAT
+ *   Test Cognitive Memory.
+ *
+ * CONCEPT
+ *   Provides memory management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_config_defaults(void) {
     SNEPPXCognitiveMemoryConfig cfg = SNEPPX_cognitive_memory_config_default();
     ASSERT_EQ(cfg.episodic.capacity, 1000, "episodic capacity");

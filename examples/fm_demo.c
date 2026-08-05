@@ -4,6 +4,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ * SNEPPX - Fm Demo
+ *
+ * WHAT
+ *   Fm Demo.
+ *
+ * CONCEPT
+ *   Provides the Fm Demo.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void print_bank_summary(const char* label, SNEPPXFMMemoryBank* bank) {
     printf("  %s: %zu/%zu entries", label, bank->num_entries, bank->max_entries);
     if (bank->num_entries > 0) {

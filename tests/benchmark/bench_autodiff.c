@@ -1,6 +1,22 @@
 #include "bench_common.h"
 #include "automatic_differentiation_framework.h"
 
+/*
+ * SNEPPX - Bench Autodiff
+ *
+ * WHAT
+ *   Bench Autodiff.
+ *
+ * CONCEPT
+ *   Provides the Bench Autodiff.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void bench_variable_ops(void) {
     BENCH_INIT(bs);
     size_t sh[] = {256, 256};

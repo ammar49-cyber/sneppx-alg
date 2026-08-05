@@ -1,3 +1,19 @@
+/*
+ * SNEPPX - Test Quantize
+ *
+ * WHAT
+ *   Test Quantize.
+ *
+ * CONCEPT
+ *   Provides the Test Quantize.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /**
  * SNEPPX Quantization C Test Suite
  * Tests INT8, FP8, AWQ, GPTQ host-side implementations.

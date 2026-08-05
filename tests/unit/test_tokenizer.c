@@ -4,6 +4,22 @@
 #include <string.h>
 #include <math.h>
 
+/*
+ * SNEPPX - Test Tokenizer
+ *
+ * WHAT
+ *   Test Tokenizer.
+ *
+ * CONCEPT
+ *   Provides tokenization.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0, tests_failed = 0;
 
 #define ASSERT(cond, msg) do { \

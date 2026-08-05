@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Test Algorithm Common
+ *
+ * WHAT
+ *   Test Algorithm Common.
+ *
+ * CONCEPT
+ *   Provides the Test Algorithm Common.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Algorithm Unit Tests — SKELETON
  * VERSION: v0.5
  *

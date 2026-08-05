@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Soc2
+ *
+ * WHAT
+ *   Test Soc2.
+ *
+ * CONCEPT
+ *   Provides the Test Soc2.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_soc2_control_assessment(void) {
     SNEPPXSOC2Framework fw;
     memset(&fw, 0, sizeof(fw));

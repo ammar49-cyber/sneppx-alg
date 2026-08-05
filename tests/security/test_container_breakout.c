@@ -1,6 +1,22 @@
 #include "container_breakout.h"
 #include <stdio.h>
 
+/*
+ * SNEPPX - Test Container Breakout
+ *
+ * WHAT
+ *   Test Container Breakout.
+ *
+ * CONCEPT
+ *   Provides the Test Container Breakout.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     breakout_stats_t stats;
     int r = SNEPPX_breakout_detect_ns_change(1234, "malicious");

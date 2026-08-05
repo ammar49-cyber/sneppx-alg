@@ -12,6 +12,22 @@
 #include <time.h>
 #endif
 
+/*
+ * SNEPPX - Bench Common
+ *
+ * WHAT
+ *   Bench Common.
+ *
+ * CONCEPT
+ *   Provides the Bench Common.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     double min_time;
     double max_time;

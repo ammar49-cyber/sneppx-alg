@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Noise Protocol
+ *
+ * WHAT
+ *   Test Noise Protocol.
+ *
+ * CONCEPT
+ *   Provides the Test Noise Protocol.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_noise_handshake_init(void) {
     SNEPPXNoiseHandshakeState hs;
     memset(&hs, 0, sizeof(hs));

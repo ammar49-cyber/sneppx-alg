@@ -3,6 +3,22 @@
 #include <cassert>
 #include <iostream>
 
+/*
+ * SNEPPX - Test Obf Anti
+ *
+ * WHAT
+ *   Test Obf Anti.
+ *
+ * CONCEPT
+ *   Provides the Test Obf Anti.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int tests_passed = 0;
 static int tests_failed = 0;
 

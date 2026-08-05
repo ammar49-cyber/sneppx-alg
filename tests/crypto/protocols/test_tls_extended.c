@@ -2,6 +2,22 @@
 #include <assert.h>
 #include <string.h>
 
+/*
+ * SNEPPX - Test Tls Extended
+ *
+ * WHAT
+ *   Test Tls Extended.
+ *
+ * CONCEPT
+ *   Provides the Test Tls Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void test_tls_session_init(void) {
     SNEPPXTlsSession session;
     memset(&session, 0, sizeof(session));

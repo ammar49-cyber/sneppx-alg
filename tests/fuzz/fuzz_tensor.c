@@ -1,4 +1,20 @@
 /*
+ * SNEPPX - Fuzz Tensor
+ *
+ * WHAT
+ *   Fuzz Tensor.
+ *
+ * CONCEPT
+ *   Provides tensor operations.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * Fuzz Tests for Tensor Operations — SKELETON
  * VERSION: v0.5
  *

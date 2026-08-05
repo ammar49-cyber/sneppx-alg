@@ -1,6 +1,22 @@
 #include "memory_leak_detector.h"
 #include <stdio.h>
 
+/*
+ * SNEPPX - Test Memory Leak
+ *
+ * WHAT
+ *   Test Memory Leak.
+ *
+ * CONCEPT
+ *   Provides memory management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int main() {
     SNEPPX_leak_init();
     leak_stats_t stats;
