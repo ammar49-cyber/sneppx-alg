@@ -1,6 +1,22 @@
 #ifndef SNEPPX_SECURITY_CPP_H
 #define SNEPPX_SECURITY_CPP_H
 /*
+ * SNEPPX - Cpp Security Bridge
+ *
+ * WHAT
+ *   Cpp Security Bridge.
+ *
+ * CONCEPT
+ *   Provides the Cpp Security Bridge.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
  * C++ Security Bindings — v0.5
  *
  * PURPOSE: C++ RAII wrappers for the C security library.  Provides

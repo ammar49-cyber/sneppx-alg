@@ -9,6 +9,22 @@
 #define SNEPPX_AI_GUARDRAIL_MAX_CATEGORIES 128
 #define SNEPPX_AI_GUARDRAIL_SCORE_THRESHOLD 0.85f
 
+/*
+ * SNEPPX - Content Filter
+ *
+ * WHAT
+ *   Content Filter.
+ *
+ * CONCEPT
+ *   Provides the Content Filter.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_AI_CATEGORY_HATE_SPEECH,
     SNEPPX_AI_CATEGORY_VIOLENCE,

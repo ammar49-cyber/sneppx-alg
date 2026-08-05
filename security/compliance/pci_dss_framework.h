@@ -9,6 +9,22 @@
 #define SNEPPX_PCI_DSS_SUB_REQUIREMENTS 78
 #define SNEPPX_PCI_DSS_MAX_CARDHOLDER_RECORDS 65536
 
+/*
+ * SNEPPX - Pci Dss Framework
+ *
+ * WHAT
+ *   Pci Dss Framework.
+ *
+ * CONCEPT
+ *   Provides the Pci Dss Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_PCI_DSS_REQ_BUILD_MAINTAIN_NETWORK,
     SNEPPX_PCI_DSS_REQ_PROTECT_CARDHOLDER_DATA,

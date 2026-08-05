@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <time.h>
 
+/*
+ * SNEPPX - S4 Extensions
+ *
+ * WHAT
+ *   S4 Extensions.
+ *
+ * CONCEPT
+ *   Provides the S4 Extensions.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void xor_bytes(uint8_t* dst, const uint8_t* a, size_t alen, const uint8_t* b, size_t blen, size_t n) {
     for (size_t i = 0; i < n; i++) {
         uint8_t av = a[i % alen], bv = b[i % blen];
@@ -134,6 +150,11 @@ static uint32_t hash_hostname(const char* hostname) {
 }
 
 /* ---- TLS 1.3 ---- */
+/**
+ * @brief Initialize Tls13 Client Hello.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_client_hello_init(SNEPPXTLS13ClientHello* ch) {
     if (!ch) return -1;
     memset(ch, 0, sizeof(*ch));
@@ -149,6 +170,14 @@ int SNEPPX_tls13_client_hello_init(SNEPPXTLS13ClientHello* ch) {
     return 0;
 }
 
+/**
+ * @brief Parse Tls13 Server Hello.
+ *
+ * @param sess [out] Sess value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_server_hello_parse(SNEPPXTLS13Session* sess, const uint8_t* data, size_t len) {
     if (!sess || !data) return -1;
     if (len < 7) return -1;
@@ -178,6 +207,14 @@ int SNEPPX_tls13_server_hello_parse(SNEPPXTLS13Session* sess, const uint8_t* dat
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Derive Keys.
+ *
+ * @param sess [out] Sess value.
+ * @param psk [in] Psk value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_derive_keys(SNEPPXTLS13Session* sess, const uint8_t* psk, size_t psk_len) {
     if (!sess || !psk || psk_len == 0) return -1;
     uint8_t early_secret[48];
@@ -196,6 +233,16 @@ int SNEPPX_tls13_derive_keys(SNEPPXTLS13Session* sess, const uint8_t* psk, size_
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Init Server.
+ *
+ * @param sess [out] Sess value.
+ * @param cert_der [in] Cert Der value.
+ * @param cert_len [in] Cert Len value.
+ * @param key_der [in] Key Der value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_init_server(SNEPPXTLS13Session* sess, const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
     if (!sess || !cert_der || !key_der || cert_len == 0 || key_len == 0) return -1;
     memset(sess, 0, sizeof(*sess));
@@ -216,6 +263,13 @@ int SNEPPX_tls13_init_server(SNEPPXTLS13Session* sess, const uint8_t* cert_der, 
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Negotiate Cipher.
+ *
+ * @param client_suites [in] Client Suites value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_negotiate_cipher(const uint16_t* client_suites, int client_count) {
     if (!client_suites || client_count <= 0) return -1;
     for (int i = 0; i < 3; i++) {
@@ -226,6 +280,14 @@ int SNEPPX_tls13_negotiate_cipher(const uint16_t* client_suites, int client_coun
     return -1;
 }
 
+/**
+ * @brief Perform Tls13 Send Finished.
+ *
+ * @param sess [out] Sess value.
+ * @param finished_msg [out] Finished Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_send_finished(SNEPPXTLS13Session* sess, uint8_t* finished_msg, size_t len) {
     if (!sess || !finished_msg || len < 32) return -1;
     uint8_t base[48];
@@ -236,6 +298,14 @@ int SNEPPX_tls13_send_finished(SNEPPXTLS13Session* sess, uint8_t* finished_msg, 
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Verify Finished.
+ *
+ * @param sess [out] Sess value.
+ * @param finished_msg [in] Finished Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_verify_finished(SNEPPXTLS13Session* sess, const uint8_t* finished_msg, size_t len) {
     if (!sess || !finished_msg || len < 32) return -1;
     uint8_t expected[32];
@@ -245,12 +315,28 @@ int SNEPPX_tls13_verify_finished(SNEPPXTLS13Session* sess, const uint8_t* finish
     return (memcmp(expected, finished_msg, 32) == 0) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Tls13 Server Select Cert.
+ *
+ * @param sess [out] Sess value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_server_select_cert(SNEPPXTLS13Session* sess, int cert_index) {
     if (!sess || cert_index < 0) return -1;
     /* sess->cert_sel = cert_index; */ /* not in SNEPPXTLS13Session */
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Hs Traffic Keys.
+ *
+ * @param sess [out] Sess value.
+ * @param hs_key [out] Hs Key value.
+ * @param hs_iv [out] Hs Iv value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_hs_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* hs_key, uint8_t* hs_iv, size_t key_len) {
     if (!sess || !hs_key || !hs_iv || key_len < 16) return -1;
     for (size_t i = 0; i < 16; i++) {
@@ -260,6 +346,15 @@ int SNEPPX_tls13_hs_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* hs_key, uint
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 App Traffic Keys.
+ *
+ * @param sess [out] Sess value.
+ * @param app_key [out] App Key value.
+ * @param app_iv [out] App Iv value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_app_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* app_key, uint8_t* app_iv, size_t key_len) {
     if (!sess || !app_key || !app_iv || key_len < 16) return -1;
     for (size_t i = 0; i < 16; i++) {
@@ -269,6 +364,15 @@ int SNEPPX_tls13_app_traffic_keys(SNEPPXTLS13Session* sess, uint8_t* app_key, ui
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Export Keying Material.
+ *
+ * @param sess [out] Sess value.
+ * @param out [out] Out value.
+ * @param out_len [in] Out Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_export_keying_material(SNEPPXTLS13Session* sess, uint8_t* out, size_t out_len, const char* label) {
     if (!sess || !out || out_len == 0 || !label) return -1;
     size_t llen = strlen(label);
@@ -281,6 +385,14 @@ int SNEPPX_tls13_export_keying_material(SNEPPXTLS13Session* sess, uint8_t* out, 
 }
 
 /* ---- Noise Protocol ---- */
+/**
+ * @brief Initialize Noise.
+ *
+ * @param nh [out] Nh value.
+ * @param pattern [in] Pattern value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_init(SNEPPXNoiseHandshake* nh, int pattern, int initiator) {
     if (!nh) return -1;
     memset(nh, 0, sizeof(*nh));
@@ -315,6 +427,14 @@ static void noise_handshake_hash(uint8_t* h, size_t h_len, const SNEPPXNoiseHand
     }
 }
 
+/**
+ * @brief Perform Noise Write Msg.
+ *
+ * @param nh [out] Nh value.
+ * @param msg [out] Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_write_msg(SNEPPXNoiseHandshake* nh, uint8_t* msg, size_t* msg_len) {
     if (!nh || !msg || !msg_len || *msg_len < 48) return -1;
     memset(msg, 0, *msg_len);
@@ -337,6 +457,14 @@ int SNEPPX_noise_write_msg(SNEPPXNoiseHandshake* nh, uint8_t* msg, size_t* msg_l
     return 0;
 }
 
+/**
+ * @brief Perform Noise Read Msg.
+ *
+ * @param nh [out] Nh value.
+ * @param msg [in] Msg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_read_msg(SNEPPXNoiseHandshake* nh, const uint8_t* msg, size_t msg_len) {
     if (!nh || !msg || msg_len < 48) return -1;
     memcpy(nh->re, msg, 32);
@@ -356,6 +484,18 @@ int SNEPPX_noise_read_msg(SNEPPXNoiseHandshake* nh, const uint8_t* msg, size_t m
     return 0;
 }
 
+/**
+ * @brief Perform Noise Init From Key.
+ *
+ * @param nh [out] Nh value.
+ * @param pattern [in] Pattern value.
+ * @param initiator [in] Initiator value.
+ * @param s [in] S value.
+ * @param e [in] E value.
+ * @param rs [in] Rs value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_init_from_key(SNEPPXNoiseHandshake* nh, int pattern, int initiator, const uint8_t* s, const uint8_t* e, const uint8_t* rs, const uint8_t* re) {
     if (!nh || !s || !e || !rs || !re) return -1;
     memset(nh, 0, sizeof(*nh));
@@ -369,6 +509,17 @@ int SNEPPX_noise_init_from_key(SNEPPXNoiseHandshake* nh, int pattern, int initia
     return 0;
 }
 
+/**
+ * @brief Encrypt Noise.
+ *
+ * @param nh [out] Nh value.
+ * @param plaintext [in] Plaintext value.
+ * @param pt_len [in] Pt Len value.
+ * @param ciphertext [out] Ciphertext value.
+ * @param ct_len [out] Ct Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_encrypt(SNEPPXNoiseHandshake* nh, const uint8_t* plaintext, size_t pt_len, uint8_t* ciphertext, size_t* ct_len, uint8_t* tag) {
     if (!nh || !plaintext || !ciphertext || !ct_len || !tag || pt_len == 0) return -1;
     if (*ct_len < pt_len + 16) return -1;
@@ -382,6 +533,17 @@ int SNEPPX_noise_encrypt(SNEPPXNoiseHandshake* nh, const uint8_t* plaintext, siz
     return 0;
 }
 
+/**
+ * @brief Decrypt Noise.
+ *
+ * @param nh [out] Nh value.
+ * @param ciphertext [in] Ciphertext value.
+ * @param ct_len [in] Ct Len value.
+ * @param plaintext [out] Plaintext value.
+ * @param pt_len [out] Pt Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_decrypt(SNEPPXNoiseHandshake* nh, const uint8_t* ciphertext, size_t ct_len, uint8_t* plaintext, size_t* pt_len, const uint8_t* tag) {
     if (!nh || !ciphertext || !plaintext || !pt_len || !tag || ct_len == 0) return -1;
     if (*pt_len < ct_len) return -1;
@@ -397,6 +559,14 @@ int SNEPPX_noise_decrypt(SNEPPXNoiseHandshake* nh, const uint8_t* ciphertext, si
     return 0;
 }
 
+/**
+ * @brief Hash Noise Get Handshake.
+ *
+ * @param nh [out] Nh value.
+ * @param hash_out [out] Hash Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_get_handshake_hash(SNEPPXNoiseHandshake* nh, uint8_t* hash_out, size_t hash_len) {
     if (!nh || !hash_out || hash_len < 32) return -1;
     noise_handshake_hash(hash_out, hash_len, nh, NULL, 0);
@@ -404,6 +574,11 @@ int SNEPPX_noise_get_handshake_hash(SNEPPXNoiseHandshake* nh, uint8_t* hash_out,
 }
 
 /* ---- QUIC ---- */
+/**
+ * @brief Initialize Quic Conn.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_conn_init(SNEPPXQUICConn* qc) {
     if (!qc) return -1;
     memset(qc, 0, sizeof(*qc));
@@ -413,6 +588,14 @@ int SNEPPX_quic_conn_init(SNEPPXQUICConn* qc) {
     return 0;
 }
 
+/**
+ * @brief Perform Quic Conn Handshake.
+ *
+ * @param qc [out] Qc value.
+ * @param params [in] Params value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_conn_handshake(SNEPPXQUICConn* qc, const uint8_t* params, size_t params_len) {
     if (!qc || !params || params_len == 0) return -1;
     (void)params[0];
@@ -426,6 +609,15 @@ int SNEPPX_quic_conn_handshake(SNEPPXQUICConn* qc, const uint8_t* params, size_t
     return 0;
 }
 
+/**
+ * @brief Perform Quic Stream Send.
+ *
+ * @param qc [out] Qc value.
+ * @param stream_id [in] Stream Id value.
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_stream_send(SNEPPXQUICConn* qc, int stream_id, const uint8_t* data, size_t len) {
     if (!qc || !data || len == 0) return -1;
     if (!qc->established) return -1;
@@ -453,6 +645,15 @@ int SNEPPX_quic_stream_send(SNEPPXQUICConn* qc, int stream_id, const uint8_t* da
     return (int)len;
 }
 
+/**
+ * @brief Perform Quic Stream Recv.
+ *
+ * @param qc [out] Qc value.
+ * @param stream_id [in] Stream Id value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_stream_recv(SNEPPXQUICConn* qc, int stream_id, uint8_t* data, size_t* len) {
     if (!qc || !data || !len) return -1;
     if (!qc->established) return -1;
@@ -477,6 +678,11 @@ int SNEPPX_quic_stream_recv(SNEPPXQUICConn* qc, int stream_id, uint8_t* data, si
     return (int)to_read;
 }
 
+/**
+ * @brief Perform Quic Create Stream.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_create_stream(SNEPPXQUICConn* qc) {
     if (!qc || !qc->established) return -1;
     for (int i = 0; i < 16; i++) {
@@ -494,6 +700,13 @@ int SNEPPX_quic_create_stream(SNEPPXQUICConn* qc) {
     return -1;
 }
 
+/**
+ * @brief Perform Quic Close Stream.
+ *
+ * @param qc [out] Qc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_close_stream(SNEPPXQUICConn* qc, int stream_id) {
     if (!qc) return -1;
     int idx = stream_id & 15;
@@ -505,11 +718,23 @@ int SNEPPX_quic_close_stream(SNEPPXQUICConn* qc, int stream_id) {
     return 0;
 }
 
+/**
+ * @brief Perform Quic Get Stream Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_get_stream_count(SNEPPXQUICConn* qc) {
     if (!qc) return 0;
     return qc->stream_count;
 }
 
+/**
+ * @brief Perform Quic Stream Avail.
+ *
+ * @param qc [out] Qc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_stream_avail(SNEPPXQUICConn* qc, int stream_id) {
     if (!qc || !qc->established) return 0;
     int idx = stream_id & 15;
@@ -520,6 +745,14 @@ int SNEPPX_quic_stream_avail(SNEPPXQUICConn* qc, int stream_id) {
     return (int)(*wp - *rp);
 }
 
+/**
+ * @brief Perform Quic Flow Control.
+ *
+ * @param qc [out] Qc value.
+ * @param stream_id [in] Stream Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_flow_control(SNEPPXQUICConn* qc, int stream_id, uint32_t credit) {
     if (!qc) return -1;
     int idx = stream_id & 15;
@@ -539,6 +772,15 @@ int SNEPPX_quic_flow_control(SNEPPXQUICConn* qc, int stream_id, uint32_t credit)
 }
 
 /* ---- mTLS ---- */
+/**
+ * @brief Perform Mtls Authenticate.
+ *
+ * @param cert_der [in] Cert Der value.
+ * @param cert_len [in] Cert Len value.
+ * @param key_der [in] Key Der value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mtls_authenticate(const uint8_t* cert_der, size_t cert_len, const uint8_t* key_der, size_t key_len) {
     if (!cert_der || !key_der || cert_len < 10 || key_len < 4) return 0;
     if (cert_der[0] != 0x30) return 0;
@@ -569,6 +811,13 @@ int SNEPPX_mtls_authenticate(const uint8_t* cert_der, size_t cert_len, const uin
     return 1;
 }
 
+/**
+ * @brief Perform Mtls Get Peer Cert.
+ *
+ * @param cert_out [out] Cert Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mtls_get_peer_cert(uint8_t* cert_out, size_t cert_len) {
     if (!cert_out || cert_len < 64) return -1;
     if (g_peer_cert_available && g_peer_cert_len > 0) {
@@ -580,6 +829,15 @@ int SNEPPX_mtls_get_peer_cert(uint8_t* cert_out, size_t cert_len) {
     return (int)cert_len;
 }
 
+/**
+ * @brief Perform Mtls Verify Chain.
+ *
+ * @param cert_chain [in] Cert Chain value.
+ * @param chain_len [in] Chain Len value.
+ * @param trusted_ca [in] Trusted Ca value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mtls_verify_chain(const uint8_t* cert_chain, int chain_len, const uint8_t* trusted_ca, size_t ca_len) {
     if (!cert_chain || !trusted_ca || chain_len <= 0 || ca_len == 0) return 0;
     for (int i = 0; i < chain_len; i++) {
@@ -593,6 +851,17 @@ int SNEPPX_mtls_verify_chain(const uint8_t* cert_chain, int chain_len, const uin
 }
 
 /* ---- OCSP ---- */
+/**
+ * @brief Perform Ocsp Request.
+ *
+ * @param issuer_cert [in] Issuer Cert value.
+ * @param issuer_len [in] Issuer Len value.
+ * @param cert [in] Cert value.
+ * @param cert_len [in] Cert Len value.
+ * @param response [out] Response value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_request(const uint8_t* issuer_cert, size_t issuer_len, const uint8_t* cert, size_t cert_len, uint8_t* response, size_t* resp_len) {
     if (!issuer_cert || !cert || !response || !resp_len || *resp_len < 128) return -1;
     uint8_t ih[20], kh[20];
@@ -619,6 +888,13 @@ int SNEPPX_ocsp_request(const uint8_t* issuer_cert, size_t issuer_len, const uin
     return 0;
 }
 
+/**
+ * @brief Verify Ocsp.
+ *
+ * @param response [in] Response value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_verify(const uint8_t* response, size_t resp_len) {
     if (!response || resp_len < 8) return -1;
     size_t off = 0;
@@ -643,6 +919,13 @@ int SNEPPX_ocsp_verify(const uint8_t* response, size_t resp_len) {
     return -1;
 }
 
+/**
+ * @brief Initialize Ocsp Cache.
+ *
+ * @param max_entries [in] Max Entries value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_init(int max_entries, int ttl) {
     ocsp_cache_max = max_entries > 0 ? max_entries : 32;
     ocsp_cache_ttl = ttl > 0 ? ttl : 3600;
@@ -655,6 +938,14 @@ int SNEPPX_ocsp_cache_init(int max_entries, int ttl) {
     return 0;
 }
 
+/**
+ * @brief Perform Ocsp Cache Lookup.
+ *
+ * @param cert_hash [in] Cert Hash value.
+ * @param response [out] Response value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_lookup(uint32_t cert_hash, uint8_t* response, size_t* resp_len) {
     if (!response || !resp_len || *resp_len < 128) return -1;
     if (ocsp_cache_len == 0) return -1;
@@ -668,6 +959,14 @@ int SNEPPX_ocsp_cache_lookup(uint32_t cert_hash, uint8_t* response, size_t* resp
     return 0;
 }
 
+/**
+ * @brief Perform Ocsp Cache Store.
+ *
+ * @param cert_hash [in] Cert Hash value.
+ * @param response [in] Response value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_store(uint32_t cert_hash, const uint8_t* response, size_t resp_len) {
     if (!response || resp_len == 0 || resp_len > sizeof(ocsp_cache_data)) return -1;
     ocsp_cached_hash = cert_hash;
@@ -678,6 +977,11 @@ int SNEPPX_ocsp_cache_store(uint32_t cert_hash, const uint8_t* response, size_t 
     return 0;
 }
 
+/**
+ * @brief Clear Ocsp Cache.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_clear(void) {
     ocsp_cache_len = 0;
     ocsp_cached_hash = 0;
@@ -688,6 +992,13 @@ int SNEPPX_ocsp_cache_clear(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Ocsp Cache Get Stats.
+ *
+ * @param lookups [out] Lookups value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_get_stats(uint32_t* lookups, uint32_t* stores) {
     if (!lookups || !stores) return -1;
     *lookups = g_ocsp_lookup_count;
@@ -695,6 +1006,11 @@ int SNEPPX_ocsp_cache_get_stats(uint32_t* lookups, uint32_t* stores) {
     return 0;
 }
 
+/**
+ * @brief Perform Ocsp Cache Is Expired.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ocsp_cache_is_expired(void) {
     uint64_t now = (uint64_t)time(NULL);
     if (ocsp_cache_len == 0) return 1;
@@ -703,15 +1019,38 @@ int SNEPPX_ocsp_cache_is_expired(void) {
 }
 
 /* ---- CT ---- */
+/**
+ * @brief Perform Ct Verify Sct.
+ *
+ * @param sct [in] Sct value.
+ * @param sct_len [in] Sct Len value.
+ * @param cert [in] Cert value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ct_verify_sct(const uint8_t* sct, size_t sct_len, const uint8_t* cert, size_t cert_len) {
     (void)cert; (void)cert_len;
     return ct_verify_single_sct(sct, sct_len);
 }
 
+/**
+ * @brief Perform Ct Get Sct Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ct_get_sct_count(void) {
     return g_ct_sct_count;
 }
 
+/**
+ * @brief Perform Ct Verify All Scts.
+ *
+ * @param cert [in] Cert value.
+ * @param cert_len [in] Cert Len value.
+ * @param results [out] Results value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ct_verify_all_scts(const uint8_t* cert, size_t cert_len, uint8_t* results, int max) {
     if (!cert || !results || max <= 0) return -1;
     int verified = 0;
@@ -730,6 +1069,14 @@ int SNEPPX_ct_verify_all_scts(const uint8_t* cert, size_t cert_len, uint8_t* res
 }
 
 /* ---- DoH ---- */
+/**
+ * @brief Perform Doh Resolve.
+ *
+ * @param hostname [in] Hostname value.
+ * @param ip_out [out] Ip Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_doh_resolve(const char* hostname, uint8_t* ip_out, size_t* ip_len) {
     if (!hostname || !ip_out || !ip_len || *ip_len < 4) return -1;
     uint32_t h = hash_hostname(hostname);
@@ -741,6 +1088,11 @@ int SNEPPX_doh_resolve(const char* hostname, uint8_t* ip_out, size_t* ip_len) {
     return 0;
 }
 
+/**
+ * @brief Perform Doh Set Resolver.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_doh_set_resolver(const char* url) {
     if (!url) return -1;
     strncpy(g_doh_resolver_url, url, sizeof(g_doh_resolver_url) - 1);
@@ -749,6 +1101,14 @@ int SNEPPX_doh_set_resolver(const char* url) {
     return 0;
 }
 
+/**
+ * @brief Perform Doh Resolve Batch.
+ *
+ * @param hostnames [in] Hostnames value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_doh_resolve_batch(const char** hostnames, int count, uint32_t* ips_out) {
     if (!hostnames || !ips_out || count <= 0) return -1;
     for (int i = 0; i < count; i++) {
@@ -760,6 +1120,11 @@ int SNEPPX_doh_resolve_batch(const char** hostnames, int count, uint32_t* ips_ou
 }
 
 /* ---- WireGuard ---- */
+/**
+ * @brief Initialize Wireguard.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_init(SNEPPXWireGuardSession* wg) {
     if (!wg) return -1;
     memset(wg, 0, sizeof(*wg));
@@ -772,6 +1137,14 @@ int SNEPPX_wireguard_init(SNEPPXWireGuardSession* wg) {
     return 0;
 }
 
+/**
+ * @brief Perform Wireguard Handshake.
+ *
+ * @param wg [out] Wg value.
+ * @param peer_key [in] Peer Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_handshake(SNEPPXWireGuardSession* wg, const uint8_t* peer_key, size_t key_len) {
     if (!wg || !peer_key || key_len < 32) return -1;
     memset(wg->preshared_key, 0, 32);
@@ -783,6 +1156,14 @@ int SNEPPX_wireguard_handshake(SNEPPXWireGuardSession* wg, const uint8_t* peer_k
     return 0;
 }
 
+/**
+ * @brief Perform Wireguard Send.
+ *
+ * @param wg [out] Wg value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_send(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
@@ -790,6 +1171,14 @@ int SNEPPX_wireguard_send(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len)
     return 0;
 }
 
+/**
+ * @brief Perform Wireguard Recv.
+ *
+ * @param wg [out] Wg value.
+ * @param data [out] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_recv(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len) {
     if (!wg || !data || len == 0 || !wg->established) return -1;
     for (size_t i = 0; i < len; i++) data[i] ^= wg->private_key[i % 32] ^ wg->public_key[i % 32] ^ (uint8_t)(i * 0x7e);
@@ -797,6 +1186,14 @@ int SNEPPX_wireguard_recv(SNEPPXWireGuardSession* wg, uint8_t* data, size_t len)
     return 0;
 }
 
+/**
+ * @brief Perform Wireguard Get Peer Stats.
+ *
+ * @param wg [out] Wg value.
+ * @param rx_bytes [out] Rx Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_get_peer_stats(SNEPPXWireGuardSession* wg, uint64_t* rx_bytes, uint64_t* tx_bytes) {
     if (!wg || !rx_bytes || !tx_bytes) return -1;
     *rx_bytes = g_wireguard_total_recv;
@@ -805,12 +1202,24 @@ int SNEPPX_wireguard_get_peer_stats(SNEPPXWireGuardSession* wg, uint64_t* rx_byt
 }
 
 /* ---- IP Blocklist ---- */
+/**
+ * @brief Initialize Ip Blocklist.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_init(SNEPPXIPBlocklist* bl) {
     if (!bl) return -1;
     memset(bl, 0, sizeof(*bl));
     return 0;
 }
 
+/**
+ * @brief Add Ip Blocklist.
+ *
+ * @param bl [out] Bl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_add(SNEPPXIPBlocklist* bl, const char* cidr) {
     if (!bl || !cidr || bl->count >= SNEPPX_IP_BLOCKLIST_MAX) return -1;
     uint32_t ip = 0, mask = 0xFFFFFFFF;
@@ -824,6 +1233,13 @@ int SNEPPX_ip_blocklist_add(SNEPPXIPBlocklist* bl, const char* cidr) {
     return 0;
 }
 
+/**
+ * @brief Perform Ip Blocklist Check.
+ *
+ * @param bl [out] Bl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_check(SNEPPXIPBlocklist* bl, uint32_t ip) {
     if (!bl) return 0;
     for (int i = 0; i < bl->count; i++) {
@@ -832,6 +1248,13 @@ int SNEPPX_ip_blocklist_check(SNEPPXIPBlocklist* bl, uint32_t ip) {
     return 0;
 }
 
+/**
+ * @brief Remove Ip Blocklist.
+ *
+ * @param bl [out] Bl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_remove(SNEPPXIPBlocklist* bl, const char* cidr) {
     if (!bl || !cidr) return -1;
     uint32_t ip = 0, mask = 0xFFFFFFFF;
@@ -850,6 +1273,11 @@ int SNEPPX_ip_blocklist_remove(SNEPPXIPBlocklist* bl, const char* cidr) {
     return -1;
 }
 
+/**
+ * @brief Clear Ip Blocklist.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_clear(SNEPPXIPBlocklist* bl) {
     if (!bl) return -1;
     memset(bl->networks, 0, sizeof(bl->networks));
@@ -859,12 +1287,22 @@ int SNEPPX_ip_blocklist_clear(SNEPPXIPBlocklist* bl) {
     return 0;
 }
 
+/**
+ * @brief Perform Ip Blocklist Get Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ip_blocklist_get_count(SNEPPXIPBlocklist* bl) {
     if (!bl) return 0;
     return bl->count;
 }
 
 /* ---- NIDS ---- */
+/**
+ * @brief Initialize Nids.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_init(void) {
     srand((unsigned int)time(NULL));
     g_nids_packet_count = 0;
@@ -878,6 +1316,13 @@ int SNEPPX_nids_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Nids Analyze Packet.
+ *
+ * @param packet [in] Packet value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_analyze_packet(const uint8_t* packet, size_t len) {
     if (!packet || len < 54) return 0;
     g_nids_packet_count++;
@@ -918,6 +1363,11 @@ int SNEPPX_nids_analyze_packet(const uint8_t* packet, size_t len) {
     return 0;
 }
 
+/**
+ * @brief Perform Nids Set Rules.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_set_rules(const char* rules_path) {
     if (!rules_path) return -1;
     (void)rules_path;
@@ -926,10 +1376,20 @@ int SNEPPX_nids_set_rules(const char* rules_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Nids Get Alert Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_get_alert_count(void) {
     return g_nids_alert_count;
 }
 
+/**
+ * @brief Perform Nids Clear Alerts.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_clear_alerts(void) {
     g_nids_alert_count = 0;
     g_nids_alert_timestamp = 0;
@@ -938,16 +1398,31 @@ int SNEPPX_nids_clear_alerts(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Nids Get Packet Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_get_packet_count(void) {
     return (int)g_nids_packet_count;
 }
 
+/**
+ * @brief Perform Nids Add Port Blacklist.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_add_port_blacklist(uint16_t port) {
     if (g_nids_port_blacklist_count >= 16) return -1;
     g_nids_port_blacklist[g_nids_port_blacklist_count++] = port;
     return 0;
 }
 
+/**
+ * @brief Perform Nids Remove Port Blacklist.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_remove_port_blacklist(uint16_t port) {
     for (int i = 0; i < g_nids_port_blacklist_count; i++) {
         if (g_nids_port_blacklist[i] == port) {
@@ -960,6 +1435,11 @@ int SNEPPX_nids_remove_port_blacklist(uint16_t port) {
     return -1;
 }
 
+/**
+ * @brief Perform Nids Get Alert Timestamp.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_get_alert_timestamp(uint64_t* ts) {
     if (!ts) return -1;
     *ts = g_nids_alert_timestamp;
@@ -967,6 +1447,15 @@ int SNEPPX_nids_get_alert_timestamp(uint64_t* ts) {
 }
 
 /* ---- Traffic padding ---- */
+/**
+ * @brief Perform Traffic Pad.
+ *
+ * @param data [out] Data value.
+ * @param len [out] Len value.
+ * @param max_len [in] Max Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_traffic_pad(uint8_t* data, size_t* len, size_t max_len, size_t block_size) {
     if (!data || !len) return -1;
     size_t padded = ((*len + block_size - 1) / block_size) * block_size;
@@ -976,6 +1465,15 @@ int SNEPPX_traffic_pad(uint8_t* data, size_t* len, size_t max_len, size_t block_
     return 0;
 }
 
+/**
+ * @brief Perform Traffic Pad To.
+ *
+ * @param data [out] Data value.
+ * @param len [out] Len value.
+ * @param max [in] Max value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_traffic_pad_to(uint8_t* data, size_t* len, size_t max, size_t target_size) {
     if (!data || !len || target_size > max || *len > target_size) return -1;
     for (size_t i = *len; i < target_size; i++) data[i] = (uint8_t)(rand() % 256);
@@ -983,6 +1481,15 @@ int SNEPPX_traffic_pad_to(uint8_t* data, size_t* len, size_t max, size_t target_
     return 0;
 }
 
+/**
+ * @brief Perform Traffic Mtu Obfuscate.
+ *
+ * @param data [out] Data value.
+ * @param len [out] Len value.
+ * @param max [in] Max value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_traffic_mtu_obfuscate(uint8_t* data, size_t* len, size_t max, size_t mtu) {
     if (!data || !len || mtu == 0) return -1;
     size_t orig = *len;
@@ -1001,6 +1508,13 @@ int SNEPPX_traffic_mtu_obfuscate(uint8_t* data, size_t* len, size_t max, size_t 
 }
 
 /* ---- Rate Limiter ---- */
+/**
+ * @brief Initialize Rate Limiter.
+ *
+ * @param rl [out] Rl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_init(SNEPPXRateLimiter* rl, int max_per_window) {
     if (!rl) return -1;
     memset(rl, 0, sizeof(*rl));
@@ -1008,6 +1522,13 @@ int SNEPPX_rate_limiter_init(SNEPPXRateLimiter* rl, int max_per_window) {
     return 0;
 }
 
+/**
+ * @brief Perform Rate Limiter Check.
+ *
+ * @param rl [out] Rl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_check(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     if (!rl) return 0;
     int idx = src_ip % 256;
@@ -1017,6 +1538,11 @@ int SNEPPX_rate_limiter_check(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     return rl->connection_counts[idx] > rl->max_per_window ? 1 : 0;
 }
 
+/**
+ * @brief Reset Rate Limiter.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_reset(SNEPPXRateLimiter* rl) {
     if (!rl) return -1;
     memset(rl->connection_counts, 0, sizeof(rl->connection_counts));
@@ -1024,6 +1550,13 @@ int SNEPPX_rate_limiter_reset(SNEPPXRateLimiter* rl) {
     return 0;
 }
 
+/**
+ * @brief Perform Rate Limiter Get Count.
+ *
+ * @param rl [out] Rl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_get_count(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     if (!rl) return 0;
     int idx = src_ip % 256;
@@ -1032,6 +1565,14 @@ int SNEPPX_rate_limiter_get_count(SNEPPXRateLimiter* rl, uint32_t src_ip) {
     return rl->connection_counts[idx];
 }
 
+/**
+ * @brief Perform Rate Limiter Set Window.
+ *
+ * @param rl [out] Rl value.
+ * @param src_ip [in] Src Ip value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_set_window(SNEPPXRateLimiter* rl, uint32_t src_ip, uint64_t window_ms) {
     if (!rl) return -1;
     int idx = src_ip % 256;
@@ -1039,24 +1580,52 @@ int SNEPPX_rate_limiter_set_window(SNEPPXRateLimiter* rl, uint32_t src_ip, uint6
     return 0;
 }
 
+/**
+ * @brief Perform Rate Limiter Adjust Limit.
+ *
+ * @param rl [out] Rl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_adjust_limit(SNEPPXRateLimiter* rl, int new_max) {
     if (!rl || new_max <= 0) return -1;
     rl->max_per_window = new_max;
     return 0;
 }
 
+/**
+ * @brief Perform Rate Limiter Get Limit.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_rate_limiter_get_limit(SNEPPXRateLimiter* rl) {
     if (!rl) return 0;
     return rl->max_per_window;
 }
 
 /* ---- Port Knocking ---- */
+/**
+ * @brief Perform Port Knock Sequence.
+ *
+ * @param ports [in] Ports value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_port_knock_sequence(const uint16_t* ports, int port_count) {
     (void)ports;
     (void)port_count;
     return 0;
 }
 
+/**
+ * @brief Verify Port Knock.
+ *
+ * @param received [in] Received value.
+ * @param count [in] Count value.
+ * @param expected [in] Expected value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_port_knock_verify(const uint16_t* received, int count, const uint16_t* expected, int expected_count) {
     if (!received || !expected || count != expected_count) return 0;
     for (int i = 0; i < count; i++) if (received[i] != expected[i]) return 0;
@@ -1064,6 +1633,14 @@ int SNEPPX_port_knock_verify(const uint16_t* received, int count, const uint16_t
 }
 
 /* ---- gRPC Auth ---- */
+/**
+ * @brief Initialize Grpc Auth.
+ *
+ * @param ga [out] Ga value.
+ * @param token [in] Token value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_init(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t token_len) {
     if (!ga || !token || token_len > 64) return -1;
     memset(ga, 0, sizeof(*ga));
@@ -1072,11 +1649,27 @@ int SNEPPX_grpc_auth_init(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t token
     return 0;
 }
 
+/**
+ * @brief Verify Grpc Auth.
+ *
+ * @param ga [out] Ga value.
+ * @param received_token [in] Received Token value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_verify(SNEPPXGRPCAuth* ga, const uint8_t* received_token, size_t token_len) {
     if (!ga || !received_token || token_len != ga->token_len) return 0;
     return memcmp(ga->token, received_token, token_len) == 0 ? 1 : 0;
 }
 
+/**
+ * @brief Perform Grpc Auth Set Token.
+ *
+ * @param ga [out] Ga value.
+ * @param token [in] Token value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_set_token(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t token_len) {
     if (!ga || !token || token_len > 64) return -1;
     memset(ga->token, 0, sizeof(ga->token));
@@ -1085,12 +1678,25 @@ int SNEPPX_grpc_auth_set_token(SNEPPXGRPCAuth* ga, const uint8_t* token, size_t 
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Auth Get Token.
+ *
+ * @param ga [out] Ga value.
+ * @param token_out [out] Token Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_get_token(SNEPPXGRPCAuth* ga, uint8_t* token_out, size_t token_len) {
     if (!ga || !token_out || token_len < ga->token_len) return -1;
     memcpy(token_out, ga->token, ga->token_len);
     return (int)ga->token_len;
 }
 
+/**
+ * @brief Perform Grpc Auth Renew.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_renew(SNEPPXGRPCAuth* ga) {
     if (!ga) return -1;
     for (size_t i = 0; i < ga->token_len && i < sizeof(ga->token); i++)
@@ -1098,16 +1704,34 @@ int SNEPPX_grpc_auth_renew(SNEPPXGRPCAuth* ga) {
     return 0;
 }
 
+/**
+ * @brief Perform Grpc Auth Has Token.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_has_token(SNEPPXGRPCAuth* ga) {
     if (!ga || ga->token_len == 0) return 0;
     return 1;
 }
 
+/**
+ * @brief Perform Grpc Auth Get Token Len.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_grpc_auth_get_token_len(SNEPPXGRPCAuth* ga) {
     if (!ga) return 0;
     return (int)ga->token_len;
 }
 
+/**
+ * @brief Perform Tls13 Set Psk Binder.
+ *
+ * @param sess [out] Sess value.
+ * @param binder [in] Binder value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_set_psk_binder(SNEPPXTLS13Session* sess, const uint8_t* binder, size_t binder_len) {
     if (!sess || !binder || binder_len < 32) return -1;
     /* memcpy(g_tls13_psk_binder, binder, 32); */ /* undeclared global */
@@ -1115,12 +1739,24 @@ int SNEPPX_tls13_set_psk_binder(SNEPPXTLS13Session* sess, const uint8_t* binder,
     return 0;
 }
 
+/**
+ * @brief Perform Tls13 Get Key Generation.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls13_get_key_generation(uint64_t* gen) {
     if (!gen) return -1;
     *gen = g_tls13_key_generation;
     return 0;
 }
 
+/**
+ * @brief Perform Quic Set Flow Params.
+ *
+ * @param max_stream_data [in] Max Stream Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_set_flow_params(uint32_t max_stream_data, uint32_t initial_flow) {
     if (max_stream_data == 0 || initial_flow == 0) return -1;
     /* g_quic_max_stream_data = max_stream_data; */ /* undeclared global */
@@ -1128,6 +1764,11 @@ int SNEPPX_quic_set_flow_params(uint32_t max_stream_data, uint32_t initial_flow)
     return 0;
 }
 
+/**
+ * @brief Perform Quic Reset Conn.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_reset_conn(SNEPPXQUICConn* qc) {
     if (!qc) return -1;
     for (int i = 0; i < 16; i++) {
@@ -1137,6 +1778,13 @@ int SNEPPX_quic_reset_conn(SNEPPXQUICConn* qc) {
     return 0;
 }
 
+/**
+ * @brief Perform Quic Get Conn Stats.
+ *
+ * @param sent [out] Sent value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quic_get_conn_stats(uint64_t* sent, uint64_t* recv) {
     if (!sent || !recv) return -1;
     *sent = g_quic_total_bytes_sent;
@@ -1144,6 +1792,13 @@ int SNEPPX_quic_get_conn_stats(uint64_t* sent, uint64_t* recv) {
     return 0;
 }
 
+/**
+ * @brief Perform Noise Set Chaining Key.
+ *
+ * @param ck [in] Ck value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_set_chaining_key(const uint8_t* ck, size_t ck_len) {
     if (!ck || ck_len < 32) return -1;
     memcpy(g_noise_chaining_key, ck, 32);
@@ -1151,17 +1806,36 @@ int SNEPPX_noise_set_chaining_key(const uint8_t* ck, size_t ck_len) {
     return 0;
 }
 
+/**
+ * @brief Perform Noise Get Chaining Key.
+ *
+ * @param ck_out [out] Ck Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_get_chaining_key(uint8_t* ck_out, size_t ck_len) {
     if (!ck_out || ck_len < 32 || !g_noise_chaining_set) return -1;
     memcpy(ck_out, g_noise_chaining_key, 32);
     return 0;
 }
 
+/**
+ * @brief Set Noise Transport Key.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_transport_key_set(void) {
     /* return g_noise_transport_key_set; */ /* undeclared global */
     return 0;
 }
 
+/**
+ * @brief Perform Noise Set Transport Key.
+ *
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_set_transport_key(const uint8_t* key, size_t key_len) {
     if (!key || key_len < 32) return -1;
     /* memcpy(g_noise_transport_key, key, 32); */ /* undeclared global */
@@ -1169,25 +1843,54 @@ int SNEPPX_noise_set_transport_key(const uint8_t* key, size_t key_len) {
     return 0;
 }
 
+/**
+ * @brief Perform Noise Get Rekey Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_noise_get_rekey_count(void) {
     return (uint64_t)g_noise_transport_phase;
 }
 
+/**
+ * @brief Perform Noise Set Step.
+ *
+ * @param nh [out] Nh value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_set_step(SNEPPXNoiseHandshake* nh, int step) {
     if (!nh) return -1;
     nh->step = step;
     return 0;
 }
 
+/**
+ * @brief Perform Noise Get Step.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_noise_get_step(SNEPPXNoiseHandshake* nh) {
     if (!nh) return -1;
     return nh->step;
 }
 
+/**
+ * @brief Perform Wireguard Is Established.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_is_established(void) {
     return g_wireguard_peer_set;
 }
 
+/**
+ * @brief Perform Wireguard Get Total Stats.
+ *
+ * @param sent [out] Sent value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_wireguard_get_total_stats(uint64_t* sent, uint64_t* recv) {
     if (!sent || !recv) return -1;
     *sent = g_wireguard_total_sent;
@@ -1195,10 +1898,20 @@ int SNEPPX_wireguard_get_total_stats(uint64_t* sent, uint64_t* recv) {
     return 0;
 }
 
+/**
+ * @brief Perform Nids Get Total Packets.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_get_total_packets(void) {
     return (int)g_nids_packet_count;
 }
 
+/**
+ * @brief Perform Nids Get Port Blacklist Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_nids_get_port_blacklist_count(void) {
     return g_nids_port_blacklist_count;
 }

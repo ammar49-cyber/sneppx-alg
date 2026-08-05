@@ -18,13 +18,42 @@
 #include <asm/unistd.h>
 #endif
 
+/*
+ * SNEPPX - Memory Hardening
+ *
+ * WHAT
+ *   Memory Hardening.
+ *
+ * CONCEPT
+ *   Provides memory management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* --- Quarantine --- */
+/**
+ * @brief Initialize Mem Quarantine.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_quarantine_init(SNEPPXMemQuarantine* q) {
     if (!q) return -1;
     memset(q,0,sizeof(*q));
     return 0;
 }
 
+/**
+ * @brief Add Mem Quarantine.
+ *
+ * @param q [out] Q value.
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_quarantine_add(SNEPPXMemQuarantine* q, void* ptr, size_t size) {
     if (!q||!ptr) return -1;
     for (int i=0;i<q->count;i++) if (q->entries[i]==ptr) return -1;
@@ -37,6 +66,13 @@ int SNEPPX_mem_quarantine_add(SNEPPXMemQuarantine* q, void* ptr, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Mem Quarantine Check.
+ *
+ * @param q [out] Q value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_quarantine_check(SNEPPXMemQuarantine* q, const void* ptr) {
     if (!q||!ptr) return 0;
     for (int i=0;i<q->count;i++) if (q->entries[i]==ptr) return 1;
@@ -44,6 +80,11 @@ int SNEPPX_mem_quarantine_check(SNEPPXMemQuarantine* q, const void* ptr) {
 }
 
 /* --- Heap Metadata Encryption --- */
+/**
+ * @brief Initialize Heap Metadata.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_metadata_init(SNEPPXHeapMetadataEncrypt* hme) {
     if (!hme) return -1;
     hme->xor_key=(uint64_t)time(NULL)^0x9E3779B97F4A7C15ULL;
@@ -52,6 +93,12 @@ int SNEPPX_heap_metadata_init(SNEPPXHeapMetadataEncrypt* hme) {
     return 0;
 }
 
+/**
+ * @brief Encrypt Heap Metadata.
+ *
+ * @param hme [out] Hme value.
+ * @param metadata [out] Metadata value.
+ */
 void SNEPPX_heap_metadata_encrypt(SNEPPXHeapMetadataEncrypt* hme, void* metadata, size_t len) {
     if (!hme||!hme->enabled||!metadata) return;
     uint8_t* p=(uint8_t*)metadata;
@@ -61,11 +108,24 @@ void SNEPPX_heap_metadata_encrypt(SNEPPXHeapMetadataEncrypt* hme, void* metadata
     }
 }
 
+/**
+ * @brief Decrypt Heap Metadata.
+ *
+ * @param hme [out] Hme value.
+ * @param metadata [out] Metadata value.
+ */
 void SNEPPX_heap_metadata_decrypt(SNEPPXHeapMetadataEncrypt* hme, void* metadata, size_t len) {
     SNEPPX_heap_metadata_encrypt(hme,metadata,len);
 }
 
 /* --- W^X Enforcement --- */
+/**
+ * @brief Perform Mem Enforce Wx.
+ *
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_enforce_wx(void* addr, size_t size) {
     (void)addr;(void)size;
 #ifdef _WIN32
@@ -80,6 +140,13 @@ int SNEPPX_mem_enforce_wx(void* addr, size_t size) {
 #endif
 }
 
+/**
+ * @brief Perform Mem Set Rx.
+ *
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_set_rx(void* addr, size_t size) {
 #ifdef _WIN32
     DWORD old; return VirtualProtect(addr,size,PAGE_EXECUTE_READ,&old)?0:-1;
@@ -90,6 +157,13 @@ int SNEPPX_mem_set_rx(void* addr, size_t size) {
 #endif
 }
 
+/**
+ * @brief Perform Mem Set Rw.
+ *
+ * @param addr [out] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_set_rw(void* addr, size_t size) {
 #ifdef _WIN32
     DWORD old; return VirtualProtect(addr,size,PAGE_READWRITE,&old)?0:-1;
@@ -101,6 +175,11 @@ int SNEPPX_mem_set_rw(void* addr, size_t size) {
 }
 
 /* --- Seccomp --- */
+/**
+ * @brief Initialize Seccomp.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_seccomp_init(SNEPPXSeccompConfig* cfg) {
     if (!cfg) return -1;
     memset(cfg,0,sizeof(*cfg));
@@ -110,6 +189,11 @@ int SNEPPX_seccomp_init(SNEPPXSeccompConfig* cfg) {
     return 0;
 }
 
+/**
+ * @brief Apply Seccomp.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_seccomp_apply(void) {
 #ifdef __linux__
     if (prctl(PR_SET_NO_NEW_PRIVS,1,0,0,0)<0) return -1;
@@ -130,6 +214,11 @@ int SNEPPX_seccomp_apply(void) {
 }
 
 /* --- Pointer Authentication --- */
+/**
+ * @brief Initialize Pac.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pac_init(SNEPPXPAC* pac) {
     if (!pac) return -1;
     for (int i=0;i<SNEPPX_MAX_PAC_KEYS;i++) {
@@ -140,6 +229,14 @@ int SNEPPX_pac_init(SNEPPXPAC* pac) {
     return 0;
 }
 
+/**
+ * @brief Sign Pac.
+ *
+ * @param pac [out] Pac value.
+ * @param pointer [in] Pointer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_pac_sign(SNEPPXPAC* pac, const void* pointer, int key_idx) {
     if (!pac||!pointer||key_idx>=pac->key_count) return 0;
     uint64_t addr=(uint64_t)(uintptr_t)pointer;
@@ -149,6 +246,15 @@ uint64_t SNEPPX_pac_sign(SNEPPXPAC* pac, const void* pointer, int key_idx) {
     return (addr<<16)|(hash&0xFFFF);
 }
 
+/**
+ * @brief Verify Pac.
+ *
+ * @param pac [out] Pac value.
+ * @param pointer [in] Pointer value.
+ * @param signature [in] Signature value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_pac_verify(SNEPPXPAC* pac, const void* pointer, uint64_t signature, int key_idx) {
     if (!pac||!pointer||key_idx>=pac->key_count) return 0;
     uint64_t expected=SNEPPX_pac_sign(pac,pointer,key_idx);
@@ -158,12 +264,26 @@ int SNEPPX_pac_verify(SNEPPXPAC* pac, const void* pointer, uint64_t signature, i
 /* --- CFG --- */
 int SNEPPX_cfg_init(SNEPPXCFG* cfg) { if (!cfg) return -1; memset(cfg,0,sizeof(*cfg)); return 0; }
 
+/**
+ * @brief Get Cfg Add Tar.
+ *
+ * @param cfg [out] Cfg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cfg_add_target(SNEPPXCFG* cfg, void* target) {
     if (!cfg||!target||cfg->target_count>=1024) return -1;
     cfg->valid_targets[cfg->target_count++]=(uintptr_t)target;
     return 0;
 }
 
+/**
+ * @brief Perform Cfg Validate.
+ *
+ * @param cfg [out] Cfg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cfg_validate(SNEPPXCFG* cfg, void* target) {
     if (!cfg||!target) return 0;
     uintptr_t t=(uintptr_t)target;
@@ -172,6 +292,11 @@ int SNEPPX_cfg_validate(SNEPPXCFG* cfg, void* target) {
 }
 
 /* --- Shadow Stack --- */
+/**
+ * @brief Initialize Shadow Stack.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_init(SNEPPXShadowStack* ss) {
     if (!ss) return -1;
     memset(ss,0,sizeof(*ss));
@@ -179,12 +304,26 @@ int SNEPPX_shadow_stack_init(SNEPPXShadowStack* ss) {
     return 0;
 }
 
+/**
+ * @brief Perform Shadow Stack Push.
+ *
+ * @param ss [out] Ss value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_push(SNEPPXShadowStack* ss, uintptr_t return_addr) {
     if (!ss||ss->sp>=SNEPPX_SHADOW_STACK_DEPTH-1) { if (ss) ss->overflow_detected=1; return -1; }
     ss->stack[++ss->sp]=return_addr;
     return 0;
 }
 
+/**
+ * @brief Perform Shadow Stack Pop.
+ *
+ * @param ss [out] Ss value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_pop(SNEPPXShadowStack* ss, uintptr_t* return_addr) {
     if (!ss||!return_addr||ss->sp<0) return -1;
     *return_addr=ss->stack[ss->sp--];
@@ -192,6 +331,11 @@ int SNEPPX_shadow_stack_pop(SNEPPXShadowStack* ss, uintptr_t* return_addr) {
 }
 
 /* --- TLS Canary Pool --- */
+/**
+ * @brief Initialize Tls Canary Pool.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls_canary_pool_init(SNEPPXThreadCanaryPool* pool) {
     if (!pool) return -1;
     for (int i=0;i<64;i++) pool->canaries[i]=(uint64_t)rand()^((uint64_t)rand()<<32);
@@ -199,11 +343,23 @@ int SNEPPX_tls_canary_pool_init(SNEPPXThreadCanaryPool* pool) {
     return 0;
 }
 
+/**
+ * @brief Perform Tls Canary Alloc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_tls_canary_alloc(SNEPPXThreadCanaryPool* pool) {
     if (!pool||pool->count<=0) return 0;
     return pool->canaries[--pool->count];
 }
 
+/**
+ * @brief Perform Tls Canary Check.
+ *
+ * @param pool [out] Pool value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls_canary_check(SNEPPXThreadCanaryPool* pool, uint64_t canary) {
     if (!pool) return 0;
     for (int i=0;i<64-pool->count;i++) if (pool->canaries[i]==canary) return 1;
@@ -211,12 +367,24 @@ int SNEPPX_tls_canary_check(SNEPPXThreadCanaryPool* pool, uint64_t canary) {
 }
 
 /* --- Guard Page Pool --- */
+/**
+ * @brief Initialize Guard Pool.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_guard_pool_init(SNEPPXGuardPagePool* pool) {
     if (!pool) return -1;
     memset(pool,0,sizeof(*pool));
     return 0;
 }
 
+/**
+ * @brief Perform Guard Pool Alloc.
+ *
+ * @param pool [out] Pool value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_guard_pool_alloc(SNEPPXGuardPagePool* pool, size_t size) {
     (void)pool;
     if (size==0) return NULL;
@@ -238,6 +406,13 @@ void* SNEPPX_guard_pool_alloc(SNEPPXGuardPagePool* pool, size_t size) {
 #endif
 }
 
+/**
+ * @brief Free Guard Pool.
+ *
+ * @param pool [out] Pool value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_guard_pool_free(SNEPPXGuardPagePool* pool, void* ptr) {
     (void)pool;
     if (!ptr) return -1;
@@ -253,6 +428,13 @@ int SNEPPX_guard_pool_free(SNEPPXGuardPagePool* pool, void* ptr) {
 }
 
 /* --- Memory Pressure --- */
+/**
+ * @brief Initialize Mem Pressure.
+ *
+ * @param mp [out] Mp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pressure_init(SNEPPXMemPressure* mp, size_t limit) {
     if (!mp) return -1;
     memset(mp,0,sizeof(*mp));
@@ -260,6 +442,13 @@ int SNEPPX_mem_pressure_init(SNEPPXMemPressure* mp, size_t limit) {
     return 0;
 }
 
+/**
+ * @brief Perform Mem Pressure Track.
+ *
+ * @param mp [out] Mp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pressure_track(SNEPPXMemPressure* mp, size_t size) {
     if (!mp) return -1;
     mp->total_allocated+=size;
@@ -270,6 +459,13 @@ int SNEPPX_mem_pressure_track(SNEPPXMemPressure* mp, size_t size) {
     return mp->pressure_level;
 }
 
+/**
+ * @brief Perform Mem Pressure Release.
+ *
+ * @param mp [out] Mp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pressure_release(SNEPPXMemPressure* mp, size_t size) {
     if (!mp) return -1;
     mp->total_allocated-=(mp->total_allocated>=size)?size:mp->total_allocated;
@@ -277,6 +473,11 @@ int SNEPPX_mem_pressure_release(SNEPPXMemPressure* mp, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Mem Pressure Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pressure_check(SNEPPXMemPressure* mp) {
     if (!mp) return -1;
     return mp->pressure_level;
@@ -322,10 +523,24 @@ static int g_scrub_phase = 0;
 
 /* === Freelist Integrity === */
 
+/**
+ * @brief Perform Freelist Canary Value.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static uint64_t SNEPPX_freelist_canary_value(void* ptr, size_t size) {
     return (uint64_t)(uintptr_t)ptr ^ (uint64_t)size ^ SNEPPX_FREELIST_CANARY_VALUE;
 }
 
+/**
+ * @brief Perform Freelist Write Canary.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_freelist_write_canary(void* ptr, size_t size) {
     if (!ptr || size < sizeof(uint64_t)) return -1;
     uint64_t* canary = (uint64_t*)((uint8_t*)ptr + size - sizeof(uint64_t));
@@ -333,12 +548,24 @@ static int SNEPPX_freelist_write_canary(void* ptr, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Freelist Verify Canary.
+ *
+ * @param ptr [in] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_freelist_verify_canary(const void* ptr, size_t size) {
     if (!ptr || size < sizeof(uint64_t)) return 0;
     const uint64_t* canary = (const uint64_t*)((const uint8_t*)ptr + size - sizeof(uint64_t));
     return (*canary == SNEPPX_freelist_canary_value((void*)ptr, size)) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Freelist Init Internal.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_freelist_init_internal(int max_entries) {
     if (g_freelist_initialized) return 0;
     g_freelist.entries = (void**)calloc((size_t)max_entries, sizeof(void*));
@@ -353,6 +580,11 @@ static int SNEPPX_freelist_init_internal(int max_entries) {
     return 0;
 }
 
+/**
+ * @brief Perform Freelist Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_freelist_check(SNEPPXFreeList* fl) {
     if (!fl) {
         if (!g_freelist_initialized) return -1;
@@ -366,6 +598,13 @@ int SNEPPX_freelist_check(SNEPPXFreeList* fl) {
     return 0;
 }
 
+/**
+ * @brief Add Freelist.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_freelist_add(void* ptr, size_t size) {
     if (!g_freelist_initialized) if (SNEPPX_freelist_init_internal(1024) != 0) return -1;
     if (!ptr) return -1;
@@ -379,6 +618,11 @@ static int SNEPPX_freelist_add(void* ptr, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Remove Freelist.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_freelist_remove(void* ptr) {
     if (!g_freelist_initialized || !ptr) return -1;
     for (int i = 0; i < g_freelist.count; i++) {
@@ -395,6 +639,13 @@ static int SNEPPX_freelist_remove(void* ptr) {
 
 /* === Memory Scrub === */
 
+/**
+ * @brief Perform Mem Scrub.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_scrub(void* ptr, size_t size) {
     if (!ptr || size == 0) return -1;
     uint8_t* p = (uint8_t*)ptr;
@@ -434,6 +685,11 @@ int SNEPPX_mem_scrub(void* ptr, size_t size) {
 
 /* === Expanded W^X === */
 
+/**
+ * @brief Perform Mem Enforce Wx Strict.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_enforce_wx_strict(void) {
     int total_fixed = 0;
 #ifdef _WIN32
@@ -489,6 +745,11 @@ int SNEPPX_mem_enforce_wx_strict(void) {
     return total_fixed;
 }
 
+/**
+ * @brief Perform Mem Enforce Wx Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_enforce_wx_check(void) {
 #ifdef _WIN32
     SYSTEM_INFO si;
@@ -525,6 +786,13 @@ int SNEPPX_mem_enforce_wx_check(void) {
 
 /* === Expanded CFG === */
 
+/**
+ * @brief Get Cfg Remove Tar.
+ *
+ * @param cfg [out] Cfg value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cfg_remove_target(SNEPPXCFG* cfg, void* target) {
     if (!cfg || !target) return -1;
     uintptr_t t = (uintptr_t)target;
@@ -538,6 +806,11 @@ int SNEPPX_cfg_remove_target(SNEPPXCFG* cfg, void* target) {
     return -1;
 }
 
+/**
+ * @brief Clear Cfg.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_cfg_clear(SNEPPXCFG* cfg) {
     if (!cfg) return -1;
     memset(cfg->valid_targets, 0, sizeof(cfg->valid_targets));
@@ -547,6 +820,11 @@ int SNEPPX_cfg_clear(SNEPPXCFG* cfg) {
 
 /* === Expanded Memory Pressure === */
 
+/**
+ * @brief Perform Mem Pressure Get Stats.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXMemPressureStats SNEPPX_mem_pressure_get_stats(SNEPPXMemPressure* mp) {
     SNEPPXMemPressureStats stats;
     stats.current = 0;
@@ -559,6 +837,13 @@ SNEPPXMemPressureStats SNEPPX_mem_pressure_get_stats(SNEPPXMemPressure* mp) {
     return stats;
 }
 
+/**
+ * @brief Perform Mem Pressure Set Limit.
+ *
+ * @param mp [out] Mp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pressure_set_limit(SNEPPXMemPressure* mp, size_t limit) {
     if (!mp) return -1;
     mp->allocation_limit = limit;
@@ -570,6 +855,14 @@ int SNEPPX_mem_pressure_set_limit(SNEPPXMemPressure* mp, size_t limit) {
 
 /* === Memory Pool === */
 
+/**
+ * @brief Initialize Mem Pool.
+ *
+ * @param pool [out] Pool value.
+ * @param block_size [in] Block Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pool_init(SNEPPXMemPool* pool, size_t block_size, int blocks) {
     if (!pool || block_size == 0 || blocks <= 0 || blocks > SNEPPX_MEM_POOL_MAX_BLOCKS) return -1;
     if (block_size < sizeof(uint64_t)) block_size = sizeof(uint64_t);
@@ -590,6 +883,11 @@ int SNEPPX_mem_pool_init(SNEPPXMemPool* pool, size_t block_size, int blocks) {
     return 0;
 }
 
+/**
+ * @brief Perform Mem Pool Alloc.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_mem_pool_alloc(SNEPPXMemPool* pool) {
     if (!pool || !pool->bitmap || !pool->memory) return NULL;
     if (pool->free_blocks <= 0) return NULL;
@@ -607,6 +905,13 @@ void* SNEPPX_mem_pool_alloc(SNEPPXMemPool* pool) {
     return NULL;
 }
 
+/**
+ * @brief Free Mem Pool.
+ *
+ * @param pool [out] Pool value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_pool_free(SNEPPXMemPool* pool, void* ptr) {
     if (!pool || !pool->bitmap || !pool->memory || !ptr) return -1;
     uintptr_t mem_start = (uintptr_t)pool->memory;
@@ -628,14 +933,29 @@ int SNEPPX_mem_pool_free(SNEPPXMemPool* pool, void* ptr) {
 
 /* === Page Alignment === */
 
+/**
+ * @brief Perform Mem Page Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 static size_t SNEPPX_mem_page_size(void);
 
+/**
+ * @brief Perform Mem Is Page Aligned.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_mem_is_page_aligned(const void* addr) {
     if (!addr) return 0;
     size_t ps = SNEPPX_mem_page_size();
     return (((uintptr_t)addr & (ps - 1)) == 0) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Mem Page Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 static size_t SNEPPX_mem_page_size(void) {
 #ifdef _WIN32
     SYSTEM_INFO si;
@@ -652,6 +972,11 @@ static size_t SNEPPX_mem_page_size(void) {
 #endif
 }
 
+/**
+ * @brief Perform Mem Round Up To Page.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_mem_round_up_to_page(size_t* size) {
     if (!size || *size == 0) return -1;
     size_t ps = SNEPPX_mem_page_size();
@@ -659,6 +984,11 @@ static int SNEPPX_mem_round_up_to_page(size_t* size) {
     return 0;
 }
 
+/**
+ * @brief Perform Mem Num Pages.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_mem_num_pages(size_t size) {
     size_t ps = SNEPPX_mem_page_size();
     if (size == 0) return 0;
@@ -667,6 +997,13 @@ static int SNEPPX_mem_num_pages(size_t size) {
 
 /* === Expanded Shadow Stack === */
 
+/**
+ * @brief Perform Shadow Stack Peek.
+ *
+ * @param ss [out] Ss value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_peek(SNEPPXShadowStack* ss, uintptr_t* return_addr) {
     if (!ss || !return_addr) return -1;
     if (ss->sp < 0) return -1;
@@ -674,11 +1011,21 @@ int SNEPPX_shadow_stack_peek(SNEPPXShadowStack* ss, uintptr_t* return_addr) {
     return 0;
 }
 
+/**
+ * @brief Perform Shadow Stack Depth.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_depth(SNEPPXShadowStack* ss) {
     if (!ss) return -1;
     return ss->sp + 1;
 }
 
+/**
+ * @brief Perform Shadow Stack Validate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shadow_stack_validate(SNEPPXShadowStack* ss) {
     if (!ss) return -1;
     if (ss->overflow_detected) return -1;
@@ -707,12 +1054,27 @@ int SNEPPX_shadow_stack_validate(SNEPPXShadowStack* ss) {
 
 /* === Freelist Integration with Quarantine === */
 
+/**
+ * @brief Perform Quarantine Add With Freelist.
+ *
+ * @param q [out] Q value.
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quarantine_add_with_freelist(SNEPPXMemQuarantine* q, void* ptr, size_t size) {
     int ret = SNEPPX_mem_quarantine_add(q, ptr, size);
     if (ret == 0) SNEPPX_freelist_add(ptr, size);
     return ret;
 }
 
+/**
+ * @brief Perform Quarantine Check With Freelist.
+ *
+ * @param q [out] Q value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_quarantine_check_with_freelist(SNEPPXMemQuarantine* q, const void* ptr) {
     if (SNEPPX_mem_quarantine_check(q, ptr)) return 1;
     if (g_freelist_initialized) {

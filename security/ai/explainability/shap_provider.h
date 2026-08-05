@@ -8,6 +8,22 @@
 #define SNEPPX_AI_SHAP_MAX_SAMPLES 100000
 #define SNEPPX_AI_SHAP_BACKGROUND_SIZE 100
 
+/*
+ * SNEPPX - Shap Provider
+ *
+ * WHAT
+ *   Shap Provider.
+ *
+ * CONCEPT
+ *   Provides SHA hash family.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     uint32_t feature_index;
     char* feature_name;

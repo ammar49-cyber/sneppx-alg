@@ -8,6 +8,22 @@
 #define SNEPPX_TLS_MAX_EXTENSIONS 64
 #define SNEPPX_TLS_MAX_CIPHER_SUITES 128
 
+/*
+ * SNEPPX - Tls Extended
+ *
+ * WHAT
+ *   Tls Extended.
+ *
+ * CONCEPT
+ *   Provides the Tls Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TLS_VERSION_1_2,
     SNEPPX_TLS_VERSION_1_3,

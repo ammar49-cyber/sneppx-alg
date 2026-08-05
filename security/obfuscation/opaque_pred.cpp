@@ -2,6 +2,22 @@
 #include <sstream>
 #include <algorithm>
 
+/*
+ * SNEPPX - Opaque Pred
+ *
+ * WHAT
+ *   Opaque Pred.
+ *
+ * CONCEPT
+ *   Provides the Opaque Pred.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 SNEPPXOpaqueEngine::SNEPPXOpaqueEngine() : rng(std::random_device{}()), next_id(1) {}

@@ -4,6 +4,22 @@
 #include <sstream>
 #include <iostream>
 
+/*
+ * SNEPPX - Cfg Flatten
+ *
+ * WHAT
+ *   Cfg Flatten.
+ *
+ * CONCEPT
+ *   Provides the Cfg Flatten.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 SNEPPXObfCFGFlattener::SNEPPXObfCFGFlattener() : rng(std::random_device{}()) {}

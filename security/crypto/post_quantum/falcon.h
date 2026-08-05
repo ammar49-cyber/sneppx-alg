@@ -14,6 +14,22 @@
 #define SNEPPX_FALCON_1024_SIGNATURE_SIZE 1330
 #define SNEPPX_FALCON_1024_MESSAGE_SIZE 66000
 
+/*
+ * SNEPPX - Falcon
+ *
+ * WHAT
+ *   Falcon.
+ *
+ * CONCEPT
+ *   Provides the Falcon.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_FALCON_512,
     SNEPPX_FALCON_1024

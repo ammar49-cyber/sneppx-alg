@@ -6,6 +6,22 @@
 
 #define SNEPPX_AUDIT_HMAC_KEY_LEN 32
 
+/*
+ * SNEPPX - Audit Logger
+ *
+ * WHAT
+ *   Audit Logger.
+ *
+ * CONCEPT
+ *   Provides structured logging.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static uint32_t audit_crc32(const void* data, size_t len) {
     const unsigned char* buf = (const unsigned char*)data;
     uint32_t crc = 0xFFFFFFFF;
@@ -17,6 +33,13 @@ static uint32_t audit_crc32(const void* data, size_t len) {
     return ~crc;
 }
 
+/**
+ * @brief Initialize Audit.
+ *
+ * @param audit [out] Audit value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_init(SNEPPXAuditLogger* audit, const char* log_path) {
     if (!audit) return -1;
     memset(audit, 0, sizeof(*audit));
@@ -26,6 +49,9 @@ int SNEPPX_audit_init(SNEPPXAuditLogger* audit, const char* log_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Audit Shutdown.
+ */
 void SNEPPX_audit_shutdown(SNEPPXAuditLogger* audit) {
     if (audit) {
         if (audit->log_file_path) {
@@ -35,6 +61,15 @@ void SNEPPX_audit_shutdown(SNEPPXAuditLogger* audit) {
     }
 }
 
+/**
+ * @brief Perform Audit Log.
+ *
+ * @param audit [out] Audit value.
+ * @param event_type [in] Event Type value.
+ * @param description [in] Description value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_log(SNEPPXAuditLogger* audit, int event_type,
                      const char* description, uint64_t related_address) {
     if (!audit || !audit->enabled || !description) return -1;
@@ -49,6 +84,13 @@ int SNEPPX_audit_log(SNEPPXAuditLogger* audit, int event_type,
     return 0;
 }
 
+/**
+ * @brief Perform Audit Export.
+ *
+ * @param audit [out] Audit value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_export(SNEPPXAuditLogger* audit, const char* output_path) {
     if (!audit || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
@@ -64,6 +106,11 @@ int SNEPPX_audit_export(SNEPPXAuditLogger* audit, const char* output_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Audit Verify Chain.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_verify_chain(SNEPPXAuditLogger* audit) {
     if (!audit) return 0;
     uint32_t expected_chain = 0;
@@ -75,6 +122,15 @@ int SNEPPX_audit_verify_chain(SNEPPXAuditLogger* audit) {
     return (expected_chain == audit->chain_crc) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Audit Search.
+ *
+ * @param audit [out] Audit value.
+ * @param event_type [in] Event Type value.
+ * @param results [out] Results value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_search(SNEPPXAuditLogger* audit, int event_type,
                         SNEPPXAuditEntry* results, int max_results) {
     if (!audit || !results || max_results <= 0) return 0;
@@ -86,16 +142,33 @@ int SNEPPX_audit_search(SNEPPXAuditLogger* audit, int event_type,
     return found;
 }
 
+/**
+ * @brief Perform Audit Get Entry Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_get_entry_count(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
     return audit->entry_count;
 }
 
+/**
+ * @brief Perform Audit Get Chain Crc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_audit_get_chain_crc(SNEPPXAuditLogger* audit) {
     if (!audit) return 0;
     return audit->chain_crc;
 }
 
+/**
+ * @brief Perform Audit Purge.
+ *
+ * @param audit [out] Audit value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_purge(SNEPPXAuditLogger* audit, uint64_t before_timestamp) {
     if (!audit) return -1;
     int kept = 0;
@@ -111,6 +184,14 @@ int SNEPPX_audit_purge(SNEPPXAuditLogger* audit, uint64_t before_timestamp) {
     return 0;
 }
 
+/**
+ * @brief Perform Audit Sign Entry.
+ *
+ * @param audit [out] Audit value.
+ * @param index [in] Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_sign_entry(SNEPPXAuditLogger* audit, int index, const uint8_t* key) {
     if (!audit || !key) return -1;
     if (index < 0 || index >= audit->entry_count) return -1;
@@ -123,6 +204,15 @@ int SNEPPX_audit_sign_entry(SNEPPXAuditLogger* audit, int index, const uint8_t* 
     return 0;
 }
 
+/**
+ * @brief Perform Audit Log Formatted.
+ *
+ * @param audit [out] Audit value.
+ * @param event_type [in] Event Type value.
+ * @param fmt [in] Fmt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_log_formatted(SNEPPXAuditLogger* audit, int event_type, const char* fmt, ...) {
     if (!audit || !fmt) return -1;
     char buf[512];
@@ -133,6 +223,14 @@ int SNEPPX_audit_log_formatted(SNEPPXAuditLogger* audit, int event_type, const c
     return SNEPPX_audit_log(audit, event_type, buf, 0);
 }
 
+/**
+ * @brief Perform Audit Get Entry.
+ *
+ * @param audit [out] Audit value.
+ * @param index [in] Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_get_entry(SNEPPXAuditLogger* audit, int index, SNEPPXAuditEntry* entry_out) {
     if (!audit || !entry_out) return -1;
     if (index < 0 || index >= audit->entry_count) return -1;
@@ -140,6 +238,11 @@ int SNEPPX_audit_get_entry(SNEPPXAuditLogger* audit, int index, SNEPPXAuditEntry
     return 0;
 }
 
+/**
+ * @brief Clear Audit.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_clear(SNEPPXAuditLogger* audit) {
     if (!audit) return -1;
     memset(audit->entries, 0, sizeof(SNEPPXAuditEntry) * audit->entry_count);
@@ -148,6 +251,14 @@ int SNEPPX_audit_clear(SNEPPXAuditLogger* audit) {
     return 0;
 }
 
+/**
+ * @brief Perform Audit Get Stats.
+ *
+ * @param audit [out] Audit value.
+ * @param count [out] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_get_stats(SNEPPXAuditLogger* audit, int* count, int* chain_verified) {
     if (!audit || !count || !chain_verified) return -1;
     *count = audit->entry_count;
@@ -155,11 +266,21 @@ int SNEPPX_audit_get_stats(SNEPPXAuditLogger* audit, int* count, int* chain_veri
     return 0;
 }
 
+/**
+ * @brief Perform Audit Set Log Level.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_set_log_level(int level) {
     (void)level;
     return 0;
 }
 
+/**
+ * @brief Perform Audit Export Xml.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_export_xml(const char* path) {
     if (!path) return -1;
     FILE* f = fopen(path, "w");
@@ -172,6 +293,11 @@ int SNEPPX_audit_export_xml(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Audit Verify Entry.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_audit_verify_entry(int index) {
     (void)index;
     return 1;

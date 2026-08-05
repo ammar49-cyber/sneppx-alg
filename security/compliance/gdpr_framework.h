@@ -9,6 +9,22 @@
 #define SNEPPX_GDPR_MAX_PROCESSING_RECORDS 1024
 #define SNEPPX_GDPR_RIGHTS_ARTICLES 8
 
+/*
+ * SNEPPX - Gdpr Framework
+ *
+ * WHAT
+ *   Gdpr Framework.
+ *
+ * CONCEPT
+ *   Provides the Gdpr Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_GDPR_RIGHT_ACCESS,
     SNEPPX_GDPR_RIGHT_RECTIFICATION,

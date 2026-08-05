@@ -6,6 +6,22 @@
 #define BREAKOUT_WATCH_FILES 64
 #define BREAKOUT_SENSITIVITY 5
 
+/*
+ * SNEPPX - Container Breakout
+ *
+ * WHAT
+ *   Container Breakout.
+ *
+ * CONCEPT
+ *   Provides the Container Breakout.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     int pid;
     char comm[64];
@@ -74,6 +90,13 @@ static int add_process(int pid, const char *comm) {
     return process_count++;
 }
 
+/**
+ * @brief Perform Breakout Detect Ns Change.
+ *
+ * @param pid [in] Pid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_detect_ns_change(int pid, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
@@ -89,6 +112,14 @@ int SNEPPX_breakout_detect_ns_change(int pid, const char *comm) {
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Detect Mount.
+ *
+ * @param pid [in] Pid value.
+ * @param target [in] Target value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_detect_mount(int pid, const char *target, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
@@ -114,6 +145,14 @@ int SNEPPX_breakout_detect_mount(int pid, const char *target, const char *comm) 
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Detect Capability.
+ *
+ * @param pid [in] Pid value.
+ * @param cap_effective [in] Cap Effective value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_detect_capability(int pid, uint64_t cap_effective, const char *comm) {
     int idx = find_process(pid);
     if (idx < 0) idx = add_process(pid, comm);
@@ -142,6 +181,11 @@ int SNEPPX_breakout_detect_capability(int pid, uint64_t cap_effective, const cha
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Check File Access.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_check_file_access(const char *path) {
     if (!path) return 0;
     for (int i = 0; suspicious_paths[i]; i++) {
@@ -155,6 +199,14 @@ int SNEPPX_breakout_check_file_access(const char *path) {
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Detect Syscall.
+ *
+ * @param pid [in] Pid value.
+ * @param syscall_name [in] Syscall Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_detect_syscall(int pid, const char *syscall_name, const char *comm) {
     if (!syscall_name) return 0;
     for (int i = 0; suspicious_syscalls[i]; i++) {
@@ -173,6 +225,11 @@ int SNEPPX_breakout_detect_syscall(int pid, const char *syscall_name, const char
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Add Watch File.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_add_watch_file(const char *path) {
     if (!path || watch_file_count >= BREAKOUT_WATCH_FILES) return -1;
     strncpy(watch_files[watch_file_count].path, path, 255);
@@ -183,6 +240,11 @@ int SNEPPX_breakout_add_watch_file(const char *path) {
     return 0;
 }
 
+/**
+ * @brief Perform Breakout Get Stats.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_get_stats(breakout_stats_t *stats) {
     if (!stats) return -1;
     stats->total_breakout_attempts = total_breakout_attempts;
@@ -195,6 +257,11 @@ int SNEPPX_breakout_get_stats(breakout_stats_t *stats) {
     return 0;
 }
 
+/**
+ * @brief Reset Breakout.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_breakout_reset(void) {
     process_count = 0;
     watch_file_count = 0;

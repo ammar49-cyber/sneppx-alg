@@ -9,6 +9,22 @@
 #define SBOM_MAX_COMPONENTS 4096
 #define VULN_MAX_ENTRIES 65536
 
+/*
+ * SNEPPX - Container Security
+ *
+ * WHAT
+ *   Container Security.
+ *
+ * CONCEPT
+ *   Provides the Container Security.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char image_id[128];
     char manifest_digest[64];
@@ -48,6 +64,16 @@ static void hex_decode(uint8_t *out, const char *hex) {
         out[i/2] = (hexchar(hex[i]) << 4) | hexchar(hex[i+1]);
 }
 
+/**
+ * @brief Perform Container Verify Image.
+ *
+ * @param manifest [in] Manifest value.
+ * @param manifest_len [in] Manifest Len value.
+ * @param signature [in] Signature value.
+ * @param sig_len [in] Sig Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_verify_image(const uint8_t *manifest, size_t manifest_len, const uint8_t *signature, size_t sig_len, const uint8_t *pubkey) {
     if (!manifest || !signature || !pubkey) return -1;
     uint8_t hash[32];
@@ -57,6 +83,14 @@ int SNEPPX_container_verify_image(const uint8_t *manifest, size_t manifest_len, 
     return 0;
 }
 
+/**
+ * @brief Perform Container Parse Manifest.
+ *
+ * @param manifest [in] Manifest value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_parse_manifest(const uint8_t *manifest, size_t len, container_manifest_t *out) {
     if (!manifest || !out) return -1;
     memset(out, 0, sizeof(container_manifest_t));
@@ -83,6 +117,14 @@ int SNEPPX_container_parse_manifest(const uint8_t *manifest, size_t len, contain
     return 0;
 }
 
+/**
+ * @brief Perform Container Verify Layer.
+ *
+ * @param layer_data [in] Layer Data value.
+ * @param layer_len [in] Layer Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_verify_layer(const uint8_t *layer_data, size_t layer_len, const char *expected_digest) {
     if (!layer_data || !expected_digest) return -1;
     uint8_t hash[32];
@@ -95,6 +137,14 @@ int SNEPPX_container_verify_layer(const uint8_t *layer_data, size_t layer_len, c
     return strncmp(hex, dig + 1, 64) == 0 ? 0 : 1;
 }
 
+/**
+ * @brief Perform Sbom Generate.
+ *
+ * @param doc [out] Doc value.
+ * @param image_name [in] Image Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *version) {
     if (!doc) return -1;
     memset(doc, 0, sizeof(sbom_doc_t));
@@ -110,6 +160,16 @@ int SNEPPX_sbom_generate(sbom_doc_t *doc, const char *image_name, const char *ve
     return 0;
 }
 
+/**
+ * @brief Perform Sbom Add Component.
+ *
+ * @param doc [out] Doc value.
+ * @param name [in] Name value.
+ * @param version [in] Version value.
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sbom_add_component(sbom_doc_t *doc, const char *name, const char *version, const char *type, const char *supplier) {
     if (!doc || !name || doc->num_components >= SBOM_MAX_COMPONENTS) return -1;
     sbom_component_t *comp = &doc->components[doc->num_components++];
@@ -125,6 +185,11 @@ int SNEPPX_sbom_add_component(sbom_doc_t *doc, const char *name, const char *ver
     return 0;
 }
 
+/**
+ * @brief Perform Sbom Validate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sbom_validate(sbom_doc_t *doc) {
     if (!doc) return -1;
     if (doc->num_components == 0) return 1;
@@ -136,6 +201,14 @@ int SNEPPX_sbom_validate(sbom_doc_t *doc) {
     return 0;
 }
 
+/**
+ * @brief Perform Sbom Export Json.
+ *
+ * @param doc [out] Doc value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len) {
     if (!doc || !out) return -1;
     size_t pos = 0;
@@ -154,6 +227,16 @@ int SNEPPX_sbom_export_json(sbom_doc_t *doc, char *out, size_t out_len) {
     return (int)pos;
 }
 
+/**
+ * @brief Perform Container Scan Vulns.
+ *
+ * @param image_name [in] Image Name value.
+ * @param layer_data [in] Layer Data value.
+ * @param layer_len [in] Layer Len value.
+ * @param results [out] Results value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_scan_vulns(const char *image_name, const uint8_t *layer_data, size_t layer_len, vuln_result_t *results, int max_results) {
     if (!image_name || !results) return -1;
     int found = 0;
@@ -170,6 +253,15 @@ int SNEPPX_container_scan_vulns(const char *image_name, const uint8_t *layer_dat
     return found;
 }
 
+/**
+ * @brief Perform Container Add Vuln.
+ *
+ * @param cve_id [in] Cve Id value.
+ * @param package [in] Package value.
+ * @param severity [in] Severity value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_add_vuln(const char *cve_id, const char *package, const char *severity, double cvss) {
     if (!cve_id || !package || num_vulns >= VULN_MAX_ENTRIES) return -1;
     strncpy(vuln_db[num_vulns].cve_id, cve_id, 31);
@@ -182,6 +274,11 @@ int SNEPPX_container_add_vuln(const char *cve_id, const char *package, const cha
     return 0;
 }
 
+/**
+ * @brief Perform Container Get Stats.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_get_stats(container_stats_t *stats) {
     if (!stats) return -1;
     stats->num_images = num_images;
@@ -200,6 +297,11 @@ int SNEPPX_container_get_stats(container_stats_t *stats) {
     return 0;
 }
 
+/**
+ * @brief Perform Container Init Vuln Db.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_container_init_vuln_db(void) {
     const char *default_vulns[] = {
         "CVE-2024-21626", "runc", "CRITICAL", "9.8",

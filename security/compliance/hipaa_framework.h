@@ -10,6 +10,22 @@
 #define SNEPPX_HIPAA_SAFEGUARDS_PHYSICAL 3
 #define SNEPPX_HIPAA_SAFEGUARDS_TECHNICAL 5
 
+/*
+ * SNEPPX - Hipaa Framework
+ *
+ * WHAT
+ *   Hipaa Framework.
+ *
+ * CONCEPT
+ *   Provides the Hipaa Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_PHI_TYPE_DEMOGRAPHIC,
     SNEPPX_PHI_TYPE_MEDICAL_RECORD,

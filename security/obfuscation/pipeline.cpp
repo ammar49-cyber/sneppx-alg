@@ -8,6 +8,22 @@
 #include <vector>
 #include <cstring>
 
+/*
+ * SNEPPX - Pipeline
+ *
+ * WHAT
+ *   Pipeline.
+ *
+ * CONCEPT
+ *   Provides pipeline parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 SNEPPXObfuscator::SNEPPXObfuscator()

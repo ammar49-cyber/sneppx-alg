@@ -9,6 +9,22 @@
 #define SNEPPX_BC_BLOCK_HASH_SIZE 64
 #define SNEPPX_BC_STATE_ROOT_SIZE 64
 
+/*
+ * SNEPPX - Consensus Audit
+ *
+ * WHAT
+ *   Consensus Audit.
+ *
+ * CONCEPT
+ *   Provides audit logging.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_BC_CONSENSUS_POW,
     SNEPPX_BC_CONSENSUS_POS,

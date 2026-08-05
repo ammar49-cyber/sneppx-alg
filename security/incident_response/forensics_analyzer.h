@@ -8,6 +8,22 @@
 #define SNEPPX_IR_FORENSICS_MAX_FILE_SCAN_DEPTH 128
 #define SNEPPX_IR_FORENSICS_CHUNK_SIZE 1048576
 
+/*
+ * SNEPPX - Forensics Analyzer
+ *
+ * WHAT
+ *   Forensics Analyzer.
+ *
+ * CONCEPT
+ *   Provides the Forensics Analyzer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_IR_ANALYSIS_MEMORY,
     SNEPPX_IR_ANALYSIS_DISK,

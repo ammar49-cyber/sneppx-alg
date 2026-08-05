@@ -7,6 +7,22 @@
 #define SNEPPX_CIS_MAX_CONTROLS 1024
 #define SNEPPX_CIS_MAX_TECHNOLOGIES 16
 
+/*
+ * SNEPPX - Cis Benchmark
+ *
+ * WHAT
+ *   Cis Benchmark.
+ *
+ * CONCEPT
+ *   Provides the Cis Benchmark.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_CIS_TECH_LINUX,
     SNEPPX_CIS_TECH_WINDOWS,

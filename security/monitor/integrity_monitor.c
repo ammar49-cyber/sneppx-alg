@@ -22,6 +22,22 @@
 #define SNEPPX_MONITOR_SLIDING_WINDOW_SIZE 32
 #define SNEPPX_MONITOR_EVENT_TYPE_COUNT 16
 
+/*
+ * SNEPPX - Integrity Monitor
+ *
+ * WHAT
+ *   Integrity Monitor.
+ *
+ * CONCEPT
+ *   Provides the Integrity Monitor.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     char name[128];
     const void* addr;
@@ -128,33 +144,149 @@ static int g_event_filter[SNEPPX_MONITOR_EVENT_TYPE_COUNT];
 
 static uint64_t g_bulk_verify_index = 0;
 
+/**
+ * @brief Perform Prng Next.
+ *
+ * @return The result value, or 0 on error.
+ */
 unsigned long SNEPPX_prng_next(void);
 
+/**
+ * @brief Initialize Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_init(void);
+/**
+ * @brief Perform Monitor Shutdown.
+ */
 void SNEPPX_monitor_shutdown(void);
+/**
+ * @brief Start Monitor.
+ *
+ * @param interval_ms [in] Interval Ms value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_start(uint64_t interval_ms);
+/**
+ * @brief Stop Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_stop(void);
+/**
+ * @brief Perform Monitor Register Region.
+ *
+ * @param name [in] Name value.
+ * @param addr [in] Addr value.
+ * @param size [in] Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_register_region(const char* name, const void* addr, size_t size);
+/**
+ * @brief Perform Monitor Unregister Region.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_unregister_region(const char* name);
+/**
+ * @brief Perform Monitor Verify All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_all(void);
+/**
+ * @brief Perform Monitor Verify Region.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_region(const char* name);
+/**
+ * @brief Perform Monitor Check Canary.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_canary(void);
+/**
+ * @brief Perform Monitor Refresh Canary.
+ */
 void SNEPPX_monitor_refresh_canary(void);
+/**
+ * @brief Perform Monitor Freq Analyze.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_analyze(void);
+/**
+ * @brief Reset Monitor Freq.
+ */
 void SNEPPX_monitor_freq_reset(void);
+/**
+ * @brief Perform Monitor Timing Set Baseline.
+ *
+ * @param mean [in] Mean value.
+ * @param stddev [in] Stddev value.
+ */
 void SNEPPX_monitor_timing_set_baseline(double mean, double stddev);
+/**
+ * @brief Perform Monitor Timing Check.
+ *
+ * @param elapsed_us [in] Elapsed Us value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_timing_check(uint64_t elapsed_us);
+/**
+ * @brief Perform Monitor Api Hook Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_api_hook_check(void);
+/**
+ * @brief Perform Monitor Api Hook Enable.
+ *
+ * @param base [in] Base value.
+ * @param size [in] Size value.
+ */
 void SNEPPX_monitor_api_hook_enable(const void* base, size_t size);
+/**
+ * @brief Perform Monitor Syscall Track.
+ *
+ * @param syscall_num [in] Syscall Num value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_track(int syscall_num);
+/**
+ * @brief Perform Monitor Syscall Analyze.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_analyze(void);
+/**
+ * @brief Perform Monitor Syscall Learn Baseline.
+ */
 void SNEPPX_monitor_syscall_learn_baseline(void);
+/**
+ * @brief Perform Monitor Syscall Enable.
+ */
 void SNEPPX_monitor_syscall_enable(void);
 static unsigned long prng_next(void) {
     g_prng_state = g_prng_state * 1103515245UL + 12345UL;
     return g_prng_state;
 }
 
+/**
+ * @brief Perform Prng Next.
+ *
+ * @return The result value, or 0 on error.
+ */
 unsigned long SNEPPX_prng_next(void) {
     return prng_next();
 }
@@ -237,6 +369,11 @@ static void freq_record_sample(int event_type) {
     s->count = ++g_freq_baseline[event_type % 4];
 }
 
+/**
+ * @brief Perform Monitor Freq Analyze.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_analyze(void) {
     if (g_freq_sample_count < 10) return 0;
     int recent[4] = {0};
@@ -260,16 +397,29 @@ int SNEPPX_monitor_freq_analyze(void) {
     return anomalies;
 }
 
+/**
+ * @brief Reset Monitor Freq.
+ */
 void SNEPPX_monitor_freq_reset(void) {
     memset(g_freq_baseline, 0, sizeof(g_freq_baseline));
     g_freq_sample_count = 0;
 }
 
+/**
+ * @brief Perform Monitor Timing Set Baseline.
+ *
+ * @param mean [in] Mean value.
+ */
 void SNEPPX_monitor_timing_set_baseline(double mean, double stddev) {
     g_timing_baseline = mean;
     g_timing_stddev = (stddev > 0.001) ? stddev : 1.0;
 }
 
+/**
+ * @brief Perform Monitor Timing Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_timing_check(uint64_t elapsed_us) {
     if (g_timing_samples < 5) {
         g_timing_samples++;
@@ -303,6 +453,11 @@ int SNEPPX_monitor_timing_check(uint64_t elapsed_us) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Api Hook Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_api_hook_check(void) {
     if (!g_api_hook_check_enabled) return 0;
     if (!g_module_base || g_module_size == 0) return -1;
@@ -316,12 +471,22 @@ int SNEPPX_monitor_api_hook_check(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Api Hook Enable.
+ *
+ * @param base [in] Base value.
+ */
 void SNEPPX_monitor_api_hook_enable(const void* base, size_t size) {
     g_module_base = base;
     g_module_size = size;
     g_api_hook_check_enabled = 1;
 }
 
+/**
+ * @brief Perform Monitor Syscall Track.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_track(int syscall_num) {
     if (!g_syscall_enabled) return 0;
     if (syscall_num >= 0 && syscall_num < SNEPPX_MONITOR_MAX_SYSCALL_TABLE) {
@@ -330,6 +495,11 @@ int SNEPPX_monitor_syscall_track(int syscall_num) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Syscall Analyze.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_analyze(void) {
     if (!g_syscall_enabled) return 0;
     int anomalies = 0;
@@ -347,14 +517,25 @@ int SNEPPX_monitor_syscall_analyze(void) {
     return anomalies;
 }
 
+/**
+ * @brief Perform Monitor Syscall Learn Baseline.
+ */
 void SNEPPX_monitor_syscall_learn_baseline(void) {
     for (int i = 0; i < SNEPPX_MONITOR_MAX_SYSCALL_TABLE; i++)
         g_syscall_baseline[i] = g_syscall_counts[i];
 }
 
+/**
+ * @brief Perform Monitor Syscall Enable.
+ */
 void SNEPPX_monitor_syscall_enable(void) {
     g_syscall_enabled = 1;
 }
+/**
+ * @brief Initialize Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_init(void) {
     g_prng_state = (unsigned long)time(NULL) ^ 0x7F3C5A1B;
     g_region_count = 0;
@@ -405,6 +586,9 @@ int SNEPPX_monitor_init(void) {
     SNEPPX_monitor_refresh_canary();
     return 0;
 }
+/**
+ * @brief Perform Monitor Shutdown.
+ */
 void SNEPPX_monitor_shutdown(void) {
     SNEPPX_monitor_stop();
     memset(g_callbacks, 0, sizeof(g_callbacks));
@@ -423,6 +607,11 @@ void SNEPPX_monitor_shutdown(void) {
     memset(g_event_log, 0, sizeof(g_event_log));
 }
 
+/**
+ * @brief Start Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_start(uint64_t interval_ms) {
     if (g_monitor_running) return 0;
     g_monitor_interval_ms = interval_ms;
@@ -430,11 +619,24 @@ int SNEPPX_monitor_start(uint64_t interval_ms) {
     return 0;
 }
 
+/**
+ * @brief Stop Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_stop(void) {
     g_monitor_running = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Register Region.
+ *
+ * @param name [in] Name value.
+ * @param addr [in] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_register_region(const char* name, const void* addr, size_t size) {
     if (!name || !addr || size == 0 || g_region_count >= SNEPPX_MONITOR_MAX_REGIONS) return -1;
     MonitoredRegion* reg = &g_regions[g_region_count];
@@ -452,6 +654,11 @@ int SNEPPX_monitor_register_region(const char* name, const void* addr, size_t si
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Unregister Region.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_unregister_region(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -464,6 +671,11 @@ int SNEPPX_monitor_unregister_region(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Verify All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_all(void) {
     int violations = 0;
     uint64_t now_us = (uint64_t)time(NULL) * 1000000;
@@ -571,6 +783,11 @@ int SNEPPX_monitor_verify_all(void) {
     return violations;
 }
 
+/**
+ * @brief Perform Monitor Verify Region.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_region(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -590,10 +807,18 @@ int SNEPPX_monitor_verify_region(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Check Canary.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_canary(void) {
     return memcmp(g_canaries[0], g_canary_checks[0], SNEPPX_MONITOR_CANARY_SIZE) == 0;
 }
 
+/**
+ * @brief Perform Monitor Refresh Canary.
+ */
 void SNEPPX_monitor_refresh_canary(void) {
     for (size_t i = 0; i < SNEPPX_MONITOR_CANARY_SIZE; i++) {
         g_canaries[0][i] = (unsigned char)(prng_next() & 0xFF);
@@ -607,11 +832,19 @@ void SNEPPX_monitor_refresh_canary(void) {
     }
 }
 
+/**
+ * @brief Perform Monitor Set Callback.
+ */
 void SNEPPX_monitor_set_callback(SNEPPXMonitorCallback cb) {
     g_callbacks[0] = cb;
     g_callback_count = (cb != NULL) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Monitor Verify Single Region.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_single_region(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -637,6 +870,11 @@ int SNEPPX_monitor_verify_single_region(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Set Canary.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_canary(int depth) {
     if (depth < 0 || depth >= SNEPPX_MONITOR_MAX_CANARIES) return -1;
     if (depth >= g_canary_count)
@@ -648,11 +886,23 @@ int SNEPPX_monitor_set_canary(int depth) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Check Canary At.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_canary_at(int depth) {
     if (depth < 0 || depth >= g_canary_count) return -1;
     return memcmp(g_canaries[depth], g_canary_checks[depth], SNEPPX_MONITOR_CANARY_SIZE) == 0;
 }
 
+/**
+ * @brief Perform Monitor Get Events.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_events(SNEPPXMonitorEvent* buffer, int max) {
     if (!buffer || max <= 0) return 0;
     int to_copy = (max < g_event_log_count) ? max : g_event_log_count;
@@ -668,6 +918,15 @@ int SNEPPX_monitor_get_events(SNEPPXMonitorEvent* buffer, int max) {
     return to_copy;
 }
 
+/**
+ * @brief Perform Monitor Scan Memory For Pattern.
+ *
+ * @param pattern [in] Pattern value.
+ * @param pattern_len [in] Pattern Len value.
+ * @param start [in] Start value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_scan_memory_for_pattern(const unsigned char* pattern, size_t pattern_len, const void* start, const void* end) {
     if (!pattern || pattern_len == 0 || !start || !end || start >= end) return -1;
     const unsigned char* p = (const unsigned char*)start;
@@ -687,11 +946,19 @@ int SNEPPX_monitor_scan_memory_for_pattern(const unsigned char* pattern, size_t 
     return found;
 }
 
+/**
+ * @brief Perform Monitor Set Anomaly Threshold.
+ */
 void SNEPPX_monitor_set_anomaly_threshold(int threshold) {
     if (threshold < 1) threshold = 1;
     g_anomaly_threshold = threshold;
 }
 
+/**
+ * @brief Perform Monitor Check Self.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_self(void) {
     SelfCheckBlock check_block;
     memcpy(&check_block, &g_self_block, sizeof(SelfCheckBlock));
@@ -707,12 +974,22 @@ int SNEPPX_monitor_check_self(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Heartbeat.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_heartbeat(uint64_t interval_ms) {
     g_heartbeat_interval_ms = interval_ms;
     g_last_heartbeat_time = (uint64_t)time(NULL) * 1000;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Add Callback.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_add_callback(SNEPPXMonitorCallback cb) {
     if (!cb) return -1;
     if (g_callback_count >= SNEPPX_MONITOR_MAX_CALLBACKS) return -1;
@@ -723,6 +1000,11 @@ int SNEPPX_monitor_add_callback(SNEPPXMonitorCallback cb) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Remove Callback.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_remove_callback(SNEPPXMonitorCallback cb) {
     if (!cb) return -1;
     for (int i = 0; i < g_callback_count; i++) {
@@ -736,6 +1018,11 @@ int SNEPPX_monitor_remove_callback(SNEPPXMonitorCallback cb) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Auto Learn.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_auto_learn(uint64_t seconds) {
     if (seconds == 0) {
         g_auto_learn_enabled = 0;
@@ -747,6 +1034,11 @@ int SNEPPX_monitor_auto_learn(uint64_t seconds) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Sensitivity.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_sensitivity(int level) {
     if (level < 0) level = 0;
     if (level > 10) level = 10;
@@ -756,10 +1048,20 @@ int SNEPPX_monitor_set_sensitivity(int level) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Anomaly Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_anomaly_count(void) {
     return g_anomaly_total_count;
 }
 
+/**
+ * @brief Perform Monitor Export Log.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_export_log(const char* path) {
     if (!path) return -1;
     FILE* f = fopen(path, "w");
@@ -779,17 +1081,32 @@ int SNEPPX_monitor_export_log(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Verify Interval.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_verify_interval(uint64_t ms) {
     g_verify_interval_ms = ms;
     g_last_verify_called = (uint64_t)time(NULL) * 1000;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Adaptive Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_adaptive_threshold(int enabled) {
     g_adaptive_threshold_enabled = (enabled != 0);
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Check Module Integrity.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_module_integrity(const char* module_name) {
     if (!module_name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -831,10 +1148,20 @@ static void reset_event_type_baselines(void) {
     memset(g_event_type_baselines, 0, sizeof(g_event_type_baselines));
 }
 
+/**
+ * @brief Perform Monitor Get Region Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_count(void) {
     return g_region_count;
 }
 
+/**
+ * @brief Perform Monitor Get Active Region Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_active_region_count(void) {
     int count = 0;
     for (int i = 0; i < g_region_count; i++) {
@@ -843,40 +1170,83 @@ int SNEPPX_monitor_get_active_region_count(void) {
     return count;
 }
 
+/**
+ * @brief Perform Monitor Get Event Log Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_log_count(void) {
     return g_event_log_count;
 }
 
+/**
+ * @brief Perform Monitor Clear Event Log.
+ */
 void SNEPPX_monitor_clear_event_log(void) {
     memset(g_event_log, 0, sizeof(g_event_log));
     g_event_log_head = 0;
     g_event_log_count = 0;
 }
 
+/**
+ * @brief Perform Monitor Get Last Verify Time.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_last_verify_time(void) {
     return g_last_verify_time;
 }
 
+/**
+ * @brief Perform Monitor Get Anomaly Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_anomaly_threshold(void) {
     return g_anomaly_threshold;
 }
 
+/**
+ * @brief Perform Monitor Get Sensitivity.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_sensitivity(void) {
     return g_sensitivity_level;
 }
 
+/**
+ * @brief Perform Monitor Is Auto Learning.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_auto_learning(void) {
     return g_auto_learn_enabled;
 }
 
+/**
+ * @brief Perform Monitor Get Verify Interval.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_verify_interval(void) {
     return g_verify_interval_ms;
 }
 
+/**
+ * @brief Perform Monitor Is Adaptive Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_adaptive_threshold(void) {
     return g_adaptive_threshold_enabled ? 1 : 0;
 }
 
+/**
+ * @brief Perform Monitor Event Type String.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_monitor_event_type_string(SNEPPXMonitorEventType type) {
     switch (type) {
         case SNEPPX_MONITOR_EVENT_TEXT_MODIFIED: return "TEXT_MODIFIED";
@@ -891,6 +1261,13 @@ const char* SNEPPX_monitor_event_type_string(SNEPPXMonitorEventType type) {
     }
 }
 
+/**
+ * @brief Perform Monitor Set Severity Level.
+ *
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_severity_level(SNEPPXMonitorEventType type, int severity) {
     int idx = (int)type % SNEPPX_MONITOR_EVENT_TYPE_COUNT;
     if (severity < SNEPPX_MONITOR_ALERT_LOW) severity = SNEPPX_MONITOR_ALERT_LOW;
@@ -899,6 +1276,11 @@ int SNEPPX_monitor_set_severity_level(SNEPPXMonitorEventType type, int severity)
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Severity Level.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_severity_level(SNEPPXMonitorEventType type) {
     int idx = (int)type % SNEPPX_MONITOR_EVENT_TYPE_COUNT;
     return g_alert_severity_levels[idx];
@@ -934,6 +1316,11 @@ static void auto_learn_finalize(void) {
     auto_learn_update_baselines();
 }
 
+/**
+ * @brief Perform Monitor Get Region Crc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_crc(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -943,6 +1330,11 @@ int SNEPPX_monitor_get_region_crc(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Region Is Active.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_is_active(const char* name) {
     if (!name) return 0;
     for (int i = 0; i < g_region_count; i++) {
@@ -952,6 +1344,11 @@ int SNEPPX_monitor_region_is_active(const char* name) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Region Check Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_check_count(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -961,23 +1358,48 @@ int SNEPPX_monitor_get_region_check_count(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Get Heartbeat Interval.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_heartbeat_interval(void) {
     return g_heartbeat_interval_ms;
 }
 
+/**
+ * @brief Perform Monitor Is Running.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_running(void) {
     return g_monitor_running ? 1 : 0;
 }
 
+/**
+ * @brief Perform Monitor Get Interval Ms.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_interval_ms(void) {
     return g_monitor_interval_ms;
 }
 
+/**
+ * @brief Perform Monitor Get Uptime Seconds.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_uptime_seconds(void) {
     if (g_monitor_start_time == 0) return 0;
     return (uint64_t)time(NULL) - g_monitor_start_time;
 }
 
+/**
+ * @brief Perform Monitor Reset Region.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_reset_region(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -991,14 +1413,38 @@ int SNEPPX_monitor_reset_region(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Set Start Time.
+ */
 void SNEPPX_monitor_set_start_time(void) {
     g_monitor_start_time = (uint64_t)time(NULL);
 }
+/**
+ * @brief Perform Monitor Reset Anomaly Count.
+ */
 void SNEPPX_monitor_reset_anomaly_count(void) { g_anomaly_total_count = 0; }
+/**
+ * @brief Perform Monitor Get Syscall Enabled.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_syscall_enabled(void) { return g_syscall_enabled; }
+/**
+ * @brief Perform Monitor Set Prng State.
+ */
 void SNEPPX_monitor_set_prng_state(unsigned long s) { g_prng_state = s; }
+/**
+ * @brief Perform Monitor Get Prng State.
+ *
+ * @return The result value, or 0 on error.
+ */
 unsigned long SNEPPX_monitor_get_prng_state(void) { return g_prng_state; }
 
+/**
+ * @brief Perform Monitor Export Json.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_export_json(const char* path) {
     if (!path) return -1;
     FILE* f = fopen(path, "w");
@@ -1028,6 +1474,11 @@ int SNEPPX_monitor_export_json(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Name.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_name(const char* name) {
     if (!name) return -1;
     strncpy(g_monitor_instance_name, name, sizeof(g_monitor_instance_name) - 1);
@@ -1035,20 +1486,42 @@ int SNEPPX_monitor_set_name(const char* name) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Uptime.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_uptime(void) {
     return SNEPPX_monitor_get_uptime_seconds();
 }
 
+/**
+ * @brief Perform Monitor Get Event Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_count(void) {
     return g_anomaly_total_count;
 }
 
+/**
+ * @brief Perform Monitor Set Event Filter.
+ *
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_event_filter(SNEPPXMonitorEventType type, int enabled) {
     int idx = (int)type % SNEPPX_MONITOR_EVENT_TYPE_COUNT;
     g_event_filter[idx] = (enabled != 0) ? 1 : 0;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Timing Set Window.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_timing_set_window(size_t size) {
     if (size < 2) size = 2;
     if (size > SNEPPX_MONITOR_SLIDING_WINDOW_SIZE) size = SNEPPX_MONITOR_SLIDING_WINDOW_SIZE;
@@ -1056,6 +1529,13 @@ int SNEPPX_monitor_timing_set_window(size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Timing Get Baseline.
+ *
+ * @param mean [out] Mean value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_timing_get_baseline(double* mean, double* stddev) {
     if (!mean||!stddev) return -1;
     *mean = g_timing_baseline;
@@ -1063,16 +1543,33 @@ int SNEPPX_monitor_timing_get_baseline(double* mean, double* stddev) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Freq Get Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_get_threshold(void) {
     return g_anomaly_threshold;
 }
 
+/**
+ * @brief Perform Monitor Freq Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_set_threshold(int t) {
     if (t < 1) t = 1;
     g_anomaly_threshold = t;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Syscall Set Enabled.
+ *
+ * @param num [in] Num value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_set_enabled(int num, int enabled) {
     if (num < 0 || num >= SNEPPX_MONITOR_MAX_SYSCALL_TABLE) return -1;
     if (enabled) {
@@ -1082,17 +1579,34 @@ int SNEPPX_monitor_syscall_set_enabled(int num, int enabled) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Syscall Get Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_get_count(int num) {
     if (num < 0 || num >= SNEPPX_MONITOR_MAX_SYSCALL_TABLE) return -1;
     return g_syscall_counts[num];
 }
 
+/**
+ * @brief Reset Monitor Syscall.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_syscall_reset(void) {
     memset(g_syscall_counts, 0, sizeof(g_syscall_counts));
     memset(g_syscall_baseline, 0, sizeof(g_syscall_baseline));
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Region Get Baseline.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_get_baseline(const char* name, uint32_t* crc_out) {
     if (!name||!crc_out) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -1104,6 +1618,11 @@ int SNEPPX_monitor_region_get_baseline(const char* name, uint32_t* crc_out) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Region Update Baseline.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_update_baseline(const char* name) {
     if (!name) return -1;
     for (int i = 0; i < g_region_count; i++) {
@@ -1115,10 +1634,22 @@ int SNEPPX_monitor_region_update_baseline(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Region Get Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_get_count(void) {
     return g_region_count;
 }
 
+/**
+ * @brief Perform Monitor Region List.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_list(char* buffer, int max) {
     if (!buffer||max<1) return -1;
     int pos = 0;
@@ -1131,6 +1662,11 @@ int SNEPPX_monitor_region_list(char* buffer, int max) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Heartbeat Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_heartbeat_check(void) {
     if (g_heartbeat_interval_ms == 0) return 0;
     uint64_t now_ms = (uint64_t)time(NULL) * 1000;
@@ -1149,11 +1685,25 @@ int SNEPPX_monitor_heartbeat_check(void) {
     return 0;
 }
 
+/**
+ * @brief Reset Monitor Heartbeat.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_heartbeat_reset(void) {
     g_last_heartbeat_time = (uint64_t)time(NULL) * 1000;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Register Region Ex.
+ *
+ * @param name [in] Name value.
+ * @param addr [in] Addr value.
+ * @param size [in] Size value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_register_region_ex(const char* name, const void* addr, size_t size, int flags) {
     int ret = SNEPPX_monitor_register_region(name, addr, size);
     if (ret == 0) {
@@ -1166,6 +1716,11 @@ int SNEPPX_monitor_register_region_ex(const char* name, const void* addr, size_t
     return ret;
 }
 
+/**
+ * @brief Verify Monitor Bulk.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_bulk_verify(void) {
     int violations = 0;
     int checked = 0;
@@ -1201,15 +1756,30 @@ static void verify_region_now(int idx) {
     }
 }
 
+/**
+ * @brief Perform Monitor Freq Get Baseline Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_get_baseline_count(int index) {
     if (index<0||index>=4) return -1;
     return g_freq_baseline[index];
 }
 
+/**
+ * @brief Perform Monitor Freq Get Sample Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_freq_get_sample_count(void) {
     return g_freq_sample_count;
 }
 
+/**
+ * @brief Perform Monitor Timing Get Current Mean.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_monitor_timing_get_current_mean(void) {
     if (g_sliding_window_count==0) return 0.0;
     double sum=0.0;
@@ -1217,6 +1787,11 @@ double SNEPPX_monitor_timing_get_current_mean(void) {
     return sum/g_sliding_window_count;
 }
 
+/**
+ * @brief Perform Monitor Timing Get Current Stddev.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_monitor_timing_get_current_stddev(void) {
     if (g_sliding_window_count<2) return 0.0;
     double mean = SNEPPX_monitor_timing_get_current_mean();
@@ -1228,34 +1803,63 @@ double SNEPPX_monitor_timing_get_current_stddev(void) {
     return sqrt(var/(g_sliding_window_count-1));
 }
 
+/**
+ * @brief Perform Monitor Get Self Crc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_self_crc(void) {
     return (int)g_self_crc_baseline;
 }
 
+/**
+ * @brief Perform Monitor Get Callback Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_callback_count(void) {
     return g_callback_count;
 }
 
+/**
+ * @brief Perform Monitor Set Verify Interval Now.
+ */
 void SNEPPX_monitor_set_verify_interval_now(uint64_t ms) {
     g_verify_interval_ms = ms;
     g_last_verify_called = (uint64_t)time(NULL)*1000;
 }
 
+/**
+ * @brief Perform Monitor Set Heartbeat Now.
+ */
 void SNEPPX_monitor_set_heartbeat_now(uint64_t interval_ms) {
     g_heartbeat_interval_ms = interval_ms;
     g_last_heartbeat_time = (uint64_t)time(NULL)*1000;
 }
 
+/**
+ * @brief Perform Monitor Set Bulk Index.
+ */
 void SNEPPX_monitor_set_bulk_index(uint64_t idx) {
     g_bulk_verify_index = idx;
 }
 
+/**
+ * @brief Perform Monitor Get Bulk Index.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_bulk_index(void) {
     return g_bulk_verify_index;
 }
 
 static int g_max_events_stored = SNEPPX_MONITOR_EVENT_LOG_SIZE;
 
+/**
+ * @brief Perform Monitor Set Max Events.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_max_events(int max) {
     if (max<16) max=16;
     if (max>4096) max=4096;
@@ -1263,10 +1867,22 @@ int SNEPPX_monitor_set_max_events(int max) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Max Events.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_max_events(void) {
     return g_max_events_stored;
 }
 
+/**
+ * @brief Perform Monitor Get Event At.
+ *
+ * @param index [in] Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_at(int index, SNEPPXMonitorEvent* ev) {
     if (!ev||index<0||index>=g_event_log_count) return -1;
     int start = (g_event_log_head - g_event_log_count + SNEPPX_MONITOR_EVENT_LOG_SIZE) % SNEPPX_MONITOR_EVENT_LOG_SIZE;
@@ -1279,6 +1895,9 @@ int SNEPPX_monitor_get_event_at(int index, SNEPPXMonitorEvent* ev) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set All Filters.
+ */
 void SNEPPX_monitor_set_all_filters(int enabled) {
     int val = enabled?1:0;
     for (int i=0;i<SNEPPX_MONITOR_EVENT_TYPE_COUNT;i++) {
@@ -1286,47 +1905,93 @@ void SNEPPX_monitor_set_all_filters(int enabled) {
     }
 }
 
+/**
+ * @brief Perform Monitor Get Filter.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_filter(SNEPPXMonitorEventType type) {
     int idx = (int)type % SNEPPX_MONITOR_EVENT_TYPE_COUNT;
     return g_event_filter[idx];
 }
 
+/**
+ * @brief Perform Monitor Timing Reset Samples.
+ */
 void SNEPPX_monitor_timing_reset_samples(void) {
     g_timing_samples = 0;
     sliding_window_reset();
 }
 
+/**
+ * @brief Perform Monitor Get Timing Samples.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_timing_samples(void) {
     return g_timing_samples;
 }
 
+/**
+ * @brief Perform Monitor Get Sliding Window Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_sliding_window_count(void) {
     return g_sliding_window_count;
 }
 
+/**
+ * @brief Perform Monitor Get Event Rate.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_monitor_get_event_rate(void) {
     uint64_t uptime = SNEPPX_monitor_get_uptime_seconds();
     if (uptime==0) return 0.0;
     return (double)g_anomaly_total_count/(double)uptime;
 }
 
+/**
+ * @brief Perform Monitor Get Event Type Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_type_count(int type_idx) {
     if (type_idx<0||type_idx>=SNEPPX_MONITOR_EVENT_TYPE_COUNT) return 0;
     return g_event_type_counts[type_idx];
 }
 
+/**
+ * @brief Perform Monitor Reset Event Type Counts.
+ */
 void SNEPPX_monitor_reset_event_type_counts(void) {
     memset(g_event_type_counts,0,sizeof(g_event_type_counts));
 }
 
+/**
+ * @brief Perform Monitor Get Event Type Baseline.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_type_baseline(int type) {
     return event_type_get_baseline(type);
 }
 
+/**
+ * @brief Perform Monitor Get Start Time.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_start_time(void) {
     return g_monitor_start_time;
 }
 
+/**
+ * @brief Perform Monitor Set Region Active.
+ *
+ * @param name [in] Name value.
+ */
 void SNEPPX_monitor_set_region_active(const char* name, int active) {
     if (!name) return;
     for (int i=0;i<g_region_count;i++) {
@@ -1337,15 +2002,30 @@ void SNEPPX_monitor_set_region_active(const char* name, int active) {
     }
 }
 
+/**
+ * @brief Perform Monitor Is Region Active.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_region_active(const char* name) {
     return SNEPPX_monitor_region_is_active(name);
 }
 
+/**
+ * @brief Perform Monitor Get Event Type Baseline Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_type_baseline_count(int type) {
     if (type<0||type>=SNEPPX_MONITOR_EVENT_TYPE_COUNT) return 0;
     return g_event_type_baselines[type];
 }
 
+/**
+ * @brief Perform Monitor Get Region Index.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_index(const char* name) {
     if (!name) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1354,16 +2034,33 @@ int SNEPPX_monitor_get_region_index(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Get Region Crc By Index.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_monitor_get_region_crc_by_index(int index) {
     if (index<0||index>=g_region_count) return 0;
     return g_regions[index].baseline_crc;
 }
 
+/**
+ * @brief Perform Monitor Get Region Name By Index.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 const char* SNEPPX_monitor_get_region_name_by_index(int index) {
     if (index<0||index>=g_region_count) return NULL;
     return g_regions[index].name;
 }
 
+/**
+ * @brief Perform Monitor Verify Range.
+ *
+ * @param start [in] Start value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_verify_range(int start, int end) {
     if (start<0) start=0;
     if (end>=g_region_count) end=g_region_count-1;
@@ -1382,10 +2079,18 @@ int SNEPPX_monitor_verify_range(int start, int end) {
     return violations;
 }
 
+/**
+ * @brief Perform Monitor Set Heartbeat Interval Now.
+ */
 void SNEPPX_monitor_set_heartbeat_interval_now(void) {
     g_last_heartbeat_time=(uint64_t)time(NULL)*1000;
 }
 
+/**
+ * @brief Perform Monitor Get Heartbeat Elapsed.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_heartbeat_elapsed(void) {
     if (g_last_heartbeat_time==0) return 0;
     uint64_t now_ms=(uint64_t)time(NULL)*1000;
@@ -1393,6 +2098,14 @@ uint64_t SNEPPX_monitor_get_heartbeat_elapsed(void) {
     return now_ms-g_last_heartbeat_time;
 }
 
+/**
+ * @brief Perform Monitor Get Region Addr.
+ *
+ * @param name [in] Name value.
+ * @param addr_out [in] Addr Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_addr(const char* name, const void** addr_out, size_t* size_out) {
     if (!name||!addr_out||!size_out) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1405,6 +2118,15 @@ int SNEPPX_monitor_get_region_addr(const char* name, const void** addr_out, size
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Get Region By Index.
+ *
+ * @param index [in] Index value.
+ * @param name_out [out] Name Out value.
+ * @param name_max [in] Name Max value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_by_index(int index, char* name_out, int name_max, uint32_t* crc_out) {
     if (index<0||index>=g_region_count||!name_out||name_max<1) return -1;
     strncpy(name_out,g_regions[index].name,name_max-1);
@@ -1413,6 +2135,13 @@ int SNEPPX_monitor_get_region_by_index(int index, char* name_out, int name_max, 
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Timing Mean Std.
+ *
+ * @param mean [out] Mean value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_timing_mean_std(double* mean, double* stddev) {
     if (!mean||!stddev) return -1;
     if (g_sliding_window_count<2) return -1;
@@ -1425,6 +2154,11 @@ int SNEPPX_monitor_get_timing_mean_std(double* mean, double* stddev) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Timing Mean.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_timing_mean(double* mean) {
     if (!mean) return -1;
     if (g_sliding_window_count==0) return -1;
@@ -1434,6 +2168,11 @@ int SNEPPX_monitor_get_timing_mean(double* mean) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Timing Stddev.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_timing_stddev(double* stddev) {
     if (!stddev) return -1;
     if (g_sliding_window_count<2) return -1;
@@ -1446,17 +2185,30 @@ int SNEPPX_monitor_get_timing_stddev(double* stddev) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Freq Baseline Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_freq_baseline_count(void) {
     int c=0;
     for (int i=0;i<4;i++) c+=g_freq_baseline[i];
     return c;
 }
 
+/**
+ * @brief Perform Monitor Set Heartbeat Timer.
+ */
 void SNEPPX_monitor_set_heartbeat_timer(uint64_t ms) {
     g_heartbeat_interval_ms=ms;
     g_last_heartbeat_time=(uint64_t)time(NULL)*1000;
 }
 
+/**
+ * @brief Perform Monitor Is Heartbeat Expired.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_heartbeat_expired(void) {
     if (g_heartbeat_interval_ms==0) return 0;
     uint64_t now_ms=(uint64_t)time(NULL)*1000;
@@ -1464,6 +2216,11 @@ int SNEPPX_monitor_is_heartbeat_expired(void) {
     return (now_ms-g_last_heartbeat_time>g_heartbeat_interval_ms)?1:0;
 }
 
+/**
+ * @brief Perform Monitor Region Exists.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_region_exists(const char* name) {
     if (!name) return 0;
     for (int i=0;i<g_region_count;i++) {
@@ -1472,10 +2229,20 @@ int SNEPPX_monitor_region_exists(const char* name) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Start Time Now.
+ */
 void SNEPPX_monitor_set_start_time_now(void) {
     g_monitor_start_time=(uint64_t)time(NULL);
 }
 
+/**
+ * @brief Perform Monitor Get Region Size.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_size(const char* name, size_t* size_out) {
     if (!name||!size_out) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1487,11 +2254,23 @@ int SNEPPX_monitor_get_region_size(const char* name, size_t* size_out) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Get Syscall Baseline.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_syscall_baseline(int num) {
     if (num<0||num>=SNEPPX_MONITOR_MAX_SYSCALL_TABLE) return -1;
     return g_syscall_baseline[num];
 }
 
+/**
+ * @brief Perform Monitor Get Syscall Ratio.
+ *
+ * @param num [in] Num value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_syscall_ratio(int num, double* ratio_out) {
     if (num<0||num>=SNEPPX_MONITOR_MAX_SYSCALL_TABLE||!ratio_out) return -1;
     if (g_syscall_baseline[num]==0) { *ratio_out=0.0; return 0; }
@@ -1499,6 +2278,11 @@ int SNEPPX_monitor_get_syscall_ratio(int num, double* ratio_out) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Anomaly Rate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_anomaly_rate(double* rate_out) {
     if (!rate_out) return -1;
     uint64_t uptime=SNEPPX_monitor_get_uptime_seconds();
@@ -1507,6 +2291,13 @@ int SNEPPX_monitor_get_anomaly_rate(double* rate_out) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Event Rate For Type.
+ *
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_rate_for_type(int type, double* rate_out) {
     if (type<0||type>=SNEPPX_MONITOR_EVENT_TYPE_COUNT||!rate_out) return -1;
     uint64_t uptime=SNEPPX_monitor_get_uptime_seconds();
@@ -1515,35 +2306,72 @@ int SNEPPX_monitor_get_event_rate_for_type(int type, double* rate_out) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set Event Type Baseline.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_event_type_baseline(int type) {
     if (type<0||type>=SNEPPX_MONITOR_EVENT_TYPE_COUNT) return -1;
     g_event_type_baselines[type]=g_event_type_counts[type];
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Compare Event Type.
+ *
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_compare_event_type(int type, int* diff_out) {
     if (type<0||type>=SNEPPX_MONITOR_EVENT_TYPE_COUNT||!diff_out) return -1;
     *diff_out=g_event_type_counts[type]-g_event_type_baselines[type];
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Set All Event Baselines.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_all_event_baselines(void) {
     memcpy(g_event_type_baselines,g_event_type_counts,sizeof(g_event_type_baselines));
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Total Event Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_total_event_count(void) {
     int total=0;
     for (int i=0;i<SNEPPX_MONITOR_EVENT_TYPE_COUNT;i++) total+=g_event_type_counts[i];
     return total;
 }
 
+/**
+ * @brief Perform Monitor Get Region Check Count By Index.
+ *
+ * @param index [in] Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_check_count_by_index(int index, int* count_out) {
     if (index<0||index>=g_region_count||!count_out) return -1;
     *count_out=g_region_freq[index].check_count;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Region Check Interval.
+ *
+ * @param index [in] Index value.
+ * @param min_out [out] Min Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_check_interval(int index, uint64_t* min_out, uint64_t* max_out) {
     if (index<0||index>=g_region_count||!min_out||!max_out) return -1;
     *min_out=g_region_freq[index].min_interval_us;
@@ -1551,6 +2379,14 @@ int SNEPPX_monitor_get_region_check_interval(int index, uint64_t* min_out, uint6
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Region Crc String.
+ *
+ * @param name [in] Name value.
+ * @param buf [out] Buf value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_crc_string(const char* name, char* buf, size_t size) {
     if (!name||!buf||size<16) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1562,6 +2398,11 @@ int SNEPPX_monitor_get_region_crc_string(const char* name, char* buf, size_t siz
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Is Region Modified.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_is_region_modified(const char* name) {
     if (!name) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1573,44 +2414,83 @@ int SNEPPX_monitor_is_region_modified(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Disable All Filters.
+ */
 void SNEPPX_monitor_disable_all_filters(void) {
     memset(g_event_filter,0,sizeof(g_event_filter));
 }
 
+/**
+ * @brief Perform Monitor Enable All Filters.
+ */
 void SNEPPX_monitor_enable_all_filters(void) {
     memset(g_event_filter,1,sizeof(g_event_filter));
 }
 
+/**
+ * @brief Perform Monitor Get Region Count Active.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_count_active(void) {
     return SNEPPX_monitor_get_active_region_count();
 }
 
+/**
+ * @brief Perform Monitor Get Syscall Count Total.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_syscall_count_total(void) {
     int total=0;
     for (int i=0;i<SNEPPX_MONITOR_MAX_SYSCALL_TABLE;i++) total+=g_syscall_counts[i];
     return total;
 }
 
+/**
+ * @brief Perform Monitor Get Syscall Baseline Total.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_syscall_baseline_total(void) {
     int total=0;
     for (int i=0;i<SNEPPX_MONITOR_MAX_SYSCALL_TABLE;i++) total+=g_syscall_baseline[i];
     return total;
 }
 
+/**
+ * @brief Perform Monitor Reset Freq Baselines.
+ */
 void SNEPPX_monitor_reset_freq_baselines(void) {
     memset(g_freq_baseline,0,sizeof(g_freq_baseline));
 }
 
+/**
+ * @brief Perform Monitor Get Freq Baseline For Type.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_freq_baseline_for_type(int type) {
     if (type<0||type>=4) return 0;
     return g_freq_baseline[type];
 }
 
+/**
+ * @brief Perform Monitor Get Self Check Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_self_check_count(void) {
     (void)0;
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Check Regions Batch.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_check_regions_batch(int indices[], int count) {
     if (!indices||count<1) return -1;
     int violations=0;
@@ -1630,14 +2510,29 @@ int SNEPPX_monitor_check_regions_batch(int indices[], int count) {
     return violations;
 }
 
+/**
+ * @brief Perform Monitor Get Canary Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_canary_count(void) {
     return g_canary_count;
 }
 
+/**
+ * @brief Perform Monitor Get Canary Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_canary_size(void) {
     return SNEPPX_MONITOR_CANARY_SIZE;
 }
 
+/**
+ * @brief Perform Monitor Has Callback.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_has_callback(SNEPPXMonitorCallback cb) {
     if (!cb) return 0;
     for (int i=0;i<g_callback_count;i++) {
@@ -1646,18 +2541,36 @@ int SNEPPX_monitor_has_callback(SNEPPXMonitorCallback cb) {
     return 0;
 }
 
+/**
+ * @brief Perform Monitor Get Event Type Count Safe.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_event_type_count_safe(int type) {
     return SNEPPX_monitor_get_event_type_count(type);
 }
 
+/**
+ * @brief Perform Monitor Set Interval Now.
+ */
 void SNEPPX_monitor_set_interval_now(uint64_t ms) {
     g_monitor_interval_ms=ms;
 }
 
+/**
+ * @brief Perform Monitor Get Interval.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_monitor_get_interval(void) {
     return g_monitor_interval_ms;
 }
 
+/**
+ * @brief Perform Monitor Get Region Flags.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_flags(const char* name) {
     if (!name) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1666,6 +2579,13 @@ int SNEPPX_monitor_get_region_flags(const char* name) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Set Region Flags.
+ *
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_set_region_flags(const char* name, int flags) {
     if (!name) return -1;
     for (int i=0;i<g_region_count;i++) {
@@ -1677,20 +2597,38 @@ int SNEPPX_monitor_set_region_flags(const char* name, int flags) {
     return -1;
 }
 
+/**
+ * @brief Perform Monitor Get Region Count Total.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_region_count_total(void) {
     return g_region_count;
 }
 
+/**
+ * @brief Perform Monitor Get Heartbeat Miss Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_heartbeat_miss_count(void) {
     static int miss_count=0;
     if (SNEPPX_monitor_heartbeat_check()) miss_count++;
     return miss_count;
 }
 
+/**
+ * @brief Perform Monitor Reset Heartbeat Miss Count.
+ */
 void SNEPPX_monitor_reset_heartbeat_miss_count(void) {
     (void)0;
 }
 
+/**
+ * @brief Perform Monitor Get Verify Interval Remaining.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_monitor_get_verify_interval_remaining(void) {
     if (g_verify_interval_ms==0) return 0;
     uint64_t now_ms=(uint64_t)time(NULL)*1000;

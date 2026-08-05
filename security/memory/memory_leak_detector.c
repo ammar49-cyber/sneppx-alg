@@ -7,6 +7,22 @@
 #define LEAK_BACKTRACE_DEPTH 16
 #define LEAK_MAX_REPORTS 1024
 
+/*
+ * SNEPPX - Memory Leak Detector
+ *
+ * WHAT
+ *   Memory Leak Detector.
+ *
+ * CONCEPT
+ *   Provides memory management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     void *ptr;
     size_t size;
@@ -28,6 +44,11 @@ static uint64_t current_usage = 0;
 static int tracking_enabled = 1;
 static int leak_threshold = 1024;
 
+/**
+ * @brief Initialize Leak.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_init(void) {
     memset(allocations, 0, sizeof(allocations));
     alloc_count = 0;
@@ -39,6 +60,16 @@ int SNEPPX_leak_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Leak Track Alloc.
+ *
+ * @param ptr [out] Ptr value.
+ * @param size [in] Size value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_track_alloc(void *ptr, size_t size, const char *file, int line, const char *func) {
     if (!ptr || !tracking_enabled) return -1;
     if (alloc_count >= LEAK_MAX_ALLOCATIONS) return -1;
@@ -57,6 +88,11 @@ int SNEPPX_leak_track_alloc(void *ptr, size_t size, const char *file, int line, 
     return 0;
 }
 
+/**
+ * @brief Free Leak Track.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_track_free(void *ptr) {
     if (!ptr || !tracking_enabled) return -1;
     for (int i = 0; i < alloc_count; i++) {
@@ -70,6 +106,13 @@ int SNEPPX_leak_track_free(void *ptr) {
     return 1;
 }
 
+/**
+ * @brief Perform Leak Check.
+ *
+ * @param reports [out] Reports value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_check(leak_report_t *reports, int max_reports) {
     if (!reports) return -1;
     int found = 0;
@@ -87,6 +130,11 @@ int SNEPPX_leak_check(leak_report_t *reports, int max_reports) {
     return found;
 }
 
+/**
+ * @brief Perform Leak Get Stats.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_get_stats(leak_stats_t *stats) {
     if (!stats) return -1;
     stats->total_allocations = alloc_count;
@@ -102,21 +150,41 @@ int SNEPPX_leak_get_stats(leak_stats_t *stats) {
     return 0;
 }
 
+/**
+ * @brief Perform Leak Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_set_threshold(int bytes) {
     leak_threshold = bytes > 0 ? bytes : 1024;
     return 0;
 }
 
+/**
+ * @brief Perform Leak Enable Tracking.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_enable_tracking(void) {
     tracking_enabled = 1;
     return 0;
 }
 
+/**
+ * @brief Perform Leak Disable Tracking.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_disable_tracking(void) {
     tracking_enabled = 0;
     return 0;
 }
 
+/**
+ * @brief Reset Leak.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_leak_reset(void) {
     alloc_count = 0;
     total_allocated = 0;
@@ -127,12 +195,24 @@ int SNEPPX_leak_reset(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Leak Malloc.
+ *
+ * @param size [in] Size value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void *SNEPPX_leak_malloc(size_t size, const char *file, int line, const char *func) {
     void *ptr = malloc(size);
     if (ptr) SNEPPX_leak_track_alloc(ptr, size, file, line, func);
     return ptr;
 }
 
+/**
+ * @brief Free Leak.
+ */
 void SNEPPX_leak_free(void *ptr) {
     if (ptr) {
         SNEPPX_leak_track_free(ptr);
@@ -140,12 +220,32 @@ void SNEPPX_leak_free(void *ptr) {
     }
 }
 
+/**
+ * @brief Perform Leak Calloc.
+ *
+ * @param nmemb [in] Nmemb value.
+ * @param size [in] Size value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void *SNEPPX_leak_calloc(size_t nmemb, size_t size, const char *file, int line, const char *func) {
     void *ptr = calloc(nmemb, size);
     if (ptr) SNEPPX_leak_track_alloc(ptr, nmemb * size, file, line, func);
     return ptr;
 }
 
+/**
+ * @brief Perform Leak Realloc.
+ *
+ * @param ptr [out] Ptr value.
+ * @param size [in] Size value.
+ * @param file [in] File value.
+ * @param line [in] Line value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void *SNEPPX_leak_realloc(void *ptr, size_t size, const char *file, int line, const char *func) {
     if (ptr) SNEPPX_leak_track_free(ptr);
     void *new_ptr = realloc(ptr, size);

@@ -9,6 +9,22 @@
 #define SNEPPX_SOC2_MAX_EVIDENCE 4096
 #define SNEPPX_SOC2_TRUST_CRITERIA 5
 
+/*
+ * SNEPPX - Soc2 Framework
+ *
+ * WHAT
+ *   Soc2 Framework.
+ *
+ * CONCEPT
+ *   Provides the Soc2 Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_SOC2_SECURITY,
     SNEPPX_SOC2_AVAILABILITY,

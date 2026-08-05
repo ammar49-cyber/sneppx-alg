@@ -30,6 +30,38 @@
 #define SNEPPX_SCRUB_PATTERN_ONE 1
 #define SNEPPX_SCRUB_PATTERN_RANDOM 2
 
+/*
+ * SNEPPX - Secure Allocator
+ *
+ * WHAT
+ *   Secure Allocator.
+ *
+ * CONCEPT
+ *   Provides the Secure Allocator.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
+ * SNEPPX - Secure Allocator
+ *
+ * WHAT
+ *   Secure Allocator.
+ *
+ * CONCEPT
+ *   Provides the Secure Allocator.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static int g_scrub_pattern = SNEPPX_SCRUB_PATTERN_ZERO;
 static int g_quarantine_max = SNEPPX_SECURE_QUARANTINE_SIZE;
 
@@ -272,6 +304,11 @@ static int init_small_bins(void) {
     return 0;
 }
 
+/**
+ * @brief Initialize Secure Allocator.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_init(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return -1;
     memset(alloc, 0, sizeof(*alloc));
@@ -291,6 +328,9 @@ int SNEPPX_secure_allocator_init(SNEPPXSecureAllocator* alloc) {
     return 0;
 }
 
+/**
+ * @brief Destroy Secure Allocator.
+ */
 void SNEPPX_secure_allocator_destroy(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return;
     for (int i = 0; i < g_record_count; i++) {
@@ -311,6 +351,14 @@ void SNEPPX_secure_allocator_destroy(SNEPPXSecureAllocator* alloc) {
     g_small_bins_initialized = 0;
 }
 
+/**
+ * @brief Perform Secure Alloc.
+ *
+ * @param alloc [out] Alloc value.
+ * @param bytes [in] Bytes value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_secure_alloc(SNEPPXSecureAllocator* alloc, size_t bytes, size_t alignment) {
     (void)alignment;
     if (!alloc || bytes == 0) return NULL;
@@ -377,6 +425,11 @@ void* SNEPPX_secure_alloc(SNEPPXSecureAllocator* alloc, size_t bytes, size_t ali
     return ptr;
 }
 
+/**
+ * @brief Free Secure.
+ *
+ * @param alloc [out] Alloc value.
+ */
 void SNEPPX_secure_free(SNEPPXSecureAllocator* alloc, void* ptr) {
     if (!alloc || !ptr) return;
 
@@ -445,6 +498,9 @@ void SNEPPX_secure_free(SNEPPXSecureAllocator* alloc, void* ptr) {
     }
 }
 
+/**
+ * @brief Perform Secure Audit.
+ */
 void SNEPPX_secure_audit(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return;
     printf("=== SNEPPX Secure Allocator Audit ===\n");
@@ -485,12 +541,24 @@ void SNEPPX_secure_audit(SNEPPXSecureAllocator* alloc) {
     printf("================================\n");
 }
 
+/**
+ * @brief Perform Secure Canary Generate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_secure_canary_generate(void) {
     static uint64_t counter = 0;
     counter = (counter + 1) * 0x9E3779B97F4A7C15ULL ^ 0xDEADBEEFCAFEBABEULL;
     return counter;
 }
 
+/**
+ * @brief Perform Secure Canary Check.
+ *
+ * @param ptr [out] Ptr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_canary_check(void* ptr, uint64_t canary) {
     if (!ptr) return -1;
     for (int i = 0; i < g_record_count; i++) {
@@ -504,6 +572,11 @@ int SNEPPX_secure_canary_check(void* ptr, uint64_t canary) {
     return -1;
 }
 
+/**
+ * @brief Perform Secure Freelist Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_freelist_check(SNEPPXSecureAllocator* alloc) {
     (void)alloc;
     if (!g_initialized) return -1;
@@ -535,6 +608,13 @@ int SNEPPX_secure_freelist_check(SNEPPXSecureAllocator* alloc) {
     return (errors == 0) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Secure Free Quarantine.
+ *
+ * @param alloc [out] Alloc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_free_quarantine(SNEPPXSecureAllocator* alloc, void* ptr) {
     if (!alloc || !ptr) return -1;
     if (g_quarantine_count >= g_quarantine_max) {
@@ -586,6 +666,9 @@ int SNEPPX_secure_free_quarantine(SNEPPXSecureAllocator* alloc, void* ptr) {
     return -1;
 }
 
+/**
+ * @brief Perform Secure Free Flush Quarantine.
+ */
 void SNEPPX_secure_free_flush_quarantine(SNEPPXSecureAllocator* alloc) {
     (void)alloc;
     for (int i = 0; i < g_quarantine_count; i++) {
@@ -601,6 +684,11 @@ void SNEPPX_secure_free_flush_quarantine(SNEPPXSecureAllocator* alloc) {
     memset(g_quarantine, 0, sizeof(g_quarantine));
 }
 
+/**
+ * @brief Perform Secure Allocator Get Stats.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXSecureAllocStats SNEPPX_secure_allocator_get_stats(SNEPPXSecureAllocator* alloc) {
     SNEPPXSecureAllocStats stats;
     memset(&stats, 0, sizeof(stats));
@@ -614,11 +702,19 @@ SNEPPXSecureAllocStats SNEPPX_secure_allocator_get_stats(SNEPPXSecureAllocator* 
     return stats;
 }
 
+/**
+ * @brief Perform Secure Allocator Set Scrub Pattern.
+ */
 void SNEPPX_secure_allocator_set_scrub_pattern(int pattern_id) {
     if (pattern_id >= 0 && pattern_id <= 2)
         g_scrub_pattern = pattern_id;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Fragmentation.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_secure_allocator_get_fragmentation(void) {
     if (!g_freelist_head) return 0.0;
     size_t total_free = 0;
@@ -635,6 +731,11 @@ double SNEPPX_secure_allocator_get_fragmentation(void) {
     return 1.0 - ((double)largest_free / (double)total_free);
 }
 
+/**
+ * @brief Perform Secure Allocator Defragment.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_defragment(void) {
     if (!g_freelist_head) return 0;
     int merged = 0;
@@ -667,11 +768,19 @@ int SNEPPX_secure_allocator_walk(void (*walk_callback)(const SNEPPXSecureAllocRe
     return walked;
 }
 
+/**
+ * @brief Perform Secure Allocator Set Quarantine Max.
+ */
 void SNEPPX_secure_allocator_set_quarantine_max(int max_entries) {
     if (max_entries > 0 && max_entries <= 4096)
         g_quarantine_max = max_entries;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Quarantine Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_get_quarantine_count(void) {
     return g_quarantine_count;
 }
@@ -781,33 +890,68 @@ static void small_bin_destroy(void) {
     g_small_bins_initialized = 0;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Total Allocated.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_secure_allocator_get_total_allocated(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return 0;
     return alloc->total_allocated;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Peak Allocated.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_secure_allocator_get_peak_allocated(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return 0;
     return alloc->peak_allocated;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Num Allocations.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_secure_allocator_get_num_allocations(SNEPPXSecureAllocator* alloc) {
     if (!alloc) return 0;
     return alloc->num_allocations;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Freelist Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_get_freelist_count(void) {
     return freelist_count_blocks();
 }
 
+/**
+ * @brief Perform Secure Allocator Get Freelist Total.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_secure_allocator_get_freelist_total(void) {
     return freelist_total_free();
 }
 
+/**
+ * @brief Perform Secure Allocator Enable Guard Pages.
+ *
+ * @param alloc [out] Alloc value.
+ */
 void SNEPPX_secure_allocator_enable_guard_pages(SNEPPXSecureAllocator* alloc, int enable) {
     if (alloc) alloc->use_guard_pages = enable;
 }
 
+/**
+ * @brief Perform Secure Allocator Enable Canaries.
+ *
+ * @param alloc [out] Alloc value.
+ */
 void SNEPPX_secure_allocator_enable_canaries(SNEPPXSecureAllocator* alloc, int enable) {
     if (alloc) alloc->use_canaries = enable;
 }
@@ -833,6 +977,11 @@ static void freelist_validate_all(void) {
     }
 }
 
+/**
+ * @brief Perform Secure Allocator Trim Pool.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_trim_pool(SNEPPXSecureAllocator* alloc) {
     (void)alloc;
     int removed = 0;
@@ -856,16 +1005,42 @@ int SNEPPX_secure_allocator_trim_pool(SNEPPXSecureAllocator* alloc) {
     return removed;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Small Bin Count.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_secure_allocator_get_small_bin_count(int bin_idx) {
     if (bin_idx < 0 || bin_idx >= SNEPPX_SMALL_BINS) return 0;
     return (size_t)g_small_bins[bin_idx].count;
 }
 
+/**
+ * @brief Perform Secure Allocator Get Small Bin Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_get_small_bin_size(int bin_idx) {
     if (bin_idx < 0 || bin_idx >= SNEPPX_SMALL_BINS) return 0;
     return g_small_bins[bin_idx].bin_size;
 }
+/**
+ * @brief Perform Secure Allocator Get Record Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_get_record_count(void) { return g_record_count; }
+/**
+ * @brief Perform Secure Allocator Get Initialized.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_secure_allocator_get_initialized(void) { return g_initialized; }
+/**
+ * @brief Perform Secure Allocator Set Initialized.
+ */
 void SNEPPX_secure_allocator_set_initialized(int v) { g_initialized = v; }
+/**
+ * @brief Perform Secure Allocator Reset Stats.
+ */
 void SNEPPX_secure_allocator_reset_stats(void) { g_stats_num_frees = 0; g_stats_num_double_free = 0; g_stats_num_canary_violations = 0; }

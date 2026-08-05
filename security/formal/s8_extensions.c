@@ -4,20 +4,59 @@
 #include <stdio.h>
 #include <ctype.h>
 
+/*
+ * SNEPPX - S8 Extensions
+ *
+ * WHAT
+ *   S8 Extensions.
+ *
+ * CONCEPT
+ *   Provides the S8 Extensions.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Perform Next Line.
+ *
+ * @param s [in] S value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_next_line(const char* s, int* pos) {
     while (s[*pos] && s[*pos] != '\n') (*pos)++;
     if (s[*pos] == '\n') { (*pos)++; return 1; }
     return 0;
 }
 
+/**
+ * @brief Perform Skip Ws.
+ *
+ * @param s [in] S value.
+ */
 static void SNEPPX_skip_ws(const char* s, int* pos) {
     while (s[*pos] && (s[*pos] == ' ' || s[*pos] == '\t' || s[*pos] == '\r')) (*pos)++;
 }
 
+/**
+ * @brief Perform Is Ident Char.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_is_ident_char(char c) {
     return isalnum(c) || c == '_';
 }
 
+/**
+ * @brief Perform Extract Expr.
+ *
+ * @param formula [in] Formula value.
+ * @param expr [out] Expr value.
+ */
 static void SNEPPX_extract_expr(const char* formula, char* expr, int maxlen) {
     int i = 0, j = 0, paren = 0;
     while (formula[i] && formula[i] != '(') i++;
@@ -31,6 +70,13 @@ static void SNEPPX_extract_expr(const char* formula, char* expr, int maxlen) {
     expr[j] = '\0';
 }
 
+/**
+ * @brief Parse Tla.
+ *
+ * @param parser [out] Parser value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tla_parse(SNEPPXTLAParser* parser, const char* spec_text) {
     if (!parser || !spec_text) return -1;
     strncpy(parser->spec, spec_text, SNEPPX_TLA_MAX_SPEC - 1);
@@ -85,6 +131,13 @@ int SNEPPX_tla_parse(SNEPPXTLAParser* parser, const char* spec_text) {
     return 0;
 }
 
+/**
+ * @brief Initialize Ltl.
+ *
+ * @param ltl [out] Ltl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ltl_init(SNEPPXLTLVerifier* ltl, const char* formula) {
     if (!ltl || !formula) return -1;
     strncpy(ltl->formula, formula, SNEPPX_LTL_MAX_FORMULA - 1);
@@ -105,6 +158,14 @@ int SNEPPX_ltl_init(SNEPPXLTLVerifier* ltl, const char* formula) {
     return 0;
 }
 
+/**
+ * @brief Perform Ltl Check.
+ *
+ * @param ltl [out] Ltl value.
+ * @param trace [out] Trace value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ltl_check(SNEPPXLTLVerifier* ltl, int* trace, int trace_len) {
     if (!ltl || !trace || trace_len <= 0) return -1;
     char oper = 0, expr[128];
@@ -136,6 +197,13 @@ int SNEPPX_ltl_check(SNEPPXLTLVerifier* ltl, int* trace, int trace_len) {
     return 0;
 }
 
+/**
+ * @brief Initialize Symex.
+ *
+ * @param se [out] Se value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_init(SNEPPXSymExEngine* se, int depth_limit) {
     if (!se) return -1;
     memset(se, 0, sizeof(*se));
@@ -143,12 +211,25 @@ int SNEPPX_symex_init(SNEPPXSymExEngine* se, int depth_limit) {
     return 0;
 }
 
+/**
+ * @brief Perform Is Conditional Op.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_is_conditional_op(uint8_t b) {
     if (b >= 0x70 && b <= 0x7F) return 1;
     if (b == 0xE3) return 1;
     return 0;
 }
 
+/**
+ * @brief Perform Symex Explore.
+ *
+ * @param se [out] Se value.
+ * @param bytecode [in] Bytecode value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_explore(SNEPPXSymExEngine* se, const uint8_t* bytecode, size_t bc_len) {
     if (!se || !bytecode) return -1;
     if (bc_len == 0) return 0;
@@ -323,6 +404,14 @@ int SNEPPX_symex_explore(SNEPPXSymExEngine* se, const uint8_t* bytecode, size_t 
     return (int)branches;
 }
 
+/**
+ * @brief Perform Loop Invariant Infer.
+ *
+ * @param loop_body [in] Loop Body value.
+ * @param invariant_out [out] Invariant Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_loop_invariant_infer(const char* loop_body, char* invariant_out, size_t inv_size) {
     if (!loop_body || !invariant_out || inv_size == 0) return -1;
     const char* p = loop_body;
@@ -397,12 +486,24 @@ int SNEPPX_loop_invariant_infer(const char* loop_body, char* invariant_out, size
     return 0;
 }
 
+/**
+ * @brief Initialize Data Flow.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_init(SNEPPXDataFlow* df) {
     if (!df) return -1;
     memset(df, 0, sizeof(*df));
     return 0;
 }
 
+/**
+ * @brief Perform Data Flow Taint.
+ *
+ * @param df [out] Df value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_taint(SNEPPXDataFlow* df, int var_id) {
     if (!df || df->taint_count >= 256) return -1;
     int i;
@@ -413,6 +514,13 @@ int SNEPPX_data_flow_taint(SNEPPXDataFlow* df, int var_id) {
     return 0;
 }
 
+/**
+ * @brief Perform Cmp Int.
+ *
+ * @param a [in] A value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_cmp_int(const void* a, const void* b) {
     int ia = *(const int*)a, ib = *(const int*)b;
     if (ia < ib) return -1;
@@ -420,6 +528,11 @@ static int SNEPPX_cmp_int(const void* a, const void* b) {
     return 0;
 }
 
+/**
+ * @brief Perform Data Flow Propagate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_propagate(SNEPPXDataFlow* df) {
     if (!df) return -1;
     if (df->taint_count <= 1) return 0;
@@ -453,6 +566,14 @@ int SNEPPX_data_flow_propagate(SNEPPXDataFlow* df) {
     return propagated;
 }
 
+/**
+ * @brief Perform Lean Export Proof.
+ *
+ * @param theorem_name [in] Theorem Name value.
+ * @param proof_body [in] Proof Body value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lean_export_proof(const char* theorem_name, const char* proof_body, const char* output_path) {
     if (!theorem_name || !proof_body || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
@@ -466,6 +587,11 @@ int SNEPPX_lean_export_proof(const char* theorem_name, const char* proof_body, c
     fclose(f);
     return 0;
 }
+/**
+ * @brief Perform Tla Parse File.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tla_parse_file(const char* filepath) {
     if (!filepath) return -1;
     FILE* f = fopen(filepath, "r");
@@ -481,11 +607,24 @@ int SNEPPX_tla_parse_file(const char* filepath) {
     return ret;
 }
 
+/**
+ * @brief Perform Tla Get State Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tla_get_state_count(SNEPPXTLAParser* parser) {
     if (!parser) return -1;
     return parser->state_count;
 }
 
+/**
+ * @brief Perform Tla Get Error.
+ *
+ * @param parser [out] Parser value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tla_get_error(SNEPPXTLAParser* parser, char* buffer, size_t size) {
     if (!parser || !buffer || size == 0) return -1;
     if (!parser->parsed) {
@@ -496,18 +635,43 @@ int SNEPPX_tla_get_error(SNEPPXTLAParser* parser, char* buffer, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Ltl Negate.
+ *
+ * @param formula [in] Formula value.
+ * @param negated_out [out] Negated Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ltl_negate(const char* formula, char* negated_out, size_t size) {
     if (!formula || !negated_out || size == 0) return -1;
     snprintf(negated_out, size, "!(%s)", formula);
     return 0;
 }
 
+/**
+ * @brief Perform Ltl To String.
+ *
+ * @param ltl [out] Ltl value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ltl_to_string(SNEPPXLTLVerifier* ltl, char* buffer, size_t size) {
     if (!ltl || !buffer || size == 0) return -1;
     snprintf(buffer, size, "%s", ltl->formula);
     return 0;
 }
 
+/**
+ * @brief Perform Ltl Check Trace.
+ *
+ * @param trace [out] Trace value.
+ * @param trace_len [in] Trace Len value.
+ * @param formula [in] Formula value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ltl_check_trace(int* trace, int trace_len, const char* formula, int* holds) {
     if (!trace || !formula || !holds) return -1;
     SNEPPXLTLVerifier ltl;
@@ -518,28 +682,58 @@ int SNEPPX_ltl_check_trace(int* trace, int trace_len, const char* formula, int* 
     return ret;
 }
 
+/**
+ * @brief Perform Symex Get Path Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_get_path_count(SNEPPXSymExEngine* se) {
     if (!se) return 0;
     return (int)se->explored_paths;
 }
 
+/**
+ * @brief Perform Symex Set Depth Limit.
+ *
+ * @param se [out] Se value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_set_depth_limit(SNEPPXSymExEngine* se, int limit) {
     if (!se || limit < 0) return -1;
     se->depth_limit = limit;
     return 0;
 }
 
+/**
+ * @brief Reset Symex.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_reset(SNEPPXSymExEngine* se) {
     if (!se) return -1;
     se->explored_paths = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Symex Get Coverage.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_symex_get_coverage(SNEPPXSymExEngine* se) {
     (void)se;
     return 50;
 }
 
+/**
+ * @brief Perform Loop Invariant Infer From Source.
+ *
+ * @param source_path [in] Source Path value.
+ * @param invariant_out [out] Invariant Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_loop_invariant_infer_from_source(const char* source_path, char* invariant_out, size_t inv_size) {
     if (!source_path || !invariant_out || inv_size == 0) return -1;
     FILE* f = fopen(source_path, "r");
@@ -554,17 +748,34 @@ int SNEPPX_loop_invariant_infer_from_source(const char* source_path, char* invar
     return ret;
 }
 
+/**
+ * @brief Verify Loop Invariant.
+ *
+ * @param loop [in] Loop value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_loop_invariant_verify(const char* loop, const char* invariant) {
     (void)loop;
     (void)invariant;
     return 1;
 }
 
+/**
+ * @brief Perform Data Flow Get Taint Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_get_taint_count(SNEPPXDataFlow* df) {
     if (!df) return 0;
     return df->taint_count;
 }
 
+/**
+ * @brief Clear Data Flow.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_clear(SNEPPXDataFlow* df) {
     if (!df) return -1;
     memset(df->taint_marks, 0, sizeof(df->taint_marks));
@@ -572,6 +783,11 @@ int SNEPPX_data_flow_clear(SNEPPXDataFlow* df) {
     return 0;
 }
 
+/**
+ * @brief Perform Data Flow Propagate All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_propagate_all(SNEPPXDataFlow* df) {
     int total = 0, n;
     do {
@@ -582,6 +798,13 @@ int SNEPPX_data_flow_propagate_all(SNEPPXDataFlow* df) {
     return total;
 }
 
+/**
+ * @brief Perform Data Flow Export Dot.
+ *
+ * @param df [out] Df value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_flow_export_dot(SNEPPXDataFlow* df, const char* path) {
     if (!df || !path) return -1;
     FILE* f = fopen(path, "w");
@@ -598,6 +821,14 @@ int SNEPPX_data_flow_export_dot(SNEPPXDataFlow* df, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Lean Export All.
+ *
+ * @param theorems [in] Theorems value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_lean_export_all(const char** theorems, int count, const char* output_dir) {
     if (!theorems || !output_dir) return -1;
     for (int i = 0; i < count; i++) {

@@ -9,6 +9,22 @@
 #define SNEPPX_IR_PLAYBOOK_MAX_VARIABLES 128
 #define SNEPPX_IR_PLAYBOOK_NESTING_MAX 16
 
+/*
+ * SNEPPX - Playbook Engine
+ *
+ * WHAT
+ *   Playbook Engine.
+ *
+ * CONCEPT
+ *   Provides the Playbook Engine.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_IR_PLAYBOOK_TYPE_INCIDENT_RESPONSE,
     SNEPPX_IR_PLAYBOOK_TYPE_SOC_RUNBOOK,

@@ -10,6 +10,22 @@
 #define SNEPPX_ZT_SESSION_TIMEOUT_NS 3600000000000ULL
 #define SNEPPX_ZT_REAUTH_INTERVAL_NS 1800000000000ULL
 
+/*
+ * SNEPPX - Ztna Framework
+ *
+ * WHAT
+ *   Ztna Framework.
+ *
+ * CONCEPT
+ *   Provides the Ztna Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_ZT_ACCESS_DENY,
     SNEPPX_ZT_ACCESS_ALLOW,

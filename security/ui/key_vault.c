@@ -5,6 +5,22 @@
 #include <stdlib.h>
 #include <time.h>
 
+/*
+ * SNEPPX - Key Vault
+ *
+ * WHAT
+ *   Key Vault.
+ *
+ * CONCEPT
+ *   Provides key vault management.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef SNEPPXKeyVault SNEPPXVault;
 
 typedef struct {
@@ -17,6 +33,11 @@ static int auto_rotate_threshold = SNEPPX_VAULT_AUTO_ROTATE_ACCESS;
 static uint8_t master_key_hash[32];
 static int master_key_set = 0;
 
+/**
+ * @brief Initialize Key Vault.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_init(SNEPPXKeyVault* vault) {
     if (!vault) return -1;
     memset(vault, 0, sizeof(*vault));
@@ -26,6 +47,9 @@ int SNEPPX_key_vault_init(SNEPPXKeyVault* vault) {
     return 0;
 }
 
+/**
+ * @brief Destroy Key Vault.
+ */
 void SNEPPX_key_vault_destroy(SNEPPXKeyVault* vault) {
     if (!vault) return;
     for (int i = 0; i < vault->key_count; i++)
@@ -33,6 +57,14 @@ void SNEPPX_key_vault_destroy(SNEPPXKeyVault* vault) {
     memset(vault, 0, sizeof(*vault));
 }
 
+/**
+ * @brief Perform Key Vault Generate Key.
+ *
+ * @param vault [out] Vault value.
+ * @param key_id [out] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_generate_key(SNEPPXKeyVault* vault, uint8_t* key_id, uint64_t ttl_seconds) {
     if (!vault || vault->is_locked || !key_id || vault->key_count >= SNEPPX_VAULT_MAX_KEYS) return -1;
     SNEPPXVaultKey* k = &vault->keys[vault->key_count];
@@ -46,6 +78,14 @@ int SNEPPX_key_vault_generate_key(SNEPPXKeyVault* vault, uint8_t* key_id, uint64
     return vault->key_count++;
 }
 
+/**
+ * @brief Perform Key Vault Get Key.
+ *
+ * @param vault [out] Vault value.
+ * @param key_id [in] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key(SNEPPXKeyVault* vault, const uint8_t* key_id, uint8_t* key_out) {
     if (!vault || vault->is_locked || !key_id || !key_out) return -1;
     for (int i = 0; i < vault->key_count; i++) {
@@ -67,6 +107,13 @@ int SNEPPX_key_vault_get_key(SNEPPXKeyVault* vault, const uint8_t* key_id, uint8
     return -1;
 }
 
+/**
+ * @brief Perform Key Vault Rotate Key.
+ *
+ * @param vault [out] Vault value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_rotate_key(SNEPPXKeyVault* vault, const uint8_t* key_id) {
     if (!vault || vault->is_locked || !key_id) return -1;
     for (int i = 0; i < vault->key_count; i++) {
@@ -80,6 +127,13 @@ int SNEPPX_key_vault_rotate_key(SNEPPXKeyVault* vault, const uint8_t* key_id) {
     return -1;
 }
 
+/**
+ * @brief Perform Key Vault Revoke Key.
+ *
+ * @param vault [out] Vault value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_revoke_key(SNEPPXKeyVault* vault, const uint8_t* key_id) {
     if (!vault || vault->is_locked || !key_id) return -1;
     for (int i = 0; i < vault->key_count; i++) {
@@ -92,12 +146,24 @@ int SNEPPX_key_vault_revoke_key(SNEPPXKeyVault* vault, const uint8_t* key_id) {
     return -1;
 }
 
+/**
+ * @brief Perform Key Vault Lock.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_lock(SNEPPXKeyVault* vault) {
     if (!vault) return -1;
     vault->is_locked = 1;
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Unlock.
+ *
+ * @param vault [out] Vault value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_unlock(SNEPPXKeyVault* vault, const uint8_t* master_key) {
     if (!vault) return -1;
     if (master_key_set && master_key) {
@@ -115,11 +181,24 @@ int SNEPPX_key_vault_unlock(SNEPPXKeyVault* vault, const uint8_t* master_key) {
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Key Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key_count(SNEPPXKeyVault* vault) {
     if (!vault) return -1;
     return vault->key_count;
 }
 
+/**
+ * @brief Perform Key Vault Get Key Info.
+ *
+ * @param vault [out] Vault value.
+ * @param key_id [in] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key_info(SNEPPXKeyVault* vault, const uint8_t* key_id, SNEPPXVaultKey* info_out) {
     if (!vault || !key_id || !info_out) return -1;
     for (int i = 0; i < vault->key_count; i++) {
@@ -136,6 +215,14 @@ int SNEPPX_key_vault_get_key_info(SNEPPXKeyVault* vault, const uint8_t* key_id, 
     return -1;
 }
 
+/**
+ * @brief Perform Key Vault List Keys.
+ *
+ * @param vault [out] Vault value.
+ * @param key_id_list [out] Key Id List value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_list_keys(SNEPPXKeyVault* vault, uint8_t* key_id_list, int max) {
     if (!vault || !key_id_list || max <= 0) return -1;
     int written = 0;
@@ -148,12 +235,24 @@ int SNEPPX_key_vault_list_keys(SNEPPXKeyVault* vault, uint8_t* key_id_list, int 
     return written;
 }
 
+/**
+ * @brief Perform Key Vault Set Auto Rotate Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_set_auto_rotate_threshold(int access_count) {
     if (access_count < 0) return -1;
     auto_rotate_threshold = access_count;
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Key Ttl.
+ *
+ * @param key_id [in] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key_ttl(const uint8_t* key_id, uint64_t* ttl_out) {
     (void)key_id;
     if (!ttl_out) return -1;
@@ -161,12 +260,26 @@ int SNEPPX_key_vault_get_key_ttl(const uint8_t* key_id, uint64_t* ttl_out) {
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Set Key Ttl.
+ *
+ * @param key_id [in] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_set_key_ttl(const uint8_t* key_id, uint64_t ttl) {
     (void)key_id;
     (void)ttl;
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Key Created.
+ *
+ * @param key_id [in] Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key_created(const uint8_t* key_id, uint64_t* created_out) {
     (void)key_id;
     if (!created_out) return -1;
@@ -174,23 +287,51 @@ int SNEPPX_key_vault_get_key_created(const uint8_t* key_id, uint64_t* created_ou
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Key Access Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_key_access_count(const uint8_t* key_id) {
     (void)key_id;
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Active Key Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_active_key_count(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Get Expired Key Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_get_expired_key_count(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Purge Expired.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_purge_expired(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Key Vault Export Key Vault.
+ *
+ * @param vault [in] Vault value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_vault_export_key_vault(const uint8_t* vault, const uint8_t* key, size_t key_len) {
     if (!vault || !key) return -1;
     (void)vault;

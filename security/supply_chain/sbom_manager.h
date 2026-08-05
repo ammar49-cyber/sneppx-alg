@@ -9,6 +9,22 @@
 #define SNEPPX_SC_MAX_VULNERABILITIES 4096
 #define SNEPPX_SC_HASH_SIZE 64
 
+/*
+ * SNEPPX - Sbom Manager
+ *
+ * WHAT
+ *   Sbom Manager.
+ *
+ * CONCEPT
+ *   Provides the Sbom Manager.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_SC_SBOM_FORMAT_SPDX,
     SNEPPX_SC_SBOM_FORMAT_CYCLONEDX,

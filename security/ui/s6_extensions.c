@@ -5,6 +5,22 @@
 #include <time.h>
 #include <math.h>
 
+/*
+ * SNEPPX - S6 Extensions
+ *
+ * WHAT
+ *   S6 Extensions.
+ *
+ * CONCEPT
+ *   Provides the S6 Extensions.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static uint8_t gf_exp[512];
 static uint8_t gf_log[256];
 static int gf_tables_initialized = 0;
@@ -115,6 +131,11 @@ static uint32_t threat_str_hash(const char* s) {
     return h;
 }
 
+/**
+ * @brief Initialize Hsm.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_init(SNEPPXHSMKeyStore* hsm) {
     if (!hsm) return -1;
     memset(hsm, 0, sizeof(*hsm));
@@ -127,6 +148,15 @@ int SNEPPX_hsm_init(SNEPPXHSMKeyStore* hsm) {
     return 0;
 }
 
+/**
+ * @brief Perform Hsm Store Key.
+ *
+ * @param hsm [out] Hsm value.
+ * @param key_id [in] Key Id value.
+ * @param key_data [in] Key Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_store_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, const uint8_t* key_data, size_t key_len) {
     (void)hsm;
     if (!key_id || !key_data || key_len == 0 || key_len > HSM_MAX_DATA) return -1;
@@ -141,6 +171,15 @@ int SNEPPX_hsm_store_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, const ui
     return 0;
 }
 
+/**
+ * @brief Perform Hsm Load Key.
+ *
+ * @param hsm [out] Hsm value.
+ * @param key_id [in] Key Id value.
+ * @param key_data [out] Key Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_load_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, uint8_t* key_data, size_t* key_len) {
     (void)hsm;
     if (!key_id || !key_data || !key_len) return -1;
@@ -153,6 +192,13 @@ int SNEPPX_hsm_load_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id, uint8_t* 
     return 0;
 }
 
+/**
+ * @brief Perform Hsm Delete Key.
+ *
+ * @param hsm [out] Hsm value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_delete_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id) {
     (void)hsm;
     if (!key_id) return -1;
@@ -163,6 +209,17 @@ int SNEPPX_hsm_delete_key(SNEPPXHSMKeyStore* hsm, const uint8_t* key_id) {
     return 0;
 }
 
+/**
+ * @brief Perform Shamir Split.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param n [in] N value.
+ * @param k [in] K value.
+ * @param shares [out] Shares value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shamir_split(const uint8_t* secret, size_t secret_len, int n, int k, uint8_t** shares, size_t* share_lens) {
     if (!secret || secret_len == 0 || n < k || k < 2 || n > 16 || !shares || !share_lens) return -1;
     gf_init();
@@ -186,6 +243,16 @@ int SNEPPX_shamir_split(const uint8_t* secret, size_t secret_len, int n, int k, 
     return 0;
 }
 
+/**
+ * @brief Perform Shamir Reconstruct.
+ *
+ * @param shares [out] Shares value.
+ * @param share_lens [out] Share Lens value.
+ * @param k [in] K value.
+ * @param secret [out] Secret value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shamir_reconstruct(uint8_t** shares, size_t* share_lens, int k, uint8_t* secret, size_t* secret_len) {
     if (!shares || !share_lens || k < 2 || !secret || !secret_len) return -1;
     gf_init();
@@ -212,12 +279,35 @@ int SNEPPX_shamir_reconstruct(uint8_t** shares, size_t* share_lens, int k, uint8
 }
 
 /* ---- Key Ceremony ---- */
+/**
+ * @brief Initialize Key Ceremony.
+ *
+ * @param kc [out] Kc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_init(SNEPPXKeyCeremony* kc, int participants) {
     if(!kc) return -1; memset(kc,0,sizeof(*kc)); kc->participants_required=participants; return 0;
 }
+/**
+ * @brief Perform Key Ceremony Participant Approve.
+ *
+ * @param kc [out] Kc value.
+ * @param token [in] Token value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_participant_approve(SNEPPXKeyCeremony* kc, const uint8_t* token, size_t token_len) {
     if(!kc||!token) return -1; kc->participants_present++; return 0;
 }
+/**
+ * @brief Perform Key Ceremony Execute.
+ *
+ * @param kc [out] Kc value.
+ * @param generated_key [out] Generated Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_execute(SNEPPXKeyCeremony* kc, uint8_t* generated_key, size_t key_len) {
     if(!kc||kc->participants_present<kc->participants_required||!generated_key) return -1;
     for(size_t i=0;i<key_len;i++) generated_key[i]=(uint8_t)(rand()%256);
@@ -225,14 +315,33 @@ int SNEPPX_key_ceremony_execute(SNEPPXKeyCeremony* kc, uint8_t* generated_key, s
 }
 
 /* ---- Rotation Scheduler ---- */
+/**
+ * @brief Initialize Key Rotation.
+ *
+ * @param ks [out] Ks value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_init(SNEPPXKeyRotationScheduler* ks, uint64_t interval_seconds) {
     if(!ks) return -1; memset(ks,0,sizeof(*ks)); ks->rotation_interval_seconds=interval_seconds; ks->last_rotation=(uint64_t)time(NULL); return 0;
 }
+/**
+ * @brief Perform Key Rotation Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_check(SNEPPXKeyRotationScheduler* ks) {
     if(!ks||!ks->auto_rotate) return 0;
     return ((uint64_t)time(NULL)-ks->last_rotation)>ks->rotation_interval_seconds?1:0;
 }
 
+/**
+ * @brief Initialize Security Dashboard.
+ *
+ * @param listen_addr [in] Listen Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_security_dashboard_init(const char* listen_addr, int port) {
     if (!listen_addr) return -1;
     memset(&dash_state, 0, sizeof(dash_state));
@@ -281,6 +390,11 @@ static void dash_parse_json(const char* json) {
     else if (key_count > 0) dash_state.info_count++;
 }
 
+/**
+ * @brief Update Security Dashboard.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_security_dashboard_update(const char* json_payload) {
     if (!dash_state.initialized) return -1;
     if (!json_payload) return -1;
@@ -305,12 +419,25 @@ static int threat_remove_edge(int idx) {
     return 0;
 }
 
+/**
+ * @brief Initialize Threat Viz.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_init(void) {
     memset(threat_edges, 0, sizeof(threat_edges));
     threat_edge_count = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Threat Viz Add Edge.
+ *
+ * @param from [in] From value.
+ * @param to [in] To value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_add_edge(const char* from, const char* to, const char* label) {
     if (!from || !to || !label) return -1;
     if (threat_edge_count >= THREAT_MAX_EDGES) return -1;
@@ -326,10 +453,25 @@ int SNEPPX_threat_viz_add_edge(const char* from, const char* to, const char* lab
 
 /* ---- Policy DSL ---- */
 int SNEPPX_policy_dsl_init(SNEPPXPolicyDSL* dsl) { if(!dsl) return -1; memset(dsl,0,sizeof(*dsl)); return 0; }
+/**
+ * @brief Perform Policy Dsl Add Rule.
+ *
+ * @param dsl [out] Dsl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_add_rule(SNEPPXPolicyDSL* dsl, const char* rule) {
     if(!dsl||!rule||dsl->rule_count>=32) return -1;
     strncpy(dsl->rules[dsl->rule_count++],rule,255); return 0;
 }
+/**
+ * @brief Perform Policy Dsl Compile.
+ *
+ * @param dsl [out] Dsl value.
+ * @param bytecode [out] Bytecode value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_compile(SNEPPXPolicyDSL* dsl, uint8_t* bytecode, size_t* bytecode_len) {
     if (!dsl || !bytecode || !bytecode_len) return -1;
     size_t pos = 0;
@@ -347,6 +489,13 @@ int SNEPPX_policy_dsl_compile(SNEPPXPolicyDSL* dsl, uint8_t* bytecode, size_t* b
     return 0;
 }
 
+/**
+ * @brief Perform Compliance Report.
+ *
+ * @param report_type [in] Report Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compliance_report(const char* report_type, const char* output_path) {
     if (!report_type || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
@@ -398,6 +547,13 @@ int SNEPPX_compliance_report(const char* report_type, const char* output_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Hsm List Keys.
+ *
+ * @param key_ids [out] Key Ids value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_list_keys(uint8_t* key_ids, int max) {
     if (!key_ids || max <= 0) return -1;
     if (!hsm_initialized) return 0;
@@ -411,6 +567,11 @@ int SNEPPX_hsm_list_keys(uint8_t* key_ids, int max) {
     return count;
 }
 
+/**
+ * @brief Perform Hsm Get Key Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_get_key_count(void) {
     if (!hsm_initialized) return 0;
     int count = 0;
@@ -420,6 +581,13 @@ int SNEPPX_hsm_get_key_count(void) {
     return count;
 }
 
+/**
+ * @brief Perform Hsm Generate Key.
+ *
+ * @param key_id_out [out] Key Id Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_generate_key(uint8_t* key_id_out, int key_type) {
     (void)key_type;
     if (!key_id_out) return -1;
@@ -438,6 +606,15 @@ int SNEPPX_hsm_generate_key(uint8_t* key_id_out, int key_type) {
     return 0;
 }
 
+/**
+ * @brief Perform Hsm Wrap Key.
+ *
+ * @param key_id [in] Key Id value.
+ * @param wrapping_key_id [in] Wrapping Key Id value.
+ * @param wrapped_out [out] Wrapped Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_wrap_key(const uint8_t* key_id, const uint8_t* wrapping_key_id, uint8_t* wrapped_out, size_t* wrapped_len) {
     if (!key_id || !wrapping_key_id || !wrapped_out || !wrapped_len) return -1;
     if (!hsm_initialized) return -1;
@@ -461,6 +638,15 @@ int SNEPPX_hsm_wrap_key(const uint8_t* key_id, const uint8_t* wrapping_key_id, u
     return 0;
 }
 
+/**
+ * @brief Perform Hsm Unwrap Key.
+ *
+ * @param wrapped [in] Wrapped value.
+ * @param wrapped_len [in] Wrapped Len value.
+ * @param wrapping_key_id [in] Wrapping Key Id value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_hsm_unwrap_key(const uint8_t* wrapped, size_t wrapped_len, const uint8_t* wrapping_key_id, uint8_t* key_id_out) {
     if (!wrapped || !wrapping_key_id || !key_id_out || wrapped_len < 8) return -1;
     if (!hsm_initialized) return -1;
@@ -484,20 +670,55 @@ int SNEPPX_hsm_unwrap_key(const uint8_t* wrapped, size_t wrapped_len, const uint
     return 0;
 }
 
+/**
+ * @brief Perform Shamir Split 5 Of 9.
+ *
+ * @param secret [in] Secret value.
+ * @param secret_len [in] Secret Len value.
+ * @param shares [out] Shares value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shamir_split_5_of_9(const uint8_t* secret, size_t secret_len, uint8_t** shares, size_t* share_lens) {
     return SNEPPX_shamir_split(secret, secret_len, 9, 5, shares, share_lens);
 }
 
+/**
+ * @brief Perform Shamir Reconstruct 5 Of 9.
+ *
+ * @param shares [out] Shares value.
+ * @param share_lens [out] Share Lens value.
+ * @param secret [out] Secret value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shamir_reconstruct_5_of_9(uint8_t** shares, size_t* share_lens, uint8_t* secret, size_t* secret_len) {
     return SNEPPX_shamir_reconstruct(shares, share_lens, 5, secret, secret_len);
 }
 
+/**
+ * @brief Perform Shamir Get Share Count.
+ *
+ * @param secret_len [in] Secret Len value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_shamir_get_share_count(size_t secret_len, int n, int k) {
     (void)secret_len;
     if (n < k || k < 2 || n > 16) return -1;
     return n;
 }
 
+/**
+ * @brief Perform Key Ceremony Get Status.
+ *
+ * @param kc [out] Kc value.
+ * @param approved [out] Approved value.
+ * @param present [out] Present value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_get_status(SNEPPXKeyCeremony* kc, int* approved, int* present, int* required) {
     if (!kc || !approved || !present || !required) return -1;
     *approved = kc->approved;
@@ -506,24 +727,46 @@ int SNEPPX_key_ceremony_get_status(SNEPPXKeyCeremony* kc, int* approved, int* pr
     return 0;
 }
 
+/**
+ * @brief Perform Key Ceremony Cancel.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_cancel(SNEPPXKeyCeremony* kc) {
     if (!kc) return -1;
     memset(kc, 0, sizeof(*kc));
     return 0;
 }
 
+/**
+ * @brief Perform Key Ceremony Set Timeout.
+ *
+ * @param kc [out] Kc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_ceremony_set_timeout(SNEPPXKeyCeremony* kc, int seconds) {
     if (!kc || seconds < 0) return -1;
     (void)seconds;
     return 0;
 }
 
+/**
+ * @brief Perform Key Rotation Force Rotate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_force_rotate(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     ks->last_rotation = (uint64_t)time(NULL);
     return 0;
 }
 
+/**
+ * @brief Perform Key Rotation Get Remaining.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_get_remaining(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     uint64_t elapsed = (uint64_t)time(NULL) - ks->last_rotation;
@@ -531,17 +774,37 @@ int SNEPPX_key_rotation_get_remaining(SNEPPXKeyRotationScheduler* ks) {
     return (int)(ks->rotation_interval_seconds - elapsed);
 }
 
+/**
+ * @brief Perform Key Rotation Set Auto.
+ *
+ * @param ks [out] Ks value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_set_auto(SNEPPXKeyRotationScheduler* ks, int enabled) {
     if (!ks) return -1;
     ks->auto_rotate = (enabled != 0);
     return 0;
 }
 
+/**
+ * @brief Perform Key Rotation Get Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_key_rotation_get_count(SNEPPXKeyRotationScheduler* ks) {
     if (!ks) return -1;
     return 0;
 }
 
+/**
+ * @brief Get Security Dashboard Add Wid.
+ *
+ * @param name [in] Name value.
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_security_dashboard_add_widget(const char* name, int type, const char* data) {
     if (!name || !data) return -1;
     if (!dash_state.initialized) return -1;
@@ -551,6 +814,11 @@ int SNEPPX_security_dashboard_add_widget(const char* name, int type, const char*
     return 0;
 }
 
+/**
+ * @brief Get Security Dashboard Remove Wid.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_security_dashboard_remove_widget(const char* name) {
     if (!name) return -1;
     if (!dash_state.initialized) return -1;
@@ -558,6 +826,11 @@ int SNEPPX_security_dashboard_remove_widget(const char* name) {
     return 0;
 }
 
+/**
+ * @brief Perform Security Dashboard Get Status.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_security_dashboard_get_status(char* status_out) {
     if (!status_out) return -1;
     if (!dash_state.initialized) return -1;
@@ -569,22 +842,44 @@ int SNEPPX_security_dashboard_get_status(char* status_out) {
     return 0;
 }
 
+/**
+ * @brief Perform Threat Viz Remove Edge.
+ *
+ * @param from [in] From value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_remove_edge(const char* from, const char* to) {
     int idx = threat_find_edge(from, to);
     if (idx < 0) return -1;
     return threat_remove_edge(idx);
 }
 
+/**
+ * @brief Clear Threat Viz.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_clear(void) {
     memset(threat_edges, 0, sizeof(threat_edges));
     threat_edge_count = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Threat Viz Get Edge Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_get_edge_count(void) {
     return threat_edge_count;
 }
 
+/**
+ * @brief Perform Threat Viz Export Dot.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_threat_viz_export_dot(const char* output_path) {
     if (!output_path) return -1;
     FILE* f = fopen(output_path, "w");
@@ -600,12 +895,27 @@ int SNEPPX_threat_viz_export_dot(const char* output_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Policy Dsl Set Rule.
+ *
+ * @param dsl [out] Dsl value.
+ * @param index [in] Index value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_set_rule(SNEPPXPolicyDSL* dsl, int index, const char* rule) {
     if (!dsl || !rule || index < 0 || index >= dsl->rule_count) return -1;
     strncpy(dsl->rules[index], rule, 255);
     return 0;
 }
 
+/**
+ * @brief Perform Policy Dsl Remove Rule.
+ *
+ * @param dsl [out] Dsl value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_remove_rule(SNEPPXPolicyDSL* dsl, int index) {
     if (!dsl || index < 0 || index >= dsl->rule_count) return -1;
     for (int i = index; i < dsl->rule_count - 1; i++) {
@@ -616,11 +926,21 @@ int SNEPPX_policy_dsl_remove_rule(SNEPPXPolicyDSL* dsl, int index) {
     return 0;
 }
 
+/**
+ * @brief Perform Policy Dsl Get Rule Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_get_rule_count(SNEPPXPolicyDSL* dsl) {
     if (!dsl) return -1;
     return dsl->rule_count;
 }
 
+/**
+ * @brief Perform Policy Dsl Validate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_policy_dsl_validate(SNEPPXPolicyDSL* dsl) {
     if (!dsl) return -1;
     for (int i = 0; i < dsl->rule_count; i++) {
@@ -630,12 +950,25 @@ int SNEPPX_policy_dsl_validate(SNEPPXPolicyDSL* dsl) {
     return 1;
 }
 
+/**
+ * @brief Perform Compliance Report Set Company.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compliance_report_set_company(const char* name) {
     if (!name) return -1;
     (void)name;
     return 0;
 }
 
+/**
+ * @brief Perform Compliance Report Add Finding.
+ *
+ * @param control_id [in] Control Id value.
+ * @param status [in] Status value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compliance_report_add_finding(const char* control_id, const char* status, const char* description) {
     if (!control_id || !status || !description) return -1;
     (void)control_id;
@@ -644,6 +977,13 @@ int SNEPPX_compliance_report_add_finding(const char* control_id, const char* sta
     return 0;
 }
 
+/**
+ * @brief Perform Compliance Report Generate Pdf.
+ *
+ * @param report_type [in] Report Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_compliance_report_generate_pdf(const char* report_type, const char* output_path) {
     return SNEPPX_compliance_report(report_type, output_path);
 }

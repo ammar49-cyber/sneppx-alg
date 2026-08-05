@@ -5,6 +5,22 @@
 #include <cstring>
 #include <stdexcept>
 
+/*
+ * SNEPPX - Cpp Security Bridge
+ *
+ * WHAT
+ *   Cpp Security Bridge.
+ *
+ * CONCEPT
+ *   Provides the Cpp Security Bridge.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 /* ---------- SecureBuffer ---------- */

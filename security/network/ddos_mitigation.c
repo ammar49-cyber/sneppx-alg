@@ -9,6 +9,22 @@
 #define DDOS_WINDOW_SEC 60
 #define DDOS_SYN_THRESHOLD 500
 
+/*
+ * SNEPPX - Ddos Mitigation
+ *
+ * WHAT
+ *   Ddos Mitigation.
+ *
+ * CONCEPT
+ *   Provides the Ddos Mitigation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef struct {
     uint32_t src_ip;
     uint32_t dst_ip;
@@ -67,6 +83,13 @@ static int add_source(uint32_t ip) {
     return source_count++;
 }
 
+/**
+ * @brief Perform Ddos Detect Syn Flood.
+ *
+ * @param src_ip [in] Src Ip value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_detect_syn_flood(uint32_t src_ip, uint32_t dst_ip) {
     int idx = find_source(src_ip);
     if (idx < 0) idx = add_source(src_ip);
@@ -103,6 +126,14 @@ int SNEPPX_ddos_detect_syn_flood(uint32_t src_ip, uint32_t dst_ip) {
     return 0;
 }
 
+/**
+ * @brief Perform Ddos Detect App Layer.
+ *
+ * @param src_ip [in] Src Ip value.
+ * @param payload [in] Payload value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_detect_app_layer(uint32_t src_ip, const uint8_t *payload, size_t len) {
     if (!active_config.enable_app_layer) return 0;
     int idx = find_source(src_ip);
@@ -125,6 +156,14 @@ int SNEPPX_ddos_detect_app_layer(uint32_t src_ip, const uint8_t *payload, size_t
     return 0;
 }
 
+/**
+ * @brief Perform Ddos Generate Syn Cookie.
+ *
+ * @param src_ip [in] Src Ip value.
+ * @param dst_ip [in] Dst Ip value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_ddos_generate_syn_cookie(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
     if (!active_config.enable_syn_cookies) return 0;
     time_t now = time(NULL);
@@ -134,12 +173,26 @@ uint32_t SNEPPX_ddos_generate_syn_cookie(uint32_t src_ip, uint32_t dst_ip, uint1
     return cookie & 0x00FFFFFF;
 }
 
+/**
+ * @brief Perform Ddos Validate Syn Cookie.
+ *
+ * @param cookie [in] Cookie value.
+ * @param src_ip [in] Src Ip value.
+ * @param dst_ip [in] Dst Ip value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_validate_syn_cookie(uint32_t cookie, uint32_t src_ip, uint32_t dst_ip, uint16_t src_port) {
     if (!active_config.enable_syn_cookies) return 1;
     uint32_t expected = SNEPPX_ddos_generate_syn_cookie(src_ip, dst_ip, src_port);
     return (cookie == expected) ? 1 : 0;
 }
 
+/**
+ * @brief Perform Ddos Apply Rate Limit.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_apply_rate_limit(uint32_t src_ip) {
     int idx = find_source(src_ip);
     if (idx < 0) idx = add_source(src_ip);
@@ -157,6 +210,16 @@ int SNEPPX_ddos_apply_rate_limit(uint32_t src_ip) {
     return 0;
 }
 
+/**
+ * @brief Perform Ddos Track Connection.
+ *
+ * @param src_ip [in] Src Ip value.
+ * @param dst_ip [in] Dst Ip value.
+ * @param src_port [in] Src Port value.
+ * @param dst_port [in] Dst Port value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_track_connection(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port, uint16_t dst_port, uint64_t bytes) {
     if (flow_count < DDOS_MAX_CONNECTIONS) {
         flows[flow_count].src_ip = src_ip;
@@ -173,6 +236,11 @@ int SNEPPX_ddos_track_connection(uint32_t src_ip, uint32_t dst_ip, uint16_t src_
     return 0;
 }
 
+/**
+ * @brief Perform Ddos Get Stats.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_get_stats(ddos_stats_t *stats) {
     if (!stats) return -1;
     stats->total_packets_dropped = total_packets_dropped;
@@ -186,12 +254,22 @@ int SNEPPX_ddos_get_stats(ddos_stats_t *stats) {
     return 0;
 }
 
+/**
+ * @brief Perform Ddos Update Config.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_update_config(const ddos_config_t *config) {
     if (!config) return -1;
     memcpy(&active_config, config, sizeof(ddos_config_t));
     return 0;
 }
 
+/**
+ * @brief Reset Ddos.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ddos_reset(void) {
     flow_count = 0;
     source_count = 0;

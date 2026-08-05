@@ -19,6 +19,22 @@
 #define SNEPPX_BIKE_256_CIPHERTEXT_SIZE 10348
 #define SNEPPX_BIKE_256_SHAREDSECRET_SIZE 64
 
+/*
+ * SNEPPX - Bike
+ *
+ * WHAT
+ *   Bike.
+ *
+ * CONCEPT
+ *   Provides the Bike.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_BIKE_128,
     SNEPPX_BIKE_192,

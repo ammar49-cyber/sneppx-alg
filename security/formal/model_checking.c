@@ -3,6 +3,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/*
+ * SNEPPX - Model Checking
+ *
+ * WHAT
+ *   Model Checking.
+ *
+ * CONCEPT
+ *   Provides the Model Checking.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/**
+ * @brief Initialize Model.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_init(SNEPPXFormalModel* model) {
     if (!model) return -1;
     memset(model, 0, sizeof(*model));
@@ -10,6 +31,15 @@ int SNEPPX_model_init(SNEPPXFormalModel* model) {
     return 0;
 }
 
+/**
+ * @brief Perform Model Add State.
+ *
+ * @param model [out] Model value.
+ * @param state_id [in] State Id value.
+ * @param is_accepting [in] Is Accepting value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_add_state(SNEPPXFormalModel* model, uint32_t state_id, int is_accepting, int is_error) {
     if (!model || model->state_count >= SNEPPX_MODEL_MAX_STATES) return -1;
     SNEPPXModelState* s = &model->states[model->state_count];
@@ -20,6 +50,14 @@ int SNEPPX_model_add_state(SNEPPXFormalModel* model, uint32_t state_id, int is_a
     return model->state_count++;
 }
 
+/**
+ * @brief Perform Model Add Transition.
+ *
+ * @param model [out] Model value.
+ * @param from [in] From value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_add_transition(SNEPPXFormalModel* model, uint32_t from, uint32_t to) {
     if (!model) return -1;
     for (int i = 0; i < model->state_count; i++) {
@@ -31,12 +69,24 @@ int SNEPPX_model_add_transition(SNEPPXFormalModel* model, uint32_t from, uint32_
     return -1;
 }
 
+/**
+ * @brief Perform Model Set Property.
+ *
+ * @param model [out] Model value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_set_property(SNEPPXFormalModel* model, const char* property) {
     if (!model || !property) return -1;
     strncpy(model->property, property, SNEPPX_MODEL_PROP_MAX_LEN - 1);
     return 0;
 }
 
+/**
+ * @brief Perform Model Check.
+ *
+ * @return The result value, or 0 on error.
+ */
 SNEPPXModelCheckResult SNEPPX_model_check(SNEPPXFormalModel* model) {
     SNEPPXModelCheckResult result;
     memset(&result, 0, sizeof(result));
@@ -83,6 +133,14 @@ int SNEPPX_model_verify_invariant(SNEPPXFormalModel* model, int (*invariant)(uin
     return 1;
 }
 
+/**
+ * @brief Perform Model Check Reachability.
+ *
+ * @param model [out] Model value.
+ * @param from_state [in] From State value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_check_reachability(SNEPPXFormalModel* model, uint32_t from_state, uint32_t to_state) {
     if (!model) return 0;
     int visited[SNEPPX_MODEL_MAX_STATES] = {0};
@@ -108,11 +166,19 @@ int SNEPPX_model_check_reachability(SNEPPXFormalModel* model, uint32_t from_stat
     return 0;
 }
 
+/**
+ * @brief Perform Model Get State Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_get_state_count(SNEPPXFormalModel* model) {
     if (!model) return -1;
     return model->state_count;
 }
 
+/**
+ * @brief Reset Model.
+ */
 void SNEPPX_model_reset(SNEPPXFormalModel* model) {
     if (!model) return;
     memset(model->states, 0, sizeof(SNEPPXModelState) * model->state_count);
@@ -121,6 +187,11 @@ void SNEPPX_model_reset(SNEPPXFormalModel* model) {
     memset(model->property, 0, SNEPPX_MODEL_PROP_MAX_LEN);
 }
 
+/**
+ * @brief Perform Model Check Deadlock.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_check_deadlock(SNEPPXFormalModel* model) {
     if (!model) return -1;
     int deadlock_count = 0;
@@ -131,6 +202,13 @@ int SNEPPX_model_check_deadlock(SNEPPXFormalModel* model) {
     return deadlock_count;
 }
 
+/**
+ * @brief Perform Model Export Dot.
+ *
+ * @param model [out] Model value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_export_dot(SNEPPXFormalModel* model, const char* output_path) {
     if (!model || !output_path) return -1;
     FILE* f = fopen(output_path, "w");
@@ -156,12 +234,31 @@ int SNEPPX_model_export_dot(SNEPPXFormalModel* model, const char* output_path) {
     return 0;
 }
 
+/**
+ * @brief Perform Model Add Transition Labeled.
+ *
+ * @param model [out] Model value.
+ * @param from [in] From value.
+ * @param to [in] To value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_add_transition_labeled(SNEPPXFormalModel* model, uint32_t from, uint32_t to, const char* label) {
     if (!model || !label) return -1;
     (void)label;
     return SNEPPX_model_add_transition(model, from, to);
 }
 
+/**
+ * @brief Perform Model Find Trace.
+ *
+ * @param model [out] Model value.
+ * @param from [in] From value.
+ * @param to [in] To value.
+ * @param trace [out] Trace value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_find_trace(SNEPPXFormalModel* model, uint32_t from, uint32_t to, uint32_t* trace, int max_len) {
     if (!model || !trace || max_len <= 0) return -1;
     int visited[SNEPPX_MODEL_MAX_STATES] = {0};
@@ -199,16 +296,31 @@ int SNEPPX_model_find_trace(SNEPPXFormalModel* model, uint32_t from, uint32_t to
     return -1;
 }
 
+/**
+ * @brief Perform Model Get Reachable.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_get_reachable(SNEPPXFormalModel* model) {
     if (!model) return -1;
     SNEPPXModelCheckResult r = SNEPPX_model_check(model);
     return r.reachable_states;
 }
 
+/**
+ * @brief Perform Model Get Deadlock Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_get_deadlock_count(SNEPPXFormalModel* model) {
     return SNEPPX_model_check_deadlock(model);
 }
 
+/**
+ * @brief Perform Model Has Cycle.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_has_cycle(SNEPPXFormalModel* model) {
     if (!model) return 0;
     int visited[SNEPPX_MODEL_MAX_STATES] = {0};
@@ -238,6 +350,14 @@ int SNEPPX_model_has_cycle(SNEPPXFormalModel* model) {
     return 0;
 }
 
+/**
+ * @brief Perform Model Get Cycle.
+ *
+ * @param model [out] Model value.
+ * @param cycle [out] Cycle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_get_cycle(SNEPPXFormalModel* model, uint32_t* cycle, int max_len) {
     if (!model || !cycle || max_len < 2) return -1;
     (void)cycle;
@@ -250,6 +370,11 @@ int SNEPPX_model_get_cycle(SNEPPXFormalModel* model, uint32_t* cycle, int max_le
     return -1;
 }
 
+/**
+ * @brief Perform Model Minimize.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_minimize(SNEPPXFormalModel* model) {
     if (!model) return -1;
     SNEPPXModelCheckResult r = SNEPPX_model_check(model);
@@ -289,6 +414,13 @@ int SNEPPX_model_minimize(SNEPPXFormalModel* model) {
     return 0;
 }
 
+/**
+ * @brief Perform Model Check Liveness.
+ *
+ * @param model [out] Model value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_check_liveness(SNEPPXFormalModel* model, const char* property) {
     if (!model || !property) return 0;
     (void)property;

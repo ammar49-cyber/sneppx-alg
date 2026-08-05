@@ -19,6 +19,22 @@
 #define SNEPPX_HQC_256_CIPHERTEXT_SIZE 17090
 #define SNEPPX_HQC_256_SHAREDSECRET_SIZE 64
 
+/*
+ * SNEPPX - Hqc
+ *
+ * WHAT
+ *   Hqc.
+ *
+ * CONCEPT
+ *   Provides the Hqc.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_HQC_128,
     SNEPPX_HQC_192,

@@ -29,6 +29,38 @@
 
 #define SNEPPX_STACK_GUARD_MARGIN 4096
 #ifdef _WIN32
+/*
+ * SNEPPX - Monitor Advanced
+ *
+ * WHAT
+ *   Monitor Advanced.
+ *
+ * CONCEPT
+ *   Provides the Monitor Advanced.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
+/*
+ * SNEPPX - Monitor Advanced
+ *
+ * WHAT
+ *   Monitor Advanced.
+ *
+ * CONCEPT
+ *   Provides the Monitor Advanced.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static void* g_so_guard_page = NULL;
 static void* g_so_stack_bottom = NULL;
 static size_t g_so_guard_size = 0;
@@ -79,6 +111,14 @@ static CodeTamperRegion g_ct_regions[SNEPPX_CODE_TAMPER_MAX_REGIONS];
 static int g_ct_region_count = 0;
 
 /* --- Code Tamper --- */
+/**
+ * @brief Initialize Code Tamper.
+ *
+ * @param ctd [out] Ctd value.
+ * @param addr [in] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_init(SNEPPXCodeTamperDetector* ctd, const void* addr, size_t size) {
     if (!ctd||!addr) return -1;
     ctd->code_addr=addr; ctd->code_size=size; ctd->enabled=1;
@@ -89,6 +129,11 @@ int SNEPPX_code_tamper_init(SNEPPXCodeTamperDetector* ctd, const void* addr, siz
     return 0;
 }
 
+/**
+ * @brief Perform Code Tamper Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_check(SNEPPXCodeTamperDetector* ctd) {
     if (!ctd||!ctd->enabled) return 0;
     uint8_t current[32];
@@ -98,6 +143,13 @@ int SNEPPX_code_tamper_check(SNEPPXCodeTamperDetector* ctd) {
     return memcmp(current,ctd->baseline_hash,32)==0?0:1;
 }
 
+/**
+ * @brief Perform Code Tamper Add Region.
+ *
+ * @param addr [in] Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_add_region(const void* addr, size_t size) {
     if (!addr||size==0||g_ct_region_count>=SNEPPX_CODE_TAMPER_MAX_REGIONS) return -1;
     CodeTamperRegion* r = &g_ct_regions[g_ct_region_count];
@@ -109,12 +161,22 @@ int SNEPPX_code_tamper_add_region(const void* addr, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Code Tamper Remove Region.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_remove_region(int index) {
     if (index<0||index>=g_ct_region_count) return -1;
     g_ct_regions[index].active = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Code Tamper Check All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_check_all(void) {
     int violations = 0;
     for (int i=0;i<g_ct_region_count;i++) {
@@ -131,6 +193,13 @@ int SNEPPX_code_tamper_check_all(void) {
 /* --- Func Ptr Detector --- */
 int SNEPPX_func_ptr_detector_init(SNEPPXFuncPtrDetector* fpd) { if (!fpd) return -1; memset(fpd,0,sizeof(*fpd)); return 0; }
 
+/**
+ * @brief Perform Func Ptr Detector Watch.
+ *
+ * @param fpd [out] Fpd value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_watch(SNEPPXFuncPtrDetector* fpd, const void** func_ptr) {
     if (!fpd||!func_ptr||fpd->count>=64) return -1;
     fpd->func_ptrs[fpd->count]=func_ptr;
@@ -139,6 +208,11 @@ int SNEPPX_func_ptr_detector_watch(SNEPPXFuncPtrDetector* fpd, const void** func
     return 0;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Scan.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_scan(SNEPPXFuncPtrDetector* fpd) {
     if (!fpd) return 0;
     int modified=0;
@@ -148,6 +222,13 @@ int SNEPPX_func_ptr_detector_scan(SNEPPXFuncPtrDetector* fpd) {
     return modified;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Unwatch.
+ *
+ * @param fpd [out] Fpd value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_unwatch(SNEPPXFuncPtrDetector* fpd, int index) {
     if (!fpd||index<0||index>=fpd->count) return -1;
     for (int i=index;i<fpd->count-1;i++) {
@@ -158,6 +239,11 @@ int SNEPPX_func_ptr_detector_unwatch(SNEPPXFuncPtrDetector* fpd, int index) {
     return 0;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Scan All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_scan_all(SNEPPXFuncPtrDetector* fpd) {
     if (!fpd) return 0;
     int modified=0;
@@ -176,6 +262,14 @@ int SNEPPX_func_ptr_detector_scan_all(SNEPPXFuncPtrDetector* fpd) {
     return modified;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Get Report.
+ *
+ * @param fpd [out] Fpd value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_get_report(SNEPPXFuncPtrDetector* fpd, char* buffer, size_t size) {
     if (!fpd||!buffer||size<1) return -1;
     int pos=0;
@@ -193,6 +287,11 @@ int SNEPPX_func_ptr_detector_get_report(SNEPPXFuncPtrDetector* fpd, char* buffer
 static uint64_t g_hcd_sentinel_value = 0xDEADBEEFCAFEBABEULL;
 static int g_hcd_enabled = 1;
 
+/**
+ * @brief Initialize Heap Corruption.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_init(SNEPPXHeapCorruptionDetector* hcd) {
     if (!hcd) return -1;
     hcd->sentinel_value=0xDEADBEEFCAFEBABEULL;
@@ -202,22 +301,48 @@ int SNEPPX_heap_corruption_init(SNEPPXHeapCorruptionDetector* hcd) {
     return 0;
 }
 
+/**
+ * @brief Perform Heap Corruption Apply Sentinel.
+ *
+ * @param hcd [out] Hcd value.
+ * @param alloc [out] Alloc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_apply_sentinel(SNEPPXHeapCorruptionDetector* hcd, void* alloc, size_t size) {
     if (!hcd||!hcd->enabled||!alloc||size<8) return -1;
     *(uint64_t*)((char*)alloc+size-8)=hcd->sentinel_value;
     return 0;
 }
 
+/**
+ * @brief Perform Heap Corruption Check.
+ *
+ * @param hcd [out] Hcd value.
+ * @param alloc [out] Alloc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_check(SNEPPXHeapCorruptionDetector* hcd, void* alloc, size_t size) {
     if (!hcd||!alloc||size<8) return 0;
     return *(uint64_t*)((char*)alloc+size-8)==hcd->sentinel_value?0:1;
 }
 
+/**
+ * @brief Perform Heap Corruption Set Sentinel.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_set_sentinel(uint64_t value) {
     g_hcd_sentinel_value = value;
     return 0;
 }
 
+/**
+ * @brief Perform Heap Corruption Disable.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_disable(void) {
     g_hcd_enabled = 0;
     return 0;
@@ -228,6 +353,11 @@ static void* g_heap_scan_allocs[SNEPPX_HEAP_SCAN_ALLOCS_MAX];
 static size_t g_heap_scan_sizes[SNEPPX_HEAP_SCAN_ALLOCS_MAX];
 static int g_heap_scan_count = 0;
 
+/**
+ * @brief Perform Heap Corruption Scan All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_scan_all(void) {
     if (!g_hcd_enabled) return 0;
     int corrupted = 0;
@@ -241,6 +371,11 @@ int SNEPPX_heap_corruption_scan_all(void) {
     return corrupted;
 }
 
+/**
+ * @brief Perform Heap Corruption Check Sentinels.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_check_sentinels(void* allocations[], size_t sizes[], int count) {
     if (!allocations||!sizes||count<0) return -1;
     int corrupted = 0;
@@ -252,6 +387,11 @@ int SNEPPX_heap_corruption_check_sentinels(void* allocations[], size_t sizes[], 
 }
 
 /* --- Stack Overflow --- */
+/**
+ * @brief Perform Stack Overflow Guard Install.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_stack_overflow_guard_install(void) {
 #ifdef _WIN32
     SYSTEM_INFO si;
@@ -292,6 +432,11 @@ int SNEPPX_stack_overflow_guard_install(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Stack Overflow Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_stack_overflow_check(void) {
     if (!g_so_installed) return 0;
     void* sp;
@@ -308,6 +453,11 @@ int SNEPPX_stack_overflow_check(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Stack Overflow Guard Uninstall.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_stack_overflow_guard_uninstall(void) {
     if (!g_so_installed) return -1;
 #ifdef _WIN32
@@ -322,10 +472,20 @@ int SNEPPX_stack_overflow_guard_uninstall(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Stack Overflow Get Guard Addr.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_stack_overflow_get_guard_addr(void) {
     return g_so_guard_page;
 }
 
+/**
+ * @brief Perform Stack Overflow Set Guard Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_stack_overflow_set_guard_size(size_t bytes) {
     if (bytes==0) return -1;
     g_so_guard_size = bytes;
@@ -333,16 +493,38 @@ int SNEPPX_stack_overflow_set_guard_size(size_t bytes) {
 }
 
 /* --- Return Address --- */
+/**
+ * @brief Verify Ret Addr.
+ *
+ * @param ret_addr [out] Ret Addr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ret_addr_verify(void* ret_addr, void* expected_ret_addr) {
     return ret_addr==expected_ret_addr?0:1;
 }
 
 /* --- Instruction Tracer --- */
+/**
+ * @brief Initialize Inst Tracer.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_inst_tracer_init(SNEPPXInstructionTracer* tracer) {
     if (!tracer) return -1;
     memset(tracer,0,sizeof(*tracer)); return 0;
 }
+/**
+ * @brief Start Inst Tracer.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_inst_tracer_start(SNEPPXInstructionTracer* tracer) { if (tracer) tracer->enabled=1; return 0; }
+/**
+ * @brief Stop Inst Tracer.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_inst_tracer_stop(SNEPPXInstructionTracer* tracer) { if (tracer) tracer->enabled=0; return 0; }
 
 /* --- ML Anomaly --- */
@@ -355,6 +537,11 @@ static int g_ml_global_n = 0;
 static double g_ml_global_sum[SNEPPX_MON_ML_FEATURES];
 static double g_ml_global_sum_sq[SNEPPX_MON_ML_FEATURES];
 
+/**
+ * @brief Initialize Ml Anomaly.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_init(SNEPPXMLAnomalyDetector* ml) {
     if (!ml) return -1;
     memset(ml,0,sizeof(*ml));
@@ -370,6 +557,13 @@ int SNEPPX_ml_anomaly_init(SNEPPXMLAnomalyDetector* ml) {
     return 0;
 }
 
+/**
+ * @brief Train Ml Anomaly.
+ *
+ * @param ml [out] Ml value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_train(SNEPPXMLAnomalyDetector* ml, const double features[][SNEPPX_MON_ML_FEATURES], int n_samples) {
     if (!ml||!features||n_samples<2) return -1;
     for (int j=0;j<SNEPPX_MON_ML_FEATURES;j++) {
@@ -386,6 +580,13 @@ int SNEPPX_ml_anomaly_train(SNEPPXMLAnomalyDetector* ml, const double features[]
     return 0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Score.
+ *
+ * @param ml [out] Ml value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_ml_anomaly_score(SNEPPXMLAnomalyDetector* ml, const double features[SNEPPX_MON_ML_FEATURES]) {
     if (!ml||!ml->trained||!features) return 1e10;
     double max_z=0.0;
@@ -396,15 +597,32 @@ double SNEPPX_ml_anomaly_score(SNEPPXMLAnomalyDetector* ml, const double feature
     return max_z;
 }
 
+/**
+ * @brief Perform Ml Anomaly Is Anomaly.
+ *
+ * @param ml [out] Ml value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_is_anomaly(SNEPPXMLAnomalyDetector* ml, const double features[SNEPPX_MON_ML_FEATURES]) {
     return SNEPPX_ml_anomaly_score(ml,features)>ml->threshold?1:0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_set_threshold(double t) {
     g_ml_global_threshold = t;
     return 0;
 }
 
+/**
+ * @brief Reset Ml Anomaly.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_reset(void) {
     g_ml_global_trained=0;
     g_ml_global_n=0;
@@ -416,6 +634,13 @@ int SNEPPX_ml_anomaly_reset(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Get Stats.
+ *
+ * @param mean [out] Mean value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_get_stats(double* mean, double* std) {
     if (!mean||!std) return -1;
     for (int j=0;j<SNEPPX_MON_ML_FEATURES;j++) {
@@ -425,6 +650,13 @@ int SNEPPX_ml_anomaly_get_stats(double* mean, double* std) {
     return 0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Batch Score.
+ *
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_batch_score(const double samples[][SNEPPX_MON_ML_FEATURES], int n, double* scores_out) {
     if (!samples||n<1||!scores_out||!g_ml_global_trained) return -1;
     for (int i=0;i<n;i++) {
@@ -438,6 +670,11 @@ int SNEPPX_ml_anomaly_batch_score(const double samples[][SNEPPX_MON_ML_FEATURES]
     return 0;
 }
 
+/**
+ * @brief Update Ml Anomaly Online.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_online_update(const double features[SNEPPX_MON_ML_FEATURES]) {
     if (!features) return -1;
     g_ml_global_n++;
@@ -455,6 +692,13 @@ int SNEPPX_ml_anomaly_online_update(const double features[SNEPPX_MON_ML_FEATURES
 /* --- FS Integrity --- */
 int SNEPPX_fs_integrity_init(SNEPPXFSIntegrity* fsi) { if (!fsi) return -1; memset(fsi,0,sizeof(*fsi)); return 0; }
 
+/**
+ * @brief Perform Fs Integrity Watch.
+ *
+ * @param fsi [out] Fsi value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_watch(SNEPPXFSIntegrity* fsi, const char* path) {
     if (!fsi||!path||fsi->count>=64) return -1;
     strncpy(fsi->paths[fsi->count],path,255);
@@ -469,6 +713,11 @@ int SNEPPX_fs_integrity_watch(SNEPPXFSIntegrity* fsi, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Fs Integrity Scan.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_scan(SNEPPXFSIntegrity* fsi) {
     if (!fsi) return 0;
     int violations=0;
@@ -486,25 +735,50 @@ int SNEPPX_fs_integrity_scan(SNEPPXFSIntegrity* fsi) {
     return violations;
 }
 
+/**
+ * @brief Perform Fs Integrity Unwatch.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_unwatch(const char* path) {
     (void)path;
     return -1;
 }
 
+/**
+ * @brief Clear Fs Integrity.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_clear(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Fs Integrity Verify Path.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_verify_path(const char* path) {
     (void)path;
     return -1;
 }
 
+/**
+ * @brief Perform Fs Integrity Get Watched Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_get_watched_count(void) {
     return 0;
 }
 
 /* --- Persistence Monitor --- */
+/**
+ * @brief Initialize Persistence Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_persistence_monitor_init(void) {
     g_persist_count = 0;
 #ifdef _WIN32
@@ -541,6 +815,11 @@ int SNEPPX_persistence_monitor_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Persistence Monitor Scan.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_persistence_monitor_scan(void) {
     if (!g_persist_initialized) return -1;
     int found = 0;
@@ -617,6 +896,11 @@ int SNEPPX_persistence_monitor_scan(void) {
 }
 
 /* --- Process Injection Detect --- */
+/**
+ * @brief Perform Proc Injection Detect.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_proc_injection_detect(void) {
     int suspicious = 0;
 #ifdef _WIN32
@@ -684,6 +968,11 @@ int SNEPPX_proc_injection_detect(void) {
 }
 
 /* --- Net Conn Monitor --- */
+/**
+ * @brief Initialize Net Conn Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_init(void) {
     g_net_bad_port_count = 0;
     int default_ports[] = {4444, 1337, 31337, 6667, 6660, 6661, 6662, 6663,
@@ -710,6 +999,11 @@ int SNEPPX_net_conn_monitor_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Net Conn Monitor Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_check(void) {
     int suspicious = 0;
     int checked_ports[SNEPPX_BAD_PORTS_MAX];
@@ -764,6 +1058,11 @@ int SNEPPX_net_conn_monitor_check(void) {
 }
 
 /* --- Device Insertion Detect --- */
+/**
+ * @brief Perform Device Insertion Detect.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_device_insertion_detect(void) {
     int new_count = 0;
 #ifdef _WIN32
@@ -832,6 +1131,11 @@ int SNEPPX_device_insertion_detect(void) {
 }
 
 /* --- Kernel Object Monitor --- */
+/**
+ * @brief Initialize Kernel Obj Monitor.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kernel_obj_monitor_init(void) {
 #ifdef _WIN32
     if (!GetProcessHandleCount(GetCurrentProcess(), &g_kobj_baseline)) {
@@ -872,6 +1176,11 @@ int SNEPPX_kernel_obj_monitor_init(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Kernel Obj Monitor Check.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kernel_obj_monitor_check(void) {
     if (!g_kobj_initialized) return 0;
 #ifdef _WIN32
@@ -916,6 +1225,13 @@ int SNEPPX_kernel_obj_monitor_check(void) {
 }
 
 /* --- TOCTOU --- */
+/**
+ * @brief Initialize Toctou.
+ *
+ * @param td [out] Td value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_init(SNEPPXTOCTOUDetector* td, const char* path) {
     if (!td||!path) return -1;
     memset(td,0,sizeof(*td));
@@ -929,6 +1245,13 @@ int SNEPPX_toctou_init(SNEPPXTOCTOUDetector* td, const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Toctou Check.
+ *
+ * @param td [out] Td value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_check(SNEPPXTOCTOUDetector* td, const char* path) {
     if (!td||!td->initialized||!path) return 0;
     uint8_t current[32];
@@ -941,18 +1264,33 @@ int SNEPPX_toctou_check(SNEPPXTOCTOUDetector* td, const char* path) {
     return memcmp(current,td->baseline,32)==0?0:1;
 }
 
+/**
+ * @brief Perform Toctou Update Baseline.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_update_baseline(SNEPPXTOCTOUDetector* td) {
     if (!td||!td->initialized) return -1;
     (void)td;
     return 0;
 }
 
+/**
+ * @brief Destroy Toctou.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_destroy(SNEPPXTOCTOUDetector* td) {
     if (!td) return -1;
     memset(td,0,sizeof(*td));
     return 0;
 }
 
+/**
+ * @brief Perform Toctou Get Status.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_get_status(SNEPPXTOCTOUDetector* td) {
     if (!td||!td->initialized) return -1;
     (void)td;
@@ -960,6 +1298,13 @@ int SNEPPX_toctou_get_status(SNEPPXTOCTOUDetector* td) {
 }
 
 /* --- IMA --- */
+/**
+ * @brief Perform Ima Measure.
+ *
+ * @param path [in] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_measure(const char* path, uint8_t hash[32]) {
     if (!path||!hash) return -1;
     FILE* f=fopen(path,"rb");
@@ -973,6 +1318,13 @@ int SNEPPX_ima_measure(const char* path, uint8_t hash[32]) {
     return 0;
 }
 
+/**
+ * @brief Perform Ima Appraise.
+ *
+ * @param path [in] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_appraise(const char* path, const uint8_t hash[32]) {
     if (!path||!hash) return 0;
     uint8_t current[32];
@@ -980,6 +1332,14 @@ int SNEPPX_ima_appraise(const char* path, const uint8_t hash[32]) {
     return memcmp(current,hash,32)==0?1:0;
 }
 
+/**
+ * @brief Perform Ima Measure Batch.
+ *
+ * @param paths [in] Paths value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_measure_batch(const char** paths, int count, uint8_t hashes_out[][32]) {
     if (!paths||count<1||!hashes_out) return -1;
     int ok=0;
@@ -989,6 +1349,14 @@ int SNEPPX_ima_measure_batch(const char** paths, int count, uint8_t hashes_out[]
     return ok;
 }
 
+/**
+ * @brief Perform Ima Appraise Batch.
+ *
+ * @param paths [in] Paths value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_appraise_batch(const char** paths, uint8_t hashes[][32], int count, int* results_out) {
     if (!paths||!hashes||count<1||!results_out) return -1;
     int ok=0;
@@ -999,17 +1367,35 @@ int SNEPPX_ima_appraise_batch(const char** paths, uint8_t hashes[][32], int coun
     return ok;
 }
 
+/**
+ * @brief Perform Ima Clear Cache.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_clear_cache(void) {
     return 0;
 }
 
 /* --- Alert Correlator --- */
+/**
+ * @brief Initialize Alert Correlator.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_init(SNEPPXAlertCorrelator* ac) {
     if (!ac) return -1;
     memset(ac,0,sizeof(*ac));
     return 0;
 }
 
+/**
+ * @brief Add Alert Correlator.
+ *
+ * @param ac [out] Ac value.
+ * @param type [in] Type value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_add(SNEPPXAlertCorrelator* ac, int type, const char* desc) {
     if (!ac||ac->count>=SNEPPX_MON_MAX_EVENTS) return -1;
     ac->events[ac->count].timestamp=(uint64_t)time(NULL);
@@ -1019,6 +1405,11 @@ int SNEPPX_alert_correlator_add(SNEPPXAlertCorrelator* ac, int type, const char*
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Evaluate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_evaluate(SNEPPXAlertCorrelator* ac) {
     if (!ac) return 0;
     int type_counts[4]={0};
@@ -1040,26 +1431,55 @@ int SNEPPX_alert_correlator_evaluate(SNEPPXAlertCorrelator* ac) {
     return ac->alerts_triggered;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Window.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_window(uint64_t seconds) {
     (void)seconds;
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Recent Events.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_recent_events(char* buffer, int max) {
     if (!buffer||max<1) return -1;
     buffer[0]=0;
     return 0;
 }
 
+/**
+ * @brief Clear Alert Correlator.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_clear(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_threshold(int count) {
     (void)count;
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Stats.
+ *
+ * @param total_events [out] Total Events value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_stats(int* total_events, int* triggered_alerts) {
     if (!total_events||!triggered_alerts) return -1;
     *total_events=0;
@@ -1093,6 +1513,13 @@ static void heap_scan_ensure_init(void) {
     }
 }
 
+/**
+ * @brief Perform Heap Corruption Register Alloc.
+ *
+ * @param alloc [out] Alloc value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_register_alloc(void* alloc, size_t size) {
     if (!alloc) return -1;
     heap_scan_ensure_init();
@@ -1108,6 +1535,11 @@ int SNEPPX_heap_corruption_register_alloc(void* alloc, size_t size) {
     return 0;
 }
 
+/**
+ * @brief Perform Heap Corruption Unregister Alloc.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_unregister_alloc(void* alloc) {
     if (!alloc) return -1;
     heap_scan_ensure_init();
@@ -1159,11 +1591,21 @@ static int g_fsi_path_count = 0;
 static int g_ima_measure_count = 0;
 static int g_ima_appraise_count = 0;
 
+/**
+ * @brief Perform Code Tamper Get Stats.
+ *
+ * @param total_checks [out] Total Checks value.
+ */
 void SNEPPX_code_tamper_get_stats(int* total_checks, int* violations) {
     if (total_checks) *total_checks = (int)g_ct_total_checks;
     if (violations) *violations = g_ct_total_violations;
 }
 
+/**
+ * @brief Perform Code Tamper Set Enabled All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_set_enabled_all(int enabled) {
     for (int i=0;i<g_ct_region_count;i++) {
         g_ct_regions[i].active = enabled?1:0;
@@ -1171,58 +1613,123 @@ int SNEPPX_code_tamper_set_enabled_all(int enabled) {
     return 0;
 }
 
+/**
+ * @brief Perform Code Tamper Get Region Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_get_region_count(void) {
     return g_ct_region_count;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Clear All.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_clear_all(SNEPPXFuncPtrDetector* fpd) {
     if (!fpd) return -1;
     memset(fpd,0,sizeof(*fpd));
     return 0;
 }
 
+/**
+ * @brief Perform Heap Corruption Get Sentinel Value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_get_sentinel_value(void) {
     return (int)g_hcd_sentinel_value;
 }
 
+/**
+ * @brief Perform Heap Corruption Is Enabled.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_is_enabled(void) {
     return g_hcd_enabled?1:0;
 }
 
+/**
+ * @brief Perform Heap Corruption Get Alloc Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_get_alloc_count(void) {
     return g_heap_scan_count;
 }
 
+/**
+ * @brief Perform Heap Corruption Reset Stats.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_reset_stats(void) {
     g_heap_total_checks = 0;
     g_heap_total_corruptions = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Stack Overflow Is Installed.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_stack_overflow_is_installed(void) {
     return g_so_installed?1:0;
 }
 
+/**
+ * @brief Perform Stack Overflow Get Guard Size.
+ *
+ * @return The computed size/count, or 0 on error.
+ */
 size_t SNEPPX_stack_overflow_get_guard_size(void) {
     return g_so_guard_size;
 }
 
+/**
+ * @brief Perform Stack Overflow Get Stack Bottom.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_stack_overflow_get_stack_bottom(void) {
     return g_so_stack_bottom;
 }
 
+/**
+ * @brief Perform Ml Anomaly Get Trained.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_get_trained(void) {
     return g_ml_global_trained?1:0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Get Online N.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_get_online_n(void) {
     return g_ml_global_n;
 }
 
+/**
+ * @brief Perform Ml Anomaly Get Threshold.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_ml_anomaly_get_threshold(void) {
     return g_ml_global_threshold;
 }
 
+/**
+ * @brief Perform Ml Anomaly Export Model.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_export_model(const char* path) {
     if (!path) return -1;
     FILE* f=fopen(path,"w");
@@ -1239,6 +1746,13 @@ int SNEPPX_ml_anomaly_export_model(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Hash Fs Integrity Add Path With.
+ *
+ * @param path [in] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_add_path_with_hash(const char* path, const uint8_t hash[32]) {
     if (!path||!hash||g_fsi_path_count>=64) return -1;
     strncpy(g_fsi_watched_paths[g_fsi_path_count],path,sizeof(g_fsi_watched_paths[0])-1);
@@ -1248,19 +1762,37 @@ int SNEPPX_fs_integrity_add_path_with_hash(const char* path, const uint8_t hash[
     return 0;
 }
 
+/**
+ * @brief Perform Fs Integrity Get Scan Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_get_scan_count(void) {
     return (int)g_fsi_total_scans;
 }
 
+/**
+ * @brief Perform Fs Integrity Get Violation Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_get_violation_count(void) {
     return g_fsi_fs_violations;
 }
 
+/**
+ * @brief Perform Fs Integrity Clear Stats.
+ */
 void SNEPPX_fs_integrity_clear_stats(void) {
     g_fsi_total_scans = 0;
     g_fsi_fs_violations = 0;
 }
 
+/**
+ * @brief Perform Fs Integrity Has Path.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_has_path(const char* path) {
     if (!path) return 0;
     for (int i=0;i<g_fsi_watch_count;i++) {
@@ -1269,10 +1801,22 @@ int SNEPPX_fs_integrity_has_path(const char* path) {
     return 0;
 }
 
+/**
+ * @brief Perform Persistence Monitor Get Path Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_persistence_monitor_get_path_count(void) {
     return g_persist_count;
 }
 
+/**
+ * @brief Perform Net Conn Monitor Set Bad Ports.
+ *
+ * @param ports [in] Ports value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_set_bad_ports(const int* ports, int count) {
     if (!ports||count<0||count>SNEPPX_BAD_PORTS_MAX) return -1;
     g_net_bad_port_count = 0;
@@ -1284,6 +1828,11 @@ int SNEPPX_net_conn_monitor_set_bad_ports(const int* ports, int count) {
     return 0;
 }
 
+/**
+ * @brief Perform Toctou Get Change Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_get_change_count(SNEPPXTOCTOUDetector* td) {
     if (!td||!td->initialized) return -1;
     uint8_t current[32];
@@ -1296,37 +1845,75 @@ int SNEPPX_toctou_get_change_count(SNEPPXTOCTOUDetector* td) {
     return memcmp(current,td->baseline,32)==0?0:1;
 }
 
+/**
+ * @brief Perform Ima Get Measure Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_get_measure_count(void) {
     return g_ima_measure_count;
 }
 
+/**
+ * @brief Perform Ima Get Appraise Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_get_appraise_count(void) {
     return g_ima_appraise_count;
 }
 
+/**
+ * @brief Perform Ima Reset Counts.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_reset_counts(void) {
     g_ima_measure_count = 0;
     g_ima_appraise_count = 0;
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Window.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_window(void) {
     return (int)g_ac_window_size;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Alert Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_alert_count(void) {
     return g_ac_alerts_triggered_tracked;
 }
 
+/**
+ * @brief Perform Alert Correlator Reset Events.
+ */
 void SNEPPX_alert_correlator_reset_events(void) {
     g_ac_total_events_tracked = 0;
     g_ac_alerts_triggered_tracked = 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Alert Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_alert_threshold(void) {
     return g_ac_alert_threshold;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Window Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_window_size(uint64_t seconds) {
     if (seconds<1) seconds=1;
     if (seconds>86400) seconds=86400;
@@ -1334,12 +1921,22 @@ int SNEPPX_alert_correlator_set_window_size(uint64_t seconds) {
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Alert Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_alert_threshold(int count) {
     if (count<1) count=1;
     g_ac_alert_threshold = count;
     return 0;
 }
 
+/**
+ * @brief Perform Kernel Obj Monitor Get Current Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kernel_obj_monitor_get_current_count(void) {
 #ifdef _WIN32
     DWORD current = 0;
@@ -1357,6 +1954,11 @@ int SNEPPX_kernel_obj_monitor_get_current_count(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Device Insertion Has New Device.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_device_insertion_has_new_device(void) {
     int current = SNEPPX_device_insertion_detect();
     return current>0?1:0;
@@ -1366,21 +1968,41 @@ static void increment_persist_path(void) {
     if (g_persist_count<SNEPPX_PERSIST_MAX) g_persist_count++;
 }
 
+/**
+ * @brief Perform Persistence Monitor Scan Single.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_persistence_monitor_scan_single(const char* path) {
     if (!path||!g_persist_initialized) return -1;
     (void)path;
     return 0;
 }
 
+/**
+ * @brief Perform Net Conn Monitor Get Port Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_get_port_count(void) {
     return g_net_bad_port_count;
 }
 
+/**
+ * @brief Perform Net Conn Monitor Get Port.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_get_port(int index) {
     if (index<0||index>=g_net_bad_port_count) return -1;
     return g_net_bad_ports[index];
 }
 
+/**
+ * @brief Perform Device Insertion Reset Counts.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_device_insertion_reset_counts(void) {
     g_dev_prev_count = -1;
 #ifdef _WIN32
@@ -1389,6 +2011,11 @@ int SNEPPX_device_insertion_reset_counts(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Kernel Obj Monitor Get Current.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_kernel_obj_monitor_get_current(void) {
 #ifdef _WIN32
     DWORD current = 0;
@@ -1406,18 +2033,38 @@ int SNEPPX_kernel_obj_monitor_get_current(void) {
     return 0;
 }
 
+/**
+ * @brief Perform Toctou Get Path.
+ *
+ * @param td [out] Td value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_get_path(SNEPPXTOCTOUDetector* td, char* buffer, size_t size) {
     if (!td||!buffer||size<1) return -1;
     buffer[0]=0;
     return 0;
 }
 
+/**
+ * @brief Perform Ima Measure Path.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_measure_path(const char* path) {
     if (!path) return -1;
     uint8_t hash[32];
     return SNEPPX_ima_measure(path,hash);
 }
 
+/**
+ * @brief Perform Ima Appraise Path.
+ *
+ * @param path [in] Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ima_appraise_path(const char* path, const uint8_t expected[32]) {
     if (!path||!expected) return 0;
     uint8_t hash[32];
@@ -1425,6 +2072,11 @@ int SNEPPX_ima_appraise_path(const char* path, const uint8_t expected[32]) {
     return memcmp(hash,expected,32)==0?1:0;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Window Seconds.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_window_seconds(uint64_t seconds) {
     if (seconds<1) seconds=1;
     if (seconds>86400) seconds=86400;
@@ -1432,28 +2084,58 @@ int SNEPPX_alert_correlator_set_window_seconds(uint64_t seconds) {
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Window Seconds.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_alert_correlator_get_window_seconds(void) {
     return g_ac_window_size;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Threshold Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_threshold_count(void) {
     return g_ac_alert_threshold;
 }
 
+/**
+ * @brief Perform Alert Correlator Set Threshold Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_set_threshold_count(int count) {
     if (count<1) count=1;
     g_ac_alert_threshold = count;
     return 0;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Total Events.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_total_events(void) {
     return g_ac_total_events_tracked;
 }
 
+/**
+ * @brief Perform Alert Correlator Get Total Alerts.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_get_total_alerts(void) {
     return g_ac_alerts_triggered_tracked;
 }
 
+/**
+ * @brief Perform Internal Verify All Regions.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_internal_verify_all_regions(void) {
     int violations = 0;
     for (int i=0;i<g_ct_region_count;i++) {
@@ -1467,6 +2149,11 @@ int SNEPPX_internal_verify_all_regions(void) {
     return violations;
 }
 
+/**
+ * @brief Perform Internal Verify All Heaps.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_internal_verify_all_heaps(void) {
     if (!g_hcd_enabled) return 0;
     int corrupted = 0;
@@ -1479,28 +2166,56 @@ int SNEPPX_internal_verify_all_heaps(void) {
 
 static uint64_t g_global_init_time = 0;
 
+/**
+ * @brief Perform Get Global Uptime.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_get_global_uptime(void) {
     if (g_global_init_time==0) return 0;
     return (uint64_t)time(NULL)-g_global_init_time;
 }
 
+/**
+ * @brief Perform Set Global Init Time.
+ */
 void SNEPPX_set_global_init_time(void) {
     g_global_init_time = (uint64_t)time(NULL);
 }
 
+/**
+ * @brief Perform Has Global Init Time.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_has_global_init_time(void) {
     return g_global_init_time!=0?1:0;
 }
 
+/**
+ * @brief Perform Instrument Enter.
+ */
 static void SNEPPX_instrument_enter(const char* func) {
     (void)func;
 }
 
+/**
+ * @brief Perform Instrument Exit.
+ *
+ * @param func [in] Func value.
+ */
 static void SNEPPX_instrument_exit(const char* func, int ret) {
     (void)func;
     (void)ret;
 }
 
+/**
+ * @brief Perform Code Tamper Verify All With Report.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_verify_all_with_report(char* buffer, size_t size) {
     if (!buffer||size<1) return -1;
     int violations = SNEPPX_code_tamper_check_all();
@@ -1509,6 +2224,13 @@ int SNEPPX_code_tamper_verify_all_with_report(char* buffer, size_t size) {
     return violations;
 }
 
+/**
+ * @brief Perform Heap Corruption Scan With Report.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_heap_corruption_scan_with_report(char* buffer, size_t size) {
     if (!buffer||size<1) return -1;
     int corrupted = SNEPPX_heap_corruption_scan_all();
@@ -1517,6 +2239,14 @@ int SNEPPX_heap_corruption_scan_with_report(char* buffer, size_t size) {
     return corrupted;
 }
 
+/**
+ * @brief Perform Func Ptr Detector Scan With Report.
+ *
+ * @param fpd [out] Fpd value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_func_ptr_detector_scan_with_report(SNEPPXFuncPtrDetector* fpd, char* buffer, size_t size) {
     if (!fpd||!buffer||size<1) return -1;
     int modified = SNEPPX_func_ptr_detector_scan(fpd);
@@ -1525,18 +2255,39 @@ int SNEPPX_func_ptr_detector_scan_with_report(SNEPPXFuncPtrDetector* fpd, char* 
     return modified;
 }
 
+/**
+ * @brief Perform Ml Anomaly Score With Threshold.
+ *
+ * @param ml [out] Ml value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_score_with_threshold(SNEPPXMLAnomalyDetector* ml, const double features[SNEPPX_MON_ML_FEATURES], double* score_out) {
     if (!ml||!features||!score_out) return -1;
     *score_out = SNEPPX_ml_anomaly_score(ml,features);
     return (*score_out>ml->threshold)?1:0;
 }
 
+/**
+ * @brief Perform Ml Anomaly Is Anomaly Ex.
+ *
+ * @param ml [out] Ml value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_anomaly_is_anomaly_ex(SNEPPXMLAnomalyDetector* ml, const double features[SNEPPX_MON_ML_FEATURES], double custom_threshold) {
     if (!ml||!features) return 0;
     double score = SNEPPX_ml_anomaly_score(ml,features);
     return score>custom_threshold?1:0;
 }
 
+/**
+ * @brief Perform Fs Integrity Verify With Report.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_verify_with_report(char* buffer, size_t size) {
     if (!buffer||size<1) return -1;
     int violations = 0;
@@ -1561,6 +2312,13 @@ int SNEPPX_fs_integrity_verify_with_report(char* buffer, size_t size) {
     return violations;
 }
 
+/**
+ * @brief Perform Alert Correlator Evaluate Ex.
+ *
+ * @param ac [out] Ac value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_alert_correlator_evaluate_ex(SNEPPXAlertCorrelator* ac, uint64_t window_seconds) {
     if (!ac) return 0;
     int type_counts[4]={0};
@@ -1583,16 +2341,31 @@ int SNEPPX_alert_correlator_evaluate_ex(SNEPPXAlertCorrelator* ac, uint64_t wind
     return ac->alerts_triggered;
 }
 
+/**
+ * @brief Update Toctou Check And.
+ *
+ * @param td [out] Td value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_toctou_check_and_update(SNEPPXTOCTOUDetector* td, const char* path) {
     int changed = SNEPPX_toctou_check(td,path);
     if (changed) SNEPPX_toctou_update_baseline(td);
     return changed;
 }
 
+/**
+ * @brief Perform Code Tamper Set Debug.
+ */
 void SNEPPX_code_tamper_set_debug(int enabled) {
     (void)enabled;
 }
 
+/**
+ * @brief Perform Code Tamper Get Debug.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_code_tamper_get_debug(void) {
     return 0;
 }
@@ -1600,14 +2373,27 @@ int SNEPPX_code_tamper_get_debug(void) {
 static uint64_t g_heap_corruption_total_checks = 0;
 static uint64_t g_heap_corruption_total_failures = 0;
 
+/**
+ * @brief Perform Heap Corruption Get Total Checks.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_heap_corruption_get_total_checks(void) {
     return g_heap_corruption_total_checks;
 }
 
+/**
+ * @brief Perform Heap Corruption Get Total Failures.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_heap_corruption_get_total_failures(void) {
     return g_heap_corruption_total_failures;
 }
 
+/**
+ * @brief Perform Heap Corruption Reset Total Counters.
+ */
 void SNEPPX_heap_corruption_reset_total_counters(void) {
     g_heap_corruption_total_checks = 0;
     g_heap_corruption_total_failures = 0;
@@ -1616,10 +2402,20 @@ void SNEPPX_heap_corruption_reset_total_counters(void) {
 static uint64_t g_stack_overflow_check_count = 0;
 static uint64_t g_stack_overflow_trigger_count = 0;
 
+/**
+ * @brief Perform Stack Overflow Get Check Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_stack_overflow_get_check_count(void) {
     return g_stack_overflow_check_count;
 }
 
+/**
+ * @brief Perform Stack Overflow Get Trigger Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_stack_overflow_get_trigger_count(void) {
     return g_stack_overflow_trigger_count;
 }
@@ -1627,18 +2423,38 @@ uint64_t SNEPPX_stack_overflow_get_trigger_count(void) {
 static uint64_t g_ml_score_count = 0;
 static double g_ml_max_score = 0.0;
 
+/**
+ * @brief Perform Ml Anomaly Get Max Score.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_ml_anomaly_get_max_score(void) {
     return g_ml_max_score;
 }
 
+/**
+ * @brief Perform Ml Anomaly Get Score Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint64_t SNEPPX_ml_anomaly_get_score_count(void) {
     return g_ml_score_count;
 }
 
+/**
+ * @brief Perform Fs Integrity Watch Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_fs_integrity_watch_count(void) {
     return g_fsi_watch_count;
 }
 
+/**
+ * @brief Perform Net Conn Monitor Has Bad Port.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_net_conn_monitor_has_bad_port(int port) {
     for (int i=0;i<g_net_bad_port_count;i++) {
         if (g_net_bad_ports[i]==port) return 1;
@@ -1646,11 +2462,19 @@ int SNEPPX_net_conn_monitor_has_bad_port(int port) {
     return 0;
 }
 
+/**
+ * @brief Perform Stack Overflow Reset Counts.
+ */
 void SNEPPX_stack_overflow_reset_counts(void) {
     g_stack_overflow_check_count = 0;
     g_stack_overflow_trigger_count = 0;
 }
 
+/**
+ * @brief Perform Persistence Monitor Get Initialized.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_persistence_monitor_get_initialized(void) {
     return g_persist_initialized;
 }

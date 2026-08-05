@@ -7,6 +7,22 @@
 #include <unordered_map>
 #include <cstdlib>
 
+/*
+ * SNEPPX - Inst Subst
+ *
+ * WHAT
+ *   Inst Subst.
+ *
+ * CONCEPT
+ *   Provides the Inst Subst.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 namespace SNEPPX {
 
 SNEPPXObfSubst::SNEPPXObfSubst() : rng(std::random_device{}()) {}

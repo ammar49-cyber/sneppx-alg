@@ -7,6 +7,22 @@
 #define SNEPPX_IR_EVIDENCE_MAX_ITEMS 65536
 #define SNEPPX_IR_EVIDENCE_HASH_CHAIN_SIZE 4096
 
+/*
+ * SNEPPX - Evidence Manager
+ *
+ * WHAT
+ *   Evidence Manager.
+ *
+ * CONCEPT
+ *   Provides the Evidence Manager.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_IR_EVIDENCE_TYPE_MEMORY_DUMP,
     SNEPPX_IR_EVIDENCE_TYPE_DISK_IMAGE,

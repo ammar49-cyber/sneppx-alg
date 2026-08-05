@@ -9,6 +9,22 @@
 #define SNEPPX_NOISE_MAX_PSK_COUNT 8
 #define SNEPPX_NOISE_FALLBACK_PATTERNS 16
 
+/*
+ * SNEPPX - Noise Protocol Extended
+ *
+ * WHAT
+ *   Noise Protocol Extended.
+ *
+ * CONCEPT
+ *   Provides the Noise Protocol Extended.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_NOISE_PATTERN_N,
     SNEPPX_NOISE_PATTERN_K,

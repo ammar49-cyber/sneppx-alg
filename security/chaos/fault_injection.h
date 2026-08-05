@@ -9,6 +9,22 @@
 #define SNEPPX_CHAOS_MAX_PROBES 64
 #define SNEPPX_CHAOS_HYSTRIX_CIRCUIT_BREAKER_THRESHOLD 0.5f
 
+/*
+ * SNEPPX - Fault Injection
+ *
+ * WHAT
+ *   Fault Injection.
+ *
+ * CONCEPT
+ *   Provides the Fault Injection.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_CHAOS_FAULT_POD_KILL,
     SNEPPX_CHAOS_FAULT_CONTAINER_KILL,

@@ -8,6 +8,22 @@
 #define SNEPPX_TI_ENRICHMENT_MAX_CACHE_ENTRIES 131072
 #define SNEPPX_TI_ENRICHMENT_CACHE_TTL_NS 3600000000000ULL
 
+/*
+ * SNEPPX - Enrichment Pipeline
+ *
+ * WHAT
+ *   Enrichment Pipeline.
+ *
+ * CONCEPT
+ *   Provides pipeline parallelism.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TI_ENRICHMENT_STAGE_GEOIP,
     SNEPPX_TI_ENRICHMENT_STAGE_ASN_LOOKUP,

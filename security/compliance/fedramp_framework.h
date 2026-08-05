@@ -8,6 +8,22 @@
 #define SNEPPX_FEDRAMP_MAX_CONTROLS 400
 #define SNEPPX_FEDRAMP_IMPACT_LEVELS 3
 
+/*
+ * SNEPPX - Fedramp Framework
+ *
+ * WHAT
+ *   Fedramp Framework.
+ *
+ * CONCEPT
+ *   Provides the Fedramp Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_FEDRAMP_LOW,
     SNEPPX_FEDRAMP_MODERATE,

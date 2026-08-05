@@ -9,6 +9,22 @@
 #define SNEPPX_TI_ANALYSIS_MAX_KILL_CHAIN 16
 #define SNEPPX_TI_ANALYSIS_MAX_MITRE_TTP 128
 
+/*
+ * SNEPPX - Analyzer
+ *
+ * WHAT
+ *   Analyzer.
+ *
+ * CONCEPT
+ *   Provides the Analyzer.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TI_IOC_TYPE_IPV4,
     SNEPPX_TI_IOC_TYPE_IPV6,

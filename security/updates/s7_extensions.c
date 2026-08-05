@@ -4,18 +4,49 @@
 #include <stdio.h>
 #include <time.h>
 
+/*
+ * SNEPPX - S7 Extensions
+ *
+ * WHAT
+ *   S7 Extensions.
+ *
+ * CONCEPT
+ *   Provides the S7 Extensions.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 static uint32_t hash_djb2(const uint8_t* data, size_t len) {
     uint32_t h = 5381;
     for (size_t i = 0; i < len; i++) h = ((h << 5) + h) ^ data[i];
     return h;
 }
 
+/**
+ * @brief Initialize Tuf.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_init(SNEPPXTUFMetadata* tuf) {
     if (!tuf) return -1; memset(tuf, 0, sizeof(*tuf));
     for (int i = 0; i < 32; i++) { tuf->root_key[i] = (uint8_t)(rand() % 256); tuf->targets_key[i] = (uint8_t)(rand() % 256); tuf->snapshot_key[i] = (uint8_t)(rand() % 256); tuf->timestamp_key[i] = (uint8_t)(rand() % 256); }
     tuf->initialized = 1; return 0;
 }
 
+/**
+ * @brief Perform Tuf Sign Root.
+ *
+ * @param tuf [out] Tuf value.
+ * @param data [in] Data value.
+ * @param len [in] Len value.
+ * @param sig [out] Sig value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_sign_root(SNEPPXTUFMetadata* tuf, const uint8_t* data, size_t len, uint8_t* sig, size_t* sig_len) {
     if (!tuf || !data || !sig || !sig_len || *sig_len < 32) return -1;
     for (size_t i = 0; i < len && i < 32; i++) sig[i] = data[i] ^ tuf->root_key[i];
@@ -23,6 +54,14 @@ int SNEPPX_tuf_sign_root(SNEPPXTUFMetadata* tuf, const uint8_t* data, size_t len
     *sig_len = 32; return 0;
 }
 
+/**
+ * @brief Perform Tuf Verify Targets.
+ *
+ * @param tuf [out] Tuf value.
+ * @param targets_json [in] Targets Json value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_verify_targets(SNEPPXTUFMetadata* tuf, const uint8_t* targets_json, size_t len) {
     if (!tuf || !targets_json) return -1;
     uint32_t h = hash_djb2(targets_json, len);
@@ -30,6 +69,17 @@ int SNEPPX_tuf_verify_targets(SNEPPXTUFMetadata* tuf, const uint8_t* targets_jso
     return (h == expected) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Bsdiff.
+ *
+ * @param old_data [in] Old Data value.
+ * @param old_len [in] Old Len value.
+ * @param new_data [in] New Data value.
+ * @param new_len [in] New Len value.
+ * @param patch [out] Patch value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bsdiff(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len) {
     if (!old_data || !new_data || !patch || !patch_len) return -1;
     size_t pos = 0, old_pos = 0, new_pos = 0;
@@ -56,6 +106,17 @@ int SNEPPX_bsdiff(const uint8_t* old_data, size_t old_len, const uint8_t* new_da
     *patch_len = pos; return 0;
 }
 
+/**
+ * @brief Perform Bspatch.
+ *
+ * @param old_data [in] Old Data value.
+ * @param old_len [in] Old Len value.
+ * @param patch [in] Patch value.
+ * @param patch_len [in] Patch Len value.
+ * @param new_data [out] New Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bspatch(const uint8_t* old_data, size_t old_len, const uint8_t* patch, size_t patch_len, uint8_t* new_data, size_t* new_len) {
     (void)old_data; (void)old_len;
     if (!patch || !new_data || !new_len) return -1;
@@ -75,10 +136,22 @@ int SNEPPX_bspatch(const uint8_t* old_data, size_t old_len, const uint8_t* patch
     *new_len = out_pos; return 0;
 }
 
+/**
+ * @brief Initialize Ab Partition.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_init(SNEPPXABPartition* ab) {
     if (!ab) return -1; memset(ab, 0, sizeof(*ab)); ab->active_slot = 0; ab->inactive_slot = 1; ab->swap_ready = 0; return 0;
 }
 
+/**
+ * @brief Perform Ab Partition Mark Good.
+ *
+ * @param ab [out] Ab value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_mark_good(SNEPPXABPartition* ab, int slot) {
     if (!ab) return -1;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
@@ -87,6 +160,11 @@ int SNEPPX_ab_partition_mark_good(SNEPPXABPartition* ab, int slot) {
     return 0;
 }
 
+/**
+ * @brief Perform Ab Partition Swap.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_swap(SNEPPXABPartition* ab) {
     if (!ab) return -1;
     uint8_t* target_hash = ab->active_slot == 0 ? ab->slot_b_hash : ab->slot_a_hash;
@@ -96,6 +174,14 @@ int SNEPPX_ab_partition_swap(SNEPPXABPartition* ab) {
     int tmp = ab->active_slot; ab->active_slot = ab->inactive_slot; ab->inactive_slot = tmp; ab->swap_ready = 1; return 0;
 }
 
+/**
+ * @brief Verify Manifest.
+ *
+ * @param manifest_path [in] Manifest Path value.
+ * @param signature [in] Signature value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_manifest_verify(const char* manifest_path, const uint8_t* signature, size_t sig_len) {
     if (!manifest_path || !signature) return -1;
     FILE* f = fopen(manifest_path, "rb"); if (!f) return -1;
@@ -107,12 +193,29 @@ int SNEPPX_manifest_verify(const char* manifest_path, const uint8_t* signature, 
     return (h == sig_val) ? 0 : 1;
 }
 
+/**
+ * @brief Read Tpm Pcr.
+ *
+ * @param pcr_index [in] Pcr Index value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_pcr_read(int pcr_index, uint8_t* out, size_t* out_len) {
     if (!out || !out_len || *out_len < 32) return -1;
     for (int i = 0; i < 32; i++) out[i] = (uint8_t)((pcr_index * 7 + i * 13) & 0xFF);
     *out_len = 32; return 0;
 }
 
+/**
+ * @brief Perform Tpm Quote.
+ *
+ * @param nonce [in] Nonce value.
+ * @param nonce_len [in] Nonce Len value.
+ * @param quote [out] Quote value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_quote(const uint8_t* nonce, size_t nonce_len, uint8_t* quote, size_t* quote_len) {
     if (!nonce || !quote || !quote_len || *quote_len < 64) return -1;
     memset(quote, 0, 64);
@@ -122,11 +225,24 @@ int SNEPPX_tpm_quote(const uint8_t* nonce, size_t nonce_len, uint8_t* quote, siz
     *quote_len = 64; return 0;
 }
 
+/**
+ * @brief Initialize Canary Rollout.
+ *
+ * @param cr [out] Cr value.
+ * @param total [in] Total value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_init(SNEPPXCanaryRollout* cr, int total, int canary) {
     if (!cr || total <= 0 || canary <= 0 || canary > total) return -1;
     memset(cr, 0, sizeof(*cr)); cr->total_nodes = total; cr->canary_nodes = canary; cr->promoted = 0; return 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Promote.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_promote(SNEPPXCanaryRollout* cr) {
     if (!cr) return -1;
     int new_canary = cr->canary_nodes * 2;
@@ -134,6 +250,16 @@ int SNEPPX_canary_rollout_promote(SNEPPXCanaryRollout* cr) {
     cr->promoted = 1; return 0;
 }
 
+/**
+ * @brief Create Offline Bundle.
+ *
+ * @param ob [out] Ob value.
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ * @param signing_key [in] Signing Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_create(SNEPPXOfflineBundle* ob, const uint8_t* data, size_t data_len, const uint8_t* signing_key, size_t key_len) {
     if (!ob || !data || !signing_key) return -1;
     memset(ob, 0, sizeof(*ob));
@@ -145,10 +271,25 @@ int SNEPPX_offline_bundle_create(SNEPPXOfflineBundle* ob, const uint8_t* data, s
     ob->signed_offline = 1; return 0;
 }
 
+/**
+ * @brief Initialize Dep Resolver.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_init(SNEPPXDepResolver* dr) {
     if (!dr) return -1; memset(dr, 0, sizeof(*dr)); dr->resolved = 0; return 0;
 }
 
+/**
+ * @brief Perform Dep Resolver Add Dep.
+ *
+ * @param dr [out] Dr value.
+ * @param name [in] Name value.
+ * @param maj [in] Maj value.
+ * @param min [in] Min value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_add_dep(SNEPPXDepResolver* dr, const char* name, uint32_t maj, uint32_t min, uint32_t pat) {
     if (!dr || !name) return -1;
     strncpy(dr->name, name, 63); dr->version_major = maj; dr->version_minor = min; dr->version_patch = pat; return 0;
@@ -168,6 +309,11 @@ static void dep_dfs(SNEPPXDepResolver* dr, int idx, int* dep_graph, int n) {
     deps_visited[idx] = 2;
 }
 
+/**
+ * @brief Perform Dep Resolver Resolve.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_resolve(SNEPPXDepResolver* dr) {
     if (!dr) return -1;
     int dep_graph[64 * 64] = {0};
@@ -179,16 +325,39 @@ int SNEPPX_dep_resolver_resolve(SNEPPXDepResolver* dr) {
     dr->resolved = 1; return 0;
 }
 
+/**
+ * @brief Perform Tuf Generate Keypair.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_generate_keypair(int key_type) {
     if (key_type < 0 || key_type >= SNEPPX_TUF_MAX_KEYS) return -1;
     return key_type * 100 + (rand() % 100);
 }
 
+/**
+ * @brief Perform Tuf Revoke Key.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_revoke_key(int key_type) {
     if (key_type < 0 || key_type >= SNEPPX_TUF_MAX_KEYS) return -1;
     return 0;
 }
 
+/**
+ * @brief Perform Bsdiff With Signature.
+ *
+ * @param old_data [in] Old Data value.
+ * @param old_len [in] Old Len value.
+ * @param new_data [in] New Data value.
+ * @param new_len [in] New Len value.
+ * @param patch [out] Patch value.
+ * @param patch_len [out] Patch Len value.
+ * @param signing_key [in] Signing Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bsdiff_with_signature(const uint8_t* old_data, size_t old_len, const uint8_t* new_data, size_t new_len, uint8_t* patch, size_t* patch_len, const uint8_t* signing_key, size_t key_len) {
     if (!old_data || !new_data || !patch || !patch_len || !signing_key) return -1;
     int ret = SNEPPX_bsdiff(old_data, old_len, new_data, new_len, patch, patch_len);
@@ -198,11 +367,26 @@ int SNEPPX_bsdiff_with_signature(const uint8_t* old_data, size_t old_len, const 
     return 0;
 }
 
+/**
+ * @brief Perform Ab Rollback.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_rollback(int slot) {
     if (slot < 0 || slot > 1) return -1;
     return 0;
 }
 
+/**
+ * @brief Perform Tpm Seal.
+ *
+ * @param data [in] Data value.
+ * @param data_len [in] Data Len value.
+ * @param sealed [out] Sealed value.
+ * @param sealed_len [out] Sealed Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_t* sealed_len, uint32_t pcr_mask) {
     if (!data || !sealed || !sealed_len || *sealed_len < data_len + 8) return -1;
     (void)pcr_mask;
@@ -216,6 +400,16 @@ int SNEPPX_tpm_seal(const uint8_t* data, size_t data_len, uint8_t* sealed, size_
     return 0;
 }
 
+/**
+ * @brief Perform Tpm Unseal.
+ *
+ * @param sealed [in] Sealed value.
+ * @param sealed_len [in] Sealed Len value.
+ * @param data [out] Data value.
+ * @param data_len [out] Data Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, size_t* data_len, uint32_t pcr_mask) {
     if (!sealed || !data || !data_len || sealed_len < 8) return -1;
     (void)pcr_mask;
@@ -228,11 +422,24 @@ int SNEPPX_tpm_unseal(const uint8_t* sealed, size_t sealed_len, uint8_t* data, s
     return 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Get Percentage.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_get_percentage(SNEPPXCanaryRollout* cr) {
     if (!cr || cr->total_nodes <= 0) return 0;
     return (cr->canary_nodes * 100) / cr->total_nodes;
 }
 
+/**
+ * @brief Verify Offline Bundle.
+ *
+ * @param bundle [out] Bundle value.
+ * @param public_key [in] Public Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_verify(SNEPPXOfflineBundle* bundle, const uint8_t* public_key, size_t key_len) {
     if (!bundle || !public_key) return -1;
     (void)key_len;
@@ -251,10 +458,24 @@ static uint32_t hash_xor(const uint8_t* data, size_t len) {
     return h;
 }
 
+/**
+ * @brief Perform Tuf Is Initialized.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_is_initialized(SNEPPXTUFMetadata* tuf) {
     return tuf ? tuf->initialized : 0;
 }
 
+/**
+ * @brief Perform Tuf Get Key.
+ *
+ * @param tuf [out] Tuf value.
+ * @param key_type [in] Key Type value.
+ * @param key_out [out] Key Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_get_key(SNEPPXTUFMetadata* tuf, int key_type, uint8_t* key_out, size_t key_len) {
     if (!tuf || !key_out || !key_type_valid(key_type)) return -1;
     if (key_len < 32) return -1;
@@ -268,6 +489,13 @@ int SNEPPX_tuf_get_key(SNEPPXTUFMetadata* tuf, int key_type, uint8_t* key_out, s
     return 0;
 }
 
+/**
+ * @brief Perform Bsdiff Total Size.
+ *
+ * @param patch [in] Patch value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bsdiff_total_size(const uint8_t* patch, size_t patch_len) {
     if (!patch || patch_len < 4) return 0;
     size_t total = 0;
@@ -291,18 +519,42 @@ int SNEPPX_bsdiff_total_size(const uint8_t* patch, size_t patch_len) {
     return (int)total;
 }
 
+/**
+ * @brief Perform Ab Partition Get Active Slot.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_get_active_slot(SNEPPXABPartition* ab) {
     return ab ? ab->active_slot : -1;
 }
 
+/**
+ * @brief Perform Ab Partition Get Inactive Slot.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_get_inactive_slot(SNEPPXABPartition* ab) {
     return ab ? ab->inactive_slot : -1;
 }
 
+/**
+ * @brief Perform Ab Partition Is Swap Ready.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_is_swap_ready(SNEPPXABPartition* ab) {
     return ab ? ab->swap_ready : 0;
 }
 
+/**
+ * @brief Perform Manifest Verify From Buffer.
+ *
+ * @param manifest_data [in] Manifest Data value.
+ * @param data_len [in] Data Len value.
+ * @param signature [in] Signature value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_manifest_verify_from_buffer(const uint8_t* manifest_data, size_t data_len, const uint8_t* signature, size_t sig_len) {
     if (!manifest_data || !signature) return -1;
     uint32_t h = hash_djb2(manifest_data, data_len);
@@ -311,38 +563,88 @@ int SNEPPX_manifest_verify_from_buffer(const uint8_t* manifest_data, size_t data
     return (h == sig_val) ? 0 : 1;
 }
 
+/**
+ * @brief Perform Tpm Extend.
+ *
+ * @param pcr_index [in] Pcr Index value.
+ * @param digest [in] Digest value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_extend(int pcr_index, const uint8_t* digest, size_t digest_len) {
     if (pcr_index < 0 || pcr_index >= TPM_PCR_COUNT || !digest || digest_len == 0) return -1;
     return 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Get Total.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_get_total(SNEPPXCanaryRollout* cr) {
     return cr ? cr->total_nodes : 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Get Canary.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_get_canary(SNEPPXCanaryRollout* cr) {
     return cr ? cr->canary_nodes : 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Has Promoted.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_has_promoted(SNEPPXCanaryRollout* cr) {
     return cr ? cr->promoted : 0;
 }
 
+/**
+ * @brief Perform Offline Bundle Is Signed.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_is_signed(SNEPPXOfflineBundle* ob) {
     return ob ? ob->signed_offline : 0;
 }
 
+/**
+ * @brief Perform Offline Bundle Get Size.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_get_size(SNEPPXOfflineBundle* ob) {
     return ob ? (int)ob->bundle_size : 0;
 }
 
+/**
+ * @brief Perform Dep Resolver Is Resolved.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_is_resolved(SNEPPXDepResolver* dr) {
     return dr ? dr->resolved : 0;
 }
 
+/**
+ * @brief Reset Dep Resolver.
+ */
 void SNEPPX_dep_resolver_reset(SNEPPXDepResolver* dr) {
     if (dr) { memset(dr, 0, sizeof(*dr)); dr->resolved = 0; }
 }
+/**
+ * @brief Perform Tuf Set Key.
+ *
+ * @param tuf [out] Tuf value.
+ * @param key_type [in] Key Type value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_set_key(SNEPPXTUFMetadata* tuf, int key_type, const uint8_t* key, size_t key_len) {
     if (!tuf || !key || key_len < 32 || !key_type_valid(key_type)) return -1;
     switch (key_type) {
@@ -355,6 +657,13 @@ int SNEPPX_tuf_set_key(SNEPPXTUFMetadata* tuf, int key_type, const uint8_t* key,
     return 0;
 }
 
+/**
+ * @brief Perform Ab Mark Slot Bad.
+ *
+ * @param ab [out] Ab value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_mark_slot_bad(SNEPPXABPartition* ab, int slot) {
     if (!ab || (slot != 0 && slot != 1)) return -1;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
@@ -362,6 +671,13 @@ int SNEPPX_ab_mark_slot_bad(SNEPPXABPartition* ab, int slot) {
     return 0;
 }
 
+/**
+ * @brief Perform Ab Slot Is Good.
+ *
+ * @param ab [out] Ab value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_slot_is_good(SNEPPXABPartition* ab, int slot) {
     if (!ab || (slot != 0 && slot != 1)) return 0;
     uint8_t* target = slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
@@ -369,14 +685,29 @@ int SNEPPX_ab_slot_is_good(SNEPPXABPartition* ab, int slot) {
     return 0;
 }
 
+/**
+ * @brief Perform Tpm Set Variable.
+ *
+ * @param index [in] Index value.
+ */
 void SNEPPX_tpm_set_variable(int index, uint32_t value) {
     (void)index; (void)value;
 }
 
+/**
+ * @brief Perform Tpm Get Variable.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_tpm_get_variable(int index) {
     (void)index;
     return 0;
 }
+/**
+ * @brief Perform Ab Force Swap.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_force_swap(SNEPPXABPartition* ab) {
     if (!ab) return -1;
     int tmp = ab->active_slot;
@@ -386,6 +717,14 @@ int SNEPPX_ab_force_swap(SNEPPXABPartition* ab) {
     return 0;
 }
 
+/**
+ * @brief Hash Manifest.
+ *
+ * @param manifest_path [in] Manifest Path value.
+ * @param hash_out [out] Hash Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_manifest_hash(const char* manifest_path, uint8_t* hash_out, size_t hash_len) {
     if (!manifest_path || !hash_out || hash_len < 4) return -1;
     FILE* f = fopen(manifest_path, "rb");
@@ -401,6 +740,13 @@ int SNEPPX_manifest_hash(const char* manifest_path, uint8_t* hash_out, size_t ha
 
 /* ---- New S7 extension functions ---- */
 
+/**
+ * @brief Perform Tuf Snapshot.
+ *
+ * @param snapshot_out [out] Snapshot Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_snapshot(uint8_t* snapshot_out, size_t* snapshot_len) {
     if (!snapshot_out || !snapshot_len || *snapshot_len < 64) return -1;
     memset(snapshot_out, 0, 64);
@@ -414,6 +760,13 @@ int SNEPPX_tuf_snapshot(uint8_t* snapshot_out, size_t* snapshot_len) {
     return 0;
 }
 
+/**
+ * @brief Perform Tuf Timestamp.
+ *
+ * @param timestamp_out [out] Timestamp Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_timestamp(uint8_t* timestamp_out, size_t* timestamp_len) {
     if (!timestamp_out || !timestamp_len || *timestamp_len < 32) return -1;
     memset(timestamp_out, 0, 32);
@@ -426,6 +779,14 @@ int SNEPPX_tuf_timestamp(uint8_t* timestamp_out, size_t* timestamp_len) {
     return 0;
 }
 
+/**
+ * @brief Perform Tuf Verify Snapshot.
+ *
+ * @param tuf [out] Tuf value.
+ * @param snapshot [in] Snapshot value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_verify_snapshot(SNEPPXTUFMetadata* tuf, const uint8_t* snapshot, size_t snapshot_len) {
     if (!tuf || !snapshot) return -1;
     (void)snapshot_len;
@@ -435,6 +796,14 @@ int SNEPPX_tuf_verify_snapshot(SNEPPXTUFMetadata* tuf, const uint8_t* snapshot, 
     return (h == expected) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Tuf Verify Timestamp.
+ *
+ * @param tuf [out] Tuf value.
+ * @param timestamp [in] Timestamp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_verify_timestamp(SNEPPXTUFMetadata* tuf, const uint8_t* timestamp, size_t timestamp_len) {
     if (!tuf || !timestamp) return -1;
     (void)timestamp_len;
@@ -444,6 +813,11 @@ int SNEPPX_tuf_verify_timestamp(SNEPPXTUFMetadata* tuf, const uint8_t* timestamp
     return (h == expected) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Tuf Get Keys Loaded.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tuf_get_keys_loaded(SNEPPXTUFMetadata* tuf) {
     if (!tuf) return 0;
     int count = 0;
@@ -455,6 +829,14 @@ int SNEPPX_tuf_get_keys_loaded(SNEPPXTUFMetadata* tuf) {
     return count > 0 ? 4 : 0;
 }
 
+/**
+ * @brief Perform Bsdiff Create Patch File.
+ *
+ * @param old_path [in] Old Path value.
+ * @param new_path [in] New Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bsdiff_create_patch_file(const char* old_path, const char* new_path, const char* patch_path) {
     if (!old_path || !new_path || !patch_path) return -1;
     FILE* f_old = fopen(old_path, "rb");
@@ -485,10 +867,26 @@ int SNEPPX_bsdiff_create_patch_file(const char* old_path, const char* new_path, 
     return ret;
 }
 
+/**
+ * @brief Perform Bsdiff Apply Patch.
+ *
+ * @param old_path [in] Old Path value.
+ * @param patch_path [in] Patch Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bsdiff_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
     return SNEPPX_bspatch_apply_patch(old_path, patch_path, new_path);
 }
 
+/**
+ * @brief Perform Bspatch Apply Patch.
+ *
+ * @param old_path [in] Old Path value.
+ * @param patch_path [in] Patch Path value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bspatch_apply_patch(const char* old_path, const char* patch_path, const char* new_path) {
     if (!old_path || !patch_path || !new_path) return -1;
     FILE* f_old = fopen(old_path, "rb");
@@ -519,19 +917,44 @@ int SNEPPX_bspatch_apply_patch(const char* old_path, const char* patch_path, con
     return ret;
 }
 
+/**
+ * @brief Perform Ab Partition Get Active.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_get_active(SNEPPXABPartition* ab) {
     return SNEPPX_ab_partition_get_active_slot(ab);
 }
 
+/**
+ * @brief Perform Ab Partition Get Inactive.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_partition_get_inactive(SNEPPXABPartition* ab) {
     return SNEPPX_ab_partition_get_inactive_slot(ab);
 }
 
+/**
+ * @brief Perform Ab Set Bootloader Slot.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ab_set_bootloader_slot(int slot) {
     (void)slot;
     return 0;
 }
 
+/**
+ * @brief Create Manifest.
+ *
+ * @param path [in] Path value.
+ * @param files [in] Files value.
+ * @param file_count [in] File Count value.
+ * @param manifest_out [out] Manifest Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_manifest_create(const char* path, const char** files, int file_count, uint8_t* manifest_out, size_t* manifest_len) {
     if (!path || !files || !manifest_out || !manifest_len) return -1;
     (void)path;
@@ -552,6 +975,14 @@ int SNEPPX_manifest_create(const char* path, const char** files, int file_count,
     return 0;
 }
 
+/**
+ * @brief Perform Manifest Verify All.
+ *
+ * @param path [in] Path value.
+ * @param public_key [in] Public Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_manifest_verify_all(const char* path, const uint8_t* public_key, size_t key_len) {
     if (!path || !public_key) return -1;
     (void)path;
@@ -561,12 +992,26 @@ int SNEPPX_manifest_verify_all(const char* path, const uint8_t* public_key, size
     return (check != 0) ? 0 : -1;
 }
 
+/**
+ * @brief Perform Tpm Get Random.
+ *
+ * @param bytes [out] Bytes value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tpm_get_random(uint8_t* bytes, int count) {
     if (!bytes || count <= 0) return -1;
     for (int i = 0; i < count; i++) bytes[i] = (uint8_t)(rand() % 256);
     return 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Set Percentage.
+ *
+ * @param cr [out] Cr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_set_percentage(SNEPPXCanaryRollout* cr, int percent) {
     if (!cr || percent < 0 || percent > 100) return -1;
     cr->canary_nodes = (cr->total_nodes * percent) / 100;
@@ -574,10 +1019,23 @@ int SNEPPX_canary_rollout_set_percentage(SNEPPXCanaryRollout* cr, int percent) {
     return 0;
 }
 
+/**
+ * @brief Perform Canary Rollout Is Promoted.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_canary_rollout_is_promoted(SNEPPXCanaryRollout* cr) {
     return cr ? cr->promoted : 0;
 }
 
+/**
+ * @brief Sign Offline Bundle.
+ *
+ * @param bundle [out] Bundle value.
+ * @param signing_key [in] Signing Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_sign(SNEPPXOfflineBundle* bundle, const uint8_t* signing_key, size_t key_len) {
     if (!bundle || !signing_key) return -1;
     bundle->signed_offline = 1;
@@ -587,12 +1045,26 @@ int SNEPPX_offline_bundle_sign(SNEPPXOfflineBundle* bundle, const uint8_t* signi
     return 0;
 }
 
+/**
+ * @brief Hash Offline Bundle Get.
+ *
+ * @param bundle [out] Bundle value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_offline_bundle_get_hash(SNEPPXOfflineBundle* bundle, uint8_t* hash_out) {
     if (!bundle || !hash_out) return -1;
     memcpy(hash_out, bundle->bundle_hash, 32);
     return 0;
 }
 
+/**
+ * @brief Perform Dep Resolver Remove Dep.
+ *
+ * @param dr [out] Dr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_remove_dep(SNEPPXDepResolver* dr, const char* name) {
     if (!dr || !name) return -1;
     (void)name;
@@ -600,12 +1072,24 @@ int SNEPPX_dep_resolver_remove_dep(SNEPPXDepResolver* dr, const char* name) {
     return 0;
 }
 
+/**
+ * @brief Perform Dep Resolver Check Conflicts.
+ *
+ * @param dr [out] Dr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_check_conflicts(SNEPPXDepResolver* dr, SNEPPXDepResolver* other_dr) {
     if (!dr || !other_dr) return 0;
     if (dr->version_major == other_dr->version_major && strcmp(dr->name, other_dr->name) == 0) return 1;
     return 0;
 }
 
+/**
+ * @brief Perform Dep Resolver Get Resolved Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_dep_resolver_get_resolved_count(SNEPPXDepResolver* dr) {
     if (!dr) return 0;
     return dr->resolved ? 1 : 0;

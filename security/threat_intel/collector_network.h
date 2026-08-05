@@ -8,6 +8,22 @@
 #define SNEPPX_TI_BGP_TIMEOUT_MS 30000
 #define SNEPPX_TI_DNS_BUF_SIZE 4096
 
+/*
+ * SNEPPX - Collector Network
+ *
+ * WHAT
+ *   Collector Network.
+ *
+ * CONCEPT
+ *   Provides the Collector Network.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_TI_SOURCE_BGP_DUMP,
     SNEPPX_TI_SOURCE_DNS_PASSIVE,

@@ -9,6 +9,22 @@
 #define SNEPPX_STIG_MAX_CAT_II 2048
 #define SNEPPX_STIG_MAX_CAT_III 1024
 
+/*
+ * SNEPPX - Stig Framework
+ *
+ * WHAT
+ *   Stig Framework.
+ *
+ * CONCEPT
+ *   Provides the Stig Framework.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_STIG_CATEGORY_I,
     SNEPPX_STIG_CATEGORY_II,

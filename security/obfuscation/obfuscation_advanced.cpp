@@ -16,8 +16,36 @@
 #include <sys/mman.h>
 #endif
 
+/*
+ * SNEPPX - Obfuscation Advanced
+ *
+ * WHAT
+ *   Obfuscation Advanced.
+ *
+ * CONCEPT
+ *   Provides code obfuscation.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 int SNEPPX_binary_subst_init(SNEPPXBinarySubst* bs) { if (!bs) return -1; memset(bs,0,sizeof(*bs)); return 0; }
 
+/**
+ * @brief Perform Binary Subst Add Rule.
+ *
+ * @param bs [out] Bs value.
+ * @param orig [in] Orig value.
+ * @param subst [in] Subst value.
+ * @param prefix [in] Prefix value.
+ * @param pcount [in] Pcount value.
+ * @param suffix [in] Suffix value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_binary_subst_add_rule(SNEPPXBinarySubst* bs, uint8_t orig, uint8_t subst, const uint8_t* prefix, int pcount, const uint8_t* suffix, int scount) {
     if (!bs||bs->rule_count>=SNEPPX_OBF_MAX_BINARY_OPS) return -1;
     SNEPPXBinarySubstRule* r=&bs->rules[bs->rule_count++];
@@ -27,6 +55,15 @@ int SNEPPX_binary_subst_add_rule(SNEPPXBinarySubst* bs, uint8_t orig, uint8_t su
     return 0;
 }
 
+/**
+ * @brief Apply Binary Subst.
+ *
+ * @param bs [out] Bs value.
+ * @param code [out] Code value.
+ * @param code_len [out] Code Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_binary_subst_apply(SNEPPXBinarySubst* bs, uint8_t* code, size_t* code_len, size_t max_len) {
     if (!bs||!code||!code_len) return -1;
     size_t new_len=*code_len;
@@ -50,6 +87,11 @@ int SNEPPX_binary_subst_apply(SNEPPXBinarySubst* bs, uint8_t* code, size_t* code
     return 0;
 }
 
+/**
+ * @brief Initialize Junk Code.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_junk_code_init(SNEPPXJunkCodeGen* jcg) {
     if (!jcg) return -1;
     memset(jcg,0,sizeof(*jcg));
@@ -60,6 +102,14 @@ int SNEPPX_junk_code_init(SNEPPXJunkCodeGen* jcg) {
     return 0;
 }
 
+/**
+ * @brief Perform Junk Code Add Pattern.
+ *
+ * @param jcg [out] Jcg value.
+ * @param pattern [in] Pattern value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_junk_code_add_pattern(SNEPPXJunkCodeGen* jcg, const uint8_t* pattern, size_t len) {
     if (!jcg||!pattern||jcg->junk_count>=64||len>16) return -1;
     memcpy(jcg->junk_code[jcg->junk_count],pattern,len);
@@ -67,6 +117,16 @@ int SNEPPX_junk_code_add_pattern(SNEPPXJunkCodeGen* jcg, const uint8_t* pattern,
     return 0;
 }
 
+/**
+ * @brief Perform Junk Code Insert.
+ *
+ * @param jcg [out] Jcg value.
+ * @param code [out] Code value.
+ * @param code_len [out] Code Len value.
+ * @param max_len [in] Max Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_junk_code_insert(SNEPPXJunkCodeGen* jcg, uint8_t* code, size_t* code_len, size_t max_len, int position) {
     if (!jcg||!code||!code_len||jcg->junk_count==0) return -1;
     int idx=rand()%jcg->junk_count;
@@ -80,6 +140,14 @@ int SNEPPX_junk_code_insert(SNEPPXJunkCodeGen* jcg, uint8_t* code, size_t* code_
     return 0;
 }
 
+/**
+ * @brief Perform Constant Unfold Int32.
+ *
+ * @param value [in] Value value.
+ * @param expr_out [out] Expr Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_constant_unfold_int32(uint32_t value, uint8_t* expr_out, size_t* expr_len) {
     if (!expr_out||!expr_len||*expr_len<6) return -1;
     uint32_t a=value/3+1,b=value-a;
@@ -89,6 +157,14 @@ int SNEPPX_constant_unfold_int32(uint32_t value, uint8_t* expr_out, size_t* expr
     return 0;
 }
 
+/**
+ * @brief Perform Constant Unfold Int64.
+ *
+ * @param value [in] Value value.
+ * @param expr_out [out] Expr Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_constant_unfold_int64(uint64_t value, uint8_t* expr_out, size_t* expr_len) {
     if (!expr_out||!expr_len||*expr_len<12) return -1;
     uint64_t a=value/7+3,b=value-a;
@@ -98,6 +174,16 @@ int SNEPPX_constant_unfold_int64(uint64_t value, uint8_t* expr_out, size_t* expr
     return 0;
 }
 
+/**
+ * @brief Perform Array Obfuscate Indices.
+ *
+ * @param dims [in] Dims value.
+ * @param ndim [in] Ndim value.
+ * @param linearized [out] Linearized value.
+ * @param obfuscated_indices [out] Obfuscated Indices value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_array_obfuscate_indices(const size_t* dims, int ndim, size_t* linearized, size_t* obfuscated_indices, int n_indices) {
     if (!dims||!linearized||!obfuscated_indices) return -1;
     size_t stride=1;
@@ -121,6 +207,9 @@ static struct {
     int seeded;
 } SNEPPX_bogus_int;
 
+/**
+ * @brief Perform Bogus Seed.
+ */
 static void SNEPPX_bogus_seed(void) {
     if (SNEPPX_bogus_int.seeded) return;
     SNEPPX_bogus_int.seeded=1;
@@ -128,6 +217,11 @@ static void SNEPPX_bogus_seed(void) {
     srand(seed);
 }
 
+/**
+ * @brief Initialize Bogus Cf.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bogus_cf_init(SNEPPXBogusCF* bcf) {
     if (!bcf) return -1;
     memset(bcf,0,sizeof(*bcf));
@@ -145,6 +239,14 @@ int SNEPPX_bogus_cf_init(SNEPPXBogusCF* bcf) {
     return 0;
 }
 
+/**
+ * @brief Perform Bogus Cf Add Fake Block.
+ *
+ * @param bcf [out] Bcf value.
+ * @param fake_code [in] Fake Code value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bogus_cf_add_fake_block(SNEPPXBogusCF* bcf, const uint8_t* fake_code, size_t fake_len) {
     if (!bcf||!fake_code||!fake_len||fake_len>SNEPPX_FAKE_BLOCK_SIZE) return -1;
     SNEPPX_bogus_seed();
@@ -166,6 +268,14 @@ int SNEPPX_bogus_cf_add_fake_block(SNEPPXBogusCF* bcf, const uint8_t* fake_code,
     return 0;
 }
 
+/**
+ * @brief Perform Bogus Cf Redirect.
+ *
+ * @param bcf [out] Bcf value.
+ * @param code [out] Code value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bogus_cf_redirect(SNEPPXBogusCF* bcf, uint8_t* code, size_t code_len) {
     if (!bcf||!code||!code_len) return -1;
     SNEPPX_bogus_seed();
@@ -193,6 +303,14 @@ int SNEPPX_bogus_cf_redirect(SNEPPXBogusCF* bcf, uint8_t* code, size_t code_len)
 
 int SNEPPX_iat_protect_init(SNEPPXIATProtect* iat) { if (!iat) return -1; memset(iat,0,sizeof(*iat)); return 0; }
 
+/**
+ * @brief Perform Iat Protect Add Entry.
+ *
+ * @param iat [out] Iat value.
+ * @param name [in] Name value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_iat_protect_add_entry(SNEPPXIATProtect* iat, const char* name, void* original) {
     if (!iat||!name||iat->count>=SNEPPX_OBF_MAX_IAT_ENTRIES) return -1;
     iat->entries[iat->count].name=name;
@@ -202,6 +320,11 @@ int SNEPPX_iat_protect_add_entry(SNEPPXIATProtect* iat, const char* name, void* 
     return 0;
 }
 
+/**
+ * @brief Perform Iat Protect Scan.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_iat_protect_scan(SNEPPXIATProtect* iat) {
     if (!iat) return 0;
     int hooked=0;
@@ -211,12 +334,24 @@ int SNEPPX_iat_protect_scan(SNEPPXIATProtect* iat) {
     return hooked;
 }
 
+/**
+ * @brief Perform Iat Protect Restore.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_iat_protect_restore(SNEPPXIATProtect* iat) {
     if (!iat) return -1;
     for (int i=0;i<iat->count;i++) iat->entries[i].current=iat->entries[i].original;
     return 0;
 }
 
+/**
+ * @brief Initialize Whitebox Aes.
+ *
+ * @param wb [out] Wb value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_whitebox_aes_init(SNEPPXWhiteBoxAES* wb, const uint8_t key[16]) {
     if (!wb||!key) return -1;
     memset(wb,0,sizeof(*wb));
@@ -231,6 +366,11 @@ int SNEPPX_whitebox_aes_init(SNEPPXWhiteBoxAES* wb, const uint8_t key[16]) {
     return 0;
 }
 
+/**
+ * @brief Encrypt Whitebox Aes.
+ *
+ * @param wb [out] Wb value.
+ */
 void SNEPPX_whitebox_aes_encrypt(SNEPPXWhiteBoxAES* wb, const uint8_t in[16], uint8_t out[16]) {
     if (!wb||!wb->initialized||!in||!out) { if (out) memset(out,0,16); return; }
     uint32_t s[4],tk[4];
@@ -247,12 +387,24 @@ void SNEPPX_whitebox_aes_encrypt(SNEPPXWhiteBoxAES* wb, const uint8_t in[16], ui
 
 int SNEPPX_iat_obfuscation_init(SNEPPXIATObfuscation* io) { if (!io) return -1; memset(io,0,sizeof(*io)); return 0; }
 
+/**
+ * @brief Perform Iat Hash Name.
+ *
+ * @return 0 on success, -1 on error.
+ */
 uint32_t SNEPPX_iat_hash_name(const char* name) {
     uint32_t h=0x811C9DC5;
     while (name&&*name) { h^=(uint8_t)*name++; h*=0x01000193; }
     return h;
 }
 
+/**
+ * @brief Hash Iat Resolve By.
+ *
+ * @param io [out] Io value.
+ *
+ * @return Pointer on success, NULL on error.
+ */
 void* SNEPPX_iat_resolve_by_hash(SNEPPXIATObfuscation* io, uint32_t hash) {
     if (!io) return NULL;
     for (int i=0;i<io->count;i++) if (io->api_hashes[i]==hash) return io->resolved_ptrs[i];
@@ -260,6 +412,11 @@ void* SNEPPX_iat_resolve_by_hash(SNEPPXIATObfuscation* io, uint32_t hash) {
 }
 
 #ifdef _WIN32
+/**
+ * @brief Perform Veh Handler.
+ *
+ * @return The result value, or 0 on error.
+ */
 static LONG CALLBACK SNEPPX_veh_handler(EXCEPTION_POINTERS* ep) {
     if (ep->ExceptionRecord->ExceptionCode==EXCEPTION_ACCESS_VIOLATION) {
         ep->ContextRecord->Rip+=2;
@@ -276,6 +433,12 @@ static struct sigaction SNEPPX_prev_sigsegv;
 static struct sigaction SNEPPX_prev_sigfpe;
 static volatile int SNEPPX_signal_caught=0;
 
+/**
+ * @brief Perform Sig Handler.
+ *
+ * @param sig [in] Sig value.
+ * @param info [out] Info value.
+ */
 static void SNEPPX_sig_handler(int sig, siginfo_t* info, void* ctx) {
     (void)info;(void)ctx;
     SNEPPX_signal_caught=sig;
@@ -286,12 +449,24 @@ static void SNEPPX_sig_handler(int sig, siginfo_t* info, void* ctx) {
 }
 #endif
 
+/**
+ * @brief Initialize Seh Obfuscation.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_seh_obfuscation_init(SNEPPXSEHObfuscation* seh) {
     if (!seh) return -1;
     memset(seh,0,sizeof(*seh));
     return 0;
 }
 
+/**
+ * @brief Perform Seh Obfuscation Install.
+ *
+ * @param seh [out] Seh value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_seh_obfuscation_install(SNEPPXSEHObfuscation* seh, void* handler) {
     if (!seh||!handler) return -1;
 #ifdef _WIN32
@@ -335,6 +510,11 @@ int SNEPPX_tls_callback_register(void (*cb)(void*, int, void*)) {
     return SNEPPX_tls_ctx.count;
 }
 
+/**
+ * @brief Perform Tls Callback Obfuscate.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_tls_callback_obfuscate(void) {
     if (SNEPPX_tls_ctx.count==0) return 0;
     uint64_t ts=(uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
@@ -355,6 +535,13 @@ int SNEPPX_tls_callback_obfuscate(void) {
     return SNEPPX_tls_ctx.count;
 }
 
+/**
+ * @brief Perform Crc32 Block.
+ *
+ * @param data [in] Data value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static uint32_t SNEPPX_crc32_block(const uint8_t* data, size_t len) {
     uint32_t crc=0xFFFFFFFF;
     static const uint32_t t[256]={
@@ -395,6 +582,11 @@ static uint32_t SNEPPX_crc32_block(const uint8_t* data, size_t len) {
     return crc^0xFFFFFFFF;
 }
 
+/**
+ * @brief Initialize Antidump.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_antidump_init(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     memset(ad,0,sizeof(*ad));
@@ -415,6 +607,11 @@ int SNEPPX_antidump_init(SNEPPXAntiDump* ad) {
     return 0;
 }
 
+/**
+ * @brief Perform Antidump Protect.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_antidump_protect(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     ad->is_protected=1;
@@ -456,6 +653,11 @@ int SNEPPX_antidump_protect(SNEPPXAntiDump* ad) {
     return 0;
 }
 
+/**
+ * @brief Verify Antidump.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_antidump_verify(SNEPPXAntiDump* ad) {
     if (!ad) return -1;
     if (!ad->is_protected) return 0;
@@ -488,6 +690,11 @@ int SNEPPX_antidump_verify(SNEPPXAntiDump* ad) {
 }
 
 int SNEPPX_multi_vm_init(SNEPPXMultiVM* mvm) { if (!mvm) return -1; memset(mvm,0,sizeof(*mvm)); return 0; }
+/**
+ * @brief Perform Multi Vm Switch.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_multi_vm_switch(SNEPPXMultiVM* mvm) { if (!mvm) return -1; mvm->current_slot=(mvm->current_slot+1)%SNEPPX_OBF_MAX_VM_SLOTS; return 0; }
 
 struct SNEPPXRegDep {
@@ -499,6 +706,14 @@ struct SNEPPXRegDep {
     int block_id;
 };
 
+/**
+ * @brief Perform Inst Schedule Randomize.
+ *
+ * @param code [out] Code value.
+ * @param code_len [out] Code Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_inst_schedule_randomize(uint8_t* code, size_t* code_len, size_t max_len) {
     if (!code||!code_len||*code_len==0) return -1;
     (void)max_len;

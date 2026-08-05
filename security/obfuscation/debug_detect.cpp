@@ -19,7 +19,29 @@
 #include <csignal>
 #include <algorithm>
 
+/*
+ * SNEPPX - Debug Detect
+ *
+ * WHAT
+ *   Debug Detect.
+ *
+ * CONCEPT
+ *   Provides the Debug Detect.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 extern "C" {
+/**
+ * @brief Perform Secure Zero.
+ *
+ * @param ptr [out] Ptr value.
+ * @param len [in] Len value.
+ */
 void SNEPPX_secure_zero(void* ptr, size_t len);
 }
 

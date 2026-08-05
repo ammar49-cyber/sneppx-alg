@@ -5,15 +5,50 @@
 #include <math.h>
 #include <ctype.h>
 
+/*
+ * SNEPPX - S5 Extensions
+ *
+ * WHAT
+ *   S5 Extensions.
+ *
+ * CONCEPT
+ *   Provides the S5 Extensions.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 /* --- Semantic Injection --- */
+/**
+ * @brief Initialize Semantic Injection.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_init(SNEPPXSemanticInjectionDetector* sid) {
     if(!sid) return -1; memset(sid,0,sizeof(*sid)); sid->threshold=0.85; return 0;
 }
+/**
+ * @brief Perform Semantic Injection Add Attack.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_add_attack(SNEPPXSemanticInjectionDetector* sid, const double embedding[8]) {
     if(!sid||!embedding||sid->attack_count>=SNEPPX_S5_MAX_EMBEDDING) return -1;
     memcpy(sid->known_attack_embeddings[sid->attack_count++],embedding,8*sizeof(double));
     return 0;
 }
+/**
+ * @brief Perform Semantic Injection Score.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_score(SNEPPXSemanticInjectionDetector* sid, const double embedding[8], double* score) {
     if(!sid||!embedding||!score) return -1;
     double max_sim=0.0;
@@ -27,6 +62,13 @@ int SNEPPX_semantic_injection_score(SNEPPXSemanticInjectionDetector* sid, const 
 }
 
 /* --- Multi-lang jailbreak --- */
+/**
+ * @brief Perform Ml Jailbreak Detect.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_detect(const char* text, size_t len) {
     if(!text) return 0;
     const char* patterns[]={"ignora","ignorer","\xe5\xbf\xbd\xe7\x95\xa5","\xeb\xac\xb4\xec\x8b\x9c","ignore","jailbreak","DAN","override",NULL};
@@ -107,6 +149,15 @@ static size_t rot13_decode(const char* in, size_t in_len, char* out) {
 }
 
 /* --- Encoded attack decoder --- */
+/**
+ * @brief Perform Encoded Attack Decode.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode(const char* input, size_t in_len, char* output, size_t* out_len) {
     if(!input||!output||!out_len) return -1;
     unsigned char buf[4096];
@@ -127,6 +178,13 @@ int SNEPPX_encoded_attack_decode(const char* input, size_t in_len, char* output,
     return 0;
 }
 
+/**
+ * @brief Perform Encoded Attack Scan.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_scan(const char* text, size_t len) {
     if(!text) return 0;
     char decoded[4096];
@@ -156,6 +214,14 @@ int SNEPPX_encoded_attack_scan(const char* text, size_t len) {
 }
 
 /* --- Token anomaly --- */
+/**
+ * @brief Perform Token Anomaly Score.
+ *
+ * @param token_ids [in] Token Ids value.
+ * @param token_count [in] Token Count value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_token_anomaly_score(const uint32_t* token_ids, size_t token_count, const double* expected_probs) {
     (void)token_ids;
     if(!expected_probs||token_count==0) return 0.0;
@@ -173,10 +239,23 @@ double SNEPPX_token_anomaly_score(const uint32_t* token_ids, size_t token_count,
 }
 
 /* --- Model inversion defense --- */
+/**
+ * @brief Initialize Model Inversion.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_init(SNEPPXModelInversionDefense* mid) {
     if(!mid) return -1; memset(mid,0,sizeof(*mid));
     mid->noise_scale=0.01; mid->gradient_clipping=1; mid->clip_norm=1.0; return 0;
 }
+/**
+ * @brief Apply Model Inversion.
+ *
+ * @param mid [out] Mid value.
+ * @param gradients [out] Gradients value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_apply(SNEPPXModelInversionDefense* mid, double* gradients, size_t grad_count) {
     if(!mid||!gradients) return -1;
     double norm=0.0; for(size_t i=0;i<grad_count;i++) norm+=gradients[i]*gradients[i];
@@ -188,6 +267,14 @@ int SNEPPX_model_inversion_apply(SNEPPXModelInversionDefense* mid, double* gradi
 }
 
 /* --- Membership inference --- */
+/**
+ * @brief Perform Membership Inference Defense.
+ *
+ * @param logits [out] Logits value.
+ * @param logit_count [in] Logit Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_membership_inference_defense(double* logits, size_t logit_count, double epsilon) {
     if(!logits||logit_count==0) return -1;
     for(size_t i=0;i<logit_count;i++) {
@@ -206,6 +293,14 @@ int SNEPPX_membership_inference_defense(double* logits, size_t logit_count, doub
 }
 
 /* --- Data extraction prevention --- */
+/**
+ * @brief Perform Data Extraction Prevent.
+ *
+ * @param output [in] Output value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent(const char* output, size_t len, int* contains_sensitive) {
     if(!output||!contains_sensitive) return -1;
     *contains_sensitive=0;
@@ -254,6 +349,15 @@ int SNEPPX_data_extraction_prevent(const char* output, size_t len, int* contains
 }
 
 /* --- Training data sanitization --- */
+/**
+ * @brief Perform Training Sanitize.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param sanitized [out] Sanitized value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize(const char* text, size_t len, char* sanitized, size_t* sanitized_len) {
     if(!text||!sanitized||!sanitized_len) return -1;
     size_t out_pos=0;
@@ -317,6 +421,11 @@ int SNEPPX_training_sanitize(const char* text, size_t len, char* sanitized, size
 }
 
 /* --- Watermarking --- */
+/**
+ * @brief Initialize Watermark.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_init(SNEPPXModelWatermark* mw) {
     if(!mw) return -1;
     memset(mw,0,sizeof(*mw));
@@ -325,6 +434,14 @@ int SNEPPX_watermark_init(SNEPPXModelWatermark* mw) {
     return 0;
 }
 
+/**
+ * @brief Perform Watermark Embed.
+ *
+ * @param mw [out] Mw value.
+ * @param weights [out] Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_embed(SNEPPXModelWatermark* mw, double* weights, size_t weight_count) {
     if(!mw||!weights||weight_count==0) return -1;
     for(size_t i=0;i<weight_count;i++) {
@@ -334,6 +451,14 @@ int SNEPPX_watermark_embed(SNEPPXModelWatermark* mw, double* weights, size_t wei
     return 0;
 }
 
+/**
+ * @brief Verify Watermark.
+ *
+ * @param mw [out] Mw value.
+ * @param weights [in] Weights value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_verify(SNEPPXModelWatermark* mw, const double* weights, size_t weight_count) {
     if(!mw||!weights||weight_count==0) return -1;
     double dot=0.0,n1=0.0,n2=0.0;
@@ -352,6 +477,14 @@ int SNEPPX_watermark_verify(SNEPPXModelWatermark* mw, const double* weights, siz
 }
 
 /* --- Adversarial smoothing --- */
+/**
+ * @brief Perform Adversarial Smooth.
+ *
+ * @param input [out] Input value.
+ * @param input_dim [in] Input Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth(double* input, size_t input_dim, double epsilon) {
     if(!input) return -1;
     for(size_t i=0;i<input_dim;i++) input[i]+=((double)rand()/RAND_MAX-0.5)*2.0*epsilon;
@@ -370,6 +503,13 @@ static void tokenize_bigrams(const char* s, size_t len, char bigrams[][3], size_
     }
 }
 
+/**
+ * @brief Perform Factuality Score.
+ *
+ * @param statement [in] Statement value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_factuality_score(const char* statement, const char* reference) {
     if(!statement||!reference) return 0.5;
     size_t slen=strlen(statement);
@@ -396,6 +536,15 @@ double SNEPPX_factuality_score(const char* statement, const char* reference) {
 }
 
 /* --- Bias measurement --- */
+/**
+ * @brief Perform Bias Measure.
+ *
+ * @param bm [out] Bm value.
+ * @param predictions [in] Predictions value.
+ * @param sensitive_attr [in] Sensitive Attr value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure(SNEPPXBiasMetrics* bm, const double* predictions, const int* sensitive_attr, size_t n) {
     if(!bm||!predictions||!sensitive_attr||n==0) return -1;
     double sum0=0.0,sum1=0.0;
@@ -413,13 +562,33 @@ int SNEPPX_bias_measure(SNEPPXBiasMetrics* bm, const double* predictions, const 
 }
 
 /* --- Prompt policy engine --- */
+/**
+ * @brief Initialize Prompt Policy.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_init(SNEPPXPromptPolicy* pp) {
     if(!pp) return -1; memset(pp,0,sizeof(*pp)); pp->enabled=1; return 0;
 }
+/**
+ * @brief Add Prompt Policy.
+ *
+ * @param pp [out] Pp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_add(SNEPPXPromptPolicy* pp, const char* policy_rule) {
     if(!pp||!policy_rule||pp->policy_count>=16) return -1;
     strncpy(pp->policies[pp->policy_count++],policy_rule,255); return 0;
 }
+/**
+ * @brief Perform Prompt Policy Enforce.
+ *
+ * @param pp [out] Pp value.
+ * @param prompt [in] Prompt value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_enforce(SNEPPXPromptPolicy* pp, const char* prompt, size_t len) {
     if(!pp||!prompt) return 0;
     if(!pp->enabled) return 0;
@@ -463,38 +632,84 @@ static void text_to_embedding(const char* text, size_t len, double* emb) {
     norm=sqrt(norm);
     if(norm>1e-10) for(int j=0;j<8;j++) emb[j]=h[j]/norm;
 }
+/**
+ * @brief Perform Semantic Injection Add Attack Text.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_add_attack_text(SNEPPXSemanticInjectionDetector* sid, const char* text) {
     if(!sid||!text) return -1;
     double emb[8]; text_to_embedding(text,strlen(text),emb);
     return SNEPPX_semantic_injection_add_attack(sid,emb);
 }
+/**
+ * @brief Perform Semantic Injection Remove Attack.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_remove_attack(SNEPPXSemanticInjectionDetector* sid, int index) {
     if(!sid||index<0||index>=sid->attack_count) return -1;
     for(int i=index;i<sid->attack_count-1;i++) memcpy(sid->known_attack_embeddings[i],sid->known_attack_embeddings[i+1],8*sizeof(double));
     sid->attack_count--; return 0;
 }
+/**
+ * @brief Clear Semantic Injection.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_clear(SNEPPXSemanticInjectionDetector* sid) {
     if(!sid) return -1;
     memset(sid->known_attack_embeddings,0,sizeof(sid->known_attack_embeddings));
     sid->attack_count=0; return 0;
 }
+/**
+ * @brief Perform Semantic Injection Get Attack Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_get_attack_count(SNEPPXSemanticInjectionDetector* sid) {
     if(!sid) return -1; return sid->attack_count;
 }
+/**
+ * @brief Perform Semantic Injection Get Stats.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_get_stats(SNEPPXSemanticInjectionDetector* sid, double* stats) {
     if(!sid||!stats) return -1;
     stats[0]=(double)sid->attack_count; stats[1]=sid->threshold; stats[2]=0.0; return 0;
 }
+/**
+ * @brief Perform Ml Jailbreak Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_set_threshold(double threshold) {
     if(threshold<0.0||threshold>1.0) return -1;
     ml_jailbreak_threshold=threshold; return 0;
 }
+/**
+ * @brief Perform Ml Jailbreak Add Pattern.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_add_pattern(const char* pattern) {
     if(!pattern||custom_jailbreak_count>=64) return -1;
     strncpy(custom_jailbreak_patterns[custom_jailbreak_count],pattern,255);
     custom_jailbreak_patterns[custom_jailbreak_count][255]=0;
     custom_jailbreak_count++; return 0;
 }
+/**
+ * @brief Perform Ml Jailbreak Remove Pattern.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_remove_pattern(const char* pattern) {
     if(!pattern) return -1;
     for(int i=0;i<custom_jailbreak_count;i++) {
@@ -505,7 +720,21 @@ int SNEPPX_ml_jailbreak_remove_pattern(const char* pattern) {
     }
     return -1;
 }
+/**
+ * @brief Perform Ml Jailbreak Get Pattern Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_get_pattern_count(void) { return custom_jailbreak_count; }
+/**
+ * @brief Perform Ml Jailbreak Scan Multi.
+ *
+ * @param texts [in] Texts value.
+ * @param lens [in] Lens value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_scan_multi(const char** texts, const size_t* lens, int count, int* results) {
     if(!texts||!lens||!results||count<=0) return -1;
     for(int i=0;i<count;i++) {
@@ -519,21 +748,56 @@ int SNEPPX_ml_jailbreak_scan_multi(const char** texts, const size_t* lens, int c
     }
     return 0;
 }
+/**
+ * @brief Perform Encoded Attack Decode Base64.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode_base64(const char* input, size_t in_len, char* output, size_t* out_len) {
     if(!input||!output||!out_len) return -1;
     unsigned char buf[4096]; size_t rlen=b64_decode(input,in_len,buf);
     if(rlen>4096) rlen=4096; memcpy(output,buf,rlen); *out_len=rlen; return 0;
 }
+/**
+ * @brief Perform Encoded Attack Decode Hex.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode_hex(const char* input, size_t in_len, char* output, size_t* out_len) {
     if(!input||!output||!out_len) return -1;
     if(in_len>=2&&input[0]=='0'&&(input[1]=='x'||input[1]=='X')){input+=2;in_len-=2;}
     unsigned char buf[4096]; size_t rlen=hex_decode(input,in_len,buf);
     if(rlen>4096) rlen=4096; memcpy(output,buf,rlen); *out_len=rlen; return 0;
 }
+/**
+ * @brief Perform Encoded Attack Decode Rot13.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode_rot13(const char* input, size_t in_len, char* output, size_t* out_len) {
     if(!input||!output||!out_len) return -1;
     *out_len=rot13_decode(input,in_len,output); return 0;
 }
+/**
+ * @brief Perform Encoded Attack Scan Deep.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_scan_deep(const char* text, size_t len, int depth) {
     if(!text) return 0;
     if(depth<=0) return SNEPPX_encoded_attack_scan(text,len);
@@ -544,26 +808,71 @@ int SNEPPX_encoded_attack_scan_deep(const char* text, size_t len, int depth) {
     }
     return SNEPPX_encoded_attack_scan(text,len);
 }
+/**
+ * @brief Perform Token Anomaly Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_set_threshold(double t) { if(t<=0.0) return -1; token_anomaly_threshold=t; return 0; }
+/**
+ * @brief Perform Token Anomaly Get Threshold.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_token_anomaly_get_threshold(void) { return token_anomaly_threshold; }
+/**
+ * @brief Perform Token Anomaly Batch Score.
+ *
+ * @param sequences [in] Sequences value.
+ * @param seq_count [in] Seq Count value.
+ * @param seq_lens [in] Seq Lens value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_batch_score(const uint32_t** sequences, int seq_count, const size_t* seq_lens, double* scores) {
     if(!sequences||!seq_lens||!scores||seq_count<=0) return -1;
     for(int i=0;i<seq_count;i++) scores[i]=SNEPPX_token_anomaly_score(sequences[i],seq_lens[i],NULL);
     return 0;
 }
+/**
+ * @brief Perform Model Inversion Set Noise.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_set_noise(double scale) {
     if(scale<0.0) return -1;
     SNEPPXModelInversionDefense mid; SNEPPX_model_inversion_init(&mid); mid.noise_scale=scale; return 0;
 }
+/**
+ * @brief Perform Model Inversion Set Clip.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_set_clip(double norm) {
     if(norm<=0.0) return -1;
     SNEPPXModelInversionDefense mid; SNEPPX_model_inversion_init(&mid); mid.clip_norm=norm; return 0;
 }
+/**
+ * @brief Perform Model Inversion Get Config.
+ *
+ * @param noise [out] Noise value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_get_config(double* noise, double* clip) {
     if(!noise||!clip) return -1;
     SNEPPXModelInversionDefense mid; SNEPPX_model_inversion_init(&mid);
     *noise=mid.noise_scale; *clip=mid.clip_norm; return 0;
 }
+/**
+ * @brief Apply Membership Inference Defense.
+ *
+ * @param logits [out] Logits value.
+ * @param count [in] Count value.
+ * @param epsilon [in] Epsilon value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_membership_inference_defense_apply(double* logits, size_t count, double epsilon, double* clipped_out) {
     if(!logits||!clipped_out||count==0) return -1;
     double scale=epsilon>0?1.0/epsilon:1.0;
@@ -576,19 +885,47 @@ int SNEPPX_membership_inference_defense_apply(double* logits, size_t count, doub
     }
     return 0;
 }
+/**
+ * @brief Perform Membership Inference Defense Set Epsilon.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_membership_inference_defense_set_epsilon(double e) { if(e<=0.0) return -1; membership_epsilon=e; return 0; }
+/**
+ * @brief Perform Data Extraction Prevent Set Rules.
+ *
+ * @param rules [in] Rules value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_set_rules(const char** rules, int count) {
     if(!rules||count<=0||count>SNEPPX_EXTRACT_MAX_RULES) return -1;
     extract_rule_count=count;
     for(int i=0;i<count;i++){strncpy(extract_rules[i],rules[i],SNEPPX_EXTRACT_RULE_LEN-1);extract_rules[i][SNEPPX_EXTRACT_RULE_LEN-1]=0;}
     return 0;
 }
+/**
+ * @brief Perform Data Extraction Prevent Get Rules.
+ *
+ * @param rules [out] Rules value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_get_rules(char** rules, int max) {
     if(!rules||max<=0) return -1;
     int out=extract_rule_count<max?extract_rule_count:max;
     for(int i=0;i<out;i++){size_t slen=strlen(extract_rules[i])+1;rules[i]=(char*)malloc(slen);if(rules[i])memcpy(rules[i],extract_rules[i],slen);}
     return out;
 }
+/**
+ * @brief Perform Training Sanitize Emails.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_emails(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     size_t cap=*out_len; *out_len=0; size_t pos=0;
@@ -603,6 +940,15 @@ int SNEPPX_training_sanitize_emails(const char* text, size_t len, char* out, siz
     }
     *out_len=pos; if(pos<cap) out[pos]=0; return 0;
 }
+/**
+ * @brief Perform Training Sanitize Phones.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_phones(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     size_t cap=*out_len; *out_len=0; size_t pos=0;
@@ -617,6 +963,15 @@ int SNEPPX_training_sanitize_phones(const char* text, size_t len, char* out, siz
     }
     *out_len=pos; if(pos<cap) out[pos]=0; return 0;
 }
+/**
+ * @brief Perform Training Sanitize Ips.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_ips(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     size_t cap=*out_len; *out_len=0; size_t pos=0;
@@ -629,12 +984,41 @@ int SNEPPX_training_sanitize_ips(const char* text, size_t len, char* out, size_t
     }
     *out_len=pos; if(pos<cap) out[pos]=0; return 0;
 }
+/**
+ * @brief Perform Watermark Set Key.
+ *
+ * @param mw [out] Mw value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_set_key(SNEPPXModelWatermark* mw, const uint8_t* key, size_t key_len) {
     if(!mw||!key) return -1;
     size_t cp=key_len<32?key_len:32; memset(mw->watermark,0,32); memcpy(mw->watermark,key,cp); return 0;
 }
+/**
+ * @brief Perform Watermark Get Strength.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_watermark_get_strength(SNEPPXModelWatermark* mw) { if(!mw) return 0.0; (void)mw; return watermark_strength; }
+/**
+ * @brief Perform Watermark Set Strength.
+ *
+ * @param mw [out] Mw value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_set_strength(SNEPPXModelWatermark* mw, double strength) { if(!mw||strength<0.0) return -1; watermark_strength=strength; (void)mw; return 0; }
+/**
+ * @brief Perform Watermark Detect.
+ *
+ * @param weights [in] Weights value.
+ * @param count [in] Count value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_detect(const double* weights, size_t count, const uint8_t* key, size_t key_len) {
     if(!weights||!key||count==0) return -1;
     double dot=0.0,n1=0.0,n2=0.0;
@@ -646,14 +1030,50 @@ int SNEPPX_watermark_detect(const double* weights, size_t count, const uint8_t* 
     double denom=sqrt(n1)*sqrt(n2); if(denom<1e-10) return 0;
     return (dot/denom)>0.7?1:0;
 }
+/**
+ * @brief Perform Adversarial Smooth Batch.
+ *
+ * @param inputs [out] Inputs value.
+ * @param count [in] Count value.
+ * @param dim [in] Dim value.
+ * @param epsilon [in] Epsilon value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth_batch(double** inputs, int count, size_t dim, double epsilon, double** outputs) {
     if(!inputs||!outputs||count<=0||dim==0) return -1;
     for(int i=0;i<count;i++){if(!inputs[i]||!outputs[i])return -1;memcpy(outputs[i],inputs[i],dim*sizeof(double));SNEPPX_adversarial_smooth(outputs[i],dim,epsilon);}
     return 0;
 }
+/**
+ * @brief Perform Adversarial Smooth Set Epsilon.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth_set_epsilon(double eps) { if(eps<0.0) return -1; adversarial_epsilon=eps; return 0; }
+/**
+ * @brief Perform Factuality Score Compare.
+ *
+ * @param statement [in] Statement value.
+ * @param statement [in] Statement value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_factuality_score_compare(const char* statement, const char* reference) { return SNEPPX_factuality_score(statement,reference); }
+/**
+ * @brief Perform Factuality Score Set Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_factuality_score_set_threshold(double t) { if(t<0.0||t>1.0) return -1; factuality_threshold=t; return 0; }
+/**
+ * @brief Perform Bias Measure Demographic Parity.
+ *
+ * @param predictions [in] Predictions value.
+ * @param sensitive [in] Sensitive value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure_demographic_parity(const double* predictions, const int* sensitive, size_t n) {
     if(!predictions||!sensitive||n==0) return -1;
     double sum0=0,sum1=0; int cnt0=0,cnt1=0;
@@ -661,6 +1081,15 @@ int SNEPPX_bias_measure_demographic_parity(const double* predictions, const int*
     double mean0=cnt0>0?sum0/(double)cnt0:0.0; double mean1=cnt1>0?sum1/(double)cnt1:0.0;
     return (int)((mean1-mean0)*1000);
 }
+/**
+ * @brief Perform Bias Measure Equalized Odds.
+ *
+ * @param predictions [in] Predictions value.
+ * @param labels [in] Labels value.
+ * @param sensitive [in] Sensitive value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure_equalized_odds(const double* predictions, const int* labels, const int* sensitive, size_t n) {
     if(!predictions||!labels||!sensitive||n==0) return -1;
     double tpr0s=0,tpr1s=0,fpr0s=0,fpr1s=0; int tpr0c=0,tpr1c=0,fpr0c=0,fpr1c=0;
@@ -669,20 +1098,53 @@ int SNEPPX_bias_measure_equalized_odds(const double* predictions, const int* lab
     double fpr0=fpr0c>0?fpr0s/(double)fpr0c:0.0;double fpr1=fpr1c>0?fpr1s/(double)fpr1c:0.0;
     return (int)((fabs(tpr0-tpr1)+fabs(fpr0-fpr1))*1000);
 }
+/**
+ * @brief Perform Bias Get Report.
+ *
+ * @param bm [out] Bm value.
+ * @param report [out] Report value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_get_report(SNEPPXBiasMetrics* bm, char* report, size_t report_size) {
     if(!bm||!report||report_size==0) return -1;
     int n=snprintf(report,report_size,"DP=%.4f EO=%.4f measured=%d",bm->demographic_parity,bm->equalized_odds,bm->measured);
     return (n<0)?-1:((size_t)n<report_size?n:(int)(report_size-1));
 }
+/**
+ * @brief Remove Prompt Policy.
+ *
+ * @param pp [out] Pp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_remove(SNEPPXPromptPolicy* pp, int index) {
     if(!pp||index<0||index>=pp->policy_count) return -1;
     for(int i=index;i<pp->policy_count-1;i++) strncpy(pp->policies[i],pp->policies[i+1],255);
     pp->policy_count--; return 0;
 }
+/**
+ * @brief Clear Prompt Policy.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_clear(SNEPPXPromptPolicy* pp) {
     if(!pp) return -1; memset(pp->policies,0,sizeof(pp->policies)); pp->policy_count=0; return 0;
 }
+/**
+ * @brief Perform Prompt Policy Get Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_get_count(SNEPPXPromptPolicy* pp) { if(!pp) return -1; return pp->policy_count; }
+/**
+ * @brief Perform Prompt Policy Get Policies.
+ *
+ * @param pp [out] Pp value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_get_policies(SNEPPXPromptPolicy* pp, char* buffer, int max) {
     if(!pp||!buffer||max<=0) return -1; int pos=0;
     for(int i=0;i<pp->policy_count&&pos<max-1;i++) {
@@ -691,6 +1153,13 @@ int SNEPPX_prompt_policy_get_policies(SNEPPXPromptPolicy* pp, char* buffer, int 
     }
     if(pos<max) buffer[pos]=0; return pos;
 }
+/**
+ * @brief Perform Semantic Injection Add Attack Batch.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_add_attack_batch(SNEPPXSemanticInjectionDetector* sid, const double embeddings[][8], int count) {
     if(!sid||!embeddings||count<=0) return -1;
     int added=0;
@@ -700,13 +1169,32 @@ int SNEPPX_semantic_injection_add_attack_batch(SNEPPXSemanticInjectionDetector* 
     }
     return added;
 }
+/**
+ * @brief Perform Semantic Injection Set Threshold.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_set_threshold(SNEPPXSemanticInjectionDetector* sid, double t) {
     if(!sid||t<0.0||t>1.0) return -1;
     sid->threshold=t; return 0;
 }
+/**
+ * @brief Perform Semantic Injection Get Threshold.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_semantic_injection_get_threshold(SNEPPXSemanticInjectionDetector* sid) {
     if(!sid) return -1.0; return sid->threshold;
 }
+/**
+ * @brief Perform Semantic Injection Find Closest.
+ *
+ * @param sid [out] Sid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_find_closest(SNEPPXSemanticInjectionDetector* sid, const double embedding[8], double* best_score) {
     if(!sid||!embedding||!best_score) return -1;
     double max_sim=0.0; int best_idx=-1;
@@ -718,6 +1206,13 @@ int SNEPPX_semantic_injection_find_closest(SNEPPXSemanticInjectionDetector* sid,
     }
     *best_score=max_sim; return best_idx;
 }
+/**
+ * @brief Perform Ml Jailbreak Helper Scan.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 static int SNEPPX_ml_jailbreak_helper_scan(const char* text, size_t len) {
     if(!text) return 0;
     if(SNEPPX_ml_jailbreak_detect(text,len)) return 1;
@@ -727,6 +1222,14 @@ static int SNEPPX_ml_jailbreak_helper_scan(const char* text, size_t len) {
     for(int p=0;p<custom_jailbreak_count;p++){if(strstr(lower,custom_jailbreak_patterns[p]))return 1;}
     return 0;
 }
+/**
+ * @brief Perform Ml Jailbreak Scan Advanced.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_scan_advanced(const char* text, size_t len, double* confidence) {
     if(!text||!confidence) return -1;
     *confidence=0.0; int ml=SNEPPX_ml_jailbreak_detect(text,len);
@@ -739,12 +1242,32 @@ int SNEPPX_ml_jailbreak_scan_advanced(const char* text, size_t len, double* conf
     if(custom_matches>0){*confidence=0.5+0.1*custom_matches;if(*confidence>1.0)*confidence=1.0;return 1;}
     return 0;
 }
+/**
+ * @brief Perform Ml Jailbreak Get Pattern At.
+ *
+ * @param index [in] Index value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_get_pattern_at(int index, char* buffer, size_t buf_size) {
     if(index<0||index>=custom_jailbreak_count||!buffer||buf_size==0) return -1;
     strncpy(buffer,custom_jailbreak_patterns[index],buf_size-1); buffer[buf_size-1]=0;
     return (int)strlen(buffer);
 }
+/**
+ * @brief Perform Ml Jailbreak Clear Patterns.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_clear_patterns(void) { custom_jailbreak_count=0; return 0; }
+/**
+ * @brief Perform Ml Jailbreak Scan Encoded.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_scan_encoded(const char* text, size_t len) {
     if(!text) return 0;
     if(SNEPPX_ml_jailbreak_helper_scan(text,len)) return 1;
@@ -752,12 +1275,28 @@ int SNEPPX_ml_jailbreak_scan_encoded(const char* text, size_t len) {
     if(SNEPPX_encoded_attack_decode(text,len,decoded,&dlen)==0&&dlen>0) return SNEPPX_ml_jailbreak_helper_scan(decoded,dlen);
     return 0;
 }
+/**
+ * @brief Perform Encoded Attack Decode Auto.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode_auto(const char* input, size_t in_len, char* output, size_t* out_len) {
     if(!input||!output||!out_len) return -1;
     if(in_len>=2&&input[0]=='0'&&(input[1]=='x'||input[1]=='X')) return SNEPPX_encoded_attack_decode_hex(input,in_len,output,out_len);
     if(in_len%4==0){for(size_t i=0;i<in_len;i++){char c=input[i];if(!((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')||c=='+'||c=='/'||c=='='))goto try_rot13;}return SNEPPX_encoded_attack_decode_base64(input,in_len,output,out_len);}
     try_rot13: return SNEPPX_encoded_attack_decode_rot13(input,in_len,output,out_len);
 }
+/**
+ * @brief Perform Encoded Attack Scan All Encodings.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_scan_all_encodings(const char* text, size_t len) {
     if(!text) return 0;
     if(SNEPPX_encoded_attack_scan(text,len)) return 1;
@@ -765,6 +1304,13 @@ int SNEPPX_encoded_attack_scan_all_encodings(const char* text, size_t len) {
     if(SNEPPX_encoded_attack_decode_auto(text,len,decoded,&dlen)==0&&dlen>0) return SNEPPX_encoded_attack_scan(decoded,dlen);
     return 0;
 }
+/**
+ * @brief Perform Encoded Attack Get Decoded Length.
+ *
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_get_decoded_length(const char* input, size_t in_len) {
     if(!input) return -1;
     if(in_len>=2&&input[0]=='0'&&(input[1]=='x'||input[1]=='X')) return (int)((in_len-2)/2);
@@ -773,22 +1319,53 @@ int SNEPPX_encoded_attack_get_decoded_length(const char* input, size_t in_len) {
 }
 static double token_anomaly_histogram[100];
 static int token_anomaly_hist_count=0;
+/**
+ * @brief Perform Token Anomaly Record Score.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_record_score(double score) {
     if(token_anomaly_hist_count<100){token_anomaly_histogram[token_anomaly_hist_count++]=score;return 0;}
     return -1;
 }
+/**
+ * @brief Perform Token Anomaly Get Histogram.
+ *
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_get_histogram(double* buffer, int max) {
     if(!buffer||max<=0) return -1;
     int out=token_anomaly_hist_count<max?token_anomaly_hist_count:max;
     memcpy(buffer,token_anomaly_histogram,out*sizeof(double)); return out;
 }
+/**
+ * @brief Perform Token Anomaly Reset Histogram.
+ */
 void SNEPPX_token_anomaly_reset_histogram(void) { token_anomaly_hist_count=0; }
+/**
+ * @brief Perform Token Anomaly Compute Perplexity.
+ *
+ * @param probs [in] Probs value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_token_anomaly_compute_perplexity(const double* probs, size_t count) {
     if(!probs||count==0) return 0.0;
     double sum_log=0.0;
     for(size_t i=0;i<count;i++){double p=probs[i];if(p<=0.0)p=1e-10;if(p>1.0)p=1.0;sum_log+=-log(p);}
     return sum_log/(double)count;
 }
+/**
+ * @brief Perform Model Inversion Defend Gradients.
+ *
+ * @param gradients [out] Gradients value.
+ * @param grad_count [in] Grad Count value.
+ * @param noise [in] Noise value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_defend_gradients(double* gradients, size_t grad_count, double noise, double clip) {
     if(!gradients||grad_count==0) return -1;
     double norm=0.0; for(size_t i=0;i<grad_count;i++) norm+=gradients[i]*gradients[i];
@@ -797,33 +1374,87 @@ int SNEPPX_model_inversion_defend_gradients(double* gradients, size_t grad_count
     for(size_t i=0;i<grad_count;i++) gradients[i]+=((double)rand()/RAND_MAX-0.5)*noise;
     return 0;
 }
+/**
+ * @brief Perform Model Inversion Get Noise Scale.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_get_noise_scale(void) {
     SNEPPXModelInversionDefense mid; SNEPPX_model_inversion_init(&mid);
     return (int)(mid.noise_scale*1000);
 }
+/**
+ * @brief Perform Model Inversion Get Clip Norm.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_get_clip_norm(void) {
     SNEPPXModelInversionDefense mid; SNEPPX_model_inversion_init(&mid);
     return (int)(mid.clip_norm*100);
 }
+/**
+ * @brief Perform Membership Inference Defense Get Epsilon.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_membership_inference_defense_get_epsilon(void) { return membership_epsilon; }
+/**
+ * @brief Perform Membership Inference Defense Apply Batch.
+ *
+ * @param logits_batch [out] Logits Batch value.
+ * @param batch_size [in] Batch Size value.
+ * @param logit_count [in] Logit Count value.
+ * @param epsilon [in] Epsilon value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_membership_inference_defense_apply_batch(double** logits_batch, size_t batch_size, size_t logit_count, double epsilon, double** clipped_batch) {
     if(!logits_batch||!clipped_batch||batch_size==0) return -1;
     for(size_t b=0;b<batch_size;b++) SNEPPX_membership_inference_defense_apply(logits_batch[b],logit_count,epsilon,clipped_batch[b]);
     return 0;
 }
+/**
+ * @brief Perform Data Extraction Prevent Add Rule.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_add_rule(const char* rule) {
     if(!rule||extract_rule_count>=SNEPPX_EXTRACT_MAX_RULES) return -1;
     strncpy(extract_rules[extract_rule_count],rule,SNEPPX_EXTRACT_RULE_LEN-1);
     extract_rules[extract_rule_count][SNEPPX_EXTRACT_RULE_LEN-1]=0;
     extract_rule_count++; return 0;
 }
+/**
+ * @brief Perform Data Extraction Prevent Remove Rule.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_remove_rule(const char* rule) {
     if(!rule) return -1;
     for(int i=0;i<extract_rule_count;i++){if(strcmp(extract_rules[i],rule)==0){for(int j=i;j<extract_rule_count-1;j++)strncpy(extract_rules[j],extract_rules[j+1],SNEPPX_EXTRACT_RULE_LEN-1);extract_rule_count--;return 0;}}
     return -1;
 }
+/**
+ * @brief Perform Data Extraction Prevent Clear Rules.
+ *
+ * @param extract_rules [in] Extract Rules value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_clear_rules(void) { extract_rule_count=0; memset(extract_rules,0,sizeof(extract_rules)); return 0; }
+/**
+ * @brief Perform Data Extraction Prevent Get Rule Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_get_rule_count(void) { return extract_rule_count; }
+/**
+ * @brief Perform Data Extraction Prevent Check Custom.
+ *
+ * @param output [in] Output value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_data_extraction_prevent_check_custom(const char* output, size_t len) {
     if(!output||len==0) return 0;
     char lower[4096]; size_t clen=len<4095?len:4095;
@@ -832,11 +1463,31 @@ int SNEPPX_data_extraction_prevent_check_custom(const char* output, size_t len) 
     for(int i=0;i<extract_rule_count;i++){if(strstr(lower,extract_rules[i])) return 1;}
     return 0;
 }
+/**
+ * @brief Perform Training Sanitize Batch.
+ *
+ * @param texts [in] Texts value.
+ * @param lens [in] Lens value.
+ * @param count [in] Count value.
+ * @param outputs [out] Outputs value.
+ * @param output_lens [out] Output Lens value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_batch(const char** texts, const size_t* lens, int count, char** outputs, size_t* output_lens, size_t* output_caps) {
     if(!texts||!lens||!outputs||!output_lens||!output_caps||count<=0) return -1;
     for(int i=0;i<count;i++){if(SNEPPX_training_sanitize(texts[i],lens[i],outputs[i],&output_caps[i])!=0) return -1;output_lens[i]=output_caps[i];}
     return 0;
 }
+/**
+ * @brief Perform Training Sanitize Urls.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_urls(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     size_t cap=*out_len; *out_len=0; size_t pos=0;
@@ -850,6 +1501,15 @@ int SNEPPX_training_sanitize_urls(const char* text, size_t len, char* out, size_
     }
     *out_len=pos; if(pos<cap) out[pos]=0; return 0;
 }
+/**
+ * @brief Perform Training Sanitize Ssns.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_ssns(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     size_t cap=*out_len; *out_len=0; size_t pos=0;
@@ -867,34 +1527,106 @@ int SNEPPX_training_sanitize_ssns(const char* text, size_t len, char* out, size_
     }
     *out_len=pos; if(pos<cap) out[pos]=0; return 0;
 }
+/**
+ * @brief Perform Watermark Embed With Key.
+ *
+ * @param mw [out] Mw value.
+ * @param weights [out] Weights value.
+ * @param weight_count [in] Weight Count value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_embed_with_key(SNEPPXModelWatermark* mw, double* weights, size_t weight_count, const uint8_t* key, size_t key_len) {
     if(!mw||!weights||!key||weight_count==0) return -1;
     SNEPPX_watermark_set_key(mw,key,key_len);
     return SNEPPX_watermark_embed(mw,weights,weight_count);
 }
+/**
+ * @brief Perform Watermark Verify With Key.
+ *
+ * @param weights [in] Weights value.
+ * @param weight_count [in] Weight Count value.
+ * @param key [in] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_verify_with_key(const double* weights, size_t weight_count, const uint8_t* key, size_t key_len) {
     if(!weights||!key||weight_count==0) return -1;
     return SNEPPX_watermark_detect(weights,weight_count,key,key_len);
 }
+/**
+ * @brief Perform Watermark Is Embedded.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_is_embedded(SNEPPXModelWatermark* mw) { if(!mw) return -1; return mw->embedded; }
+/**
+ * @brief Reset Watermark.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_reset(SNEPPXModelWatermark* mw) {
     if(!mw) return -1; memset(mw->watermark,0,32); mw->embedded=0; return 0;
 }
+/**
+ * @brief Perform Adversarial Smooth Batch With Epsilon.
+ *
+ * @param inputs [out] Inputs value.
+ * @param count [in] Count value.
+ * @param dim [in] Dim value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth_batch_with_epsilon(double** inputs, int count, size_t dim, double** outputs) {
     return SNEPPX_adversarial_smooth_batch(inputs,count,dim,adversarial_epsilon,outputs);
 }
+/**
+ * @brief Perform Adversarial Smooth Get Epsilon.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_adversarial_smooth_get_epsilon(void) { return adversarial_epsilon; }
+/**
+ * @brief Perform Factuality Score Batch.
+ *
+ * @param statements [in] Statements value.
+ * @param references [in] References value.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_factuality_score_batch(const char** statements, const char** references, int count) {
     if(!statements||!references||count<=0) return 0.0;
     double sum=0.0;
     for(int i=0;i<count;i++) sum+=SNEPPX_factuality_score(statements[i],references[i]);
     return sum/(double)count;
 }
+/**
+ * @brief Perform Factuality Score Check.
+ *
+ * @param statement [in] Statement value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_factuality_score_check(const char* statement, const char* reference) {
     double s=SNEPPX_factuality_score(statement,reference);
     return s>=factuality_threshold?1:0;
 }
+/**
+ * @brief Perform Factuality Get Threshold.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_factuality_get_threshold(void) { return factuality_threshold; }
+/**
+ * @brief Perform Bias Measure Demographic Parity Detail.
+ *
+ * @param predictions [in] Predictions value.
+ * @param sensitive [in] Sensitive value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure_demographic_parity_detail(const double* predictions, const int* sensitive, size_t n, double* parity_out) {
     if(!predictions||!sensitive||n==0||!parity_out) return -1;
     double sum0=0,sum1=0; int cnt0=0,cnt1=0;
@@ -902,6 +1634,16 @@ int SNEPPX_bias_measure_demographic_parity_detail(const double* predictions, con
     double mean0=cnt0>0?sum0/(double)cnt0:0.0; double mean1=cnt1>0?sum1/(double)cnt1:0.0;
     *parity_out=mean1-mean0; return 0;
 }
+/**
+ * @brief Perform Bias Measure Equalized Odds Detail.
+ *
+ * @param predictions [in] Predictions value.
+ * @param labels [in] Labels value.
+ * @param sensitive [in] Sensitive value.
+ * @param n [in] N value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure_equalized_odds_detail(const double* predictions, const int* labels, const int* sensitive, size_t n, double* eo_out) {
     if(!predictions||!labels||!sensitive||n==0||!eo_out) return -1;
     double tpr0s=0,tpr1s=0,fpr0s=0,fpr1s=0; int tpr0c=0,tpr1c=0,fpr0c=0,fpr1c=0;
@@ -910,6 +1652,14 @@ int SNEPPX_bias_measure_equalized_odds_detail(const double* predictions, const i
     double fpr0=fpr0c>0?fpr0s/(double)fpr0c:0.0;double fpr1=fpr1c>0?fpr1s/(double)fpr1c:0.0;
     *eo_out=fabs(tpr0-tpr1)+fabs(fpr0-fpr1); return 0;
 }
+/**
+ * @brief Perform Bias Measure Disparate Impact.
+ *
+ * @param predictions [in] Predictions value.
+ * @param sensitive [in] Sensitive value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_measure_disparate_impact(const double* predictions, const int* sensitive, size_t n) {
     if(!predictions||!sensitive||n==0) return -1;
     double sum0=0,sum1=0; int cnt0=0,cnt1=0;
@@ -918,27 +1668,83 @@ int SNEPPX_bias_measure_disparate_impact(const double* predictions, const int* s
     if(mean0<=0.0) return 0;
     return (int)((mean1/mean0)*100);
 }
+/**
+ * @brief Perform Prompt Policy Add Batch.
+ *
+ * @param pp [out] Pp value.
+ * @param rules [in] Rules value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_add_batch(SNEPPXPromptPolicy* pp, const char** rules, int count) {
     if(!pp||!rules||count<=0) return -1;
     int added=0;
     for(int i=0;i<count&&pp->policy_count<16;i++){strncpy(pp->policies[pp->policy_count],rules[i],255);pp->policies[pp->policy_count][255]=0;pp->policy_count++;added++;}
     return added;
 }
+/**
+ * @brief Perform Prompt Policy Set Enabled.
+ *
+ * @param pp [out] Pp value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_set_enabled(SNEPPXPromptPolicy* pp, int enabled) { if(!pp) return -1; pp->enabled=enabled; return 0; }
+/**
+ * @brief Perform Prompt Policy Is Enabled.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_is_enabled(SNEPPXPromptPolicy* pp) { if(!pp) return -1; return pp->enabled; }
+/**
+ * @brief Perform Prompt Policy Get Policy At.
+ *
+ * @param pp [out] Pp value.
+ * @param index [in] Index value.
+ * @param buffer [out] Buffer value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_prompt_policy_get_policy_at(SNEPPXPromptPolicy* pp, int index, char* buffer, size_t buf_size) {
     if(!pp||!buffer||buf_size==0||index<0||index>=pp->policy_count) return -1;
     strncpy(buffer,pp->policies[index],buf_size-1); buffer[buf_size-1]=0;
     return (int)strlen(buffer);
 }
+/**
+ * @brief Perform Semantic Injection Has Attacks.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_has_attacks(SNEPPXSemanticInjectionDetector* sid) {
     if(!sid) return -1; return sid->attack_count>0?1:0;
 }
+/**
+ * @brief Perform Ml Jailbreak Detect Utf8.
+ *
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_detect_utf8(const char* text, size_t len) {
     if(!text) return 0;
     return SNEPPX_ml_jailbreak_detect(text,len);
 }
+/**
+ * @brief Perform Ml Jailbreak Get Threshold.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_get_threshold(void) { return (int)(ml_jailbreak_threshold*100); }
+/**
+ * @brief Perform Encoded Attack Decode Auto All.
+ *
+ * @param input [in] Input value.
+ * @param in_len [in] In Len value.
+ * @param output [out] Output value.
+ * @param out_len [out] Out Len value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_decode_auto_all(const char* input, size_t in_len, char* output, size_t* out_len, int max_depth) {
     if(!input||!output||!out_len||max_depth<=0) return -1;
     char buf[4096]; size_t blen=0; int r=SNEPPX_encoded_attack_decode_auto(input,in_len,buf,&blen);
@@ -947,27 +1753,81 @@ int SNEPPX_encoded_attack_decode_auto_all(const char* input, size_t in_len, char
     memcpy(output,buf,blen); *out_len=blen; return 0;
 }
 static int token_anomaly_warning_count=0;
+/**
+ * @brief Perform Token Anomaly Check Warning.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_check_warning(double score) {
     if(score>token_anomaly_threshold){token_anomaly_warning_count++;return 1;}
     return 0;
 }
+/**
+ * @brief Perform Token Anomaly Get Warning Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_token_anomaly_get_warning_count(void) { return token_anomaly_warning_count; }
+/**
+ * @brief Perform Token Anomaly Reset Warnings.
+ */
 void SNEPPX_token_anomaly_reset_warnings(void) { token_anomaly_warning_count=0; }
+/**
+ * @brief Perform Model Inversion Set Noise Scale.
+ *
+ * @param mid [out] Mid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_set_noise_scale(SNEPPXModelInversionDefense* mid, double scale) {
     if(!mid||scale<0.0) return -1; mid->noise_scale=scale; return 0;
 }
+/**
+ * @brief Perform Model Inversion Set Clip Norm.
+ *
+ * @param mid [out] Mid value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_model_inversion_set_clip_norm(SNEPPXModelInversionDefense* mid, double norm) {
     if(!mid||norm<=0.0) return -1; mid->clip_norm=norm; return 0;
 }
+/**
+ * @brief Perform Model Inversion Get Noise Scale From Mid.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_model_inversion_get_noise_scale_from_mid(SNEPPXModelInversionDefense* mid) {
     if(!mid) return -1.0; return mid->noise_scale;
 }
+/**
+ * @brief Perform Model Inversion Get Clip Norm From Mid.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_model_inversion_get_clip_norm_from_mid(SNEPPXModelInversionDefense* mid) {
     if(!mid) return -1.0; return mid->clip_norm;
 }
+/**
+ * @brief Perform Membership Inference Defense Apply With Eps.
+ *
+ * @param logits [out] Logits value.
+ * @param count [in] Count value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_membership_inference_defense_apply_with_eps(double* logits, size_t count, double* clipped_out) {
     return SNEPPX_membership_inference_defense_apply(logits,count,membership_epsilon,clipped_out);
 }
+/**
+ * @brief Perform Training Sanitize All.
+ *
+ * @param text [in] Text value.
+ * @param len [in] Len value.
+ * @param out [out] Out value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_training_sanitize_all(const char* text, size_t len, char* out, size_t* out_len) {
     if(!text||!out||!out_len) return -1;
     char buf1[8192],buf2[8192],buf3[8192],buf4[8192];size_t l1=8192,l2=8192,l3=8192,l4=8192;
@@ -977,35 +1837,121 @@ int SNEPPX_training_sanitize_all(const char* text, size_t len, char* out, size_t
     if(SNEPPX_training_sanitize_ips(buf3,l3,out,out_len)!=0) return -1;
     return 0;
 }
+/**
+ * @brief Perform Factuality Score Get Threshold.
+ *
+ * @return The result value, or 0 on error.
+ */
 double SNEPPX_factuality_score_get_threshold(void) { return factuality_threshold; }
+/**
+ * @brief Perform Factuality Score Compare Threshold.
+ *
+ * @param statement [in] Statement value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_factuality_score_compare_threshold(const char* statement, const char* reference) {
     double s=SNEPPX_factuality_score(statement,reference);
     return s>=factuality_threshold?1:0;
 }
+/**
+ * @brief Perform Adversarial Smooth Get Epsilon Int.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth_get_epsilon_int(void) { return (int)(adversarial_epsilon*10000); }
+/**
+ * @brief Apply Adversarial Smooth.
+ *
+ * @param input [out] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_adversarial_smooth_apply(double* input, size_t input_dim) {
     return SNEPPX_adversarial_smooth(input,input_dim,adversarial_epsilon);
 }
+/**
+ * @brief Perform Watermark Get Key.
+ *
+ * @param mw [out] Mw value.
+ * @param key [out] Key value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_get_key(SNEPPXModelWatermark* mw, uint8_t* key, size_t* key_len) {
     if(!mw||!key||!key_len) return -1;
     size_t cp=(*key_len<32)?*key_len:32; memcpy(key,mw->watermark,cp); *key_len=cp; return 0;
 }
+/**
+ * @brief Perform Watermark Get Key Length.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_watermark_get_key_length(SNEPPXModelWatermark* mw) { if(!mw) return -1; return 32; }
+/**
+ * @brief Perform Bias Get Measured.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_bias_get_measured(SNEPPXBiasMetrics* bm) { if(!bm) return -1; return bm->measured; }
+/**
+ * @brief Perform Semantic Injection Is Initialized.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_is_initialized(SNEPPXSemanticInjectionDetector* sid) { if(!sid) return 0; return 1; }
+/**
+ * @brief Perform Semantic Injection Get Capacity.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_semantic_injection_get_capacity(void) { return SNEPPX_S5_MAX_EMBEDDING; }
+/**
+ * @brief Perform Ml Jailbreak Detect Raw.
+ *
+ * @param text [in] Text value.
+ * @param text [in] Text value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_detect_raw(const char* text, size_t len) { return SNEPPX_ml_jailbreak_detect(text,len); }
+/**
+ * @brief Perform Ml Jailbreak Get Custom Count.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_ml_jailbreak_get_custom_count(void) { return custom_jailbreak_count; }
+/**
+ * @brief Perform Encoded Attack Has Prefix.
+ *
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_has_prefix(const char* input, size_t in_len) {
     if(!input) return 0;
     if(in_len>=2&&input[0]=='0'&&(input[1]=='x'||input[1]=='X')) return 1;
     return 0;
 }
+/**
+ * @brief Perform Encoded Attack Is Base64.
+ *
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_is_base64(const char* input, size_t in_len) {
     if(!input||in_len==0) return 0;
     for(size_t i=0;i<in_len;i++){char c=input[i];if(!((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')||c=='+'||c=='/'||c=='='))return 0;}
     return in_len%4==0?1:0;
 }
+/**
+ * @brief Perform Encoded Attack Detect Encoding.
+ *
+ * @param input [in] Input value.
+ *
+ * @return 0 on success, -1 on error.
+ */
 int SNEPPX_encoded_attack_detect_encoding(const char* input, size_t in_len) {
     if(!input||in_len==0) return 0;
     if(in_len>=2&&input[0]=='0'&&(input[1]=='x'||input[1]=='X')) return 1;

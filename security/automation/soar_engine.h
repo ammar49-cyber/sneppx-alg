@@ -9,6 +9,22 @@
 #define SNEPPX_SOAR_MAX_ACTIONS 64
 #define SNEPPX_SOAR_MAX_INTEGRATIONS 128
 
+/*
+ * SNEPPX - Soar Engine
+ *
+ * WHAT
+ *   Soar Engine.
+ *
+ * CONCEPT
+ *   Provides the Soar Engine.
+ *
+ * ROLE
+ *   SNEPPX-Algo core component. See docs/COMMENTING.md for the
+ *   four-layer commenting standard used across this codebase.
+ *
+ */
+
+
 typedef enum {
     SNEPPX_SOAR_TRIGGER_BY_ALERT,
     SNEPPX_SOAR_TRIGGER_BY_SCHEDULE,
