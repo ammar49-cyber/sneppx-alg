@@ -48,7 +48,7 @@ cmake --build build --config Release --target neural_security_cpp
 cmake --build build --config Release --target _SNEPPX_c
 
 # CUDA kernels (requires CUDA SDK)
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNEPPX_BUILD_CUDA=ON
 cmake --build build --config Release --target neural_cuda_kernels
 ```
 
@@ -70,7 +70,7 @@ cmake --build build --config Release --target neural_cuda_kernels
 ## 5. Debug Build
 
 ```powershell
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ```
 
