@@ -21,6 +21,13 @@
 | [BENCHMARKS.md](BENCHMARKS.md) | Performance benchmarks | v1.0.0 |
 | [COVERAGE.md](COVERAGE.md) | Code coverage reporting | v0.5.0 |
 | [hss_training.md](hss_training.md) | End-to-end HSS training walkthrough | v0.5.0 |
+| **Code walkthroughs (v1.1.0)** | | |
+| [code-walkthrough.md](code-walkthrough.md) | The five-stage HSS→SER→ARC→NPE→FM pipeline map | v1.1.0 |
+| [walkthrough-hss.md](walkthrough-hss.md) | HSS source walkthrough (SSM layers, scan, discretization) | v1.1.0 |
+| [walkthrough-ser.md](walkthrough-ser.md) | SER source walkthrough (MoE gating, routing, load balance) | v1.1.0 |
+| [walkthrough-arc.md](walkthrough-arc.md) | ARC source walkthrough (input guard, gradient obfuscation) | v1.1.0 |
+| [walkthrough-npe.md](walkthrough-npe.md) | NPE source walkthrough (16-register VM, 32 opcodes, JIT) | v1.1.0 |
+| [walkthrough-fm.md](walkthrough-fm.md) | FM source walkthrough (memory banks, federated sync) | v1.1.0 |
 | **Contribution framework (v1.1.0)** | | |
 | [CONTRIBUTOR_TIERS.md](CONTRIBUTOR_TIERS.md) | Five-tier merit system with gates, badges, promotion process | v1.1.0 |
 | [BRANCHING_STRATEGY.md](BRANCHING_STRATEGY.md) | Track-based Git Flow with 8 branch types | v1.1.0 |
