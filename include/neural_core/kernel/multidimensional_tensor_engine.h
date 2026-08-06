@@ -1046,6 +1046,22 @@ SNEPPXTensor* SNEPPX_tensor_silu(const SNEPPXTensor* src);
  */
 SNEPPXTensor* SNEPPX_tensor_sigmoid(const SNEPPXTensor* src);
 /**
+ * @brief Perform Tensor Fake Quant (symmetric affine, straight-through).
+ *
+ * Quantizes src to `bits` using `scale` (symmetric, zero point = 0), then
+ * de-quantizes back to float. Used for quantization-aware training: the
+ * forward is the (non-differentiable-looking) quantize/dequantize, while the
+ * backward is the straight-through estimator (identity) handled by the
+ * autodiff op SNEPPX_fake_quant.
+ *
+ * @param src [in] Src value.
+ * @param scale [in] Scale value (> 0).
+ * @param bits [in] Bit width (2..16), e.g. 8 for INT8.
+ *
+ * @return Pointer on success, NULL on error.
+ */
+SNEPPXTensor* SNEPPX_tensor_fake_quant(const SNEPPXTensor* src, float scale, int bits);
+/**
  * @brief Perform Tensor Dropout.
  *
  * @param src [in] Src value.

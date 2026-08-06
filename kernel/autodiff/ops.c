@@ -824,6 +824,50 @@ SNEPPXVariable* SNEPPX_relu(SNEPPXTape* tape, SNEPPXVariable* a) {
     return var;
 }
 
+/* ===== fake_quant forward/backward (QAT, straight-through estimator) ===== */
+typedef struct { SNEPPXVariable* a; float scale; int bits; } FakeQuantCtx;
+static void free_ctx_FakeQuantCtx(void* p) { SNEPPX_free(p, sizeof(FakeQuantCtx)); }
+static void* recompute_FakeQuantCtx(SNEPPXVariable* var, size_t* params, size_t n) {
+    (void)params; (void)n;
+    FakeQuantCtx* ctx = (FakeQuantCtx*)SNEPPX_malloc(sizeof(FakeQuantCtx), 64);
+    if (ctx) { ctx->a = var->parents[0]; ctx->scale = 0.0f; ctx->bits = 0; var->free_ctx = free_ctx_FakeQuantCtx; }
+    return ctx;
+}
+static void backward_fake_quant(void* ctx, SNEPPXTensor* grad_output) {
+    FakeQuantCtx* c = (FakeQuantCtx*)ctx;
+    if (!c->a->requires_grad) return;
+    SNEPPXTensor* ga = SNEPPX_tensor_copy(grad_output);
+    grad_accum(&c->a->grad, ga);
+}
+/**
+ * @brief Perform Fake Quant (symmetric affine, STE backward).
+ *
+ * Forward quantizes the input tensor to `bits` with `scale` and de-quantizes;
+ * backward is the straight-through estimator (unit gradient w.r.t. the input).
+ *
+ * @param tape [out] Tape value.
+ * @param a [in] Input value.
+ * @param scale [in] Scale value (> 0).
+ * @param bits [in] Bit width (2..16).
+ *
+ * @return Pointer on success, NULL on error.
+ */
+SNEPPXVariable* SNEPPX_fake_quant(SNEPPXTape* tape, SNEPPXVariable* a, float scale, int bits) {
+    int rg = requires_grad1(a);
+    if (!a || !a->data) return NULL;
+    SNEPPXTensor* result = SNEPPX_tensor_fake_quant(a->data, scale, bits);
+    if (!result) return NULL;
+    SNEPPXVariable* var = SNEPPX_variable_create(result, rg);
+    if (!var) { SNEPPX_tensor_destroy(result); return NULL; }
+    if (rg && !SNEPPX_no_grad_is_active()) {
+        FakeQuantCtx* ctx = (FakeQuantCtx*)SNEPPX_malloc(sizeof(FakeQuantCtx), 64);
+        if (ctx) { ctx->a = a; ctx->scale = scale; ctx->bits = bits; var->backward_fn = backward_fake_quant; var->backward_ctx = ctx; var->free_ctx = free_ctx_FakeQuantCtx; var->recompute_ctx = recompute_FakeQuantCtx; }
+        set_parents(var, &a, 1);
+    }
+    if (tape && !SNEPPX_no_grad_is_active()) SNEPPX_tape_record(tape, var);
+    return var;
+}
+
 /* ===== gelu forward/backward ===== */
 typedef struct { SNEPPXVariable* a; } GeluCtx;
 static void free_ctx_GeluCtx(void* p) { SNEPPX_free(p, sizeof(GeluCtx)); }

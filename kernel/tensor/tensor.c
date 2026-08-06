@@ -2168,6 +2168,32 @@ SNEPPXTensor* SNEPPX_tensor_relu(const SNEPPXTensor* src) {
 }
 
 /**
+ * @brief Perform Tensor Fake Quant (symmetric affine).
+ *
+ * @param src [in] Src value.
+ * @param scale [in] Scale value (> 0).
+ * @param bits [in] Bit width (2..16).
+ *
+ * @return Pointer on success, NULL on error.
+ */
+SNEPPXTensor* SNEPPX_tensor_fake_quant(const SNEPPXTensor* src, float scale, int bits) {
+    if (!src || !src->data || scale <= 0.0f || bits < 2 || bits > 16) return NULL;
+    int qmax = (1 << (bits - 1)) - 1;
+    int qmin = -(1 << (bits - 1));
+    float inv_scale = 1.0f / scale;
+    SNEPPXTensor* result = SNEPPX_tensor_copy(src);
+    if (!result) return NULL;
+    float* rd = (float*)result->data;
+    for (size_t i = 0; i < result->size; i++) {
+        float qf = floorf(rd[i] * inv_scale + 0.5f);
+        if (qf < (float)qmin) qf = (float)qmin;
+        if (qf > (float)qmax) qf = (float)qmax;
+        rd[i] = qf * scale;
+    }
+    return result;
+}
+
+/**
  * @brief Perform Tensor Gelu.
  *
  * @return Pointer on success, NULL on error.
