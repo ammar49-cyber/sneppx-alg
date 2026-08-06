@@ -71,7 +71,7 @@ static void reduce_grad_to_shape(SNEPPXTensor** grad_ptr, const SNEPPXTensor* ta
     if (!reduced) { free(g_shape); free(t_shape); return; }
     size_t* strides_g = (size_t*)calloc(max_ndim, sizeof(size_t));
     size_t* strides_t = (size_t*)calloc(target->ndim, sizeof(size_t));
-    if (!strides_g || !strides_t) { free(g_shape); free(t_shape); free(reduced); SNEPPX_free(strides_g, max_ndim * sizeof(size_t)); SNEPPX_free(strides_t, target->ndim * sizeof(size_t)); return; }
+    if (!strides_g || !strides_t) { free(g_shape); free(t_shape); free(reduced); free(strides_g); free(strides_t); return; }
     strides_t[target->ndim - 1] = 1;
     for (size_t i = target->ndim; i > 1; i--) strides_t[i - 2] = strides_t[i - 1] * target->shape[i - 1];
     strides_g[max_ndim - 1] = 1;
