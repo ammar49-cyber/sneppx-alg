@@ -197,8 +197,33 @@ int SneppX_onnx_save_graph(const char* path, const char* model_name,
                            long long opset_version,
                            const SneppXOnnxValueInfo* inputs, size_t ninputs,
                            const SneppXOnnxValueInfo* outputs, size_t noutputs,
-                           const SneppXOnnxInitializer* initializers, size_t ninit,
-                           const SneppXOnnxNode* nodes, size_t nnodes);
+                            const SneppXOnnxInitializer* initializers, size_t ninit,
+                            const SneppXOnnxNode* nodes, size_t nnodes);
+
+/* ---- canonical ONNX model validation (standard IR field numbers) ---- */
+#define SNEPPX_ONNX_ELEM_FLOAT 1
+#define SNEPPX_ONNX_ELEM_FLOAT16 10
+#define SNEPPX_ONNX_ELEM_DOUBLE 11
+
+/**
+ * @brief Validate a standard binary .onnx ModelProto (raw protobuf, with or
+ *        without an "ONNX" magic prefix). Accepts files emitted by
+ *        SneppX_onnx_save_linear / SneppX_onnx_save_graph.
+ *
+ * Checks performed: well-formed protobuf parse, ir_version present, opset
+ * import present, graph name present, every node op_type non-empty, every node
+ * input is declared (by a graph input or an initializer, or produced by an
+ * earlier node), every graph output is produced by some node, initializer
+ * data_type is a supported float/16/double, and initializer raw_data length
+ * matches the product of its dims.
+ *
+ * @param path [in] .onnx file path.
+ * @param error_msg [out] Buffer for a human-readable error (may be NULL).
+ * @param error_max [in] Size of error_msg (ignored if error_msg is NULL).
+ *
+ * @return 0 if the model is valid, -1 if invalid (and error_msg is filled).
+ */
+int SneppX_onnx_validate(const char* path, char* error_msg, size_t error_max);
 #ifdef __cplusplus
 }
 #endif

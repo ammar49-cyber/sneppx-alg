@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <math.h>
 
 /*
@@ -834,3 +835,376 @@ int SneppX_onnx_save_graph(const char* path, const char* model_name,
     pbw_free(&graph);
     return rc;
 }
+
+/* =======================================================================
+ * Canonical ONNX model validator (standard IR field numbers).
+ * Parses a ModelProto graph and checks structural correctness + tensor
+ * connectivity. Does not depend on the non-standard in-tree reader.
+ * ======================================================================= */
+
+typedef struct {
+    char* name;
+    uint64_t* dims;
+    size_t ndim;
+    int data_type;
+    size_t raw_len;
+} OnnxVInit;
+
+typedef struct {
+    char* op_type;
+    char** inputs;
+    size_t nin;
+    char** outputs;
+    size_t nout;
+} OnnxVNode;
+
+typedef struct {
+    char* gname;
+    int ir_version;
+    int opset_version;
+    OnnxVInit* inits;
+    size_t ninit;
+    OnnxVNode* nodes;
+    size_t nnodes;
+    char** in_names;
+    size_t nin_names;
+    char** out_names;
+    size_t nout_names;
+} OnnxModel;
+
+static void onnxv_free_model(OnnxModel* m) {
+    for (size_t i = 0; i < m->ninit; i++) {
+        free(m->inits[i].name);
+        free(m->inits[i].dims);
+    }
+    free(m->inits);
+    for (size_t i = 0; i < m->nnodes; i++) {
+        free(m->nodes[i].op_type);
+        for (size_t k = 0; k < m->nodes[i].nin; k++) free(m->nodes[i].inputs[k]);
+        free(m->nodes[i].inputs);
+        for (size_t k = 0; k < m->nodes[i].nout; k++) free(m->nodes[i].outputs[k]);
+        free(m->nodes[i].outputs);
+    }
+    free(m->nodes);
+    for (size_t i = 0; i < m->nin_names; i++) free(m->in_names[i]);
+    free(m->in_names);
+    for (size_t i = 0; i < m->nout_names; i++) free(m->out_names[i]);
+    free(m->out_names);
+    free(m->gname);
+}
+
+static char* onnxv_dup_str(const unsigned char* b, size_t len) {
+    char* s = (char*)malloc(len + 1);
+    memcpy(s, b, len);
+    s[len] = 0;
+    return s;
+}
+
+/* find first wire-0 varint field `field` in [start,end); fills *val. */
+static int onnxv_field_varint(const unsigned char* b, size_t start, size_t end,
+                              unsigned field, uint64_t* val) {
+    size_t pos = start;
+    while (pos < end) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.field == field && t.wire == 0) {
+            *val = t.val;
+            return 1;
+        }
+        if (t.wire == 2) pos += t.len;
+        else if (t.wire == 1) pos += 8;
+        else if (t.wire == 5) pos += 4;
+    }
+    return 0;
+}
+
+/* ValueInfoProto name (field 1). */
+static char* onnxv_vi_name(const unsigned char* b, size_t start, size_t end) {
+    size_t pos = start;
+    while (pos < end) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.wire == 2 && t.field == 1) return onnxv_dup_str(b + pos, t.len);
+        if (t.wire == 2) pos += t.len;
+        else if (t.wire == 1) pos += 8;
+        else if (t.wire == 5) pos += 4;
+    }
+    return NULL;
+}
+
+/* TensorProto: name(8), dims(1), data_type(2), raw_data(9). */
+static void onnxv_parse_tensor(const unsigned char* b, size_t start, size_t end,
+                               OnnxVInit* o) {
+    size_t pos = start;
+    o->name = NULL;
+    o->dims = NULL;
+    o->ndim = 0;
+    o->data_type = 0;
+    o->raw_len = 0;
+    uint64_t dv[64];
+    size_t nd = 0;
+    while (pos < end) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.field == 1) {
+            if (t.wire == 2) {
+                size_t s = pos, e = pos + t.len;
+                while (s < e && nd < 64) {
+                    uint64_t v = 0;
+                    int sh = 0;
+                    do {
+                        v |= (uint64_t)(b[s] & 0x7f) << sh;
+                        sh += 7;
+                    } while (b[s++] & 0x80);
+                    dv[nd++] = v;
+                }
+                pos += t.len;
+            } else if (t.wire == 0 && nd < 64) {
+                dv[nd++] = t.val;
+            } else {
+                pos += t.len;
+            }
+        } else if (t.field == 2 && t.wire == 0) {
+            o->data_type = (int)t.val;
+        } else if (t.field == 8 && t.wire == 2) {
+            o->name = onnxv_dup_str(b + pos, t.len);
+            pos += t.len;
+        } else if (t.field == 9 && t.wire == 2) {
+            o->raw_len = t.len;
+            pos += t.len;
+        } else if (t.wire == 2) {
+            pos += t.len;
+        } else if (t.wire == 1) {
+            pos += 8;
+        } else if (t.wire == 5) {
+            pos += 4;
+        }
+    }
+    if (nd) {
+        o->dims = (uint64_t*)malloc(nd * sizeof(uint64_t));
+        for (size_t i = 0; i < nd; i++) o->dims[i] = dv[i];
+        o->ndim = nd;
+    }
+}
+
+/* NodeProto: input(1), output(2), name(3), op_type(4), attribute(5). */
+static void onnxv_parse_node(const unsigned char* b, size_t start, size_t end,
+                             OnnxVNode* o) {
+    size_t pos = start;
+    o->op_type = NULL;
+    o->inputs = NULL; o->nin = 0;
+    o->outputs = NULL; o->nout = 0;
+    size_t capi = 0, capo = 0;
+    while (pos < end) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.wire == 2 && t.field == 1) {
+            char* s = onnxv_dup_str(b + pos, t.len);
+            if (o->nin >= capi) { capi = capi ? capi * 2 : 8; o->inputs = (char**)realloc(o->inputs, capi * sizeof(char*)); }
+            o->inputs[o->nin++] = s;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 2) {
+            char* s = onnxv_dup_str(b + pos, t.len);
+            if (o->nout >= capo) { capo = capo ? capo * 2 : 8; o->outputs = (char**)realloc(o->outputs, capo * sizeof(char*)); }
+            o->outputs[o->nout++] = s;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 4) {
+            o->op_type = onnxv_dup_str(b + pos, t.len);
+            pos += t.len;
+        } else if (t.wire == 2) {
+            pos += t.len;
+        } else if (t.wire == 1) {
+            pos += 8;
+        } else if (t.wire == 5) {
+            pos += 4;
+        }
+    }
+}
+
+static void onnxv_parse_graph(const unsigned char* b, size_t start, size_t end,
+                              OnnxModel* m) {
+    size_t pos = start;
+    while (pos < end) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.wire == 2 && t.field == 1) {            /* node */
+            OnnxVNode nd;
+            onnxv_parse_node(b, pos, pos + t.len, &nd);
+            m->nodes = (OnnxVNode*)realloc(m->nodes, (m->nnodes + 1) * sizeof(OnnxVNode));
+            m->nodes[m->nnodes++] = nd;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 5) {     /* initializer */
+            OnnxVInit it;
+            onnxv_parse_tensor(b, pos, pos + t.len, &it);
+            m->inits = (OnnxVInit*)realloc(m->inits, (m->ninit + 1) * sizeof(OnnxVInit));
+            m->inits[m->ninit++] = it;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 11) {    /* input value_info */
+            char* nm = onnxv_vi_name(b, pos, pos + t.len);
+            m->in_names = (char**)realloc(m->in_names, (m->nin_names + 1) * sizeof(char*));
+            m->in_names[m->nin_names++] = nm;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 12) {    /* output value_info */
+            char* nm = onnxv_vi_name(b, pos, pos + t.len);
+            m->out_names = (char**)realloc(m->out_names, (m->nout_names + 1) * sizeof(char*));
+            m->out_names[m->nout_names++] = nm;
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 2) {     /* graph name */
+            m->gname = onnxv_dup_str(b + pos, t.len);
+            pos += t.len;
+        } else if (t.wire == 2) {
+            pos += t.len;
+        } else if (t.wire == 1) {
+            pos += 8;
+        } else if (t.wire == 5) {
+            pos += 4;
+        }
+    }
+}
+
+static void onnxv_parse_model(const unsigned char* b, size_t len, OnnxModel* m) {
+    size_t pos = 0;
+    /* accept both raw protobuf and the "ONNX"+len-prefixed SNEPPX-internal form */
+    if (len >= 8 && b[0] == 'O' && b[1] == 'N' && b[2] == 'N' && b[3] == 'X') {
+        pos = 8;
+    }
+    while (pos < len) {
+        PBTag t = pb_read_tag(b, &pos);
+        if (t.wire == 0 && t.field == 1) {          /* ir_version */
+            m->ir_version = (int)t.val;
+        } else if (t.wire == 2 && t.field == 7) {     /* graph */
+            onnxv_parse_graph(b, pos, pos + t.len, m);
+            pos += t.len;
+        } else if (t.wire == 2 && t.field == 8) {     /* opset_import -> version(field 2) */
+            uint64_t v = 0;
+            if (onnxv_field_varint(b, pos, pos + t.len, 2, &v))
+                m->opset_version = (int)v;
+            pos += t.len;
+        } else if (t.wire == 2) {
+            pos += t.len;
+        } else if (t.wire == 1) {
+            pos += 8;
+        } else if (t.wire == 5) {
+            pos += 4;
+        }
+    }
+}
+
+static int onnxv_name_in(const char* name, const char** list, size_t n) {
+    for (size_t i = 0; i < n; i++)
+        if (list[i] && name && strcmp(list[i], name) == 0) return 1;
+    return 0;
+}
+
+/**
+ * @brief Validate a standard binary .onnx ModelProto.
+ */
+int SneppX_onnx_validate(const char* path, char* error_msg, size_t error_max) {
+    if (!path) return -1;
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        if (error_msg && error_max) snprintf(error_msg, error_max, "cannot open file");
+        return -1;
+    }
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (sz <= 0 || sz > (1024 * 1024 * 256)) {
+        if (error_msg && error_max) snprintf(error_msg, error_max, "invalid file size %ld", sz);
+        fclose(f);
+        return -1;
+    }
+    unsigned char* buf = (unsigned char*)malloc((size_t)sz);
+    size_t rd = fread(buf, 1, (size_t)sz, f);
+    fclose(f);
+    if (rd != (size_t)sz) {
+        free(buf);
+        if (error_msg && error_max) snprintf(error_msg, error_max, "short read %zu", rd);
+        return -1;
+    }
+
+    OnnxModel m;
+    memset(&m, 0, sizeof(m));
+    onnxv_parse_model(buf, (size_t)sz, &m);
+
+    int rc = 0;
+#define SET_ERR(fmt, ...) do { if (error_msg && error_max) snprintf(error_msg, error_max, fmt, ##__VA_ARGS__); } while (0)
+
+    if (!m.ir_version)           { SET_ERR("missing ir_version"); rc = -1; goto done; }
+    if (!m.opset_version)        { SET_ERR("missing opset_import"); rc = -1; goto done; }
+    if (!m.gname)                { SET_ERR("missing graph name"); rc = -1; goto done; }
+
+    /* initializer sanity: data_type supported + raw_data length matches dims product */
+    for (size_t i = 0; i < m.ninit; i++) {
+        OnnxVInit* it = &m.inits[i];
+        if (!it->name)            { SET_ERR("initializer %zu has no name", i); rc = -1; goto done; }
+        if (it->data_type != 1 && it->data_type != 10 && it->data_type != 11) {
+            SET_ERR("initializer '%s' unsupported data_type %d", it->name, it->data_type);
+            rc = -1; goto done;
+        }
+        uint64_t prod = 1;
+        for (size_t k = 0; k < it->ndim; k++) prod *= it->dims[k];
+        size_t esz = (it->data_type == 11) ? 8 : (it->data_type == 10 ? 2 : 4);
+        if (it->raw_len != prod * esz) {
+            SET_ERR("initializer '%s' raw_data %zu != expected %llu",
+                    it->name, it->raw_len, (unsigned long long)(prod * esz));
+            rc = -1; goto done;
+        }
+    }
+
+    /* connectivity: a tensor is "declared" if it is a graph input or an
+       initializer, or produced by an already-emitted node (nodes are in order). */
+    {
+        size_t total_out = 0;
+        for (size_t i = 0; i < m.nnodes; i++) total_out += m.nodes[i].nout;
+        const char** decl = (const char**)malloc((m.nin_names + m.ninit + total_out) * sizeof(char*));
+        size_t ndef = 0;
+        for (size_t i = 0; i < m.nin_names; i++) decl[ndef++] = m.in_names[i];
+        for (size_t i = 0; i < m.ninit; i++)     decl[ndef++] = m.inits[i].name;
+
+        for (size_t i = 0; i < m.nnodes; i++) {
+            OnnxVNode* nd = &m.nodes[i];
+            if (!nd->op_type || nd->op_type[0] == 0) {
+                SET_ERR("node %zu has no op_type", i);
+                rc = -1;
+                break;
+            }
+            for (size_t j = 0; j < nd->nin; j++) {
+                if (!onnxv_name_in(nd->inputs[j], decl, ndef)) {
+                    SET_ERR("node '%s' input '%s' is not declared",
+                            nd->op_type, nd->inputs[j]);
+                    rc = -1;
+                    break;
+                }
+            }
+            if (rc != 0) break;
+            for (size_t j = 0; j < nd->nout; j++) {
+                if (onnxv_name_in(nd->outputs[j], decl, ndef)) {
+                    SET_ERR("node '%s' output '%s' conflicts with an existing tensor",
+                            nd->op_type, nd->outputs[j]);
+                    rc = -1;
+                    break;
+                }
+                decl[ndef++] = nd->outputs[j];
+            }
+            if (rc != 0) break;
+        }
+
+        /* every graph output must be produced by some node */
+        if (rc == 0) {
+            for (size_t i = 0; i < m.nout_names; i++) {
+                if (!onnxv_name_in(m.out_names[i], decl, ndef)) {
+                    SET_ERR("graph output '%s' is not produced by any node", m.out_names[i]);
+                    rc = -1;
+                    break;
+                }
+            }
+        }
+        free(decl);
+        if (rc != 0) goto done;
+    }
+
+    if (rc == 0 && error_msg && error_max) error_msg[0] = 0;
+
+done:
+    onnxv_free_model(&m);
+    free(buf);
+#undef SET_ERR
+    return rc;
+}
+

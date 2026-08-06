@@ -19,7 +19,7 @@ phase log in `AGENTS.md`.
 | Subsystem / Capability | SNEPPX status | Gap note |
 |---|---|---|
 | **Binary model export (ONNX)** | **Implemented** | Canonical binary `ModelProto` export: single-op linear (`SneppX_onnx_save_linear`) and arbitrary DAGs (`SneppX_onnx_save_graph`, any op with INT/FLOAT/INTS/FLOATS attrs, symbolic batch dims). Verified by round-trip tests. `onnx_check` is still a stub (no shape inference) |
-| ONNX validation / shape inference | Stub | `onnx_check` only verifies magic; no type/shape inference |
+| ONNX validation / shape inference | Implemented (structural) | `SneppX_onnx_validate` now checks ir_version/opset/graph name, initializer `raw_data` vs dims product, node input declaration, and output production (rejects undeclared inputs / unproduced outputs / malformed models). `onnx_check` remains legacy magic-only; full type/shape inference (e.g. symbolic batch propagation) still TODO |
 | Graph-level model import (run) | Partial | In-tree C reader uses **non-standard** protobuf field numbers (see note) |
 | Keras-/nn.Module-style layer API | Missing | No sequential / layer call API |
 | Post-training quantization | Implemented | INT8/INT4/FP8, AWQ, GPTQ (C, CUDA, Python) |
@@ -95,6 +95,21 @@ against a **non-standard** field layout (`GraphProto.node` treated as field 11,
 through that reader; they are written for interoperability with standard runtimes.
 The reader and its non-standard field mapping are left untouched to avoid regressions.
 
+### ONNX validation (`SneppX_onnx_validate`)
+
+`SneppX_onnx_validate` (same file) parses a canonical `ModelProto` with a small
+standard-field-number reader and enforces structural correctness: a present
+`ir_version` and `opset_import`; a graph name; every initializer's `data_type`
+being a supported float family and `raw_data` length matching the product of its
+dims; every node `op_type` non-empty; every node input being *declared* (a graph
+input, an initializer, or produced by an earlier node, since nodes are in
+topological order); every node output not colliding with an existing tensor; and
+every graph output being produced by some node. It accepts both raw-protobuf and
+the SNEPPX-internal `ONNX`-magic-prefixed files. Verified by
+`tests/unit/test_onnx_validate.c`: a valid `Gemm -> Relu` graph passes; an
+undeclared input, an unproduced output, and a truncated model are each rejected
+with a descriptive error.
+
 ## Remaining high-signal gaps (prioritized)
 
 1. ~~**Arbitrary graph ONNX export.**~~ **Done** — `SneppX_onnx_save_graph` now emits
@@ -102,9 +117,9 @@ The reader and its non-standard field mapping are left untouched to avoid regres
    Python `OnnxExporter` graph model (`bindings/python/.../onnx_export.py`, currently
    JSON-serializing) to this binary writer, and replacing the `onnx_check` stub
    with real schema/shape inference.
-2. **ONNX validation & shape inference.** `SNEPPX_onnx_check` only verifies a magic
-   header; a real checker would infer shapes (with symbolic/batch dims) and verify op
-   inputs/output arity against the ONNX operator schemas.
+2. ~~**ONNX validation & shape inference.**~~ **Done** — `SneppX_onnx_validate` now
+   performs structural validation (see above). Full type/shape inference — symbolic
+   batch propagation + ONNX op schema arity checks — remains a future increment.
 3. **Quantization-aware training.** Fake-quantize forward + straight-through-estimator
    backward is the canonical QAT recipe (cf. `torch.ao.quantization`); SNEPPX has
    post-training PTQ/AWQ/GPTQ but no differentiable fake-quant op registered in the
@@ -123,8 +138,10 @@ The reader and its non-standard field mapping are left untouched to avoid regres
 
 ## Recommendation
 
-The binary ONNX export gap is now closed and verified (linear + arbitrary graph).
-The next recommended increment is bridging the Python `OnnxExporter` graph model
-(`bindings/python/.../onnx_export.py`, currently JSON-serializing) to the canonical
-binary writer built here, then replacing the `onnx_check` stub with real
-schema/shape inference.
+The binary ONNX export and structural validation gaps are now closed and verified
+(linear + arbitrary graph export; valid-model acceptance and three rejection
+cases). The next recommended increment is bridging the Python `OnnxExporter` graph
+model (`bindings/python/.../onnx_export.py`, currently JSON-serializing) to the
+canonical binary writer built here, then adding full type/shape inference
+(symbolic batch propagation + ONNX op schema arity checks) on top of the
+existing validator.
