@@ -483,6 +483,29 @@ static void pbw_bytes(PBWBuf* b, unsigned field, const void* p, size_t n) {
     b->len += n;
 }
 
+/* scalar float (wire 5 / fixed32, little-endian IEEE-754) at field `field`. */
+static void pbw_float(PBWBuf* b, unsigned field, float v) {
+    pbw_tag(b, field, 5);
+    pbw_grow(b, 4);
+    union { float f; unsigned u; } x;
+    x.f = v;
+    b->data[b->len++] = (unsigned char)(x.u & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 8) & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 16) & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 24) & 0xff);
+}
+
+/* append a raw 4-byte LE float (for building packed repeated-float payloads). */
+static void pbw_float_raw(PBWBuf* b, float v) {
+    pbw_grow(b, 4);
+    union { float f; unsigned u; } x;
+    x.f = v;
+    b->data[b->len++] = (unsigned char)(x.u & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 8) & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 16) & 0xff);
+    b->data[b->len++] = (unsigned char)((x.u >> 24) & 0xff);
+}
+
 static void pbw_sub(PBWBuf* b, unsigned field, const PBWBuf* sub) {
     pbw_tag(b, field, 2);
     pbw_varint(b, sub->len);
@@ -672,5 +695,142 @@ int SNEPPX_onnx_save_linear(const char* path, const char* model_name,
     pbw_free(&yb);
     pbw_free(&wb);
     if (has_bias) pbw_free(&bb);
+    return rc;
+}
+
+/* ---- general-graph builder (canonical ONNX IR) ---- */
+
+/* ValueInfoProto: name(1), type(2) -> TypeProto.tensor_type(1) -> Tensor{
+   elem_type(1), shape(2) -> TensorShapeProto.dim(1){ dim_value(1)|dim_param(2) } } */
+static void pbw_value_info_v(PBWBuf* out, const SneppXOnnxValueInfo* vi) {
+    pbw_string(out, 1, vi->name);
+    PBWBuf shape; pbw_init(&shape);
+    for (size_t i = 0; i < vi->ndim; i++) {
+        if (vi->dims && vi->dims[i].param)
+            pbw_dim_param(&shape, vi->dims[i].param);
+        else {
+            size_t v = vi->dims ? vi->dims[i].value : 1;
+            pbw_dim_value(&shape, v);
+        }
+    }
+    PBWBuf tet; pbw_init(&tet);
+    pbw_varint_field(&tet, 1, (size_t)(vi->elem_type ? vi->elem_type : PBW_FLOAT_ELEM_TYPE));
+    pbw_sub(&tet, 2, &shape);
+    pbw_free(&shape);
+    PBWBuf type; pbw_init(&type);
+    pbw_sub(&type, 1, &tet);
+    pbw_free(&tet);
+    pbw_sub(out, 2, &type);
+    pbw_free(&type);
+}
+
+/* TensorProto: name(8), dims(1), data_type(2), raw_data(9). */
+static void pbw_tensor_proto_v(PBWBuf* b, const SneppXOnnxInitializer* init) {
+    pbw_string(b, 8, init->name);
+    pbw_dims(b, init->dims, init->ndim);
+    pbw_varint_field(b, 2, (size_t)(init->elem_type ? init->elem_type : PBW_FLOAT_ELEM_TYPE));
+    if (init->data && init->nelem)
+        pbw_bytes(b, 9, init->data, init->nelem * sizeof(float));
+}
+
+/* AttributeProto: name(1), type(20), f(2)|i(3)|s(4)|t(5)|g(6)|floats(7)|ints(8)|strings(9). */
+static void pbw_attr_proto(PBWBuf* out, const SneppXOnnxAttr* a) {
+    pbw_string(out, 1, a->name);
+    pbw_varint_field(out, 20, (size_t)a->type); /* AttributeType */
+    if (a->type == 2 /* INT */)       pbw_varint_field(out, 3, (size_t)a->i);
+    else if (a->type == 1 /* FLOAT */) pbw_float(out, 2, a->f);
+    else if (a->type == 7 /* INTS */) {
+        PBWBuf tmp; pbw_init(&tmp);
+        for (size_t i = 0; i < a->nints; i++) pbw_varint(&tmp, (size_t)a->ints[i]);
+        pbw_bytes(out, 8, tmp.data, tmp.len);
+        pbw_free(&tmp);
+    } else if (a->type == 6 /* FLOATS */) {
+        PBWBuf tmp; pbw_init(&tmp);
+        for (size_t i = 0; i < a->nfloats; i++) pbw_float_raw(&tmp, a->floats[i]);
+        pbw_bytes(out, 7, tmp.data, tmp.len);
+        pbw_free(&tmp);
+    }
+}
+
+/* NodeProto: input(1), output(2), name(3), op_type(4), attribute(5). */
+static void pbw_node_proto(PBWBuf* out, const SneppXOnnxNode* n) {
+    for (size_t i = 0; i < n->ninputs; i++) pbw_string(out, 1, n->inputs[i]);
+    for (size_t i = 0; i < n->noutputs; i++) pbw_string(out, 2, n->outputs[i]);
+    if (n->name)    pbw_string(out, 3, n->name);
+    pbw_string(out, 4, n->op_type);
+    for (size_t i = 0; i < n->nattrs; i++) {
+        PBWBuf a; pbw_init(&a);
+        pbw_attr_proto(&a, &n->attrs[i]);
+        pbw_sub(out, 5, &a);
+        pbw_free(&a);
+    }
+}
+
+int SneppX_onnx_save_graph(const char* path, const char* model_name,
+                           const char* producer_name, const char* producer_version,
+                           int ir_version, long long model_version,
+                           long long opset_version,
+                           const SneppXOnnxValueInfo* inputs, size_t ninputs,
+                           const SneppXOnnxValueInfo* outputs, size_t noutputs,
+                           const SneppXOnnxInitializer* initializers, size_t ninit,
+                           const SneppXOnnxNode* nodes, size_t nnodes) {
+    if (!path || !model_name || !producer_name || !producer_version)
+        return -1;
+    if (ir_version <= 0 && ir_version != 0) return -1;
+
+    /* ---- GraphProto ---- */
+    PBWBuf graph; pbw_init(&graph);
+    for (size_t i = 0; i < nnodes; i++) {
+        PBWBuf node; pbw_init(&node);
+        pbw_node_proto(&node, &nodes[i]);
+        pbw_sub(&graph, 1, &node);        /* node */
+        pbw_free(&node);
+    }
+    pbw_string(&graph, 2, model_name);    /* name */
+    for (size_t i = 0; i < ninit; i++) {
+        PBWBuf t; pbw_init(&t);
+        pbw_tensor_proto_v(&t, &initializers[i]);
+        pbw_sub(&graph, 5, &t);           /* initializer */
+        pbw_free(&t);
+    }
+    for (size_t i = 0; i < ninputs; i++) {
+        PBWBuf vi; pbw_init(&vi);
+        pbw_value_info_v(&vi, &inputs[i]);
+        pbw_sub(&graph, 11, &vi);         /* input */
+        pbw_free(&vi);
+    }
+    for (size_t i = 0; i < noutputs; i++) {
+        PBWBuf vi; pbw_init(&vi);
+        pbw_value_info_v(&vi, &outputs[i]);
+        pbw_sub(&graph, 12, &vi);         /* output */
+        pbw_free(&vi);
+    }
+
+    /* ---- OperatorSetIdProto ---- */
+    PBWBuf opset; pbw_init(&opset);
+    pbw_string(&opset, 1, "");            /* domain "" => ai.onnx */
+    pbw_varint_field(&opset, 2, (size_t)opset_version);
+
+    /* ---- ModelProto ---- */
+    PBWBuf model; pbw_init(&model);
+    if (ir_version)      pbw_varint_field(&model, 1, (size_t)ir_version);
+    pbw_string(&model, 2, producer_name);
+    pbw_string(&model, 3, producer_version);
+    pbw_varint_field(&model, 5, (size_t)(model_version >= 0 ? (size_t)model_version : 1));
+    pbw_sub(&model, 7, &graph);           /* graph */
+    pbw_sub(&model, 8, &opset);           /* opset_import */
+
+    /* ---- write raw protobuf ---- */
+    FILE* f = fopen(path, "wb");
+    int rc = -1;
+    if (f) {
+        size_t wr = fwrite(model.data, 1, model.len, f);
+        if (wr == model.len) rc = 0;
+        fclose(f);
+    }
+
+    pbw_free(&model);
+    pbw_free(&opset);
+    pbw_free(&graph);
     return rc;
 }

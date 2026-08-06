@@ -119,6 +119,86 @@ int SNEPPX_onnx_save_linear(const char* path, const char* model_name,
                             const char* input_name, const char* output_name,
                             size_t in_features, size_t out_features,
                             const float* weights, const float* bias);
+
+/* ---- general-graph ONNX binary export (canonical IR field numbers) ----
+ * These let a caller export an arbitrary graph (any op with a registered
+ * ONNX op_type, string/int/int-list/float-list attributes) as a canonical
+ * binary .onnx ModelProto. SneppXOnnxDim.param, when non-NULL, emits a symbolic
+ * (dim_param) dimension such as "batch".*/
+
+typedef struct {
+    size_t value;
+    const char* param; /* symbolic dim name (e.g. "batch"); non-NULL overrides value */
+} SneppXOnnxDim;
+
+typedef struct {
+    const char* name;
+    const SneppXOnnxDim* dims; /* may be NULL */
+    size_t ndim;
+    int elem_type;              /* 0 => FLOAT(1) */
+} SneppXOnnxValueInfo;
+
+typedef struct {
+    const char* name;
+    const size_t* dims;         /* NULL for scalar */
+    size_t ndim;
+    int elem_type;              /* 0 => FLOAT(1) */
+    const float* data;          /* product(dims) float32 values */
+    size_t nelem;
+} SneppXOnnxInitializer;
+
+typedef struct {
+    const char* name;
+    int type;                   /* 2=INT, 1=FLOAT, 7=INTS, 6=FLOATS */
+    long long i;
+    float f;
+    const long long* ints;
+    size_t nints;
+    const float* floats;
+    size_t nfloats;
+} SneppXOnnxAttr;
+
+typedef struct {
+    const char* op_type;
+    const char* name;
+    const char** inputs;
+    size_t ninputs;
+    const char** outputs;
+    size_t noutputs;
+    const SneppXOnnxAttr* attrs;
+    size_t nattrs;
+} SneppXOnnxNode;
+
+/**
+ * @brief Export an arbitrary ONNX graph as a standard binary .onnx
+ *        ModelProto (raw protobuf, loadable by onnxruntime).
+ *
+ * @param path [in] Output .onnx file path.
+ * @param model_name [in] Graph/Model name.
+ * @param producer_name [in] Model producer name.
+ * @param producer_version [in] Model producer version.
+ * @param ir_version [in] ONNX IR version (e.g. 10).
+ * @param model_version [in] Model version.
+ * @param opset_version [in] Default-domain (ai.onnx) opset version (e.g. 14).
+ * @param inputs [in] Graph inputs.
+ * @param ninputs [in] Number of graph inputs.
+ * @param outputs [in] Graph outputs.
+ * @param noutputs [in] Number of graph outputs.
+ * @param initializers [in] Tensor initializers (weights/bias).
+ * @param ninit [in] Number of initializers.
+ * @param nodes [in] Graph nodes in topological order.
+ * @param nnodes [in] Number of nodes.
+ *
+ * @return 0 on success, -1 on error.
+ */
+int SneppX_onnx_save_graph(const char* path, const char* model_name,
+                           const char* producer_name, const char* producer_version,
+                           int ir_version, long long model_version,
+                           long long opset_version,
+                           const SneppXOnnxValueInfo* inputs, size_t ninputs,
+                           const SneppXOnnxValueInfo* outputs, size_t noutputs,
+                           const SneppXOnnxInitializer* initializers, size_t ninit,
+                           const SneppXOnnxNode* nodes, size_t nnodes);
 #ifdef __cplusplus
 }
 #endif
