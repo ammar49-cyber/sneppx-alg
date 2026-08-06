@@ -409,6 +409,7 @@ from .onnx_export import (
     protobuf_to_onnx,
 )
 from .onnx_check import infer_shapes, onnx_check, broadcast_shape, OnnxShapeError
+from .experiment import Run, Experiment, ExperimentStore, load_experiment
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1276,6 +1277,11 @@ __all__ = [
     "onnx_check",
     "broadcast_shape",
     "OnnxShapeError",
+    # Experiment / run tracking
+    "Run",
+    "Experiment",
+    "ExperimentStore",
+    "load_experiment",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
