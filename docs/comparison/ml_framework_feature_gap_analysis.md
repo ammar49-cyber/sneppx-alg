@@ -18,8 +18,8 @@ phase log in `AGENTS.md`.
 
 | Subsystem / Capability | SNEPPX status | Gap note |
 |---|---|---|
-| **Binary model export (ONNX)** | **Implemented** | Canonical binary `ModelProto` export: single-op linear (`SneppX_onnx_save_linear`), arbitrary DAGs (`SneppX_onnx_save_graph`, any op with INT/FLOAT/INTS/FLOATS attrs, symbolic batch dims), and the Python `OnnxExporter` (`.onnx` paths now emit raw protobuf via `OnnxModel.to_bytes`). Cross-validated in both directions with the C writer/validator. `onnx_check` is still a stub (no shape inference) |
-| ONNX validation / shape inference | Implemented (structural) | `SneppX_onnx_validate` now checks ir_version/opset/graph name, initializer `raw_data` vs dims product, node input declaration, and output production (rejects undeclared inputs / unproduced outputs / malformed models). `onnx_check` remains legacy magic-only; full type/shape inference (e.g. symbolic batch propagation) still TODO |
+| **Binary model export (ONNX)** | **Implemented** | Canonical binary `ModelProto` export: single-op linear (`SneppX_onnx_save_linear`), arbitrary DAGs (`SneppX_onnx_save_graph`, any op with INT/FLOAT/INTS/FLOATS attrs, symbolic batch dims), and the Python `OnnxExporter` (`.onnx` paths now emit raw protobuf via `OnnxModel.to_bytes`). Cross-validated in both directions with the C writer/validator. |
+| ONNX validation / shape inference | **Implemented** | `SneppX_onnx_validate` (C) and `onnx_validate` (Python) check ir_version/opset/graph name, initializer `raw_data` vs dims product, node input declaration, and output production. Python `onnx_check` adds op-schema arity checks and full type/shape inference with symbolic batch propagation (Conv/Gemm/MatMul/pool/broadcast/reshape/transpose/concat/split/reduce/gather, 20+ op rules). |
 | Graph-level model import (run) | Partial | In-tree C reader uses **non-standard** protobuf field numbers (see note) |
 | Keras-/nn.Module-style layer API | Missing | No sequential / layer call API |
 | Post-training quantization | Implemented | INT8/INT4/FP8, AWQ, GPTQ (C, CUDA, Python) |
@@ -119,16 +119,17 @@ with a descriptive error.
    `export_binary`, with a pure-Python decoder (`protobuf_to_onnx`) and
    `onnx_validate` checks that mirror the C validator. The two implementations
    were cross-validated: the Python decoder reads C-written files and the C
-   validator accepts Python-written files. Replacing the `onnx_check` stub with
-   real schema/shape inference remains.
+   validator accepts Python-written files.
 2. ~~**ONNX validation & shape inference.**~~ **Done** — `SneppX_onnx_validate` (C)
    and `onnx_validate` (Python, parity checks) perform structural validation
-   (see above). Full type/shape inference — symbolic batch propagation + ONNX
-   op schema arity checks — remains a future increment.
-3. **Quantization-aware training.** Fake-quantize forward + straight-through-estimator
-   backward is the canonical QAT recipe (cf. `torch.ao.quantization`); SNEPPX has
-   post-training PTQ/AWQ/GPTQ but no differentiable fake-quant op registered in the
-   autodiff framework.
+   (see above). The Python `onnx_check` module adds op-schema arity checks and
+   full type/shape inference with symbolic batch propagation
+   (`infer_shapes`, 20+ op rules), surfaced as `infer_shapes` / `onnx_check`
+   on the top-level package.
+3. ~~**Quantization-aware training.**~~ **Done** — `SNEPPX_tensor_fake_quant` +
+   `SNEPPX_fake_quant` autograd op register the canonical QAT recipe: symmetric
+   affine fake-quantize forward (INT8/INT4/FP8 bit widths) with a
+   straight-through-estimator backward, verified by `test_fake_quant` (3/3).
 4. **Experiment / run tracking.** Structured `metadata.json` + `metrics.jsonl` +
    params/artifact versioning (cf. TensorBoard/runs); SNEPPX has profiling JSON but no
    run-level experiment model.
@@ -143,12 +144,11 @@ with a descriptive error.
 
 ## Recommendation
 
-The binary ONNX export and structural validation gaps are now closed across both
-implementations and verified end-to-end: linear + arbitrary graph export (C),
+The binary ONNX export and validation/shape-inference gaps are now closed across
+both implementations and verified end-to-end: linear + arbitrary graph export (C),
 Python `OnnxExporter` binary emission + `protobuf_to_onnx` decode + parity
-`onnx_validate`, cross-checked between C and Python (C-written files parse in
-Python; Python-written files pass the C validator; 24 Python ONNX tests pass).
-The next recommended increments, in priority order, are the remaining gaps in the
-list above: full ONNX type/shape inference (symbolic batch propagation + op schema
-arity checks), experiment/run tracking, a Keras-style layer API, the graph
-compiler, a mobile/edge runtime, and a hyperparameter-search orchestrator.
+`onnx_validate`, plus `onnx_check` shape inference with symbolic batch
+propagation; C-written files parse in Python and Python-written files pass the C
+validator (42 Python ONNX/shape tests pass). The remaining gaps, in priority
+order: experiment/run tracking, a Keras-style layer API, the graph compiler, a
+mobile/edge runtime, and a hyperparameter-search orchestrator.
