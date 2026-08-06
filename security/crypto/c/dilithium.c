@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdio.h>
 
 #define DILITHIUM_N 256
 #define DILITHIUM_Q 8380417
@@ -28,8 +29,43 @@
 
 
 
-static int16_t dilithium_zetas[256];
-static int init_ntt_d = 0;
+/* Fixed 256-entry NTT twiddle table (bit-reversed order).
+ * Ground truth: pq-crystals/dilithium ref/ntt.c. Must be int32_t:
+ * q = 8380417, coefficients reach ~+-4M (far outside int16_t). */
+static const int32_t dilithium_zetas[256] = {
+          0,    25847, -2608894,  -518909,   237124,  -777960,  -876248,   466468,
+  1826347,  2353451,  -359251, -2091905,  3119733, -2884855,  3111497,  2680103,
+  2725464,  1024112, -1079900,  3585928,  -549488, -1119584,  2619752, -2108549,
+ -2118186, -3859737, -1399561, -3277672,  1757237,   -19422,  4010497,   280005,
+  2706023,    95776,  3077325,  3530437, -1661693, -3592148, -2537516,  3915439,
+ -3861115, -3043716,  3574422, -2867647,  3539968,  -300467,  2348700,  -539299,
+ -1699267, -1643818,  3505694, -3821735,  3507263, -2140649, -1600420,  3699596,
+   811944,   531354,   954230,  3881043,  3900724, -2556880,  2071892, -2797779,
+ -3930395, -1528703, -3677745, -3041255, -1452451,  3475950,  2176455, -1585221,
+ -1257611,  1939314, -4083598, -1000202, -3190144, -3157330, -3632928,   126922,
+  3412210,  -983419,  2147896,  2715295, -2967645, -3693493,  -411027, -2477047,
+  -671102, -1228525,   -22981,  -1308169,  1349076,  1852771, -1430430, -3343383,
+   264944,   508951,  3097992,    44288, -1100098,   904516,  3958618, -3724342,
+    -8578,  1653064, -3249728,  2389356,  -210977,   759969, -1316856,   189548,
+ -3553272,  3159746, -1851402, -2409325,  -177440,  1315589,  1341330,  1285669,
+ -1584928,  -812732, -1439742, -3019102, -3881060, -3628969,  3839961,  2091667,
+  3407706,  2316500,  3817976, -3342478,  2244091, -2446433, -3562462,   266997,
+  2434439, -1235728,  3513181, -3520352, -3759364, -1197226, -3193378,   900702,
+  1859098,   909542,  819034,  495491, -1613174,   -43260,  -522500,  -655327,
+ -3122442,  2031748,  3207046, -3556995,  -525098,  -768622, -3595838,   342297,
+   286988, -2437823,  4108315,  3437287, -3342277,  1735879,   203044,  2842341,
+  2691481, -2590150,  1265009,  4055324,  1247620,  2486353,  1595974, -3767016,
+  1250494,  2635921, -3548272, -2994039,  1863119,  1903435, -1050970, -1333058,
+  1237275, -3318210, -1430225,  -451100,  1312455,  3306115, -1962642, -1279661,
+  1917081, -2546312, -1374803,  1500165,   777191,  2235880,  3406031,  -542412,
+ -2831860, -1671176,  1846953, -2584293, -3724270,   594136, -3776993, -2013608,
+  2432395,  2454455,  -164721,  1957272,  3369112,   185531, -1207385, -3183426,
+   162844,  1616392,  3014001,   810149,  1652634, -3694233, -1799107, -3038916,
+  3523897,  3866901,   269760,  2213111,  -975884,  1717735,   472078,  -426683,
+  1723600, -1803090,  1910376, -1667432, -1104333,  -260646, -3833893, -2939036,
+ -2235985,  -420899, -2286327,   183443,  -976891,  1612842, -3545687,  -554416,
+  3919660,   -48306, -1362209,  3937738,  1400424,  -846154,  1976782
+};
 
 static int32_t dilithium_mont_reduce(int64_t a) {
     int64_t t = (int64_t)((int32_t)a * 58728449);
@@ -44,14 +80,8 @@ static int32_t dilithium_reduce(int32_t a) {
 }
 
 static void dilithium_ntt(int32_t a[256]) {
-    if (!init_ntt_d) {
-        int32_t z = DILITHIUM_ROOT, z2 = (z * z) % DILITHIUM_Q;
-        dilithium_zetas[0] = 1;
-        for (int i = 1; i < 256; i++) dilithium_zetas[i] = (dilithium_zetas[i-1] * z2) % DILITHIUM_Q;
-        init_ntt_d = 1;
-    }
     int len = 128, k = 0;
-    while (len >= 2) {
+    while (len >= 1) {
         int start = 0;
         while (start < 256) {
             int32_t zeta = dilithium_zetas[++k];
@@ -73,7 +103,7 @@ static void dilithium_ntt(int32_t a[256]) {
 }
 
 static void dilithium_inv_ntt(int32_t a[256]) {
-    int len = 2, k = 255;
+    int len = 1, k = 256;
     while (len <= 128) {
         int start = 0;
         while (start < 256) {
@@ -93,12 +123,16 @@ static void dilithium_inv_ntt(int32_t a[256]) {
         }
         len <<= 1;
     }
-    int32_t inv_n = 8347681;
+    int32_t inv_n = 41978;
     for (int j = 0; j < 256; j++) a[j] = dilithium_mont_reduce((int64_t)a[j] * inv_n);
 }
 
 static void dilithium_poly_add(int32_t r[256], const int32_t a[256], const int32_t b[256]) {
-    for (int i = 0; i < 256; i++) { r[i] = a[i] + b[i]; if (r[i] >= DILITHIUM_Q) r[i] -= DILITHIUM_Q; }
+    for (int i = 0; i < 256; i++) {
+        int32_t s = dilithium_reduce(a[i] + b[i]);
+        if (s < 0) s += DILITHIUM_Q;
+        r[i] = s;
+    }
 }
 
 static void dilithium_poly_sub(int32_t r[256], const int32_t a[256], const int32_t b[256]) {
@@ -111,6 +145,9 @@ static void dilithium_poly_mul(int32_t r[256], const int32_t a[256], const int32
     memcpy(tb, b, sizeof(tb)); dilithium_ntt(tb);
     for (int i = 0; i < 256; i++) ta[i] = dilithium_mont_reduce((int64_t)ta[i] * tb[i]);
     dilithium_inv_ntt(ta);
+    /* Center into (-Q/2, Q/2] so sparse products like c*s1 keep their
+     * true small signed value (e.g. -5, not q-5) used by z=y+c*s1. */
+    for (int i = 0; i < 256; i++) ta[i] = dilithium_reduce(ta[i]);
     memcpy(r, ta, sizeof(ta));
 }
 
@@ -240,62 +277,64 @@ static void unpack_z(int32_t out[256], const uint8_t *in, int gamma1) {
 }
 
 static void dilithium_poly_power2round(int32_t r1[256], int32_t r0[256], const int32_t a[256]) {
-    int32_t half_q = DILITHIUM_Q / 2;
     for (int i = 0; i < 256; i++) {
-        int32_t a1 = (a[i] + half_q) >> 13;
+        int32_t a1 = (a[i] + (1 << 12) - 1) >> 13;
         r1[i] = a1;
         r0[i] = a[i] - (a1 << 13);
     }
+}
+
+static int32_t dilithium_decompose_scalar(int32_t *a0, int32_t a, int32_t gamma2) {
+    int32_t a1 = (a + 127) >> 7;
+    if (gamma2 == (DILITHIUM_Q - 1) / 32) {
+        a1 = (a1 * 1025 + (1 << 21)) >> 22;
+        a1 &= 15;
+    } else { /* gamma2 == (Q-1)/88 */
+        a1 = (a1 * 11275 + (1 << 23)) >> 24;
+        a1 ^= ((43 - a1) >> 31) & a1;
+    }
+    int32_t r0 = a - a1 * (2 * gamma2);
+    r0 -= (((DILITHIUM_Q - 1) / 2 - r0) >> 31) & DILITHIUM_Q;
+    *a0 = r0;
+    return a1;
+}
+
+static void dilithium_poly_decompose(int32_t r1[256], int32_t r0[256], const int32_t a[256], int32_t alpha) {
+    int32_t gamma2 = alpha / 2;
+    for (int i = 0; i < 256; i++) r1[i] = dilithium_decompose_scalar(&r0[i], a[i], gamma2);
+}
+
+static unsigned int dilithium_make_hint_scalar(int32_t a0, int32_t a1, int32_t gamma2) {
+    if (a0 > gamma2 || a0 < -gamma2 || (a0 == -gamma2 && a1 != 0)) return 1;
+    return 0;
+}
+
+static int dilithium_poly_make_hint(int32_t h[256], const int32_t a0[256], const int32_t a1[256], int32_t alpha) {
+    int32_t gamma2 = alpha / 2;
+    int cnt = 0;
+    for (int i = 0; i < 256; i++) { h[i] = (int32_t)dilithium_make_hint_scalar(a0[i], a1[i], gamma2); cnt += h[i]; }
+    return cnt;
+}
+
+static int32_t dilithium_use_hint_scalar(int32_t a, int hint, int32_t gamma2) {
+    int32_t a0, a1 = dilithium_decompose_scalar(&a0, a, gamma2);
+    if (hint == 0) return a1;
+    if (gamma2 == (DILITHIUM_Q - 1) / 32) {
+        return (a0 > 0) ? ((a1 + 1) & 15) : ((a1 - 1) & 15);
+    } else { /* (Q-1)/88 */
+        return (a0 > 0) ? ((a1 == 43) ? 0 : a1 + 1) : ((a1 == 0) ? 43 : a1 - 1);
+    }
+}
+
+static void dilithium_poly_use_hint(int32_t r[256], const int32_t a[256], const int32_t h[256], int32_t alpha) {
+    int32_t gamma2 = alpha / 2;
+    for (int i = 0; i < 256; i++) r[i] = dilithium_use_hint_scalar(a[i], (int)h[i], gamma2);
 }
 
 static int32_t dilithium_gamma2(int variant) {
     return (variant == 2) ? (DILITHIUM_Q - 1) / 88 : (variant == 3) ? (DILITHIUM_Q - 1) / 32 : (DILITHIUM_Q - 1) / 22;
 }
 
-static void dilithium_poly_decompose(int32_t r1[256], int32_t r0[256], const int32_t a[256], int32_t alpha) {
-    int32_t half_alpha = alpha / 2;
-    for (int i = 0; i < 256; i++) {
-        int32_t a1 = (a[i] + half_alpha) / alpha;
-        if (a1 >= 22) a1 -= 43;
-        r1[i] = a1;
-        r0[i] = a[i] - a1 * alpha;
-    }
-}
-
-static int dilithium_poly_make_hint(int32_t h[256], const int32_t r0[256], const int32_t r1[256], int32_t alpha) {
-    int cnt = 0;
-    int32_t half_alpha = alpha / 2;
-    for (int i = 0; i < 256; i++) {
-        int32_t t;
-        if (r0[i] > half_alpha) t = 1;
-        else if (r0[i] < -half_alpha) t = 1;
-        else if (r1[i] == 0) t = 0;
-        else if (r1[i] == 21) t = 0;
-        else t = 1;
-        h[i] = t;
-        cnt += t;
-    }
-    return cnt;
-}
-
-static void dilithium_poly_use_hint(int32_t r[256], const int32_t a[256], const int32_t h[256], int32_t alpha) {
-    int32_t half_alpha = alpha / 2;
-    for (int i = 0; i < 256; i++) {
-        if (h[i]) {
-            int32_t a1 = (a[i] + half_alpha) / alpha;
-            if (a1 >= 22) a1 -= 43;
-            int32_t r0 = a[i] - a1 * alpha;
-            int32_t r1;
-            if (r0 > 0) r1 = (a1 == 21) ? 0 : a1 + 1;
-            else r1 = (a1 == 0) ? 21 : a1 - 1;
-            r[i] = r1 << 13;
-        } else {
-            int32_t a1 = (a[i] + half_alpha) / alpha;
-            if (a1 >= 22) a1 -= 43;
-            r[i] = a1 << 13;
-        }
-    }
-}
 
 static void cbd_eta2(int32_t r[256], const uint8_t seed[32], uint8_t nonce) {
     uint8_t buf[128];
@@ -441,10 +480,11 @@ int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
     if (!sig || !siglen || !m || !sk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int eta = (variant == 2) ? 2 : 4;
+    int tau = (variant == 2) ? 39 : (variant == 3) ? 49 : 60;
     int gamma1 = (variant == 2) ? 1 << 17 : 1 << 19;
     int gamma2 = dilithium_gamma2(variant);
     int alpha = 2 * gamma2;
-    int beta = 60 * eta;
+    int beta = 2 * tau;
     uint8_t rho[32], rho_prime[32];
     memcpy(rho, sk, 32);
     memcpy(rho_prime, sk + 32, 32);
@@ -507,15 +547,37 @@ int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
         }
         dilithium_poly_challenge(c_poly, c_seed);
         reject = 0;
+        int z_reject = 0;
         for (int i = 0; i < k; i++) {
             memset(cs1, 0, 256 * sizeof(int32_t));
             dilithium_poly_mul(cs1, c_poly, s1 + i * 256);
             for (int j = 0; j < 256; j++) {
                 z[i * 256 + j] = y[i * 256 + j] + cs1[j];
                 if (z[i * 256 + j] > gamma1 - beta || z[i * 256 + j] < -(gamma1 - beta))
-                    reject = 1;
+                    z_reject = 1;
             }
         }
+        if (attempt == 0) {
+            int cs1m = 0, zm = 0;
+            for (int i = 0; i < 256; i++) { int t = cs1[i]; t = t < 0 ? -t : t; if (t > cs1m) cs1m = t; }
+            for (int i = 0; i < k * 256; i++) { int t = z[i]; t = t < 0 ? -t : t; if (t > zm) zm = t; }
+            /* schoolbook c_poly * s1[0] mod q (s1 has coefficients in [-2,2]) */
+            int32_t sb[256]; memset(sb, 0, sizeof(sb));
+            for (int j = 0; j < 256; j++) {
+                if (c_poly[j] == 0) continue;
+                for (int m = 0; m < 256; m++) {
+                    int64_t acc = (int64_t)sb[(j + m) % 256] + (int64_t)c_poly[j] * s1[m];
+                    acc %= DILITHIUM_Q; if (acc < 0) acc += DILITHIUM_Q;
+                    sb[(j + m) % 256] = (int32_t)acc;
+                }
+            }
+            int cs1d = 0;
+            for (int i = 0; i < 256; i++) { int d = cs1[i] - sb[i]; while (d < 0) d += DILITHIUM_Q; while (d >= DILITHIUM_Q) d -= DILITHIUM_Q; if (d > DILITHIUM_Q/2) d -= DILITHIUM_Q; if (d<0) d=-d; if (d > cs1d) cs1d = d; }
+            fprintf(stderr, "[dbg a0] cs1_max=%d z_max=%d c·s1 poly_mul vs schoolbook maxdiff=%d\n", cs1m, zm, cs1d);
+            fprintf(stderr, "[dbg a0] cs1[0..3]=%d,%d,%d,%d  sb[0..3]=%d,%d,%d,%d\n",
+                    cs1[0],cs1[1],cs1[2],cs1[3], sb[0],sb[1],sb[2],sb[3]);
+        }
+        reject = z_reject;
         if (reject) continue;
         int w0_reject = 0;
         for (int i = 0; i < k; i++) {
@@ -538,14 +600,13 @@ int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
         }
         if (r0_reject) continue;
         for (int i = 0; i < k; i++) {
-            memset(ct0, 0, 256 * sizeof(int32_t));
             dilithium_poly_mul(ct0, c_poly, t0 + i * 256);
-            for (int j = 0; j < 256; j++) hint_in[j] = -ct0[j];
-            memset(cs2, 0, 256 * sizeof(int32_t));
             dilithium_poly_mul(cs2, c_poly, s2 + i * 256);
-            int32_t r1poly[256];
-            for (int j = 0; j < 256; j++) r1poly[j] = w0[i * 256 + j] - cs2[j] + ct0[j];
-            dilithium_poly_make_hint(h + i * 256, hint_in, r1poly, alpha);
+            int32_t g2 = dilithium_gamma2(variant);
+            for (int j = 0; j < 256; j++) {
+                int32_t a0v = w0[i * 256 + j] - cs2[j] + ct0[j];
+                h[i * 256 + j] = (int32_t)dilithium_make_hint_scalar(a0v, w1[i * 256 + j], g2);
+            }
         }
         size_t pos = 0;
         for (int i = 0; i < k; i++) {
@@ -590,10 +651,11 @@ int SNEPPX_dilithium_verify(const uint8_t *sig, size_t siglen, const uint8_t *m,
     if (!sig || !pk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int eta = (variant == 2) ? 2 : 4;
+    int tau = (variant == 2) ? 39 : (variant == 3) ? 49 : 60;
     int gamma1 = (variant == 2) ? 1 << 17 : 1 << 19;
     int gamma2 = dilithium_gamma2(variant);
     int alpha = 2 * gamma2;
-    int beta = 60 * eta;
+    int beta = 2 * tau;
     int z_bits = 0;
     while ((1 << z_bits) < 2 * gamma1) z_bits++;
     size_t z_bytes = (256 * z_bits + 7) / 8;
