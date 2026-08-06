@@ -26,16 +26,15 @@ No other dependencies. The C core is dependency-free; Python bindings use
 git clone https://github.com/ammar49-cyber/sneppx-alg.git
 cd sneppx-alg
 
-# Configure (Release)
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+# Configure (Release) — uses the Ninja generator
+cmake --preset release
 
 # Build everything (library + examples + tests)
-cmake --build build --config Release
-
-# Run the full test suite
-cd build
-ctest -C Release --output-on-failure
+cmake --build --preset release
 ```
+
+> Windows tip: prefer the stable repo-root `ninja.exe` (Ninja ≥ 1.12). The
+> Kitware *dev* Ninja in the venv can crash — see `AGENTS.md`.
 
 ### Opt-in backends (OFF by default)
 
@@ -94,12 +93,12 @@ python -c "from SneppX_ALG import *; print('ok')"
 ## 4. Run a Demo
 
 ```powershell
-# C demos
-build\examples\Release\hss_demo.exe
-build\examples\Release\ser_demo.exe
-build\examples\Release\arc_demo.exe
-build\examples\Release\npe_demo.exe
-build\examples\Release\fm_demo.exe
+# C demos (built into build/release)
+build\release\examples\hss_demo.exe
+build\release\examples\ser_demo.exe
+build\release\examples\arc_demo.exe
+build\release\examples\npe_demo.exe
+build\release\examples\fm_demo.exe
 
 # Python — run a regression test (safe, no GPU/LLM)
 python tests/python/test_tensor.py
