@@ -99,6 +99,26 @@ int SNEPPX_onnx_export(const char* path, void* graph, const char** input_names, 
  * @return 0 on success, -1 on error.
  */
 int SNEPPX_onnx_check(const char* path, char* error_msg, size_t error_max);
+/**
+ * @brief Export a linear (Gemm) ONNX model as a standard binary .onnx
+ *        ModelProto (raw protobuf, loadable by onnxruntime). Emits a single
+ *        Gemm node computing Y = X * W^T + B (transB=1).
+ *
+ * @param path [in] Output .onnx file path (raw protobuf ModelProto).
+ * @param model_name [in] Graph/Model name.
+ * @param input_name [in] Graph input name (e.g. "X").
+ * @param output_name [in] Graph output name (e.g. "Y").
+ * @param in_features [in] Input feature width (K).
+ * @param out_features [in] Output feature width (N).
+ * @param weights [in] Row-major weights [out_features][in_features] (N*K).
+ * @param bias [in] Bias vector [out_features] (may be NULL for bias-free).
+ *
+ * @return 0 on success, -1 on error.
+ */
+int SNEPPX_onnx_save_linear(const char* path, const char* model_name,
+                            const char* input_name, const char* output_name,
+                            size_t in_features, size_t out_features,
+                            const float* weights, const float* bias);
 #ifdef __cplusplus
 }
 #endif

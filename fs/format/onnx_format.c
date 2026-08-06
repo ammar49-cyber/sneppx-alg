@@ -402,3 +402,275 @@ int SNEPPX_onnx_check(const char* path, char* error_msg, size_t error_max) {
     if (!(head[0]=='O'&&head[1]=='N'&&head[2]=='N'&&head[3]=='X')) { if(error_msg&&error_max) snprintf(error_msg,error_max,"missing ONNX magic"); return -1; }
     return 0;
 }
+
+/* =======================================================================
+ * Standard ONNX (protobuf wire-format) binary exporter.
+ *
+ * The reader above (SNEPPX_onnx_load) parses a non-standard field layout and
+ * only supports a subset of ops, so it is NOT used to validate files written
+ * here. Instead this writer emits a canonical ModelProto whose field numbers
+ * follow the ONNX IR (onnx/onnx.in.proto) and which real runtimes
+ * (onnxruntime / tf2onnx / ONNX Runtime) can load directly:
+ *
+ *   ModelProto: ir_version=1, producer_name=2, producer_version=3,
+ *               model_version=5, graph=7, opset_import=8
+ *   GraphProto: node=1, name=2, initializer=5, input=11, output=12
+ *   NodeProto:  input=1, output=2, name=3, op_type=4, attribute=5
+ *   AttrProto:  name=1, i=3, type=20 (AttributeType enum)
+ *   ValueInfo:  name=1, type=2
+ *   TypeProto:  tensor_type=1
+ *   Tensor:     elem_type=1, shape=2
+ *   ShapeProto: dim=1
+ *   Dimension:  dim_value=1, dim_param=2
+ *   TensorProto: dims=1 (packed int64), data_type=2, name=8, raw_data=9
+ *   OpsetId:    domain=1, version=2
+ *
+ * Output is raw protobuf (NO "ONNX" magic prefix), i.e. the canonical
+ * binary .onnx layout produced by torch.onnx.export / onnx.save.
+ * ======================================================================= */
+
+typedef struct {
+    unsigned char* data;
+    size_t len;
+    size_t cap;
+} PBWBuf;
+
+static void pbw_init(PBWBuf* b) {
+    b->cap = 512;
+    b->len = 0;
+    b->data = (unsigned char*)malloc(b->cap);
+}
+
+static void pbw_grow(PBWBuf* b, size_t n) {
+    while (b->len + n > b->cap) {
+        b->cap *= 2;
+        b->data = (unsigned char*)realloc(b->data, b->cap);
+    }
+}
+
+static void pbw_varint(PBWBuf* b, size_t v) {
+    pbw_grow(b, 10);
+    while (v >= 0x80) {
+        b->data[b->len++] = (unsigned char)((v & 0x7f) | 0x80);
+        v >>= 7;
+    }
+    b->data[b->len++] = (unsigned char)v;
+}
+
+static void pbw_tag(PBWBuf* b, unsigned field, int wire) {
+    pbw_varint(b, (size_t)((field << 3) | wire));
+}
+
+static void pbw_varint_field(PBWBuf* b, unsigned field, size_t v) {
+    pbw_tag(b, field, 0);
+    pbw_varint(b, v);
+}
+
+static void pbw_string(PBWBuf* b, unsigned field, const char* s) {
+    size_t n = strlen(s);
+    pbw_tag(b, field, 2);
+    pbw_varint(b, n);
+    pbw_grow(b, n);
+    memcpy(b->data + b->len, s, n);
+    b->len += n;
+}
+
+static void pbw_bytes(PBWBuf* b, unsigned field, const void* p, size_t n) {
+    pbw_tag(b, field, 2);
+    pbw_varint(b, n);
+    pbw_grow(b, n);
+    memcpy(b->data + b->len, p, n);
+    b->len += n;
+}
+
+static void pbw_sub(PBWBuf* b, unsigned field, const PBWBuf* sub) {
+    pbw_tag(b, field, 2);
+    pbw_varint(b, sub->len);
+    pbw_grow(b, sub->len);
+    memcpy(b->data + b->len, sub->data, sub->len);
+    b->len += sub->len;
+}
+
+static void pbw_free(PBWBuf* b) {
+    free(b->data);
+    b->data = NULL;
+    b->len = b->cap = 0;
+}
+
+#define PBW_FLOAT_ELEM_TYPE 1  /* TensorProto.FLOAT */
+
+/* Encode a packed repeated int64 (TensorProto.dims) into b at field 1. */
+static void pbw_dims(PBWBuf* b, const size_t* dims, size_t ndim) {
+    PBWBuf d; pbw_init(&d);
+    for (size_t i = 0; i < ndim; i++) pbw_varint(&d, dims[i]);
+    pbw_bytes(b, 1, d.data, d.len);   /* field 1 = dims */
+    pbw_free(&d);
+}
+
+/* Encode one Dimension (dim_value OR dim_param) and append as field 1 of a container. */
+static void pbw_dim_value(PBWBuf* dims, size_t v) {
+    PBWBuf d; pbw_init(&d); pbw_varint_field(&d, 1, v); pbw_sub(dims, 1, &d); pbw_free(&d);
+}
+static void pbw_dim_param(PBWBuf* dims, const char* s) {
+    PBWBuf d; pbw_init(&d); pbw_string(&d, 2, s); pbw_sub(dims, 1, &d); pbw_free(&d);
+}
+
+/* TensorProto: name(8), dims(1), data_type(2), raw_data(9). */
+static void pbw_tensor_proto(PBWBuf* b, const char* name, const size_t* dims,
+                             size_t ndim, const float* data, size_t nelem) {
+    pbw_string(b, 8, name);
+    pbw_dims(b, dims, ndim);
+    pbw_varint_field(b, 2, (size_t)PBW_FLOAT_ELEM_TYPE);
+    pbw_bytes(b, 9, data, nelem * sizeof(float));
+}
+
+/* ValueInfoProto: name(1), type(2) -> TypeProto -> tensor_type(1) -> { elem_type(1)=FLOAT, shape(2) -> TensorShapeProto{ dim(1)... } } */
+static void pbw_value_info(PBWBuf* out, const char* name, int batch_dim_param,
+                           size_t dim1_value) {
+    pbw_string(out, 1, name);
+    PBWBuf shape; pbw_init(&shape);
+    if (batch_dim_param)
+        pbw_dim_param(&shape, "batch");
+    else
+        pbw_dim_value(&shape, dim1_value);
+    pbw_dim_value(&shape, dim1_value);
+    PBWBuf tet; pbw_init(&tet);
+    pbw_varint_field(&tet, 1, (size_t)PBW_FLOAT_ELEM_TYPE);   /* elem_type */
+    pbw_sub(&tet, 2, &shape);                                  /* shape */
+    pbw_free(&shape);
+    PBWBuf type; pbw_init(&type);
+    pbw_sub(&type, 1, &tet);                                   /* tensor_type */
+    pbw_free(&tet);
+    pbw_sub(out, 2, &type);                                    /* TypeProto */
+    pbw_free(&type);
+}
+
+/* AttributeProto: name(1), type(20)=INT(2), i(3)=value. */
+static void pbw_attr_int(PBWBuf* out, const char* name, size_t v) {
+    pbw_string(out, 1, name);
+    pbw_varint_field(out, 20, 2);   /* AttributeType.INT */
+    pbw_varint_field(out, 3, v);    /* i */
+}
+
+/* NodeProto (Gemm): input(1)x.., output(2)x.., name(3), op_type(4), attribute(5). */
+static void pbw_gemm_node(PBWBuf* out, const char* node_name,
+                          const char* const* inputs, size_t ninputs,
+                          const char* output, int transB) {
+    for (size_t i = 0; i < ninputs; i++) pbw_string(out, 1, inputs[i]);
+    pbw_string(out, 2, output);
+    pbw_string(out, 3, node_name);
+    pbw_string(out, 4, "Gemm");
+    PBWBuf attr; pbw_init(&attr);
+    pbw_attr_int(&attr, "transB", (size_t)transB);
+    pbw_sub(out, 5, &attr);
+    pbw_free(&attr);
+}
+
+/**
+ * @brief Export a linear (Gemm) ONNX model as a standard binary .onnx
+ * ModelProto (raw protobuf, loadable by onnxruntime). Emits a single Gemm
+ * node computing Y = alpha * X * W^T + beta * B (alpha=beta=1) via transB=1.
+ *
+ * The writer does NOT depend on SNEPPX_onnx_load (which uses a non-standard
+ * field layout); the emitted file uses canonical ONNX IR field numbers.
+ *
+ * @param path [in] Output .onnx file path (raw protobuf ModelProto).
+ * @param model_name [in] Graph/Model name.
+ * @param input_name [in] Graph input name (e.g. "X").
+ * @param output_name [in] Graph output name (e.g. "Y").
+ * @param in_features [in] Input feature width (K).
+ * @param out_features [in] Output feature width (N).
+ * @param weights [in] Row-major weights [out_features][in_features] (N*K).
+ * @param bias [in] Bias vector [out_features] (may be NULL for bias-free).
+ *
+ * @return 0 on success, -1 on error.
+ */
+int SNEPPX_onnx_save_linear(const char* path, const char* model_name,
+                            const char* input_name, const char* output_name,
+                            size_t in_features, size_t out_features,
+                            const float* weights, const float* bias) {
+    if (!path || !model_name || !input_name || !output_name ||
+        in_features == 0 || out_features == 0 || !weights)
+        return -1;
+    if (out_features > (size_t)0x7fffffff || in_features > (size_t)0x7fffffff)
+        return -1;
+
+    int has_bias = bias != NULL;
+
+    /* ---- TensorProto W  [N, K] ---- */
+    PBWBuf wb; pbw_init(&wb);
+    {
+        size_t dims[2] = { out_features, in_features };
+        pbw_tensor_proto(&wb, "W", dims, 2, weights, out_features * in_features);
+    }
+
+    /* ---- TensorProto B  [N] (optional) ---- */
+    PBWBuf bb; pbw_init(&bb);
+    if (has_bias) {
+        size_t dims[1] = { out_features };
+        pbw_tensor_proto(&bb, "B", dims, 1, bias, out_features);
+    }
+
+    /* ---- ValueInfoProto X ---- */
+    PBWBuf xb; pbw_init(&xb);
+    pbw_value_info(&xb, input_name, 1, in_features);
+
+    /* ---- ValueInfoProto Y ---- */
+    PBWBuf yb; pbw_init(&yb);
+    pbw_value_info(&yb, output_name, 1, out_features);
+
+    /* ---- NodeProto Gemm ---- */
+    const char* inputs[3];
+    inputs[0] = input_name;
+    inputs[1] = "W";
+    size_t nin = 2;
+    if (has_bias) inputs[nin++] = "B";
+    PBWBuf node; pbw_init(&node);
+    {
+        char nm[128];
+        snprintf(nm, sizeof(nm), "%s_gemm", model_name);
+        pbw_gemm_node(&node, nm, inputs, nin, output_name, 1);
+    }
+
+    /* ---- GraphProto ---- */
+    PBWBuf graph; pbw_init(&graph);
+    pbw_sub(&graph, 1, &node);        /* node */
+    pbw_string(&graph, 2, model_name);
+    pbw_sub(&graph, 5, &wb);          /* initializer W */
+    if (has_bias) pbw_sub(&graph, 5, &bb);
+    pbw_sub(&graph, 11, &xb);         /* input X */
+    pbw_sub(&graph, 12, &yb);         /* output Y */
+
+    /* ---- OperatorSetIdProto (ai.onnx, opset 14) ---- */
+    PBWBuf opset; pbw_init(&opset);
+    pbw_string(&opset, 1, "");        /* domain "" => ai.onnx */
+    pbw_varint_field(&opset, 2, 14);  /* version */
+
+    /* ---- ModelProto ---- */
+    PBWBuf model; pbw_init(&model);
+    pbw_varint_field(&model, 1, 10);    /* ir_version */
+    pbw_string(&model, 2, "SNEPPX-Alg");
+    pbw_string(&model, 3, "1.3.0");
+    pbw_varint_field(&model, 5, 1);     /* model_version */
+    pbw_sub(&model, 7, &graph);         /* graph */
+    pbw_sub(&model, 8, &opset);         /* opset_import */
+
+    /* ---- write raw protobuf ---- */
+    FILE* f = fopen(path, "wb");
+    int rc = -1;
+    if (f) {
+        size_t wr = fwrite(model.data, 1, model.len, f);
+        if (wr == model.len) rc = 0;
+        fclose(f);
+    }
+
+    pbw_free(&model);
+    pbw_free(&opset);
+    pbw_free(&graph);
+    pbw_free(&node);
+    pbw_free(&xb);
+    pbw_free(&yb);
+    pbw_free(&wb);
+    if (has_bias) pbw_free(&bb);
+    return rc;
+}
