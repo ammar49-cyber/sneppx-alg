@@ -83,10 +83,7 @@ static void test_tape_record_and_backward(void) {
     ASSERT(a->grad != NULL, "gradient computed for a");
     ASSERT(b->grad != NULL, "gradient computed for b");
 
-    SNEPPX_variable_destroy(d);
-    SNEPPX_variable_destroy(c);
-    SNEPPX_variable_destroy(b);
-    SNEPPX_variable_destroy(a);
+    /* tape owns all recorded variables (a,b,c,d); destroy via tape only */
     SNEPPX_tape_destroy(tape);
 }
 
@@ -111,12 +108,7 @@ static void test_tape_ops(void) {
     SNEPPX_tape_backward(tape, r5);
     ASSERT(v->grad != NULL, "grad computed after sequence");
 
-    SNEPPX_variable_destroy(r5);
-    SNEPPX_variable_destroy(r4);
-    SNEPPX_variable_destroy(r3);
-    SNEPPX_variable_destroy(r2);
-    SNEPPX_variable_destroy(r1);
-    SNEPPX_variable_destroy(v);
+    /* tape owns all recorded variables (v, r1..r5) */
     SNEPPX_tape_destroy(tape);
 }
 
