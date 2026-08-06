@@ -482,10 +482,11 @@ class OnnxExporter:
         attributes: Optional[Dict[str, Any]] = None,
     ) -> List[str]:
         if outputs is None:
-            if len(inputs) == 1:
-                outputs = [self._new_tensor_name("out")]
-            else:
-                outputs = [self._new_tensor_name("out") for _ in range(len(inputs))]
+            spec = ONNX_OP_REGISTRY.get(op_type, {})
+            n_out = spec.get("outputs", 1)
+            if not isinstance(n_out, int) or n_out <= 0:
+                n_out = 1
+            outputs = [self._new_tensor_name("out") for _ in range(n_out)]
 
         node = OnnxNode(
             op_type=op_type,

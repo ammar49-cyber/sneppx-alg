@@ -408,6 +408,7 @@ from .onnx_export import (
     onnx_to_protobuf,
     protobuf_to_onnx,
 )
+from .onnx_check import infer_shapes, onnx_check, broadcast_shape, OnnxShapeError
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1270,6 +1271,11 @@ __all__ = [
     "upgrade_opset",
     "onnx_to_protobuf",
     "protobuf_to_onnx",
+    # ONNX shape inference / schema checks
+    "infer_shapes",
+    "onnx_check",
+    "broadcast_shape",
+    "OnnxShapeError",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
