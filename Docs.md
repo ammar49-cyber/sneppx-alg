@@ -506,12 +506,12 @@ python bindings/python/SneppX_ALG/interface_bindings/tests/test_integration.py
 python -m pytest tests/python/test_tensor.py -v
 
 # Model Zoo C tests
-.\build_test\algorithms\model_zoo\Release\test_model_config.exe
-.\build_test\algorithms\model_zoo\Release\test_model_registry.exe
-.\build_test\algorithms\model_zoo\Release\test_model_weights.exe
-.\build_test\algorithms\model_zoo\Release\test_model_card.exe
-.\build_test\algorithms\model_zoo\Release\test_model_factory.exe
-.\build_test\algorithms\model_zoo\Release\test_integration.exe
+.\build\algorithms\model_zoo\test_model_config.exe
+.\build\algorithms\model_zoo\test_model_registry.exe
+.\build\algorithms\model_zoo\test_model_weights.exe
+.\build\algorithms\model_zoo\test_model_card.exe
+.\build\algorithms\model_zoo\test_model_factory.exe
+.\build\algorithms\model_zoo\test_integration.exe
 ```
 
 #### C/C++ Tests

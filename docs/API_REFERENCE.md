@@ -889,7 +889,7 @@ cmake -B build_http -G Ninja -DSNEPPX_BUILD_HTTP=ON
 cmake --build build_http --config Release --target http_server_demo
 
 # run (port, optional key DB)
-build_http\examples\Release\http_server_demo.exe 8080
+build_http\examples\http_server_demo.exe 8080
 
 # exercise
 curl http://127.0.0.1:8080/v1/health
