@@ -2,6 +2,29 @@
 
 All notable changes to SNEPPX-Algo.
 
+## [Unreleased]
+
+### Build
+- Standardized on the **Ninja** generator across all CMake presets
+  (`CMakePresets.json`): `debug`, `release`, `asan`, `cuda`, `python`,
+  `minimal`, each writing to a per-config `build/<name>` directory.
+- CMake now resolves the x64 MASM assembler automatically (`ml64` next to
+  `cl.exe`), so `cmake -B build -G Ninja` works on Windows without manually
+  passing `-DCMAKE_ASM_MASM_COMPILER`. Fixed a stale bare-`ml` resolution that
+  broke the Ninja + MSVC + MASM path.
+- `docs/build.md`, `docs/TESTING.md`, `QUICKSTART.md`, and `AGENTS.md`
+  updated to the Ninja preset workflow.
+
+### Security
+- Fixed `dilithium_zetas[256]` in `security/crypto/c/dilithium.c`: one
+  corrupted twiddle factor (`…568` → `…596`) cascaded through the 8-layer
+  negacyclic NTT and broke `poly_mul`, invalidating Dilithium (ML-DSA)
+  sign/verify. Table is now the verbatim `pq-crystals/dilithium ref/ntt.c`
+  reference. Verified via `test_crypto_sign.py` (ML-DSA 44/65/87).
+- Fixed Kyber NTT twiddle table, Montgomery reduction, and `fq_reduce`/
+  `barrett_reduce` (`security/crypto/c/kyber.c`); relaxed DRBG minimum
+  entropy input (`security/crypto/c/drbg.c`).
+
 ## [1.1.1] — 2026-08-01
 
 ### Security
