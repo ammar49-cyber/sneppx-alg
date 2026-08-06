@@ -13,6 +13,7 @@ CMakeFiles/
 cmake_install.cmake
 CMakeUserPresets.json
 compile_commands.json
+Testing/
 
 # Object and library files
 *.o

@@ -405,6 +405,8 @@ from .onnx_export import (
     onnx_validate,
     onnx_version_compatible,
     upgrade_opset,
+    onnx_to_protobuf,
+    protobuf_to_onnx,
 )
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
@@ -1253,6 +1255,21 @@ __all__ = [
     "MultipleChoiceTask",
     "CodingTask",
     "MMLU_CATEGORIES",
+    # ONNX export/import
+    "OnnxExporter",
+    "OnnxImporter",
+    "OnnxModel",
+    "OnnxGraph",
+    "OnnxNode",
+    "OnnxTensor",
+    "OnnxInitializer",
+    "export_onnx",
+    "import_onnx",
+    "onnx_validate",
+    "onnx_version_compatible",
+    "upgrade_opset",
+    "onnx_to_protobuf",
+    "protobuf_to_onnx",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
