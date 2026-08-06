@@ -23,7 +23,7 @@ phase log in `AGENTS.md`.
 | Graph-level model import (run) | Partial | In-tree C reader uses **non-standard** protobuf field numbers (see note) |
 | Keras-/nn.Module-style layer API | Missing | No sequential / layer call API |
 | Post-training quantization | Implemented | INT8/INT4/FP8, AWQ, GPTQ (C, CUDA, Python) |
-| Quantization-aware training (fake-quant + STE) | Missing | No differentiable fake-quant op registered |
+| Quantization-aware training (fake-quant + STE) | Implemented | `SNEPPX_tensor_fake_quant` + `SNEPPX_fake_quant` op: symmetric affine forward (round/dequant, INT8/INT4/FP8 bit widths) with straight-through-estimator backward (unit gradient w.r.t. input). Verified by `test_fake_quant` (3/3). |
 | Structured / channel-wise pruning | Implemented | `pruning.py` tested |
 | Distillation | Implemented | `distillation.py` tested |
 | Activation / full-model autograd | Implemented | Autograd framework with ∇ for GEMM/activations/layernorm/softmax |
