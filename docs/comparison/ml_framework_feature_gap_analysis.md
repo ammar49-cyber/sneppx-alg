@@ -130,17 +130,20 @@ with a descriptive error.
    `SNEPPX_fake_quant` autograd op register the canonical QAT recipe: symmetric
    affine fake-quantize forward (INT8/INT4/FP8 bit widths) with a
    straight-through-estimator backward, verified by `test_fake_quant` (3/3).
-4. **Experiment / run tracking.** Structured `metadata.json` + `metrics.jsonl` +
-   params/artifact versioning (cf. TensorBoard/runs); SNEPPX has profiling JSON but no
-   run-level experiment model.
-5. **Keras-style layer API.** A `Sequential` / `__call__`-able layer abstraction for
-   ergonomics; SNEPPX today uses a graph/functional model directly.
-6. **Graph compiler.** Op fusion + memory tiling + (optionally) Triton codegen;
-   currently kernels are emitted raw.
-7. **Mobile / edge runtime.** ARM/SSE/NEON + NPU delegate runtime; today the path is
-   CUDA-on-server GPUs and the C host kernels.
-8. **Hyperparameter-search orchestrator.** A controller that drives `Trainer` ×
-   config grid; SNEPPX has schedulers but no search driver.
+ 4. ~~**Experiment / run tracking.**~~ **Done** — `Run` (context manager, params,
+    metrics with step/extra, artifacts, tags, `best`/`last`/`metric_history`),
+    `Experiment` (run aggregation + `best_run`), and `ExperimentStore` (root
+    directory manager), persisted as structured `metadata.json` + `metrics.jsonl`
+    under `runs/<experiment>/<run_id>/` and reloadable via `load_experiment`;
+    8 Python tests in `tests/python/test_experiment.py` pass.
+ 5. **Keras-style layer API.** A `Sequential` / `__call__`-able layer abstraction for
+    ergonomics; SNEPPX today uses a graph/functional model directly.
+ 6. **Graph compiler.** Op fusion + memory tiling + (optionally) Triton codegen;
+    currently kernels are emitted raw.
+ 7. **Mobile / edge runtime.** ARM/SSE/NEON + NPU delegate runtime; today the path is
+    CUDA-on-server GPUs and the C host kernels.
+ 8. **Hyperparameter-search orchestrator.** A controller that drives `Trainer` ×
+    config grid; SNEPPX has schedulers but no search driver.
 
 ## Recommendation
 
@@ -149,6 +152,8 @@ both implementations and verified end-to-end: linear + arbitrary graph export (C
 Python `OnnxExporter` binary emission + `protobuf_to_onnx` decode + parity
 `onnx_validate`, plus `onnx_check` shape inference with symbolic batch
 propagation; C-written files parse in Python and Python-written files pass the C
-validator (42 Python ONNX/shape tests pass). The remaining gaps, in priority
-order: experiment/run tracking, a Keras-style layer API, the graph compiler, a
+validator (42 Python ONNX/shape tests pass). Experiment/run tracking is also in:
+`Run`/`Experiment`/`ExperimentStore` with structured `metadata.json` +
+`metrics.jsonl` persistence (8 Python tests). The remaining gaps, in priority
+order: a Keras-style layer API, the graph compiler, a
 mobile/edge runtime, and a hyperparameter-search orchestrator.
