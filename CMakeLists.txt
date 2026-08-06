@@ -1,6 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 project(cognitive_processing_system VERSION 1.1.1 LANGUAGES C CXX ASM_MASM)
 
+# Under the Ninja generator CMake's ASM_MASM language latches onto a bare
+# 'ml', which only exists under the HostX86 toolset path and is therefore
+# missing from a plain vcvars64 (x64) environment, yielding a build failure
+# ("CreateProcess failed: The system cannot find the file specified").
+# Pin the assembler to ml64.exe -- the native x64 MASM that lives alongside
+# cl.exe in the x64 toolset directory -- so that a stock
+#   cmake -B build -G Ninja
+# works without extra flags. The EXISTS guards mean x86 builds are untouched.
+if(ASM_MASM AND MSVC)
+  get_filename_component(_sneppx_msvc_bin_dir "${CMAKE_C_COMPILER}" DIRECTORY)
+  if(EXISTS "${_sneppx_msvc_bin_dir}/ml64.exe")
+    set(CMAKE_ASM_MASM_COMPILER "${_sneppx_msvc_bin_dir}/ml64.exe"
+        CACHE FILEPATH "MASM assembler" FORCE)
+  endif()
+endif()
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
