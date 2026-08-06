@@ -41,6 +41,14 @@ cd build && ctest -C Release --output-on-failure
 ctest -C Release -R test_kyber --output-on-failure
 ```
 
+> **Windows + Ninja toolchain note.** This machine ships a Kitware *dev-build*
+> Ninja in the venv (`1.13.0.git.kitware.jobserver-pipe`) which crashes with
+> heap corruption. Prefer the stable repo-root `ninja.exe` (Ninja ≥ 1.12), e.g.
+> `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release`. CMake resolves the x64
+> MASM assembler automatically (`ml64` next to `cl.exe`) — no manual
+> `-DCMAKE_ASM_MASM_COMPILER` is required. If you must use the venv Ninja, fall
+> back to the legacy Visual Studio generator (`cmake -B build -G "Visual Studio 17 2022"`).
+
 ## Project Conventions
 - **Language**: C11 (`.c`), C++20 (`.cpp`), MASM (`.asm`)
 - **No VLAs**: MSVC C11 doesn't support them — use `calloc`/`free`
