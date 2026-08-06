@@ -18,7 +18,7 @@ phase log in `AGENTS.md`.
 
 | Subsystem / Capability | SNEPPX status | Gap note |
 |---|---|---|
-| **Binary model export (ONNX)** | Stub → **Implemented** (see `onnx_format.c`) | Linear/Gemm export to canonical `.onnx` now works; arbitrary graph export still missing |
+| **Binary model export (ONNX)** | **Implemented** | Canonical binary `ModelProto` export: single-op linear (`SneppX_onnx_save_linear`) and arbitrary DAGs (`SneppX_onnx_save_graph`, any op with INT/FLOAT/INTS/FLOATS attrs, symbolic batch dims). Verified by round-trip tests. `onnx_check` is still a stub (no shape inference) |
 | ONNX validation / shape inference | Stub | `onnx_check` only verifies magic; no type/shape inference |
 | Graph-level model import (run) | Partial | In-tree C reader uses **non-standard** protobuf field numbers (see note) |
 | Keras-/nn.Module-style layer API | Missing | No sequential / layer call API |
@@ -74,6 +74,18 @@ producer name, opset version, graph name, exactly one `Gemm` node with inputs
 exactly equals the input weights/bias, correct dims, and input/output shapes
 `[batch, in]`/`[batch, out]`.
 
+`SneppX_onnx_save_graph` (`fs/format/onnx_format.c`) generalizes this to an
+**arbitrary directed graph**: caller supplies `SneppXOnnxNode` entries (op_type,
+input/output name lists, attribute list with INT/FLOAT/INTS/FLOATS attributes),
+`SneppXOnnxInitializer` tensors (row-major, `raw_data`), and `SneppXOnnxValueInfo`
+inputs/outputs with concrete or symbolic (`dim.param`) dimensions. It emits the same
+canonical `ModelProto` (raw protobuf). `SNEPPX_onnx_save_linear` is retained as a
+thin convenience wrapper around this primitive. This is verified by
+`tests/unit/test_onnx_export_graph.c`, which exports a 2-node `Gemm -> Relu` graph
+and asserts node order, op types, input/output wiring, the `transB=1` attribute,
+initializer byte-exact round-trip, symbolic `[batch, …]` shapes, and the semantic
+ground truth `hidden = X·Wᵀ + B` then `Y = Relu(hidden)`.
+
 ### Known limitation of the existing C reader (NOT introduced here)
 The in-tree reader (`SNEPPX_onnx_load` / `parse_graph` in `onnx_format.c`) was written
 against a **non-standard** field layout (`GraphProto.node` treated as field 11,
@@ -85,11 +97,11 @@ The reader and its non-standard field mapping are left untouched to avoid regres
 
 ## Remaining high-signal gaps (prioritized)
 
-1. **Arbitrary graph ONNX export.** `SNEPPX_onnx_save_linear` covers a single linear
-   op. A general exporter must walk the SNEPPX autograd graph and emit a node per op
-   using the op registry (`bindings/python/.../onnx_export.py` already has
-   `OnnxExporter` + `SNEPPX_TO_ONNX_OP`, but it serializes to **JSON**, not binary
-   ONNX — that JSON layer should be replaced/wrapped by the canonical binary writer).
+1. ~~**Arbitrary graph ONNX export.**~~ **Done** — `SneppX_onnx_save_graph` now emits
+   canonical binary ONNX for any op DAG. The remaining bridge is connecting the
+   Python `OnnxExporter` graph model (`bindings/python/.../onnx_export.py`, currently
+   JSON-serializing) to this binary writer, and replacing the `onnx_check` stub
+   with real schema/shape inference.
 2. **ONNX validation & shape inference.** `SNEPPX_onnx_check` only verifies a magic
    header; a real checker would infer shapes (with symbolic/batch dims) and verify op
    inputs/output arity against the ONNX operator schemas.
@@ -111,7 +123,8 @@ The reader and its non-standard field mapping are left untouched to avoid regres
 
 ## Recommendation
 
-The binary ONNX exporter is the highest-value, lowest-risk interop gap and is now
-closed and verified. The next recommended increment is **arbitrary-graph ONNX export**
-(bridging the Python `OnnxExporter` graph model to the canonical binary writer built in
-this pass), followed by a real `onnx_check` shape/signature validator.
+The binary ONNX export gap is now closed and verified (linear + arbitrary graph).
+The next recommended increment is bridging the Python `OnnxExporter` graph model
+(`bindings/python/.../onnx_export.py`, currently JSON-serializing) to the canonical
+binary writer built here, then replacing the `onnx_check` stub with real
+schema/shape inference.
