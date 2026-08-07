@@ -75,6 +75,20 @@ def _load_pytorch_bin(path: str) -> Dict[str, np.ndarray]:
     return state
 
 
+def _named_parameters(model) -> List[Tuple[str, Tensor]]:
+    """Iterate (name, param) pairs for any module.
+
+    Modules with ``named_parameters()`` (``nn.Module`` and friends) are used
+    directly; others (e.g. ``keras_api.Sequential``) only expose a flat
+    ``parameters()`` list, which is named ``param_<i>``.
+    """
+    if hasattr(model, "named_parameters"):
+        return list(model.named_parameters())
+    return [
+        (f"param_{i}", p) for i, p in enumerate(model.parameters())
+    ]
+
+
 def load_hf_model(model: Module, model_id: str, cache_dir: Optional[str] = None):
     if cache_dir is None:
         cache_dir = os.path.expanduser(
@@ -109,14 +123,15 @@ def load_hf_model(model: Module, model_id: str, cache_dir: Optional[str] = None)
     if not state:
         return
     hf_to_sneppx = {}
-    for name, param in model.named_parameters():
+    for name, _ in _named_parameters(model):
         hf_name = name.replace("_modules.", "").replace("_parameters.", "")
         hf_to_sneppx[hf_name] = name
+    named = dict(_named_parameters(model))
     loaded = 0
     for hf_name, arr in state.items():
         mapped = hf_to_sneppx.get(hf_name)
         if mapped:
-            param = dict(model.named_parameters())[mapped]
+            param = named[mapped]
             if param.shape == arr.shape:
                 arr_cont = np.ascontiguousarray(arr)
                 param.data = arr_cont
@@ -127,7 +142,7 @@ def load_hf_model(model: Module, model_id: str, cache_dir: Optional[str] = None)
 def save_hf_model(model: Module, save_dir: str, model_id: str = "sneppx-model"):
     os.makedirs(save_dir, exist_ok=True)
     state = {}
-    for name, param in model.named_parameters():
+    for name, param in _named_parameters(model):
         clean_name = name.replace("_modules.", "").replace("_parameters.", "")
         arr = param.data
         state[clean_name] = arr
