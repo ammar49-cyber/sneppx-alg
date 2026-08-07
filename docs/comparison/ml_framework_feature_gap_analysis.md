@@ -30,7 +30,7 @@ phase log in `AGENTS.md`.
 | Optimizers | Implemented | AdamW/SGD/Lion/LAMB/LARS/AdaFactor + ZeRO-1/2/3 |
 | Mixed-precision (AMP) | Implemented | FP16/BF16 autocast + gradient scaling |
 | LR schedulers | Implemented | cosine/linear/warmup etc. |
-| Hyperparameter search orchestrator | Missing | Schedulers exist; no HPO/Search controller |
+| Hyperparameter search orchestrator | **Implemented** | `hpo.Study` with random/grid/halving/GP-UCB samplers, ask/tell + run drivers, JSON results |
 | Experiment / run tracking | Partial | `Profiler` (JSON) + `Logger` (JSON/color); no structured run+params+metrics artifact |
 | Data pipeline | Implemented | datamodules / dataloaders tested |
 | Augmentation | Implemented | `augmentation.py` tested |
@@ -168,8 +168,16 @@ with a descriptive error.
     (`BufferPool`, safe within a graph), and reports `latency_ms`/
     `throughput`/`flops`/`summary`/`benchmark`. 24 Python tests in
     `tests/python/test_edge_runtime.py` pass.
- 8. **Hyperparameter-search orchestrator.** A controller that drives `Trainer` ×
-    config grid; SNEPPX has schedulers but no search driver.
+ 8. ~~**Hyperparameter-search orchestrator.**~~ **Done** — `hpo.py` provides a
+    `Study` controller (Optuna-style `suggest`/`tell` plus a one-shot `run`
+    driver) over a `SearchSpace` of `choice`/`int_`/`uniform`/`log_uniform`
+    specs with four samplers: random search, exhaustive grid search, successive
+    halving (budget-scheduled evaluations with top-1/η promotion), and
+    Bayesian optimization via GP-UCB (closed-form RBF Gaussian-process
+    regression, `minimize`/`maximize` directions). Trials and results persist
+    to JSON (`to_json`/`from_json`). Convenience drivers
+    `random_search`/`grid_search`/`halving_search`/`bayesian_search` are
+    exported top-level. 24 Python tests in `tests/python/test_hpo.py` pass.
 
 ## Recommendation
 
@@ -187,5 +195,8 @@ tests) with the broadcast-aware autograd fix. The graph compiler is also in:
 kernels, and emits C source with a topological driver (32 Python tests). The
 mobile/edge runtime is in too: `EdgeRuntime` with device detection, pluggable
 backends + CPU fallback, INT8-quantized matmul, buffer pooling, and
-latency/flops reporting (24 Python tests). The remaining gap, in priority
-order: a hyperparameter-search orchestrator.
+latency/flops reporting (24 Python tests). The hyperparameter-search
+orchestrator is also in: `Study` with random/grid/halving/GP-UCB samplers
+over a `SearchSpace`, ask/tell streaming + run driver, and JSON results
+(24 Python tests). With these three closures every gap identified by the
+original analysis is now **Implemented** or partial-with-a-documented-cause.
