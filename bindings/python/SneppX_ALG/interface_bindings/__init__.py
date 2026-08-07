@@ -430,6 +430,14 @@ from .keras_api import (
     Softmax,
     Input,
 )
+from .graph_compiler import (
+    GraphNode,
+    GraphCompiler,
+    CompiledGraph,
+    FusedNode,
+    FUSABLE_OPS,
+    ELEMENTWISE_IMPL,
+)
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1321,6 +1329,13 @@ __all__ = [
     "SiLU",
     "Softmax",
     "Input",
+    # Graph compiler
+    "GraphNode",
+    "GraphCompiler",
+    "CompiledGraph",
+    "FusedNode",
+    "FUSABLE_OPS",
+    "ELEMENTWISE_IMPL",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
