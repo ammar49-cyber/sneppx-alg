@@ -449,6 +449,20 @@ from .edge_runtime import (
     quantize_graph_weights,
     benchmark,
 )
+from .hpo import (
+    Trial,
+    SearchSpace,
+    HPOConfig,
+    Study,
+    choice,
+    int_,
+    uniform,
+    log_uniform,
+    random_search,
+    grid_search,
+    halving_search,
+    bayesian_search,
+)
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1357,6 +1371,19 @@ __all__ = [
     "register_backend",
     "quantize_graph_weights",
     "benchmark",
+    # Hyperparameter-search orchestrator
+    "Trial",
+    "SearchSpace",
+    "HPOConfig",
+    "Study",
+    "choice",
+    "int_",
+    "uniform",
+    "log_uniform",
+    "random_search",
+    "grid_search",
+    "halving_search",
+    "bayesian_search",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
