@@ -438,6 +438,17 @@ from .graph_compiler import (
     FUSABLE_OPS,
     ELEMENTWISE_IMPL,
 )
+from .edge_runtime import (
+    EdgeDevice,
+    EdgeConfig,
+    EdgeBackend,
+    CPUBackend,
+    EdgeRuntime,
+    detect_cpu,
+    register_backend,
+    quantize_graph_weights,
+    benchmark,
+)
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1336,6 +1347,16 @@ __all__ = [
     "FusedNode",
     "FUSABLE_OPS",
     "ELEMENTWISE_IMPL",
+    # Edge / mobile runtime
+    "EdgeDevice",
+    "EdgeConfig",
+    "EdgeBackend",
+    "CPUBackend",
+    "EdgeRuntime",
+    "detect_cpu",
+    "register_backend",
+    "quantize_graph_weights",
+    "benchmark",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
