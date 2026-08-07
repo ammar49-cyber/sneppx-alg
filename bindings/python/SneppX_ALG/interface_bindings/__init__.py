@@ -410,6 +410,26 @@ from .onnx_export import (
 )
 from .onnx_check import infer_shapes, onnx_check, broadcast_shape, OnnxShapeError
 from .experiment import Run, Experiment, ExperimentStore, load_experiment
+from .keras_api import (
+    Sequential,
+    Model,
+    Dense,
+    Conv2D,
+    MaxPool2D,
+    AveragePool2D,
+    Flatten,
+    Dropout,
+    Activation,
+    BatchNormalization,
+    LayerNorm,
+    ReLU,
+    Sigmoid,
+    Tanh,
+    GELU,
+    SiLU,
+    Softmax,
+    Input,
+)
 from .amp import autocast, GradScaler
 from .grad_checkpoint import checkpoint, GradientCheckpointer
 from .schedulers import (
@@ -1282,6 +1302,25 @@ __all__ = [
     "Experiment",
     "ExperimentStore",
     "load_experiment",
+    # Keras-style layer API
+    "Sequential",
+    "Model",
+    "Dense",
+    "Conv2D",
+    "MaxPool2D",
+    "AveragePool2D",
+    "Flatten",
+    "Dropout",
+    "Activation",
+    "BatchNormalization",
+    "LayerNorm",
+    "ReLU",
+    "Sigmoid",
+    "Tanh",
+    "GELU",
+    "SiLU",
+    "Softmax",
+    "Input",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
