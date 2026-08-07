@@ -11,6 +11,50 @@ import numpy as np
 from .tensor import Tensor, _numpy_dtype, _resolve_dtype
 from .autograd import Function, Context
 
+
+def _reduce_to_shape(grad, shape):
+    """Sum ``grad`` back to ``shape`` after numpy broadcasting (ndarray)."""
+    if isinstance(grad, Tensor):
+        grad = grad.data
+    if shape is None:
+        return grad
+    target = tuple(shape)
+    grad = np.asarray(grad)
+    while grad.ndim > len(target):
+        grad = grad.sum(axis=0)
+    for axis, dim in enumerate(target):
+        if dim == 1 and grad.shape[axis] != 1:
+            grad = grad.sum(axis=axis, keepdims=True)
+    return grad
+
+
+def _broadcast_grad(grad, a_shape, b_shape):
+    """Return per-input gradients reduced to their broadcast shapes."""
+    ga = (
+        grad
+        if a_shape is None
+        else Tensor(_reduce_to_shape(grad, a_shape), dtype=grad.dtype)
+    )
+    gb = (
+        grad
+        if b_shape is None
+        else Tensor(_reduce_to_shape(grad, b_shape), dtype=grad.dtype)
+    )
+    return [ga, gb]
+
+
+def _save_attr(ctx, **attrs):
+    if ctx is not None:
+        ctx.save_attr(**attrs)
+
+
+def _get_attr(ctx, name):
+    return None if ctx is None else ctx.get_attr(name)
+
+
+def _get_saved_tensor(ctx, name):
+    return None if ctx is None else ctx.get_saved_tensor(name)
+
 # ===========================================================================
 #  Arithmetic Ops
 # ===========================================================================
@@ -20,77 +64,104 @@ class Add(Function):
     @staticmethod
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
+            _save_attr(ctx, a_shape=tuple(a.shape))
             return Tensor(a.data + b, dtype=a.dtype)
         if isinstance(a, (int, float)):
+            _save_attr(ctx, b_shape=tuple(b.shape))
             return Tensor(a + b.data, dtype=b.dtype)
+        _save_attr(ctx, a_shape=tuple(a.shape), b_shape=tuple(b.shape))
         return Tensor(a.data + b.data, dtype=a.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
-        return [grad_output, grad_output]
+        return _broadcast_grad(
+            grad_output, _get_attr(ctx, "a_shape"), _get_attr(ctx, "b_shape")
+        )
 
 
 class Sub(Function):
     @staticmethod
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
+            _save_attr(ctx, a_shape=tuple(a.shape))
             return Tensor(a.data - b, dtype=a.dtype)
         if isinstance(a, (int, float)):
+            _save_attr(ctx, b_shape=tuple(b.shape))
             return Tensor(a - b.data, dtype=b.dtype)
+        _save_attr(ctx, a_shape=tuple(a.shape), b_shape=tuple(b.shape))
         return Tensor(a.data - b.data, dtype=a.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
-        return [grad_output, -grad_output]
+        ga, gb = _broadcast_grad(
+            grad_output, _get_attr(ctx, "a_shape"), _get_attr(ctx, "b_shape")
+        )
+        return [ga, -gb]
 
 
 class Mul(Function):
     @staticmethod
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
-            ctx.save_attr(scalar_side=1, scalar=b)
+            _save_attr(ctx, scalar_side=1, scalar=b, a_shape=tuple(a.shape))
             return Tensor(a.data * b, dtype=a.dtype)
         if isinstance(a, (int, float)):
-            ctx.save_attr(scalar_side=0, scalar=a)
+            _save_attr(ctx, scalar_side=0, scalar=a, b_shape=tuple(b.shape))
             return Tensor(a * b.data, dtype=b.dtype)
-        ctx.save_for_backward(a=a, b=b)
+        if ctx is not None:
+            ctx.save_for_backward(a=a, b=b)
+        _save_attr(ctx, a_shape=tuple(a.shape), b_shape=tuple(b.shape))
         return Tensor(a.data * b.data, dtype=a.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
-        side = ctx.get_attr("scalar_side")
+        side = _get_attr(ctx, "scalar_side")
         if side == 1:
-            scalar = ctx.get_attr("scalar")
-            return [grad_output * scalar, None]
+            scalar = _get_attr(ctx, "scalar")
+            return [Tensor(_reduce_to_shape(grad_output, _get_attr(ctx, "a_shape")) * scalar, dtype=grad_output.dtype), None]
         if side == 0:
-            scalar = ctx.get_attr("scalar")
-            return [None, grad_output * scalar]
-        a = ctx.get_saved_tensor("a")
-        b = ctx.get_saved_tensor("b")
-        return [grad_output * b.data, grad_output * a.data]
+            scalar = _get_attr(ctx, "scalar")
+            return [None, Tensor(_reduce_to_shape(grad_output, _get_attr(ctx, "b_shape")) * scalar, dtype=grad_output.dtype)]
+        a = _get_saved_tensor(ctx, "a")
+        b = _get_saved_tensor(ctx, "b")
+        if a is None or b is None:
+            return _broadcast_grad(grad_output, None, None)
+        ga = Tensor(_reduce_to_shape(grad_output * b.data, _get_attr(ctx, "a_shape")), dtype=grad_output.dtype)
+        gb = Tensor(_reduce_to_shape(grad_output * a.data, _get_attr(ctx, "b_shape")), dtype=grad_output.dtype)
+        return [ga, gb]
 
 
 class Div(Function):
     @staticmethod
     def forward(ctx, a, b):
         if isinstance(b, (int, float)):
-            ctx.save_attr(b_val=b)
+            _save_attr(ctx, b_val=b, a_shape=tuple(a.shape))
             return Tensor(a.data / b, dtype=a.dtype)
-        ctx.save_for_backward(a=a, b=b)
+        if ctx is not None:
+            ctx.save_for_backward(a=a, b=b)
+        _save_attr(ctx, a_shape=tuple(a.shape), b_shape=tuple(b.shape))
         return Tensor(a.data / b.data, dtype=a.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
-        b_val = ctx.get_attr("b_val")
+        b_val = _get_attr(ctx, "b_val")
         if b_val is not None:
-            return [grad_output / b_val, None]
-        a = ctx.get_saved_tensor("a")
-        b = ctx.get_saved_tensor("b")
+            ga = Tensor(
+                _reduce_to_shape(grad_output, _get_attr(ctx, "a_shape")) / b_val,
+                dtype=grad_output.dtype,
+            )
+            return [ga, None]
+        a = _get_saved_tensor(ctx, "a")
+        b = _get_saved_tensor(ctx, "b")
+        if a is None or b is None:
+            return _broadcast_grad(grad_output, None, None)
         g = grad_output.data
-        return [
-            Tensor(g / b.data, dtype=a.dtype),
-            Tensor(-g * a.data / (b.data**2), dtype=b.dtype),
-        ]
+        ga = Tensor(_reduce_to_shape(g / b.data, _get_attr(ctx, "a_shape")), dtype=a.dtype)
+        gb = Tensor(
+            _reduce_to_shape(-g * a.data / (b.data ** 2), _get_attr(ctx, "b_shape")),
+            dtype=b.dtype,
+        )
+        return [ga, gb]
 
 
 class Neg(Function):
