@@ -40,7 +40,7 @@ phase log in `AGENTS.md`.
 | Quantized serving | Implemented | `quantized_serve.py` |
 | Inference HTTP API | Implemented | `inference_server.py` (`/v1/generate/continuous-batch`, `/v1/models/quantize`) |
 | Mobile / edge runtime | Missing | GPU path is server CUDA; no ARM/mobile NPU runtime |
-| Graph compiler (op fusion / tiling / Triton) | Missing | Kernels use raw ops; no fusion pass or Triton codegen |
+| Graph compiler (op fusion / tiling / Triton) | **Implemented** | Python `GraphCompiler` fuses maximal element-wise chains into single kernels, tiles large kernels, and emits C source (fused loops + matmul helper + driver); no Triton codegen |
 | JIT / trace → executable graph | Missing | No symbolic-trace-to-executable pipeline |
 | RLHF / DPO / GRPO | Implemented (fixed) | Phases 9 completed |
 | Tokenizer | Implemented | Tested |
@@ -146,8 +146,18 @@ with a descriptive error.
     `backward` did not reduce gradients over broadcast axes, corrupting bias
     tensors during training); 15 Python tests in
     `tests/python/test_keras_api.py` pass, 119 across the core regression.
- 6. **Graph compiler.** Op fusion + memory tiling + (optionally) Triton codegen;
-    currently kernels are emitted raw.
+ 6. ~~**Graph compiler.**~~ **Done** — `GraphCompiler` builds a `GraphNode` compute
+    DAG (arithmetic/unary sugar, `clip`, `matmul`, `evaluate`), fuses maximal
+    chains of element-wise ops (add/sub/mul/div/neg/abs/exp/log/relu/sigmoid/
+    tanh/gelu/silu/clip) into single `FusedNode` kernels via union-find with
+    shared-subexpression collapsing, rewrites the graph with a replacement map,
+    tiles large element-wise kernels (`forward(..., tile_size=...)`), and emits C
+    source (`generate_c`): fused flat-`n` kernels with scalar constants inlined,
+    a row-major `sneppx_matmul_f32` helper, and a topological
+    `sneppx_graph_forward` driver. 32 Python tests in
+    `tests/python/test_graph_compiler.py` pass (fusion parity vs unfused
+    evaluate, broadcast shapes, matmul boundaries, multiple clusters, codegen
+    structural checks).
  7. **Mobile / edge runtime.** ARM/SSE/NEON + NPU delegate runtime; today the path is
     CUDA-on-server GPUs and the C host kernels.
  8. **Hyperparameter-search orchestrator.** A controller that drives `Trainer` ×
@@ -164,6 +174,8 @@ validator (42 Python ONNX/shape tests pass). Experiment/run tracking is also in:
 `Run`/`Experiment`/`ExperimentStore` with structured `metadata.json` +
 `metrics.jsonl` persistence (8 Python tests), and the Keras-style layer API
 (`Sequential`/`Model` with compile/fit/evaluate/predict/summary, 15 Python
-tests) with the broadcast-aware autograd fix. The remaining gaps, in priority
-order: the graph compiler, a mobile/edge runtime, and a hyperparameter-search
-orchestrator.
+tests) with the broadcast-aware autograd fix. The graph compiler is also in:
+`GraphCompiler` fuses element-wise chains into single kernels, tiles large
+kernels, and emits C source with a topological driver (32 Python tests). The
+remaining gaps, in priority order: a mobile/edge runtime and a
+hyperparameter-search orchestrator.
