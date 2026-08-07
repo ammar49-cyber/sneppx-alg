@@ -37,11 +37,15 @@ phase log in `AGENTS.md`.
 | Distributed (DP/TP/PP/EP, ZeRO, FSDP, elastic) | Implemented | Phases 2 completed; checkpoint coordinator + heartbeat/elastic |
 | NCCL / multi-node transports | Implemented | `net/distributed/` |
 | Continuous-batching serving | Implemented | `continuous_batching.py` |
+| Paged attention / KV caching | **Implemented** | `paged_attention.py` |
+| MX deployment formats (MXFP4/6/8) | **Implemented** | `mx_formats.py` |
+| MLflow-class observability (registry/lineage/prompts/gateway/eval) | **Implemented** | `mlflow_like.py` |
+| Hardware inference backends (CPU/ONNX/OpenVINO/NPU/auto) | **Implemented** | `hw_backends.py` |
 | Quantized serving | Implemented | `quantized_serve.py` |
 | Inference HTTP API | Implemented | `inference_server.py` (`/v1/generate/continuous-batch`, `/v1/models/quantize`) |
 | Mobile / edge runtime | **Implemented** | Python `EdgeRuntime`: CPU/ISA detection, pluggable backends with CPU fallback, INT8-quantized matmul, scratch-buffer pooling, latency/flops; NPU/ARM delegate extension point |
 | Graph compiler (op fusion / tiling / Triton) | **Implemented** | Python `GraphCompiler` fuses maximal element-wise chains into single kernels, tiles large kernels, and emits C source (fused loops + matmul helper + driver); no Triton codegen |
-| JIT / trace → executable graph | Missing | No symbolic-trace-to-executable pipeline |
+| JIT / trace → executable graph | **Implemented** | `jit.py`: symbolic trace, `jit`/`grad`/`value_and_grad`/`jacobian`/`hessian`/`vmap` |
 | RLHF / DPO / GRPO | Implemented (fixed) | Phases 9 completed |
 | Tokenizer | Implemented | Tested |
 | Model zoo / `from_pretrained` | Implemented | LLaMA2/3, Mistral, Qwen2, DeepSeek V2 + HF weight conversion |
@@ -168,16 +172,55 @@ with a descriptive error.
     (`BufferPool`, safe within a graph), and reports `latency_ms`/
     `throughput`/`flops`/`summary`/`benchmark`. 24 Python tests in
     `tests/python/test_edge_runtime.py` pass.
- 8. ~~**Hyperparameter-search orchestrator.**~~ **Done** — `hpo.py` provides a
-    `Study` controller (Optuna-style `suggest`/`tell` plus a one-shot `run`
-    driver) over a `SearchSpace` of `choice`/`int_`/`uniform`/`log_uniform`
-    specs with four samplers: random search, exhaustive grid search, successive
-    halving (budget-scheduled evaluations with top-1/η promotion), and
-    Bayesian optimization via GP-UCB (closed-form RBF Gaussian-process
-    regression, `minimize`/`maximize` directions). Trials and results persist
-    to JSON (`to_json`/`from_json`). Convenience drivers
-    `random_search`/`grid_search`/`halving_search`/`bayesian_search` are
-    exported top-level. 24 Python tests in `tests/python/test_hpo.py` pass.
+  8. ~~**Hyperparameter-search orchestrator.**~~ **Done** — `hpo.py` provides a
+     `Study` controller (Optuna-style `suggest`/`tell` plus a one-shot `run`
+     driver) over a `SearchSpace` of `choice`/`int_`/`uniform`/`log_uniform`
+     specs with four samplers: random search, exhaustive grid search, successive
+     halving (budget-scheduled evaluations with top-1/η promotion), and
+     Bayesian optimization via GP-UCB (closed-form RBF Gaussian-process
+     regression, `minimize`/`maximize` directions). Trials and results persist
+     to JSON (`to_json`/`from_json`). Convenience drivers
+     `random_search`/`grid_search`/`halving_search`/`bayesian_search` are
+     exported top-level. 24 Python tests in `tests/python/test_hpo.py` pass.
+  9. ~~**Paged attention / KV caching.**~~ **Done** — `paged_attention.py`
+     implements a `Tracer` (LIFO page reuse) + `PrefixCache` (token-hash-deduped
+     prefix re-use) and `paged_attention_forward` for GQA with causal-masked
+     prefill (`[0, t]` rows) and non-causal decode; paged `incremental`/
+     `chunked` paths exercised. Fixed upstream bugs found while testing: GQA
+     `q @ k.T` was over-expanding to `(heads, kv, seq)` (now a `np.einsum`),
+     causal mask axis, and per-position prefill scoring. 16 Python tests in
+     `tests/python/test_paged_attention.py` pass.
+  10. ~~**MX deployment formats (MXFP4/6/8).**~~ **Done** — `mx_formats.py`
+      implements an MXFloat codec (block shared exponents, 1/2-bit exponent +
+      2/3/4/6-bit mantissa, scaling of block exponents by `E8M0`-style
+      exponents) and micro-scaled dot products (MXFP4/MXFP6/MXFP8_E4M3/BNB6).
+      Fixed the scale formula (`ceil(log2(peak)) - bias` broke 2-bit-exponent
+      formats → `ceil(log2(peak) - log2(max))`) and added IEEE subnormal
+      encode/decode, lifting MXFP4 SNR 2.2→16.2 dB and MXFP6_E2M3 2.3→30.5 dB.
+      7 Python tests in `tests/python/test_mx_formats.py` pass.
+  11. ~~**JIT / trace → executable graph.**~~ **Done** — `jit.py` provides
+      symbolic tracing (op graph + `tuple` nodes), `jit` (cache by input
+      shapes), first/second-order `grad` (multi-`argnum`, `value_and_grad`,
+      `jacobian`, `hessian` incl. mixed partials), and `vmap` (batched
+      `args`/`out_axes`). Fixed: multi-argnum `grad` only returned the first
+      gradient (now builds a `tuple` node), transposed-1-D matmul VJPs
+      (`matmul_grad_a/b`), and `sum_to_shape` robustness to extra/fewer dims.
+      24 Python tests in `tests/python/test_jit.py` pass.
+  12. ~~**MLflow-class observability.**~~ **Done** — `mlflow_like.py` provides
+      `JSONStore` persistence, `ModelRegistry` (version lifecycle, stages with
+      Production↔Archived guard, aliases, lineage), `LineageStore` (run DAG:
+      chain/descendants/tags/models), `PromptRegistry` (versions + template
+      `render`), `AIGateway` (route priorities, disabled-route fallback,
+      usage), `EvalMonitor` (delta/regression detection), and the
+      `SneppxTrackingClient` facade. 9 Python tests in
+      `tests/python/test_observability.py` pass.
+  13. ~~**Hardware inference backends.**~~ **Done** — `hw_backends.py` probes
+      CPU/ONNX/OpenVINO/NPU/GPU devices without importing heavy packages,
+      routes through `BackendRegistry`/`select_execution_provider`/
+      `inference_session` with an alias-aware `auto` priority chain
+      (NPU > OpenVINO > ONNX > CPU_FP16 > CPU_FP32) and per-backend degradation
+      to a deterministic seeded numpy fallback, and records latency per run.
+      9 Python tests in `tests/python/test_hw_backends.py` pass.
 
 ## Recommendation
 
@@ -198,5 +241,9 @@ backends + CPU fallback, INT8-quantized matmul, buffer pooling, and
 latency/flops reporting (24 Python tests). The hyperparameter-search
 orchestrator is also in: `Study` with random/grid/halving/GP-UCB samplers
 over a `SearchSpace`, ask/tell streaming + run driver, and JSON results
-(24 Python tests). With these three closures every gap identified by the
-original analysis is now **Implemented** or partial-with-a-documented-cause.
+(24 Python tests). With these closures every gap identified by the original
+analysis is now **Implemented** or partial-with-a-documented-cause. This pass also
+closed the remaining user-facing gaps from the matrix: paged attention (16 tests),
+MX deployment formats (7 tests), JIT/grad/vmap tracing (24 tests), MLflow-class
+observability (9 tests), and hardware inference backends (9 tests) — all Python
+tests green alongside the core regression suite.
