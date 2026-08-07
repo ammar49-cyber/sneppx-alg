@@ -21,7 +21,7 @@ phase log in `AGENTS.md`.
 | **Binary model export (ONNX)** | **Implemented** | Canonical binary `ModelProto` export: single-op linear (`SneppX_onnx_save_linear`), arbitrary DAGs (`SneppX_onnx_save_graph`, any op with INT/FLOAT/INTS/FLOATS attrs, symbolic batch dims), and the Python `OnnxExporter` (`.onnx` paths now emit raw protobuf via `OnnxModel.to_bytes`). Cross-validated in both directions with the C writer/validator. |
 | ONNX validation / shape inference | **Implemented** | `SneppX_onnx_validate` (C) and `onnx_validate` (Python) check ir_version/opset/graph name, initializer `raw_data` vs dims product, node input declaration, and output production. Python `onnx_check` adds op-schema arity checks and full type/shape inference with symbolic batch propagation (Conv/Gemm/MatMul/pool/broadcast/reshape/transpose/concat/split/reduce/gather, 20+ op rules). |
 | Graph-level model import (run) | Partial | In-tree C reader uses **non-standard** protobuf field numbers (see note) |
-| Keras-/nn.Module-style layer API | Missing | No sequential / layer call API |
+| Keras-/nn.Module-style layer API | **Implemented** | `Sequential`/`Model` with add/compile/fit/evaluate/predict/summary + layer factories and pure-Python optimizers |
 | Post-training quantization | Implemented | INT8/INT4/FP8, AWQ, GPTQ (C, CUDA, Python) |
 | Quantization-aware training (fake-quant + STE) | Implemented | `SNEPPX_tensor_fake_quant` + `SNEPPX_fake_quant` op: symmetric affine forward (round/dequant, INT8/INT4/FP8 bit widths) with straight-through-estimator backward (unit gradient w.r.t. input). Verified by `test_fake_quant` (3/3). |
 | Structured / channel-wise pruning | Implemented | `pruning.py` tested |
@@ -31,7 +31,7 @@ phase log in `AGENTS.md`.
 | Mixed-precision (AMP) | Implemented | FP16/BF16 autocast + gradient scaling |
 | LR schedulers | Implemented | cosine/linear/warmup etc. |
 | Hyperparameter search orchestrator | **Implemented** | `hpo.Study` with random/grid/halving/GP-UCB samplers, ask/tell + run drivers, JSON results |
-| Experiment / run tracking | Partial | `Profiler` (JSON) + `Logger` (JSON/color); no structured run+params+metrics artifact |
+| Experiment / run tracking | **Implemented** | `Run`/`Experiment`/`ExperimentStore` with structured `metadata.json` + `metrics.jsonl` persistence |
 | Data pipeline | Implemented | datamodules / dataloaders tested |
 | Augmentation | Implemented | `augmentation.py` tested |
 | Distributed (DP/TP/PP/EP, ZeRO, FSDP, elastic) | Implemented | Phases 2 completed; checkpoint coordinator + heartbeat/elastic |
