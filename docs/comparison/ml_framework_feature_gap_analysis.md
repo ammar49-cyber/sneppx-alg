@@ -247,3 +247,17 @@ closed the remaining user-facing gaps from the matrix: paged attention (16 tests
 MX deployment formats (7 tests), JIT/grad/vmap tracing (24 tests), MLflow-class
 observability (9 tests), and hardware inference backends (9 tests) — all Python
 tests green alongside the core regression suite.
+
+A subsequent production-serving pass also closed the model-serving gap: a
+C serving control plane (`net/http/serving_engine.h/.c`) with model versioning,
+rolling updates, A/B traffic routing, dynamic batching (size + timeout drain),
+Prometheus+JSON metrics, health/readiness probes, and YAML hot-reload (compiled
+and linked with MSVC 19.44 + UCRT; C unit test in `tests/unit/test_serving_engine.c`
+passes), mirrored in Python (`interface_bindings/serving_engine.py` with
+`ServingEngine`, `DynamicBatchQueue`, `WorkerPool`, `ConfigReloader`, and a
+stdlib `http.server.ThreadingHTTPServer` in `serving_server.py`) plus a
+stdlib-`urllib` client SDK (`serving_client.py`). The FastAPI
+`inference_server.py` was extended with `/healthz`, `/readyz`, `/metrics`
+(Prometheus + JSON), `/v1/models/{model_id}/versions`, `/v1/deploy`, and
+`/v1/traffic`, and `register_model` now mirrors into the serving control plane.
+Example config: `config/serving.yaml`.

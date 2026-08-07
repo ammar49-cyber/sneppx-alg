@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 import numpy as np
 
 try:
-    from fastapi import FastAPI, HTTPException, Query
+    from fastapi import FastAPI, HTTPException, Query, Header
     from fastapi.responses import StreamingResponse, JSONResponse
     from pydantic import BaseModel, Field
 except ImportError:
@@ -37,8 +37,26 @@ from .api_gateway import router as auth_router, self_service_router as keys_rout
 from .firewall import create_firewall as _create_firewall
 from .continuous_batching import ContinuousBatchScheduler, SchedulerConfig, ScheduledRequest, continuous_generate_loop
 from .quantized_serve import QuantizedModelConfig, quantize_model_weights, dequantize_weights
+from .serving_engine import ServingEngine, ServingConfig, MetricsCollector
 
 logger = logging.getLogger(__name__)
+
+
+# ===========================================================================
+#  Serving control plane (metrics / readiness / versioning / A-B)
+# ===========================================================================
+
+_serving_engine: Optional[ServingEngine] = None
+
+
+def get_serving_engine() -> ServingEngine:
+    """Shared production-grade serving engine for metrics, readiness, A/B routing."""
+    global _serving_engine
+    if _serving_engine is None:
+        _serving_engine = ServingEngine(config=ServingConfig(),
+                                        model_fn=lambda batch: batch)
+        _serving_engine.set_ready(True)
+    return _serving_engine
 
 
 # ===========================================================================
@@ -191,6 +209,10 @@ def register_model(
     meta: Optional[dict] = None,
 ):
     _models[model_id] = ModelEntry(model_id, model, tokenizer, default_config, meta)
+    # Mirror into the production serving engine (model versioning surface).
+    eng = get_serving_engine()
+    if not eng.versions(model_id):
+        eng.register_model(model_id, "v1", meta.get("description", "") if isinstance(meta, dict) else "")
 
 
 def get_model(model_id: Optional[str] = None) -> ModelEntry:
@@ -338,6 +360,12 @@ async def usage_middleware(request: callable, call_next):
                 )
     except Exception:
         pass
+    # Feed the production serving engine's metrics (latency/throughput/errors).
+    try:
+        get_serving_engine().metrics.record(
+            latency_us=elapsed_ms * 1000.0, tokens=0, error=response.status_code >= 500)
+    except Exception:
+        pass
     return response
 
 
@@ -349,6 +377,64 @@ async def health_endpoint():
         models_loaded=len(_models),
         uptime_seconds=time.time() - _start_time,
     )
+
+
+# ---------------------------------------------------------------------------
+# Production serving surface: liveness, readiness, metrics, versioning, A/B
+# ---------------------------------------------------------------------------
+
+@app.get("/healthz")
+async def healthz_endpoint():
+    eng = get_serving_engine()
+    return {"status": "ok", "ready": eng.ready,
+            "uptime_ms": int((time.time() - _start_time) * 1000)}
+
+
+@app.get("/readyz")
+async def readyz_endpoint():
+    eng = get_serving_engine()
+    if not eng.ready:
+        return JSONResponse({"ready": False}, status_code=503)
+    return {"ready": True, "uptime_ms": int((time.time() - _start_time) * 1000)}
+
+
+@app.get("/metrics")
+async def metrics_endpoint(format: str = Query(default=""), accept: Optional[str] = Header(default=None)):
+    from fastapi.responses import PlainTextResponse
+    eng = get_serving_engine()
+    if format == "json" or (accept and "application/json" in accept):
+        return JSONResponse(eng.metrics.to_dict())
+    return PlainTextResponse(eng.metrics.render_prometheus(),
+                             media_type="text/plain; version=0.0.4")
+
+
+@app.get("/v1/models/{model_id}/versions")
+async def model_versions_endpoint(model_id: str):
+    eng = get_serving_engine()
+    versions = eng.versions(model_id)
+    if versions is None:
+        raise HTTPException(404, f"Model '{model_id}' not found")
+    return {"name": model_id, "versions": versions}
+
+
+@app.post("/v1/deploy")
+async def deploy_endpoint(model: str = Query(...), version: str = Query("v1"),
+                          description: str = Query(""), promote: bool = Query(False)):
+    eng = get_serving_engine()
+    ok = eng.deploy(model, version, description, weight=100 if promote else 0, promote=promote)
+    return {"status": "deployed" if ok else "error"}
+
+
+@app.post("/v1/traffic")
+async def traffic_endpoint(model: str = Query(...), split: str = Query(...)):
+    eng = get_serving_engine()
+    legs = []
+    for part in split.split(","):
+        if ":" in part:
+            vid, w = part.split(":", 1)
+            legs.append((vid.strip(), int(w.strip())))
+    ok = eng.set_traffic(model, legs)
+    return {"status": "ok" if ok else "error"}
 
 
 @app.get("/v1/models", response_model=ModelListResponse)

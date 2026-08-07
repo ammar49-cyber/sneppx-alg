@@ -992,6 +992,22 @@ from .hw_backends import (
     inference_session,
     detect_devices,
 )
+from .serving_engine import (
+    ServingConfig,
+    ModelVersion,
+    TrafficSplit,
+    MetricsCollector,
+    DynamicBatchQueue,
+    ConfigReloader,
+    ServingEngine,
+    WorkerPool,
+    ServingServer,
+    serve_from_config,
+)
+from .serving_client import (
+    ServingClient,
+    ServingError,
+)
 
 __all__ = [
     # tensor
@@ -1501,6 +1517,19 @@ __all__ = [
     "select_execution_provider",
     "inference_session",
     "detect_devices",
+    # Phase 10 — production serving stack
+    "ServingConfig",
+    "ModelVersion",
+    "TrafficSplit",
+    "MetricsCollector",
+    "DynamicBatchQueue",
+    "ConfigReloader",
+    "ServingEngine",
+    "WorkerPool",
+    "ServingServer",
+    "serve_from_config",
+    "ServingClient",
+    "ServingError",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports

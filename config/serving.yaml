@@ -1,0 +1,30 @@
+# Example serving configuration for the SneppX serving engine.
+#
+# This single file drives both the C control plane (net/http/serving_engine.c)
+# and the Python engine (SneppX_ALG.interface_bindings.serving_engine).
+# The `serving.*` params use flat dotted keys so the C hot-reload parser
+# understands them directly; the nested `models:` and `traffic:` blocks are
+# consumed by the Python `serve_from_config` loader.
+#
+# Usage:
+#   python -m SneppX_ALG.interface_bindings.serving_cli --config config/serving.yaml
+#   python -c "from SneppX_ALG.interface_bindings.serving_engine import serve_from_config; serve_from_config('config/serving.yaml')"
+
+serving.listen: 127.0.0.1
+serving.port: 8300
+serving.max_batch_size: 32
+serving.batch_timeout_ms: 5.0
+serving.n_workers: 4
+serving.warmup_iters: 8
+
+models:
+  gpt2:
+    version_id: v1
+    description: "reference GPT-2 style model"
+    weight: 100
+  bert:
+    version_id: v1
+    description: "reference BERT style model"
+    weight: 0
+
+traffic.bert: "v1:100"
