@@ -39,7 +39,7 @@ phase log in `AGENTS.md`.
 | Continuous-batching serving | Implemented | `continuous_batching.py` |
 | Quantized serving | Implemented | `quantized_serve.py` |
 | Inference HTTP API | Implemented | `inference_server.py` (`/v1/generate/continuous-batch`, `/v1/models/quantize`) |
-| Mobile / edge runtime | Missing | GPU path is server CUDA; no ARM/mobile NPU runtime |
+| Mobile / edge runtime | **Implemented** | Python `EdgeRuntime`: CPU/ISA detection, pluggable backends with CPU fallback, INT8-quantized matmul, scratch-buffer pooling, latency/flops; NPU/ARM delegate extension point |
 | Graph compiler (op fusion / tiling / Triton) | **Implemented** | Python `GraphCompiler` fuses maximal element-wise chains into single kernels, tiles large kernels, and emits C source (fused loops + matmul helper + driver); no Triton codegen |
 | JIT / trace → executable graph | Missing | No symbolic-trace-to-executable pipeline |
 | RLHF / DPO / GRPO | Implemented (fixed) | Phases 9 completed |
@@ -158,8 +158,16 @@ with a descriptive error.
     `tests/python/test_graph_compiler.py` pass (fusion parity vs unfused
     evaluate, broadcast shapes, matmul boundaries, multiple clusters, codegen
     structural checks).
- 7. **Mobile / edge runtime.** ARM/SSE/NEON + NPU delegate runtime; today the path is
-    CUDA-on-server GPUs and the C host kernels.
+ 7. ~~**Mobile / edge runtime.**~~ **Done** — `EdgeRuntime` (Python) detects the
+    host as an `EdgeDevice` (x86 SSE/AVX/AVX-512, ARM NEON/FP16, RISC-V via
+    ISA flags + vector width), executes compiled graphs through pluggable
+    `EdgeBackend` implementations (registered via `register_backend`, default
+    `CPUBackend`, with a CPU fallback for ops a delegate doesn't support),
+    runs INT8-quantized matmuls (`quantize_graph_weights` + `int8_matmul`
+    with fp32/int32 accumulation), recycles scratch buffers between calls
+    (`BufferPool`, safe within a graph), and reports `latency_ms`/
+    `throughput`/`flops`/`summary`/`benchmark`. 24 Python tests in
+    `tests/python/test_edge_runtime.py` pass.
  8. **Hyperparameter-search orchestrator.** A controller that drives `Trainer` ×
     config grid; SNEPPX has schedulers but no search driver.
 
@@ -177,5 +185,7 @@ validator (42 Python ONNX/shape tests pass). Experiment/run tracking is also in:
 tests) with the broadcast-aware autograd fix. The graph compiler is also in:
 `GraphCompiler` fuses element-wise chains into single kernels, tiles large
 kernels, and emits C source with a topological driver (32 Python tests). The
-remaining gaps, in priority order: a mobile/edge runtime and a
-hyperparameter-search orchestrator.
+mobile/edge runtime is in too: `EdgeRuntime` with device detection, pluggable
+backends + CPU fallback, INT8-quantized matmul, buffer pooling, and
+latency/flops reporting (24 Python tests). The remaining gap, in priority
+order: a hyperparameter-search orchestrator.
