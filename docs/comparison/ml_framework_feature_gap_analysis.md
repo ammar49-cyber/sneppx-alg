@@ -136,8 +136,16 @@ with a descriptive error.
     directory manager), persisted as structured `metadata.json` + `metrics.jsonl`
     under `runs/<experiment>/<run_id>/` and reloadable via `load_experiment`;
     8 Python tests in `tests/python/test_experiment.py` pass.
- 5. **Keras-style layer API.** A `Sequential` / `__call__`-able layer abstraction for
-    ergonomics; SNEPPX today uses a graph/functional model directly.
+ 5. ~~**Keras-style layer API.**~~ **Done** — `keras_api.Sequential`/`Model`
+    with `add`/`compile`/`fit`/`evaluate`/`predict`/`summary`/`count_params`/
+    `get`+`set`+`save`+`load` weights, layer factories (`Dense`, `Conv2D`,
+    `MaxPool2D`, `AveragePool2D`, `Flatten`, `Dropout`, `BatchNormalization`,
+    `LayerNorm`, `Activation`, `ReLU`, `Sigmoid`, `Tanh`, `GELU`, `SiLU`,
+    `Softmax`, `Input`) with training `history` + `validation_data`/callbacks.
+    Also fixed a pre-existing pure-Python autograd bug (Add/Sub/Mul/Div
+    `backward` did not reduce gradients over broadcast axes, corrupting bias
+    tensors during training); 15 Python tests in
+    `tests/python/test_keras_api.py` pass, 119 across the core regression.
  6. **Graph compiler.** Op fusion + memory tiling + (optionally) Triton codegen;
     currently kernels are emitted raw.
  7. **Mobile / edge runtime.** ARM/SSE/NEON + NPU delegate runtime; today the path is
@@ -154,6 +162,8 @@ Python `OnnxExporter` binary emission + `protobuf_to_onnx` decode + parity
 propagation; C-written files parse in Python and Python-written files pass the C
 validator (42 Python ONNX/shape tests pass). Experiment/run tracking is also in:
 `Run`/`Experiment`/`ExperimentStore` with structured `metadata.json` +
-`metrics.jsonl` persistence (8 Python tests). The remaining gaps, in priority
-order: a Keras-style layer API, the graph compiler, a
-mobile/edge runtime, and a hyperparameter-search orchestrator.
+`metrics.jsonl` persistence (8 Python tests), and the Keras-style layer API
+(`Sequential`/`Model` with compile/fit/evaluate/predict/summary, 15 Python
+tests) with the broadcast-aware autograd fix. The remaining gaps, in priority
+order: the graph compiler, a mobile/edge runtime, and a hyperparameter-search
+orchestrator.
