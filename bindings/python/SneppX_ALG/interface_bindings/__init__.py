@@ -2,6 +2,28 @@ from .. import _neural_engine_bridge
 
 __version__ = "0.9.5.937"
 
+# PyTorch-like high-level API
+from .pytorch_api import (
+    Tensor as PyTorchTensor,
+    Parameter as PyTorchParameter,
+    Module as PyTorchModule,
+    Linear as PyTorchLinear,
+    LayerNorm as PyTorchLayerNorm,
+    Dropout as PyTorchDropout,
+    Embedding as PyTorchEmbedding,
+    Conv2d as PyTorchConv2d,
+    Sequential as PyTorchSequential,
+    Optimizer as PyTorchOptimizer,
+    SGD as PyTorchSGD,
+    Adam as PyTorchAdam,
+    AdamW as PyTorchAdamW,
+    Dataset as PyTorchDataset,
+    DataLoader as PyTorchDataLoader,
+    accuracy as py_accuracy,
+    precision_recall_f1 as py_f1,
+    Trainer as PyTorchTrainer,
+)
+
 # Phase 1 Foundation — dispatch layer + ctypes utilities
 from . import dispatch
 from .dispatch import (
