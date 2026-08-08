@@ -32,6 +32,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 |------|----------------|
 | Model Hub guide | [`docs/guide/model_hub.md`](docs/guide/model_hub.md) |
 | Serving guide | [`docs/guide/serving.md`](docs/guide/serving.md) |
+| Edge Runtime | [`edge/README.md`](edge/README.md) |
 | Quick start & build | [`docs/index.md`](docs/index.md) |
 | Contribution framework | [`docs/CONTRIBUTOR_TIERS.md`](docs/CONTRIBUTOR_TIERS.md) |
 | Branching strategy | [`docs/BRANCHING_STRATEGY.md`](docs/BRANCHING_STRATEGY.md) |
@@ -42,6 +43,11 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 | Development workflow | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | Commenting standard | [`docs/COMMENTING.md`](docs/COMMENTING.md) |
 | All docs | [`docs/README.md`](docs/README.md) |
+
+## What's new in v1.1.2 (Unreleased)
+
+- **Lightweight Edge Runtime**: Added `edge/` directory with minimal C inference engine (<5MB binary), arena allocator for memory reuse, and model converter `sneppx-to-edge`.
+- **API Layer**: Added `sneppx.nn` PyTorch-like Python API layer for high-level model building, training, and evaluation.
 
 ## What's new in v1.1.1
 
