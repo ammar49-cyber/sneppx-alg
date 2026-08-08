@@ -114,6 +114,7 @@ endif()
 
 file(GLOB_RECURSE CORE_KERNEL_SRC kernel/*.c drivers/*.c)
 file(GLOB_RECURSE NET_HTTP_SRC net/http/*.c)
+list(FILTER NET_HTTP_SRC EXCLUDE REGEX "vizmon\\.c$")
 file(GLOB_RECURSE CORE_LIB_SRC lib/internal/*.c)
 file(GLOB_RECURSE CORE_SECURITY_C_SRC security/crypto/c/*.c)
 file(GLOB_RECURSE FS_SNAPSHOT_SRC fs/*.c)
@@ -176,6 +177,33 @@ if(SNEPPX_BUILD_HTTP)
 endif()
 if(NOT MSVC)
     target_link_libraries(neural_core_kernel PUBLIC m)
+endif()
+
+# ---- SneppX vizmon: lightweight C visualization & monitoring control plane ----
+# Separate static library (libvizmon) per the dashboard requirement: pure-C,
+# no third-party deps (on Windows links ws2_32). Compile-only (ON by default).
+option(SNEPPX_BUILD_VIZMON "Build the SneppX visualization/monitoring dashboard" ON)
+if(SNEPPX_BUILD_VIZMON)
+    file(GLOB SNEPPX_VIZMON_SRC net/http/vizmon.c)
+    if(MSVC)
+        # On Windows, build as SHARED (DLL) so ctypes can load it
+        add_library(sneppx_vizmon SHARED ${SNEPPX_VIZMON_SRC})
+        target_compile_definitions(sneppx_vizmon PRIVATE SNEPPX_VIZMON_EXPORTS)
+    else()
+        # On Unix, static is fine (can be dlopen'd)
+        add_library(sneppx_vizmon STATIC ${SNEPPX_VIZMON_SRC})
+    endif()
+    target_include_directories(sneppx_vizmon PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    if(NOT MSVC)
+        target_link_libraries(sneppx_vizmon PUBLIC m)
+    endif()
+    if(MSVC)
+        target_link_libraries(sneppx_vizmon PUBLIC ws2_32)
+        target_compile_definitions(sneppx_vizmon PRIVATE SNEPPX_BUILD_HTTP)
+    endif()
 endif()
 
 file(GLOB_RECURSE NEURAL_ARCHITECTURE_SRC algorithms/*/core/*.c)

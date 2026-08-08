@@ -449,6 +449,11 @@ from .edge_runtime import (
     quantize_graph_weights,
     benchmark,
 )
+from .vizmon import (
+    VizMon,
+    start_dashboard,
+    create_vizmon,
+)
 from .hpo import (
     Trial,
     SearchSpace,
@@ -1530,6 +1535,10 @@ __all__ = [
     "serve_from_config",
     "ServingClient",
     "ServingError",
+    # Visualization & Monitoring (vizmon)
+    "VizMon",
+    "start_dashboard",
+    "create_vizmon",
 ]
 
 # Lazy import helper — allows accessing submodules even if direct imports
