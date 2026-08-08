@@ -184,7 +184,7 @@ class ModelRegistry:
 
         # Save the model card
         import json
-        card_path = os.path.join(download_dir, "config.json")
+        card_path = os.path.join(download_dir, "model_card.json")
         with open(card_path, "w") as f:
             json.dump(card.model_dump(mode="json"), f, indent=2)
 

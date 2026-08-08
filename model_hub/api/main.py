@@ -98,7 +98,6 @@ class HubDatabase:
                     query: Optional[str] = None, task: Optional[str] = None,
                     tag: Optional[str] = None, org: Optional[str] = None) -> Dict[str, Any]:
         all_models = self._scan_models()
-        total = len(all_models)
 
         # Filter
         if query:
@@ -109,6 +108,8 @@ class HubDatabase:
             all_models = [m for m in all_models if tag in (m.get("tags") or [])]
         if org:
             all_models = [m for m in all_models if m.get("organization") == org or m.get("name", "").startswith(org + "/")]
+
+        total = len(all_models)
 
         # Sort
         if sort_by == "downloads":
@@ -154,6 +155,7 @@ class HubDatabase:
                     data["_model_name"] = model_name
                     data["_version"] = version
                     data["_downloads"] = 0  # Would come from usage tracking
+                    data["_size"] = sum(f.get("size", 0) for f in (data.get("files") or []))
                     results.append(data)
         return results
 
@@ -182,6 +184,8 @@ class HubDatabase:
             else:
                 card["name"] = name
             card["version"] = version
+        # Compute total_size from recorded files
+        card["total_size"] = sum(f.get("size", 0) for f in (card.get("files") or []))
         return card
 
     def get_model_versions(self, name: str) -> List[str]:

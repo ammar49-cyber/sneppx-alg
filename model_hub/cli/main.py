@@ -195,16 +195,15 @@ def cmd_search(args: argparse.Namespace):
 
 def cmd_info(args: argparse.Namespace):
     client = _ensure_client()
-    card = client.get_model(args.model_name, args.version)
+    try:
+        card = client.get_model(args.model_name, args.version)
+    except Exception:
+        card = None
     if card:
         print(_format_model_card(card.model_dump(mode="json"), verbose=args.verbose))
     else:
-        card = client._request("GET", f"/api/v1/models/{client._model_segment(args.model_name)}", params={"version": args.version})
-        if card:
-            print(_format_model_card(card, verbose=args.verbose))
-        else:
-            print(f"Model not found: {args.model_name}@{args.version}")
-            sys.exit(1)
+        print(f"Model not found: {args.model_name}@{args.version}")
+        sys.exit(1)
 
 
 def cmd_versions(args: argparse.Namespace):
@@ -251,7 +250,17 @@ def cmd_upload(args: argparse.Namespace):
     org = card_data.get("organization")
     card_name = card_data.get("name", args.model_dir)
     model_name = f"{org}/{card_name}" if org and org not in card_name else card_name
-    version = card_data.get("version", args.version)
+    if args.version:
+        card_data["version"] = args.version
+    if args.task:
+        card_data["task"] = args.task
+    if args.format:
+        card_data["format"] = args.format
+    if args.visibility:
+        card_data["visibility"] = args.visibility
+    if args.license:
+        card_data["license"] = args.license
+    version = card_data.get("version")
     resp = client._request(
         "POST", "/api/v1/models/upload",
         data={"card": json.dumps(card_data)},
@@ -359,10 +368,14 @@ def cmd_orgs(args: argparse.Namespace):
 
 def cmd_login(args: argparse.Namespace):
     client = _ensure_client()
-    result = client._request("POST", "/api/v1/auth/login", data={
-        "username": args.username,
-        "password": args.password,
-    })
+    try:
+        result = client._request("POST", "/api/v1/auth/login", data={
+            "username": args.username,
+            "password": args.password,
+        })
+    except Exception as e:
+        print(f"Login failed: {e}")
+        sys.exit(1)
     token = result.get("access_token")
     if token:
         cache_dir = os.environ.get("SNEPPX_HUB_CACHE", os.path.join(os.path.expanduser("~"), ".cache", "sneppx", "hub"))

@@ -134,10 +134,15 @@ class Hub:
         with open(card_path) as f:
             card_data = json.load(f)
 
-        # Upload metadata
-        resp = self._client._request("POST", "/api/v1/models/upload", json=card_data)
+        # Upload metadata (server expects the card as a Form field)
+        resp = self._client._request("POST", "/api/v1/models/upload",
+                                     data={"card": json.dumps(card_data)})
 
         # Upload files
+        org = card_data.get("organization")
+        card_name = card_data.get("name")
+        model_name = f"{org}/{card_name}" if org and org not in str(card_name) else card_name
+        version = card_data.get("version")
         for filename in os.listdir(model_dir):
             if filename == "model_card.json" or filename.endswith(".py"):
                 continue
@@ -146,7 +151,7 @@ class Hub:
                 with open(filepath, "rb") as f:
                     self._client._request(
                         "POST",
-                        f"/api/v1/models/{card_data['name']}/{card_data['version']}/files/{filename}",
+                        f"/api/v1/models/{self._client._model_segment(model_name)}/{version}/files/{filename}",
                         files={"file": (filename, f, "application/octet-stream")},
                     )
 
@@ -171,6 +176,12 @@ class Hub:
         """Get leaderboard entries."""
         lb = self._client.get_leaderboard(task=task, metric=metric)
         return [e.model_dump(mode="json") for e in lb.entries]
+
+    def list_organizations(self) -> List[Dict[str, Any]]:
+        """List all organizations on the hub."""
+        result = self._client._request("GET", "/api/v1/orgs")
+        orgs = result.get("orgs", result)
+        return orgs if isinstance(orgs, list) else []
 
     @classmethod
     def get_default(cls) -> "Hub":
@@ -207,10 +218,8 @@ def load(model_name: str, version: str = "latest", task: Optional[str] = None,
 
     # If format is supported by the existing loader, use it
     fmt = card.format
-    if fmt == ModelFormat.SNEPPX_NATIVE:
-        # Check for config.json to build from config
-        config_path = os.path.join(result_dir, "config.json")
-    if os.path.exists(config_path):
+    config_path = os.path.join(result_dir, "config.json")
+    if fmt == ModelFormat.SNEPPX_NATIVE and os.path.exists(config_path):
         try:
             from SneppX_ALG.model_zoo import build_model_from_config
             with open(config_path) as f:
@@ -253,10 +262,25 @@ def download(model_name: str, version: str = "latest", dest: Optional[str] = Non
     return hub.download(model_name, version, dest)
 
 
+def upload(model_dir: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+    """Upload a model directory to the hub."""
+    hub = Hub.get_default()
+    if api_key:
+        hub._api_key = api_key
+        hub._client = HubAPIClient(base_url=hub._base_url, api_key=api_key)
+    return hub.upload(model_dir)
+
+
 def leaderboard(task: Optional[str] = None, metric: Optional[str] = None) -> List[Dict]:
     """Get leaderboard entries."""
     hub = Hub.get_default()
     return hub.leaderboard(task, metric)
+
+
+def list_organizations() -> List[Dict[str, Any]]:
+    """List all organizations on the hub."""
+    hub = Hub.get_default()
+    return hub.list_organizations()
 
 
 def submit_benchmark(model_name: str, version: str, **kwargs) -> bool:
