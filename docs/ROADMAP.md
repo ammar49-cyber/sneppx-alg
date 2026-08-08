@@ -16,15 +16,15 @@ All 8 development phases complete, API frozen for stability, full regression sui
 | Profiling | Profiler, structured logging, NVTX, sanitizer scripts | **Done** |
 | CUDA Backend | Tensor-core GEMM, Flash Attention v2/v3, autodiff, memory pool, RNG | **Done** |
 
-## v1.1 — Model Serving & Inference Optimization (Next)
+## v1.1 — Model Serving, Fine-Tuning & Model Hub (Completed — v1.1.1)
 
-| Area | Deliverable | Metric |
+| Area | Deliverable | Status |
 |------|-------------|--------|
-| **Serving** | TensorRT-LLM / vLLM integration, OpenAI-compatible API | <5ms TTFT at 7B |
-| **Continuing Pre-training** | Distributed checkpoint resume, FSDP integration | 10k tokens/s/node |
-| **Fine-tuning** | LoRA/QLoRA adapters, DPO/GRPO trainers | 2x memory reduction — **Done (v1.1.0)** |
-| **Evaluation** | LM Eval Harness integration, standard benchmarks | MMLU/GSM8K/HumanEval |
-| **Deployment** | pip-installable wheel, Docker Compose for serving | One-command deploy |
+| **Serving** | C HTTP Server, FastAPI inference engine, continuous batching | **Done (v1.1.1)** |
+| **Fine-tuning** | LoRA/QLoRA adapters, DPO/GRPO trainers | **Done (v1.1.0)** |
+| **Evaluation** | Synthetic and benchmark eval harnesses (MMLU, GSM8K, HumanEval) | **Done (v1.1.0)** |
+| **Model Hub** | Centralized registry, CLI (`sneppx-hub`), storage backend, C WinHTTP client | **Done (v1.1.1)** |
+| **Security Hardening** | C safety refactoring, Dilithium/Kyber crypto fixes, Ninja build presets | **Done (v1.1.1)** |
 
 ## v1.2 — Production Hardening
 
