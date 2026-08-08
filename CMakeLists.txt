@@ -206,6 +206,20 @@ if(SNEPPX_BUILD_VIZMON)
     endif()
 endif()
 
+# ---- Model Hub C client library ----
+option(SNEPPX_BUILD_HUB "Build the SNEPPX Model Hub C client library" ON)
+if(SNEPPX_BUILD_HUB)
+    add_library(sneppx_hub_client STATIC model_hub/src/hub_client.c)
+    target_include_directories(sneppx_hub_client PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/model_hub/include>
+        $<INSTALL_INTERFACE:include/neural_core>
+    )
+    if(MSVC)
+        target_link_libraries(sneppx_hub_client PUBLIC winhttp)
+    endif()
+    target_compile_definitions(sneppx_hub_client PRIVATE SNEPPX_HUB_EXPORTS)
+endif()
+
 file(GLOB_RECURSE NEURAL_ARCHITECTURE_SRC algorithms/*/core/*.c)
 
 add_library(neural_architecture_layer STATIC ${NEURAL_ARCHITECTURE_SRC})
