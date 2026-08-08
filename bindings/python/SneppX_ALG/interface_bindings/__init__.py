@@ -1469,6 +1469,9 @@ __all__ = [
     "FusedNode",
     "FUSABLE_OPS",
     "ELEMENTWISE_IMPL",
+    "GraphOptimizer",
+    "trace",
+    "visualize_graph",
     # Edge / mobile runtime
     "EdgeDevice",
     "EdgeConfig",
