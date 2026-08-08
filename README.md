@@ -30,6 +30,8 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 
 | Area | Where to start |
 |------|----------------|
+| Model Hub guide | [`docs/guide/model_hub.md`](docs/guide/model_hub.md) |
+| Serving guide | [`docs/guide/serving.md`](docs/guide/serving.md) |
 | Quick start & build | [`docs/index.md`](docs/index.md) |
 | Contribution framework | [`docs/CONTRIBUTOR_TIERS.md`](docs/CONTRIBUTOR_TIERS.md) |
 | Branching strategy | [`docs/BRANCHING_STRATEGY.md`](docs/BRANCHING_STRATEGY.md) |
@@ -43,6 +45,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 
 ## What's new in v1.1.1
 
+- **Model Hub (`sneppx-hub`)**: Centralized model registry and sharing platform with 15 CLI commands (`list`, `search`, `upload`, `download`, `leaderboard`, `orgs`, `keys`, `server`), storage backend, and native WinHTTP C client (`sneppx_hub_client.h`).
 - **C HTTP REST API**: Real serving endpoints — `GET /v1/health`, `GET /v1/models`, `GET /v1/models/{id}`, `POST /v1/generate` (see `net/http/http_api.c`, demo at `examples/http_server_demo.c`)
 - **Security fixes**: Unsafe C functions replaced with safe alternatives across 8 files (model factory, VIT, numpy/onnx/pth/safetensors formats, HTTP auth, S9 extensions)
 - **Python packaging**: `pyproject.toml` wheel metadata + `cp311-cp311-win_amd64` wheel tag, optional serve deps
