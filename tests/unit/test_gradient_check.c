@@ -241,11 +241,14 @@ static void test_grad_embedding(void) {
     SNEPPXTensor* tw = SNEPPX_tensor_zeros(wsh, 2, SNEPPX_FLOAT32);
     for (size_t i = 0; i < 8; i++) ((float*)tw->data)[i] = (float)(i + 1);
     size_t ish[] = {3};
-    SNEPPXTensor* ti = SNEPPX_tensor_zeros(ish, 1, SNEPPX_FLOAT32);
+    SNEPPXTensor* ti = SNEPPX_tensor_zeros(ish, 1, SNEPPX_INT32);
     size_t idx_vals[] = {0, 2, 1};
-    memcpy(ti->data, idx_vals, 3 * sizeof(size_t));
     SNEPPXVariable* w = SNEPPX_variable_create(tw, 1);
     SNEPPXVariable* idx = SNEPPX_variable_create(ti, 0);
+    /* index tensor must carry integer values (read_index honors INT32 via
+       dtype) instead of size_t bit-patterns memcpy'd into a float buffer. */
+    int32_t* iv = (int32_t*)ti->data;
+    iv[0] = (int32_t)idx_vals[0]; iv[1] = (int32_t)idx_vals[1]; iv[2] = (int32_t)idx_vals[2];
     SNEPPXTape* tape = SNEPPX_tape_create();
     SNEPPXVariable* e = SNEPPX_embedding(tape, w, idx);
     SNEPPX_tape_backward(tape, e);
