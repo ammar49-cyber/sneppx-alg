@@ -164,26 +164,33 @@ SNEPPXTensor* SNEPPX_rope_precompute(size_t seq_len, size_t head_dim, float base
  */
 void SNEPPX_rope_apply(SNEPPXTensor* q, SNEPPXTensor* k, const SNEPPXTensor* cos, const SNEPPXTensor* sin,
                      size_t offset) {
-    if (!q || !k || !cos || !sin) return;
+    if (!q || !k || !cos) return;
     size_t d = q->shape[q->ndim - 1];
     size_t half = d / 2;
+    if (half == 0) return;
     size_t total = q->size;
     float* qd = (float*)q->data;
     float* kd = (float*)k->data;
-    float* cd = (float*)cos->data;
-    float* sd = (float*)sin->data;
-    for (size_t i = 0; i < total; i++) {
-        size_t pos = (i / d) + offset;
-        size_t j = i % d;
-        size_t idx;
-        if (j < half) idx = pos * d + j;
-        else idx = pos * d + (j - half);
-        float c = cd[idx], s = sd[idx];
-        float qv = qd[i];
-        float kv = kd[i];
-        size_t partner = (j < half) ? (i + half) : (i - half);
-        qd[i] = qv * c - qd[partner] * s;
-        kd[i] = kv * c - kd[partner] * s;
+    const float* cd = (const float*)cos->data;
+    size_t cd_last = cos->shape[cos->ndim - 1];
+    (void)sin;
+    /* SNEPPX_rope_precompute returns a combined [S, d] table: first half =
+       cos, second half = sin. Every caller passes this combined table as
+       `cos` (and `sin` is NULL or the same pointer). Process each (x_i,
+       x_{i+half}) pair together from the ORIGINAL values so the in-place
+       rotation is not contaminated by earlier writes. */
+    for (size_t base = 0; base < total; base += d) {
+        size_t pos = (base / d) + offset;
+        for (size_t j = 0; j < half; j++) {
+            float cosv = cd[pos * cd_last + j];
+            float sinv = cd[pos * cd_last + half + j];
+            float qv = qd[base + j];      float qvp = qd[base + j + half];
+            float kv = kd[base + j];      float kvp = kd[base + j + half];
+            qd[base + j]       = qv * cosv - qvp * sinv;
+            qd[base + j + half] = qv * sinv + qvp * cosv;
+            kd[base + j]       = kv * cosv - kvp * sinv;
+            kd[base + j + half] = kv * sinv + kvp * cosv;
+        }
     }
 }
 
