@@ -24,6 +24,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 - **Distributed Training**: ZeRO-1/2/3, pipeline/tensor/expert parallelism, elastic training, fault tolerance
 - **Quantization**: INT8/INT4/FP8, AWQ, GPTQ
 - **Advanced Architectures**: Differential Attention, Mamba-2 SSM, FlexAttention, Mixture of Depth
+- **ONNX import/export**: standalone numpy-only toolkit — parse/serialize/check/shape-inference/optimize/QDQ-quantize/external-data, pure-numpy executor + onnxruntime adapter, `sneppx-onnx` CLI
 - **Built-in Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
 
 ## Documentation
@@ -48,6 +49,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 
 - **Lightweight Edge Runtime**: Added `edge/` directory with minimal C inference engine (<5MB binary), arena allocator for memory reuse, and model converter `sneppx-to-edge`.
 - **API Layer**: Added `sneppx.nn` PyTorch-like Python API layer for high-level model building, training, and evaluation.
+- **ONNX import/export**: New standalone numpy-only `onnx/` package (`import onnx`, `SneppX_ALG.onnx`) — protobuf wire-format parser/serializer, `check_model`/`infer_shapes`, optimizer (constant-folding + DCE), QDQ quantizer, external-data support, pure-numpy `Session` executor, optional onnxruntime adapter, and `sneppx-onnx` CLI (`info`/`check`/`shapes`/`optimize`/`convert`/`quantize`/`run`/`save-external`/`load-external`). Wire format is byte-compatible with the legacy `interface_bindings` exporter both ways. Tests in `onnx/tests/test_onnx.py` (25, numpy-only).
 
 ## What's new in v1.1.1
 

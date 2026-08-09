@@ -219,6 +219,43 @@ model = from_pretrained("meta-llama/Llama-2-7b-hf")
 
 Supported architectures: LLaMA 2 (7B/13B/70B), LLaMA 3 (8B/70B), Mistral (7B), Qwen 2 (7B/72B), DeepSeek V2 (Lite/Full). See [`docs/guide/model_zoo.md`](guide/model_zoo.md) for the full guide.
 
+## ONNX import/export (v1.2.0)
+
+Standalone numpy-only ONNX toolkit (`import onnx`, also exposed as `SneppX_ALG.onnx`):
+
+```python
+import numpy as np
+import onnx
+
+graph = onnx.build_graph(
+    name="mlp",
+    inputs=[onnx.ValueInfo("x", "float32", ["batch", 4])],
+    outputs=[onnx.ValueInfo("y", "float32", ["batch", 2])],
+    initializers={"W1": np.random.randn(4, 8).astype(np.float32), ...},
+    nodes=[
+        onnx.Node("MatMul", ["x", "W1"], ["mm1"]),
+        onnx.Node("Add", ["mm1", "b1"], ["a1"]),
+        onnx.Node("Relu", ["a1"], ["r1"]),
+        onnx.Node("MatMul", ["r1", "W2"], ["mm2"]),
+        onnx.Node("Add", ["mm2", "b2"], ["y"]),
+    ],
+)
+onnx.save_model(onnx.Model(graph, producer_name="SNEPPX"), "model.onnx")
+m = onnx.load_model("model.onnx")          # parse
+ok, errors = onnx.check_model(m)           # validate
+shapes = onnx.infer_shapes(m)              # shape inference
+m2 = onnx.optimize(m)                      # const-fold + DCE
+q = onnx.quantize_model(m)                 # QDQ insert
+out = onnx.Session(m).run({"x": x})[0]     # numpy executor
+```
+
+- `sneppx-onnx` CLI: `info`, `check`, `shapes`, `optimize`, `convert`, `quantize`, `run`, `save-external`, `load-external`
+- `OnnxRuntimeSession` runs through onnxruntime when installed (falls back to the numpy executor)
+- `onnx/exporter.py` bridges to the legacy `interface_bindings` exporter; wire format is byte-compatible both ways
+- Tests: `onnx/tests/test_onnx.py` (25 tests, numpy-only)
+
+Full guide: [`docs/guide/onnx.md`](guide/onnx.md)
+
 ## Context Extension (v1.0.0)
 
 Extend any supported model to 128K context via NTK-aware RoPE scaling:

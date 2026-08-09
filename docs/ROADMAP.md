@@ -25,6 +25,7 @@ All 8 development phases complete, API frozen for stability, full regression sui
 | **Evaluation** | Synthetic and benchmark eval harnesses (MMLU, GSM8K, HumanEval) | **Done (v1.1.0)** |
 | **Model Hub** | Centralized registry, CLI (`sneppx-hub`), storage backend, C WinHTTP client | **Done (v1.1.1)** |
 | **Security Hardening** | C safety refactoring, Dilithium/Kyber crypto fixes, Ninja build presets | **Done (v1.1.1)** |
+| **ONNX toolkit** | Standalone numpy-only parse/serialize/check/infer/optimize/QDQ/external-data, numpy + onnxruntime runtimes, `sneppx-onnx` CLI, legacy-wire-compatible exporter bridge | **Done (Unreleased)** |
 
 ## v1.2 — Production Hardening
 

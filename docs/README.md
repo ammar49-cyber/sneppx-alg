@@ -43,6 +43,7 @@
 | [guide/128k_context_extension.md](guide/128k_context_extension.md) | 128K context extension via NTK/YaRN scaling | v1.0.0 |
 | [guide/mha_forward_pass.md](guide/mha_forward_pass.md) | Multi-head attention forward pass | v1.0.0 |
 | [guide/model_zoo.md](guide/model_zoo.md) | Model Zoo configuration presets | v1.0.0 |
+| [guide/onnx.md](guide/onnx.md) | ONNX import/export toolkit (parse, check, optimize, QDQ, runtimes, CLI) | v1.1.2 |
 | [guide/testing_framework.md](guide/testing_framework.md) | Test suite organization | v1.0.0 |
 | **Code docs (Doxygen)** | | |
 | See [doxygen/README.md](doxygen/README.md) | Generate Doxygen HTML from C/C++ code comments | v1.1.0 |

@@ -45,6 +45,9 @@ python tests/python/test_profiler.py
 
 # Model zoo tests (49 tests)
 python tests/python/test_model_zoo.py
+
+# ONNX toolkit tests (25 tests)
+python -m pytest onnx/tests/
 ```
 
 ## Test Categories

@@ -15,6 +15,28 @@ All notable changes to SNEPPX-Algo.
 - `docs/build.md`, `docs/TESTING.md`, `QUICKSTART.md`, and `AGENTS.md`
   updated to the Ninja preset workflow.
 
+### ONNX import/export toolkit
+- New standalone, numpy-only `onnx/` package (`import onnx`, exposed as
+  `SneppX_ALG.onnx`): canonical protobuf wire-format reader/writer
+  (`wire.py`), data model (`model.py`), `parse_model`/`load_model`/
+  `serialize_model`/`save_model`, shape inference (`infer_shapes`),
+  structural + shape checker (`check_model`), optimizer passes
+  (`constant_fold`, `dead_code_elimination`, `eliminate_identity`), QDQ
+  quantizer (`quantize_model`, per-channel or tensor-wise, bias-skipping),
+  external-data save/load, a pure-numpy executor (`onnx.Session`) and an
+  optional onnxruntime adapter (`OnnxRuntimeSession`).
+- `sneppx-onnx` CLI (`onnx/cli.py`, wired as `sneppx-onnx` entry point via
+  `bindings/python/.../interface_bindings/onnx_cli.py`) with `info`, `check`,
+  `shapes`, `optimize`, `convert`, `quantize`, `run`, `save-external`,
+  `load-external` subcommands.
+- `onnx/exporter.py` bridges to the legacy `interface_bindings` exporter
+  (`from_sneppx_graph`/`to_sneppx_graph`); wire format is byte-compatible in
+  both directions.
+- Fixed `bindings/python/.../interface_bindings/__init__.py`: `GraphOptimizer`
+  was in `__all__`/star-import but never imported, breaking
+  `import SneppX_ALG`; added the missing `graph_optimizer` import.
+- Tests: `onnx/tests/test_onnx.py` (25 tests, all numpy-only, all pass).
+
 ### Security
 - Fixed `dilithium_zetas[256]` in `security/crypto/c/dilithium.c`: one
   corrupted twiddle factor (`…568` → `…596`) cascaded through the 8-layer
