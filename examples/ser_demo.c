@@ -55,7 +55,7 @@ int main(void) {
         printf("Load balance loss: %f\n", loss);
 
         SNEPPX_tensor_destroy(gw);
-        free(ei);
+        SNEPPX_free(ei, 8 * 2 * sizeof(int));
     }
 
     float* od = (float*)output->data;

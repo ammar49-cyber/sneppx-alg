@@ -43,7 +43,7 @@ void SNEPPX_ser_forward(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPX
     *output = SNEPPX_tensor_zeros(shape_out, 2, SNEPPX_FLOAT32);
     if (!*output) {
         SNEPPX_tensor_destroy(gate_weights);
-        free(expert_indices);
+        SNEPPX_free(expert_indices, num_tokens * n_act * sizeof(int));
         return;
     }
 
@@ -137,5 +137,5 @@ void SNEPPX_ser_forward(SNEPPXSERLayer* layer, const SNEPPXTensor* input, SNEPPX
     }
 
     SNEPPX_tensor_destroy(gate_weights);
-    free(expert_indices);
+    SNEPPX_free(expert_indices, num_tokens * n_act * sizeof(int));
 }
