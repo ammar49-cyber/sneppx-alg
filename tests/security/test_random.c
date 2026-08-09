@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "test_gtest.h"
 #include <string.h>
 #include <stdlib.h>
 #include "cryptographic_random_generator.h"
@@ -19,13 +20,7 @@
  */
 
 
-static int tests_passed = 0;
-static int tests_failed = 0;
 
-#define TEST(name, expr) do { \
-    if (!(expr)) { printf("FAIL: %s\n", name); tests_failed++; } \
-    else { printf("PASS: %s\n", name); tests_passed++; } \
-} while(0)
 
 void test_uniformity(void) {
     printf("\n--- test_uniformity ---\n");
@@ -33,7 +28,7 @@ void test_uniformity(void) {
     uint8_t* buf = (uint8_t*)malloc(len);
     if (!buf) { printf("SKIP: uniformity (malloc failed)\n"); return; }
     int ret = SNEPPX_random_bytes(buf, len);
-    TEST("generate 1MB random", ret == 0);
+    SX_TEST("generate 1MB random", ret == 0);
     size_t zeros = 0, ones = 0;
     for (size_t i = 0; i < len; i++) {
         for (int b = 0; b < 8; b++) {
@@ -41,7 +36,7 @@ void test_uniformity(void) {
         }
     }
     double ratio = (double)ones / (double)(ones + zeros);
-    TEST("bit ratio near 0.5", ratio > 0.49 && ratio < 0.51);
+    SX_TEST("bit ratio near 0.5", ratio > 0.49 && ratio < 0.51);
     free(buf);
 }
 
@@ -53,7 +48,7 @@ void test_no_duplicates(void) {
     for (int i = 0; i < 1000 && !dup; i++)
         for (int j = i + 1; j < 1000 && !dup; j++)
             if (vals[i] == vals[j]) dup = 1;
-    TEST("no duplicates in 1000 values", !dup);
+    SX_TEST("no duplicates in 1000 values", !dup);
 }
 
 void test_uniform_bounded(void) {
@@ -64,15 +59,10 @@ void test_uniform_bounded(void) {
         uint32_t v = SNEPPX_random_uniform(bound);
         if (v >= bound) { ok = 0; break; }
     }
-    TEST("all values in [0, bound)", ok == 1);
+    SX_TEST("all values in [0, bound)", ok == 1);
 }
 
-int main(void) {
-    printf("=== SNEPPX-Random Test Suite ===\n");
-    test_uniformity();
-    test_no_duplicates();
-    test_uniform_bounded();
-    printf("\nResults: %d passed, %d failed out of %d\n",
-           tests_passed, tests_failed, tests_passed + tests_failed);
-    return tests_failed > 0 ? 1 : 0;
-}
+
+TEST(test_random, test_uniformity) { test_uniformity(); }
+TEST(test_random, test_no_duplicates) { test_no_duplicates(); }
+TEST(test_random, test_uniform_bounded) { test_uniform_bounded(); }

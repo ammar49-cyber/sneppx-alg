@@ -9,6 +9,7 @@
  */
 
 #include "onnx_format.h"
+#include "test_gtest.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ static void unique_path(char* out, size_t n, const char* tag) {
     snprintf(out, n, "%s/sneppx_onnxv_%s_%u.onnx", t, tag, SNEPPX_PID());
 }
 
-int main(void) {
+TEST(test_onnx_validate, suite) {
     int failures = 0;
     char path[512];
     char err[256];
@@ -88,7 +89,7 @@ after_a:
     /* ---- (b) undeclared node input ---- */
     {
         SneppXOnnxDim ydims[2] = { {0, "batch"}, {OUT_FEATURES, NULL} };
-        SneppXOnnxValueInfo inputs[1]  = { { "X", (SneppXOnnxDim[]){{0,"batch"},{IN_FEATURES,NULL}}, 2, 0 } };
+        SneppXOnnxValueInfo inputs[1]  = { { "X", SX_ARR_C(SneppXOnnxDim, 2, {0,"batch"},{IN_FEATURES,NULL}), 2, 0 } };
         SneppXOnnxValueInfo outputs[1] = { { "Y", ydims, 2, 0 } };
         const char* relu_in[1] = { "ghost" };   /* never declared */
         const char* relu_out[1] = { "Y" };
@@ -150,7 +151,7 @@ after_a:
         remove(path);
     }
 
-    if (failures) { fprintf(stderr, "RESULT: %d failure(s)\n", failures); return 1; }
+    if (failures) { fprintf(stderr, "RESULT: %d failure(s)\n", failures); FAIL() << "early exit (legacy return 1)"; }
     fprintf(stderr, "PASS: ONNX validator (valid + 3 invalid cases)\n");
-    return 0;
+    return;
 }

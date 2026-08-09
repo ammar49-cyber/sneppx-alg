@@ -6,6 +6,32 @@ file(GLOB_RECURSE SECURITY_TEST_SRCS ../tests/security/*.c)
 set(EXCLUDED_TESTS
 )
 
+# --- GoogleTest discovery -------------------------------------------------
+# Prefer an installed GTest; fall back to FetchContent. The C test sources
+# are migrated to the GoogleTest framework (see tests/test_gtest.h) and are
+# only compiled when SNEPPX_USE_GTEST is ON, so the rest of the build is
+# unaffected when GTest cannot be obtained.
+if(SNEPPX_USE_GTEST)
+    find_package(GTest QUIET)
+    if(NOT GTest_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+            GIT_SHALLOW TRUE
+        )
+        if(MSVC)
+            set(gtest_force_shared_crt ON CACHE BOOL "Force gtest to use the shared C runtime" FORCE)
+        endif()
+        FetchContent_MakeAvailable(googletest)
+    endif()
+    if(GTest_FOUND)
+        set(SNEPPX_GTEST_LIBS GTest::gtest_main GTest::gtest)
+    else()
+        set(SNEPPX_GTEST_LIBS gtest_main gtest)
+    endif()
+endif()
+
 macro(add_neural_test test_src link_libs)
     get_filename_component(test_name ${test_src} NAME_WE)
     list(FIND EXCLUDED_TESTS ${test_name} _excluded)
@@ -13,7 +39,17 @@ macro(add_neural_test test_src link_libs)
         message(STATUS "Skipping excluded test: ${test_name}")
     else()
     add_executable(${test_name} ${test_src})
-    target_link_libraries(${test_name} ${link_libs})
+    target_link_libraries(${test_name} PRIVATE ${link_libs})
+    if(SNEPPX_USE_GTEST)
+        # The migrated test sources are C files that now use GoogleTest;
+        # compile them as C++ (MSVC needs /TP because cl decides the
+        # language from the .c extension).
+        set_source_files_properties(${test_src} PROPERTIES LANGUAGE CXX)
+        if(MSVC)
+            set_source_files_properties(${test_src} PROPERTIES COMPILE_OPTIONS "/TP")
+        endif()
+        target_link_libraries(${test_name} PRIVATE ${SNEPPX_GTEST_LIBS})
+    endif()
     target_include_directories(${test_name} PRIVATE
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/include/neural_core/kernel
@@ -50,17 +86,34 @@ macro(add_neural_test test_src link_libs)
     endif()
 endmacro()
 
-foreach(test_src ${UNIT_TEST_SRCS})
-    add_neural_test(${test_src} "neural_core_kernel;neural_architecture_layer")
-endforeach()
+if(SNEPPX_USE_GTEST)
+    foreach(test_src ${UNIT_TEST_SRCS})
+        add_neural_test(${test_src} "neural_core_kernel;neural_architecture_layer")
+    endforeach()
 
-foreach(test_src ${INTEGRATION_TEST_SRCS})
-    add_neural_test(${test_src} "neural_core_kernel;neural_architecture_layer")
-endforeach()
+    foreach(test_src ${INTEGRATION_TEST_SRCS})
+        add_neural_test(${test_src} "neural_core_kernel;neural_architecture_layer")
+    endforeach()
 
-foreach(test_src ${SECURITY_TEST_SRCS})
-    add_neural_test(${test_src} "neural_security_c;neural_core_kernel;neural_architecture_layer")
-endforeach()
+    # test_vizmon exercises the separate sneppx_vizmon dashboard library.
+    if(TARGET sneppx_vizmon)
+        target_link_libraries(test_vizmon PRIVATE sneppx_vizmon)
+        if(MSVC AND SNEPPX_BUILD_VIZMON)
+            add_custom_command(TARGET test_vizmon POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:sneppx_vizmon>
+                $<TARGET_FILE_DIR:test_vizmon>
+            )
+        endif()
+    endif()
+
+    foreach(test_src ${SECURITY_TEST_SRCS})
+        add_neural_test(${test_src} "neural_security_c;neural_core_kernel;neural_architecture_layer")
+    endforeach()
+else()
+    message(WARNING "SNEPPX_USE_GTEST=OFF: C test executables are not built. "
+                    "Set SNEPPX_USE_GTEST=ON to build the GoogleTest suite.")
+endif()
 
 file(GLOB_RECURSE SECURITY_CPP_TEST_SRCS ../tests/security/cpp/*.cpp)
 

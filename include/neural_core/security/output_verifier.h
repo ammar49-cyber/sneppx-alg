@@ -46,6 +46,15 @@ typedef struct {
     int max_output_length;
 } SNEPPXS5Verifier;
 
+/*
+ * The S5 verifier is implemented under the SNEPPX_output_verifier_*
+ * names (see security/ai/output_verifier.c); declare them here so the
+ * C test suite compiles as C++ without implicit declarations.
+ */
+int  SNEPPX_output_verifier_init(SNEPPXS5Verifier* ov);
+void SNEPPX_output_verifier_destroy(SNEPPXS5Verifier* ov);
+int  SNEPPX_output_verifier_check(SNEPPXS5Verifier* ov, const char* output, size_t len);
+
 /**
  * @brief Initialize S5 Verifier.
  *

@@ -1,6 +1,10 @@
 #ifndef SNEPPX_ED25519_H
 #define SNEPPX_ED25519_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -83,4 +87,8 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
  */
 int SNEPPX_ed25519_scalar_multiply(uint8_t* result, const uint8_t* scalar, const uint8_t* point);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

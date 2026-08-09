@@ -7,6 +7,7 @@
  */
 
 #include "onnx_format.h"
+#include "test_gtest.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -255,7 +256,7 @@ static size_t count_fields(const unsigned char* b, size_t off, size_t n, unsigne
     return k;
 }
 
-int main(void) {
+TEST(test_onnx_export_graph, suite) {
     char path[512];
     unique_path(path, sizeof(path));
     int failures = 0;
@@ -288,20 +289,20 @@ int main(void) {
                                inits, 2,
                                nodes, 2) != 0) {
         fprintf(stderr, "FAIL: SneppX_onnx_save_graph returned nonzero\n");
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
 
     /* read bytes back */
     FILE* fp = fopen(path, "rb");
-    if (!fp) { fprintf(stderr, "FAIL: cannot open %s\n", path); return 1; }
+    if (!fp) { fprintf(stderr, "FAIL: cannot open %s\n", path); FAIL() << "early exit (legacy return 1)"; }
     fseek(fp, 0, SEEK_END);
     long sz = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    if (sz <= 0 || sz > 1024 * 1024) { fprintf(stderr, "FAIL: size %ld\n", sz); fclose(fp); return 1; }
+    if (sz <= 0 || sz > 1024 * 1024) { fprintf(stderr, "FAIL: size %ld\n", sz); fclose(fp); FAIL() << "early exit (legacy return 1)"; }
     unsigned char* buf = (unsigned char*)malloc((size_t)sz);
     size_t bytes_rd = fread(buf, 1, (size_t)sz, fp);
     fclose(fp);
-    if (bytes_rd != (size_t)sz) { fprintf(stderr, "FAIL: short read %zu\n", bytes_rd); free(buf); return 1; }
+    if (bytes_rd != (size_t)sz) { fprintf(stderr, "FAIL: short read %zu\n", bytes_rd); free(buf); FAIL() << "early exit (legacy return 1)"; }
 
     /* raw protobuf, no ONNX magic */
     if (buf[0] != 0x08) { fprintf(stderr, "FAIL: first byte 0x%02x (expected 0x08)\n", buf[0]); failures++; }
@@ -314,7 +315,6 @@ int main(void) {
 
     size_t go = 0, gl = 0;
     if (!pb_find(buf, 0, (size_t)sz, 7, 2, &go, &gl)) {
-        fprintf(stderr, "FAIL: graph field 7 missing\n"); free(buf); remove(path); return failures ? 1 : 0;
     }
     char gname[64] = {0};
     if (!pb_find_str(buf, go, gl, 2, gname, sizeof(gname)) || strcmp(gname, "sneppx_graph") != 0) {
@@ -484,7 +484,7 @@ int main(void) {
 
     remove(path);
     free(buf);
-    if (failures) { fprintf(stderr, "RESULT: %d failure(s)\n", failures); return 1; }
+    if (failures) { fprintf(stderr, "RESULT: %d failure(s)\n", failures); FAIL() << "early exit (legacy return 1)"; }
     fprintf(stderr, "PASS: arbitrary ONNX graph (Gemm->Relu) validated\n");
-    return 0;
+    return;
 }

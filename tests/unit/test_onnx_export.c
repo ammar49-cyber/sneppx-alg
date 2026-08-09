@@ -8,6 +8,7 @@
  */
 
 #include "onnx_format.h"
+#include "test_gtest.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -233,7 +234,7 @@ static void unique_path(char* out, size_t n) {
     snprintf(out, n, "%s/sneppx_onnx_export_xt_%u.onnx", t, SNEPPX_PID());
 }
 
-int main(void) {
+TEST(test_onnx_export, suite) {
     char path[512];
     unique_path(path, sizeof(path));
 
@@ -244,14 +245,14 @@ int main(void) {
                                 IN_FEATURES, OUT_FEATURES,
                                 kWeights, kBias) != 0) {
         fprintf(stderr, "FAIL: SNEPPX_onnx_save_linear returned nonzero\n");
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
 
     /* read bytes back */
     FILE* fp = fopen(path, "rb");
     if (!fp) {
         fprintf(stderr, "FAIL: cannot open exported file %s\n", path);
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
     fseek(fp, 0, SEEK_END);
     long sz = ftell(fp);
@@ -259,7 +260,7 @@ int main(void) {
     if (sz <= 0 || sz > 1024 * 1024) {
         fprintf(stderr, "FAIL: exported file size %ld unexpected\n", sz);
         fclose(fp);
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
     unsigned char* buf = (unsigned char*)malloc((size_t)sz);
     size_t bytes_rd = fread(buf, 1, (size_t)sz, fp);
@@ -267,7 +268,7 @@ int main(void) {
     if (bytes_rd != (size_t)sz) {
         fprintf(stderr, "FAIL: short read %zu\n", bytes_rd);
         free(buf);
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
 
     /* 1) raw protobuf, no "ONNX" magic prefix (first byte is ir_version tag 0x08) */
@@ -293,7 +294,6 @@ int main(void) {
         fprintf(stderr, "FAIL: ModelProto.graph field 7 not found\n");
         remove(path);
         free(buf);
-        return failures ? 1 : 0;
     }
 
     /* 3) opset_import (field 8) -> OperatorSetIdProto.version (field 2) */
@@ -545,8 +545,8 @@ int main(void) {
 
     if (failures) {
         fprintf(stderr, "RESULT: %d assertion failure(s)\n", failures);
-        return 1;
+        FAIL() << "early exit (legacy return 1)";
     }
     fprintf(stderr, "PASS: ONNX linear export validated against standard ONNX IR field numbers\n");
-    return 0;
+    return;
 }

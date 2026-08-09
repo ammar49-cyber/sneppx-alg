@@ -1,6 +1,10 @@
 #ifndef SNEPPX_CONTAINER_SECURITY_H
 #define SNEPPX_CONTAINER_SECURITY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include <time.h>
@@ -180,4 +184,8 @@ int SNEPPX_container_get_stats(container_stats_t *stats);
  */
 int SNEPPX_container_init_vuln_db(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

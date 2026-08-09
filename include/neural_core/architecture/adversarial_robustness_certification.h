@@ -1,6 +1,10 @@
 #ifndef SNEPPX_ARC_H
 #define SNEPPX_ARC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "multidimensional_tensor_engine.h"
 #include "automatic_differentiation_framework.h"
 #include <stddef.h>
@@ -236,4 +240,8 @@ int SNEPPX_arc_build_adversarial_train_graph(SNEPPXARCLayer* layer, SNEPPXTape* 
                                             SNEPPXVariable** clean_output,
                                             SNEPPXVariable** adv_output);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* SNEPPX_ARC_H */

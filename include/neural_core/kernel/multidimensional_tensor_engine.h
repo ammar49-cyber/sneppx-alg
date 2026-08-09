@@ -1,6 +1,10 @@
 #ifndef SNEPPX_TENSOR_H
 #define SNEPPX_TENSOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -1222,4 +1226,8 @@ int SNEPPX_tensor_is_contiguous(const SNEPPXTensor* tensor);
  */
 const char* SNEPPX_tensor_dtype_name(SNEPPXDtype dtype);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

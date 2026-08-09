@@ -1,6 +1,10 @@
 #ifndef SNEPPX_SHA512_H
 #define SNEPPX_SHA512_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -62,4 +66,8 @@ void SNEPPX_sha512_finish(SNEPPXSHA512Context* ctx, uint8_t digest[SNEPPX_SHA512
  */
 void SNEPPX_sha512(const uint8_t* data, size_t len, uint8_t digest[SNEPPX_SHA512_DIGEST_SIZE]);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif

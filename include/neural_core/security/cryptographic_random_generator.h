@@ -1,6 +1,10 @@
 #ifndef SNEPPX_RANDOM_H
 #define SNEPPX_RANDOM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -44,4 +48,8 @@ uint32_t SNEPPX_random_uint32(void);
  */
 uint32_t SNEPPX_random_uniform(uint32_t upper_bound);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif
