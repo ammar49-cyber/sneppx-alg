@@ -1757,6 +1757,7 @@ SNEPPXTensor* SNEPPX_tensor_matmul(const SNEPPXTensor* a, const SNEPPXTensor* b)
     b = tensor_prep_contiguous(b, &tb);
 
     int a1 = (a->ndim == 1), b1 = (b->ndim == 1);
+    if (a1 && b1) { if (ta) SNEPPX_tensor_destroy(ta); if (tb) SNEPPX_tensor_destroy(tb); return NULL; }
     size_t a_m = a1 ? 1 : a->shape[a->ndim - 2];
     size_t a_k = a1 ? a->shape[0] : a->shape[a->ndim - 1];
     size_t b_k = b1 ? b->shape[0] : b->shape[b->ndim - 2];
