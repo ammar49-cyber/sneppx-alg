@@ -2,6 +2,7 @@
 #include "automatic_differentiation_framework.h"
 #include "polymorphic_memory_allocator.h"
 #include <string.h>
+#include <math.h>
 #include <stdlib.h>
 /*
  * SNEPPX - ARC Forward (Training)
