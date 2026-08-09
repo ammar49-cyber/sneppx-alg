@@ -19,3 +19,20 @@ except ImportError:
 from .interface_bindings import *
 
 __all__ = ["_neural_engine_bridge"]
+
+
+def __getattr__(name):
+    if name == "onnx":
+        # standalone numpy-only ONNX toolkit in the top-level onnx/ package
+        import os as _os
+        import sys as _sys
+        _root = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.dirname(
+            _os.path.abspath(__file__)
+        ))))
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        import importlib as _importlib
+        _mod = _importlib.import_module("onnx")
+        globals()["onnx"] = _mod
+        return _mod
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

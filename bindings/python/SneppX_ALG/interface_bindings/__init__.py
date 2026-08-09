@@ -460,6 +460,11 @@ from .graph_compiler import (
     FUSABLE_OPS,
     ELEMENTWISE_IMPL,
 )
+from .graph_optimizer import (
+    GraphOptimizer,
+    trace,
+    visualize_graph,
+)
 from .edge_runtime import (
     EdgeDevice,
     EdgeConfig,
@@ -1590,6 +1595,19 @@ def __getattr__(name):
         'Dataset': '.data',
         'DataLoader': '.data',
     }
+    if name == 'onnx':
+        # standalone numpy-only ONNX toolkit in the top-level onnx/ package
+        import os as _os
+        import sys as _sys
+        _root = _os.path.dirname(
+            _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))))
+        )
+        if _root not in _sys.path:
+            _sys.path.insert(0, _root)
+        import importlib as _importlib
+        _mod = _importlib.import_module('onnx')
+        _LAZY[name] = _mod
+        return _mod
     if name in _lazy_map:
         import importlib
         mod = importlib.import_module(_lazy_map[name], __package__)

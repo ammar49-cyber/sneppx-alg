@@ -57,6 +57,7 @@ sneppx-experiment = "SneppX_ALG.interface_bindings.experiment_cli:main"
 sneppx-eval = "SneppX_ALG.interface_bindings.eval_cli:main"
 sneppx-quantize = "SneppX_ALG.interface_bindings.quantize_cli:main"
 sneppx-rlhf = "SneppX_ALG.interface_bindings.rlhf_cli:main"
+sneppx-onnx = "SneppX_ALG.interface_bindings.onnx_cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "scipy>=1.7"]
