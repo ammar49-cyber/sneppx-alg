@@ -167,11 +167,12 @@ int SNEPPX_ab_partition_mark_good(SNEPPXABPartition* ab, int slot) {
  */
 int SNEPPX_ab_partition_swap(SNEPPXABPartition* ab) {
     if (!ab) return -1;
-    uint8_t* target_hash = ab->active_slot == 0 ? ab->slot_b_hash : ab->slot_a_hash;
-    int all_zero = 1;
-    for (int i = 0; i < 32; i++) { if (target_hash[i]) all_zero = 0; }
-    if (all_zero) return -1;
-    int tmp = ab->active_slot; ab->active_slot = ab->inactive_slot; ab->inactive_slot = tmp; ab->swap_ready = 1; return 0;
+    uint8_t* active_hash = ab->active_slot == 0 ? ab->slot_a_hash : ab->slot_b_hash;
+    int active_good = 0;
+    for (int i = 0; i < 32; i++) { if (active_hash[i]) { active_good = 1; break; } }
+    if (!active_good) return -1;
+    int tmp = ab->active_slot; ab->active_slot = ab->inactive_slot; ab->inactive_slot = tmp; ab->swap_ready = 1;
+    return 1;
 }
 
 /**

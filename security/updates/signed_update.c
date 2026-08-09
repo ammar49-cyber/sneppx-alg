@@ -128,7 +128,8 @@ int SNEPPX_update_verifier_apply(SNEPPXUpdateVerifier* uv, const SNEPPXSignedUpd
                                  const uint8_t* update_data, size_t data_len) {
     (void)update_data; (void)data_len;
     if (!uv || !update) return -1;
-    if (!SNEPPX_update_verifier_check(uv, update)) return -1;
+    uint32_t target[3] = {update->version_major, update->version_minor, update->version_patch};
+    if (SNEPPX_update_verifier_rollback_check(uv, target) != 0) return -1;
     uv->current_version[0] = update->version_major;
     uv->current_version[1] = update->version_minor;
     uv->current_version[2] = update->version_patch;
@@ -155,6 +156,9 @@ int SNEPPX_update_verifier_rollback_check(SNEPPXUpdateVerifier* uv, uint32_t tar
     if (target_version[0] < uv->current_version[0]) return 1;
     if (target_version[0] == uv->current_version[0] && target_version[1] < uv->current_version[1]) return 1;
     if (target_version[0] == uv->current_version[0] && target_version[1] == uv->current_version[1] && target_version[2] < uv->current_version[2]) return 1;
+    if (target_version[0] < uv->min_allowed_version[0]) return 1;
+    if (target_version[0] == uv->min_allowed_version[0] && target_version[1] < uv->min_allowed_version[1]) return 1;
+    if (target_version[0] == uv->min_allowed_version[0] && target_version[1] == uv->min_allowed_version[1] && target_version[2] < uv->min_allowed_version[2]) return 1;
     return 0;
 }
 
