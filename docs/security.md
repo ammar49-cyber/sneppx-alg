@@ -19,7 +19,7 @@ Core  Secure Engine  Engine  Sec   San    Sec   Sec    Verif  Report
 **Status**: Complete
 **Source**: `security/crypto/c/` and `include/neural_core/security/`
 
-All crypto source files follow the four-layer commenting standard in [COMMENTING.md](../COMMENTING.md): Layer 1 file headers, Layer 2 concept blocks, Layer 3 inline "why" comments, and Layer 4 Doxygen API docs on every public `SNEPPX_*` function.
+All crypto source files follow the four-layer commenting standard in [COMMENTING.md](COMMENTING.md): Layer 1 file headers, Layer 2 concept blocks, Layer 3 inline "why" comments, and Layer 4 Doxygen API docs on every public `SNEPPX_*` function.
 
 ### Primitives
 
@@ -349,7 +349,7 @@ SNEPPX_fuzzer_run(&fz, duration_sec, &report);
 
 ## Reporting Vulnerabilities
 
-See [SECURITY.md](../SECURITY.md)
+See [SECURITY.md](https://github.com/ammar49-cyber/sneppx-alg/blob/main/../SECURITY.md)
 
 ## Security Best Practices
 
