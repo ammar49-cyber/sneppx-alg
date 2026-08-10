@@ -95,6 +95,8 @@ static void test_adversarial_training_graph(void) {
 
     SNEPPXVariable** weights_to_zero = wv;
     for (size_t i = 0; i < n_weights; i++) wv[i]->data = NULL;
+    inv->data = NULL;
+    tgv->data = NULL;
     SNEPPX_tape_destroy(tape);
     SNEPPX_free(weights_to_zero, n_weights * sizeof(SNEPPXVariable*));
     SNEPPX_free(wt, n_weights * sizeof(SNEPPXTensor*));

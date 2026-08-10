@@ -21,7 +21,7 @@
 
 
 static void test_guard_create(void) {
-    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 64, 42);
     SX_ASSERT(g != NULL, "guard not null");
     SX_ASSERT(g->projection_matrix->shape[0] == 64, "proj rows 64");
     SX_ASSERT(g->projection_matrix->shape[1] == 64, "proj cols 64");
@@ -29,7 +29,7 @@ static void test_guard_create(void) {
 }
 
 static void test_guard_normal_input(void) {
-    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 64, 42);
     SX_ASSERT(g != NULL, "guard not null");
 
     size_t shape_in[] = {8, 64};
@@ -55,7 +55,7 @@ static void test_guard_normal_input(void) {
 }
 
 static void test_guard_anomaly_input(void) {
-    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 42);
+    SNEPPXInputGuard* g = SNEPPX_input_guard_create(64, 64, 42);
     SX_ASSERT(g != NULL, "guard not null");
 
     size_t shape_in[] = {8, 64};

@@ -92,11 +92,12 @@ SNEPPXARCConfig SNEPPX_arc_config_default(void);
  * @brief Create Input Guard.
  *
  * @param input_dim [in] Input Dim value.
+ * @param output_dim [in] Output Dim value.
  * @param seed [in] Seed value.
  *
  * @return Pointer on success, NULL on error.
  */
-SNEPPXInputGuard* SNEPPX_input_guard_create(size_t input_dim, unsigned int seed);
+SNEPPXInputGuard* SNEPPX_input_guard_create(size_t input_dim, size_t output_dim, unsigned int seed);
 /**
  * @brief Destroy Input Guard.
  *
