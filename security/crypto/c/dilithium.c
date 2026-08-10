@@ -44,7 +44,7 @@ static const int32_t dilithium_zetas[256] = {
  -3930395, -1528703, -3677745, -3041255, -1452451,  3475950,  2176455, -1585221,
  -1257611,  1939314, -4083598, -1000202, -3190144, -3157330, -3632928,   126922,
   3412210,  -983419,  2147896,  2715295, -2967645, -3693493,  -411027, -2477047,
-  -671102, -1228525,   -22981,  -1308169,  1349076,  1852771, -1430430, -3343383,
+  -671102, -1228525,   -22981,  -1308169,  -381987,  1349076,  1852771, -1430430, -3343383,
    264944,   508951,  3097992,    44288, -1100098,   904516,  3958618, -3724342,
     -8578,  1653064, -3249728,  2389356,  -210977,   759969, -1316856,   189548,
  -3553272,  3159746, -1851402, -2409325,  -177440,  1315589,  1341330,  1285669,
@@ -55,10 +55,10 @@ static const int32_t dilithium_zetas[256] = {
  -3122442,  2031748,  3207046, -3556995,  -525098,  -768622, -3595838,   342297,
    286988, -2437823,  4108315,  3437287, -3342277,  1735879,   203044,  2842341,
   2691481, -2590150,  1265009,  4055324,  1247620,  2486353,  1595974, -3767016,
-  1250494,  2635921, -3548272, -2994039,  1863119,  1903435, -1050970, -1333058,
+  1250494,  2635921, -3548272, -2994039,  1869119,  1903435, -1050970, -1333058,
   1237275, -3318210, -1430225,  -451100,  1312455,  3306115, -1962642, -1279661,
   1917081, -2546312, -1374803,  1500165,   777191,  2235880,  3406031,  -542412,
- -2831860, -1671176,  1846953, -2584293, -3724270,   594136, -3776993, -2013608,
+ -2831860, -1671176, -1846953, -2584293, -3724270,   594136, -3776993, -2013608,
   2432395,  2454455,  -164721,  1957272,  3369112,   185531, -1207385, -3183426,
    162844,  1616392,  3014001,   810149,  1652634, -3694233, -1799107, -3038916,
   3523897,  3866901,   269760,  2213111,  -975884,  1717735,   472078,  -426683,
@@ -80,51 +80,38 @@ static int32_t dilithium_reduce(int32_t a) {
 }
 
 static void dilithium_ntt(int32_t a[256]) {
-    int len = 128, k = 0;
-    while (len >= 1) {
-        int start = 0;
-        while (start < 256) {
-            int32_t zeta = dilithium_zetas[++k];
-            for (int j = start; j < start + len; j++) {
-                int32_t t = dilithium_mont_reduce((int64_t)zeta * a[j + len]);
-                int32_t u = a[j];
-                int32_t v = t;
-                int32_t sum = u + v;
-                if (sum >= DILITHIUM_Q) sum -= DILITHIUM_Q;
-                a[j] = sum;
-                int32_t diff = u - v;
-                if (diff < 0) diff += DILITHIUM_Q;
-                a[j + len] = diff;
+    unsigned int len, start, j, k;
+    int32_t zeta, t;
+    k = 0;
+    for (len = 128; len > 0; len >>= 1) {
+        for (start = 0; start < 256; start = j + len) {
+            zeta = dilithium_zetas[++k];
+            for (j = start; j < start + len; ++j) {
+                t = dilithium_mont_reduce((int64_t)zeta * a[j + len]);
+                a[j + len] = a[j] - t;
+                a[j] = a[j] + t;
             }
-            start += len * 2;
         }
-        len >>= 1;
     }
 }
 
 static void dilithium_inv_ntt(int32_t a[256]) {
-    int len = 1, k = 256;
-    while (len <= 128) {
-        int start = 0;
-        while (start < 256) {
-            int32_t zeta = -dilithium_zetas[--k];
-            if (zeta < 0) zeta += DILITHIUM_Q;
-            for (int j = start; j < start + len; j++) {
-                int32_t u = a[j];
-                int32_t v = a[j + len];
-                int32_t sum = u + v;
-                if (sum >= DILITHIUM_Q) sum -= DILITHIUM_Q;
-                int32_t diff = u - v;
-                if (diff < 0) diff += DILITHIUM_Q;
-                a[j] = sum;
-                a[j + len] = dilithium_mont_reduce((int64_t)zeta * diff);
+    unsigned int start, len, j, k;
+    int32_t t, zeta;
+    const int32_t f = 41978;
+    k = 256;
+    for (len = 1; len < 256; len <<= 1) {
+        for (start = 0; start < 256; start = j + len) {
+            zeta = -dilithium_zetas[--k];
+            for (j = start; j < start + len; ++j) {
+                t = a[j];
+                a[j] = t + a[j + len];
+                a[j + len] = t - a[j + len];
+                a[j + len] = dilithium_mont_reduce((int64_t)zeta * a[j + len]);
             }
-            start += len * 2;
         }
-        len <<= 1;
     }
-    int32_t inv_n = 41978;
-    for (int j = 0; j < 256; j++) a[j] = dilithium_mont_reduce((int64_t)a[j] * inv_n);
+    for (j = 0; j < 256; ++j) a[j] = dilithium_mont_reduce((int64_t)f * a[j]);
 }
 
 static void dilithium_poly_add(int32_t r[256], const int32_t a[256], const int32_t b[256]) {
@@ -556,26 +543,6 @@ int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
                 if (z[i * 256 + j] > gamma1 - beta || z[i * 256 + j] < -(gamma1 - beta))
                     z_reject = 1;
             }
-        }
-        if (attempt == 0) {
-            int cs1m = 0, zm = 0;
-            for (int i = 0; i < 256; i++) { int t = cs1[i]; t = t < 0 ? -t : t; if (t > cs1m) cs1m = t; }
-            for (int i = 0; i < k * 256; i++) { int t = z[i]; t = t < 0 ? -t : t; if (t > zm) zm = t; }
-            /* schoolbook c_poly * s1[0] mod q (s1 has coefficients in [-2,2]) */
-            int32_t sb[256]; memset(sb, 0, sizeof(sb));
-            for (int j = 0; j < 256; j++) {
-                if (c_poly[j] == 0) continue;
-                for (int m = 0; m < 256; m++) {
-                    int64_t acc = (int64_t)sb[(j + m) % 256] + (int64_t)c_poly[j] * s1[m];
-                    acc %= DILITHIUM_Q; if (acc < 0) acc += DILITHIUM_Q;
-                    sb[(j + m) % 256] = (int32_t)acc;
-                }
-            }
-            int cs1d = 0;
-            for (int i = 0; i < 256; i++) { int d = cs1[i] - sb[i]; while (d < 0) d += DILITHIUM_Q; while (d >= DILITHIUM_Q) d -= DILITHIUM_Q; if (d > DILITHIUM_Q/2) d -= DILITHIUM_Q; if (d<0) d=-d; if (d > cs1d) cs1d = d; }
-            fprintf(stderr, "[dbg a0] cs1_max=%d z_max=%d c·s1 poly_mul vs schoolbook maxdiff=%d\n", cs1m, zm, cs1d);
-            fprintf(stderr, "[dbg a0] cs1[0..3]=%d,%d,%d,%d  sb[0..3]=%d,%d,%d,%d\n",
-                    cs1[0],cs1[1],cs1[2],cs1[3], sb[0],sb[1],sb[2],sb[3]);
         }
         reject = z_reject;
         if (reject) continue;
