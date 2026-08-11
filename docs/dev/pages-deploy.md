@@ -4,58 +4,31 @@
 > `.github/workflows/*.yml`, `CODEOWNERS`, and CI configs are **intentionally
 > forbidden** in `ammar49-cyber/sneppx-alg`. All verification is local.
 
-The documentation is a static **Material for MkDocs** site. There is a single
-**primary** publishing target and one **legacy** target.
+The documentation is a static **Material for MkDocs** site. There is a **primary**
+origin (GitHub Pages) and a **mirror** on the company Vercel project.
 
-## Primary: `sneppxalg.vercel.app/sneppx-alg` (Arix-Site)
+## Primary: `ammar49-cyber.github.io/sneppx-alg` (GitHub Pages)
 
-The live docs site is served from the `sneppxalg` Vercel project via the
-companion `ammar49-cyber/Arix-Site` Next.js repository. MkDocs emits
-**depth-relative** asset references and an absolute `site_url` of
-`https://sneppxalg.vercel.app/sneppx-alg/`, so the built `site/` is mounted
-**unchanged** into `Arix-Site` as static assets:
+The canonical docs site is published from the `ammar49-cyber/sneppx-alg`
+repository's `gh-pages` branch. `mkdocs.yml` -> `site_url` points here:
 
-```text
-site/  ──►  Arix-Site/public/sneppx-alg/
+```yaml
+site_url: https://ammar49-cyber.github.io/sneppx-alg/
 ```
 
-### Publish a docs release
+## Mirror: `sneppxalg.vercel.app/sneppxalg` (Ariz-Site)
 
-```powershell
-# 1. Build the static site locally (strict = fail on broken links/nav)
-mkdocs build --strict          # -> site/
+The same built site is **mirrored, unchanged**, into the companion
+`ammar49-cyber/Arix-Site` (Next.js, `output: "export"`) repository, under
+`public/sneppxalg/`. Vercel serves `public/` verbatim, so the docs become
+available at `https://sneppxalg.vercel.app/sneppxalg/`.
 
-# 2. Mirror the output into the Arix-Site static folder (overwrite)
-robocopy site "..\Arix-Site\public\sneppx-alg" /E /NFL /NDL /NJH /NJS /NC /R:1 /W:1
-
-# 3. Commit + push in Arix-Site; Vercel auto-redeploys on main
-cd ..\Arix-Site
-git add -A
-git commit -m "docs: publish SNEPPX-Algo docs from mkdocs build"
-git push origin main
-```
-
-Vercel rebuilds the Arix-Site Next.js (`output: "export"`) app on every push to
-`main`, and `public/sneppx-alg/` is served verbatim at
-`/sneppx-alg/`. No `next.config.js` changes are required.
-
-- Point the `ammar49-cyber/sneppx-alg` repo **"Website"** field at
-  `https://sneppxalg.vercel.app/sneppx-alg/` (set with
-  `gh repo edit ammar49-cyber/sneppx-alg --homepage https://sneppxalg.vercel.app/sneppx-alg/`).
-- Tag the repo (`git tag v1.2.1 && git push --tags`) before publishing so the
-  changelog and git-revision timestamps reflect the release.
-
-## Legacy: GitHub Pages (`mkdocs gh-deploy`)
-
-GitHub Pages on the `ammar49-cyber/sneppx-alg` `gh-pages` branch is retained as
-a backup origin only. Because `mkdocs.yml` -> `site_url` now points at the
-**Vercel** primary, `mkdocs gh-deploy` will emit Vercel canonical URLs from a
-GitHub-hosted origin — a deliberate mismatch. Do **not** rely on it for SEO;
-use the primary target above.
-
-```powershell
-mkdocs gh-deploy --force     # legacy / backup only
-```
+Why this is safe and lossless:
+- `site_url` stays the **GitHub** canonical, so canonical/Sitemap/RSS tags
+  always point at the primary origin (no SEO duplication surprises).
+- MkDocs emits **depth-relative** asset references and a `.nojekyll`-style
+  static layout, so the **same `site/` directory mounts verbatim** into a
+  subfolder of any static host — no HTML rewriting or `base` tag is required.
 
 ## Prerequisites
 
@@ -82,6 +55,51 @@ If it fails:
   iframe resolves; otherwise links to it are plain HTML hrefs (not
   Markdown-relative) and are not link-checked by `--strict`.
 
+## Deploy to GitHub Pages (primary)
+
+```powershell
+# One-time: configure Pages on the ammar49-cyber/sneppx-alg repo
+# Settings -> Pages -> Source: "Deploy from a branch" -> gh-pages (root)
+
+# To publish a release:
+mkdocs gh-deploy --force
+```
+
+- `gh-deploy` writes the built site to the `gh-pages` branch and (with
+  `--force`) replaces any prior deployment.
+- Because there is **no CI**, every publish is a deliberate maintainer action.
+  Tag the repo (`git tag v1.2.0 && git push --tags`) before deploying so the
+  changelog and "last updated" metadata reflect the release.
+- `docs/.nojekyll` is present, so GitHub Pages serves directories like `assets/`
+  and the (optional) `doxygen/html/` without Jekyll filtering.
+
+## Publish the Vercel mirror (`sneppxalg.vercel.app/sneppxalg`)
+
+After a successful `mkdocs build --strict`:
+
+```powershell
+# 1. From the sneppx-alg repo root, build the static site
+mkdocs build --strict          # -> site/
+
+# 2. Mirror site/ into the Ariz-Site static folder (overwrite /sneppxalg)
+robocopy site "..\Arix-Site\public\sneppxalg" /E /NFL /NDL /NJH /NJS /NC /R:1 /W:1
+
+# 3. Commit + push in Arix-Site; Vercel auto-redeploys on main
+cd ..\Arix-Site
+git add -A
+git commit -m "docs: mirror SNEPPX-Algo docs at /sneppxalg"
+git push origin main
+```
+
+Vercel rebuilds the Arix-Site Next.js (`output: "export"`) app on every push to
+`main`, and `public/sneppxalg/` is served verbatim at `/sneppxalg/`. No
+`next.config.js` or `vercel.json` changes are required.
+
+> If a Vercel deploy reports **"Deployment was blocked"**, it is a GitHub/Vercel
+> deployment-protection gate on the `Arix-Site` project (not a build error). The
+> docs are still correct on GitHub Pages (primary); the mirror needs an
+> approve-and-redeploy from a Vercel project owner.
+
 ## Versioned docs (mike) — optional
 
 `mkdocs.yml` configures `extra.version.provider: mike` for versioned URLs.
@@ -101,8 +119,9 @@ This is **optional** — a single latest build (above) is the default flow.
 | Decision | Reason |
 |----------|--------|
 | No `.github/workflows/*.yml` | Repo policy: all verification is local |
-| Primary = Vercel/Arix-Site (`public/sneppx-alg/`) | Serves the real `sneppxalg` domain; depth-relative assets need no rewrite |
-| GitHub Pages (`gh-deploy`) kept as backup only | `site_url` is Vercel-prefixed, so GH canonicals intentionally diverge |
-| `docs/.nojekyll` committed | Lets GitHub serve `assets/` and `doxygen/` dirs without Jekyll filtering |
+| GitHub Pages = primary; Vercel = mirror | Primary origin is canonical; Vercel mirrors unchanged |
+| Mount `site/` into `Arix-Site/public/sneppxalg/` verbatim | Depth-relative assets need no rewrite; no Next config risk |
+| `site_url` = GitHub canonical | Avoids canonical mismatch across the two origins |
+| `docs/.nojekyll` committed | Lets GitHub Pages serve `assets/` and `doxygen/` dirs |
 | `mkdocs build --strict` | Catches broken links and nav drift in PRs |
 | `git-revision-date-localized` plugin | Lightweight "last updated" metadata; no version branch required |
