@@ -6,6 +6,7 @@ build-coverage/
 build_standalone/
 out/
 dist/
+site/
 
 # CMake
 CMakeCache.txt
