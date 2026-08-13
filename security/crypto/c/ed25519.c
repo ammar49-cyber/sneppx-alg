@@ -582,36 +582,30 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
     SNEPPX_sha512_update(&ctx, public_key, 32);
     SNEPPX_sha512_update(&ctx, message, msg_len);
     SNEPPX_sha512_finish(&ctx, hram);
-    point A; int ret_A = point_from_bytes(&A, public_key); printf("DBG: point_from_bytes(A)=%d\n", ret_A);
-    if (ret_A != 0) { printf("DBG: A.public_key="); for(int i=0;i<32;i++) printf("%02x",public_key[i]); printf("\n"); return -1; }
-    point R; int ret_R = point_from_bytes(&R, sig->data); printf("DBG: point_from_bytes(R)=%d\n", ret_R);
+    point A; int ret_A = point_from_bytes(&A, public_key);
+    if (ret_A != 0) return -1;
+    point R; int ret_R = point_from_bytes(&R, sig->data);
     if (ret_R != 0) return -1;
-    uint8_t h_scalar[32]; memcpy(h_scalar, hram, 32);
-    {
-        static const uint8_t sc_l[32] = {
-            0xed,0xd3,0xf5,0x5c,0x1a,0x63,0x12,0x58,
-            0xd6,0x9c,0xf7,0xa2,0xde,0xf9,0xde,0x14,
-            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10
-        };
-        for (int iter = 0; iter < 16; iter++) {
-            uint32_t borrow = 0;
-            for (int i = 0; i < 32; i++) {
-                uint16_t w = (uint16_t)h_scalar[i] - sc_l[i] - borrow;
-                borrow = (w >> 8) & 1;
-                h_scalar[i] = (uint8_t)w;
-            }
-            if (borrow) { for (int i = 0; i < 32; i++) { uint16_t w = (uint16_t)h_scalar[i] + sc_l[i]; h_scalar[i] = (uint8_t)w; } break; }
-        }
-    }
+
+    uint8_t h_scalar[32];
+    sc_reduce64(h_scalar, hram);
+
     point hA; point_scalar_mult(&hA, h_scalar, 32, &A);
-    point sB; point_scalar_mult(&sB, sig->data + 32, 32, &B);
-    point R_plus_hA; point_add(&R_plus_hA, &R, &hA);
+    /* Cofactor 8: [8]R + [8]hA */
+    point R8; point_double(&R8, &R); point_double(&R8, &R8); point_double(&R8, &R8);
+    point hA8; point_double(&hA8, &hA); point_double(&hA8, &hA8); point_double(&hA8, &hA8);
+    point R8_plus_hA8; point_add(&R8_plus_hA8, &R8, &hA8);
+
+    /* Cofactor 8: [8]S * B */
+    point sB8; point_scalar_mult(&sB8, sig->data + 32, 32, &B);
+    point_double(&sB8, &sB8); point_double(&sB8, &sB8); point_double(&sB8, &sB8);
+
+    /* Compare [8]sB and [8]R + [8]hA */
     field lhs_x, rhs_x, lhs_y, rhs_y;
-    fe_mul(&lhs_x, &R_plus_hA.X, &sB.Z);
-    fe_mul(&rhs_x, &sB.X, &R_plus_hA.Z);
-    fe_mul(&lhs_y, &R_plus_hA.Y, &sB.Z);
-    fe_mul(&rhs_y, &sB.Y, &R_plus_hA.Z);
+    fe_mul(&lhs_x, &R8_plus_hA8.X, &sB8.Z);
+    fe_mul(&rhs_x, &sB8.X, &R8_plus_hA8.Z);
+    fe_mul(&lhs_y, &R8_plus_hA8.Y, &sB8.Z);
+    fe_mul(&rhs_y, &sB8.Y, &R8_plus_hA8.Z);
     uint8_t bx[32], cx[32], by[32], cy[32];
     fe_to_bytes(bx, &lhs_x); fe_to_bytes(cx, &rhs_x);
     fe_to_bytes(by, &lhs_y); fe_to_bytes(cy, &rhs_y);
