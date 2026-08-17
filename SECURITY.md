@@ -53,9 +53,17 @@ No reported vulnerabilities at this time.
 
 ### Test Suite Edge Cases
 
-- Ed25519: 2/306 verification tests fail under specific edge conditions
+- Ed25519: Fixed to full RFC 8032 compliance (all 4 test vectors pass). The base-point T-ordering bug (init_base_point computed B.T before parity negation) has been resolved.
 - Argon2: 1/4 timing test fails on certain hardware
 - These are pre-existing S0 limitations and do not represent security vulnerabilities
+
+### S2 Obfuscation — Audit Findings (2026-08-16)
+
+See `docs/security/obf_audit.md` for the full audit report. Key findings:
+- **Critical:** S2 uses `rand()` (CWE-338) for obfuscation decisions — predictable seed makes all choices reproducible
+- **High:** Whitebox AES table lookups are timing-variable (CWE-208)
+- **Medium:** `bogus_cf_redirect` has no restore path; XOR with hardcoded `0xDEADBEEF` is trivially reversible (CWE-327)
+- Known issues tracked in `docs/security/obf_audit.md`
 
 ## Hall of Fame
 
