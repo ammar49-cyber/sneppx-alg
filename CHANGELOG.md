@@ -46,6 +46,24 @@ All notable changes to SNEPPX-Algo.
 - Fixed Kyber NTT twiddle table, Montgomery reduction, and `fq_reduce`/
   `barrett_reduce` (`security/crypto/c/kyber.c`); relaxed DRBG minimum
   entropy input (`security/crypto/c/drbg.c`).
+- Fixed Ed25519 `init_base_point` in `security/crypto/c/ed25519.c`: T
+  coordinate was computed before parity negation, producing an off-curve
+  base point and invalidating sign + verify. All 4 RFC 8032 test vectors
+  now pass.
+
+### Profiling
+- Added `[BENCH]` `fprintf(stderr,...)` start/end markers to HSS forward
+  pass (`algorithms/hss/core/forward.c`) and SER layer forward
+  (`algorithms/ser/core/forward_layer.c`) for integration with
+  `sneppx-bench` regression tracking.
+- Captured performance baselines for `bench_tensor`, `bench_npe`,
+  `bench_pq_crypto`. HSS/SER timeout at 300s (no CUDA toolchain available).
+
+### S2 Obfuscation Audit
+- Audit report published in `docs/security/obf_audit.md` (7 findings,
+  3 critical). Key issues: `rand()` used for obfuscation decisions (CWE-338),
+  whitebox AES timing side-channel (CWE-208), no restore path in bogus CF
+  redirect (CWE-717), hardcoded XOR constant (CWE-327).
 
 ## [1.1.1] — 2026-08-01
 
