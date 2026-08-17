@@ -26,6 +26,7 @@ For complete documentation, start at [`docs/index.md`](docs/index.md).
 - **Advanced Architectures**: Differential Attention, Mamba-2 SSM, FlexAttention, Mixture of Depth
 - **ONNX import/export**: standalone numpy-only toolkit — parse/serialize/check/shape-inference/optimize/QDQ-quantize/external-data, pure-numpy executor + onnxruntime adapter, `sneppx-onnx` CLI
 - **Built-in Profiling & Debugging**: Profiler, logger, NVTX stubs, sanitizer scripts
+- **Benchmark Integration**: `[BENCH]` stderr markers in HSS/SER forward passes for `sneppx-bench` regression tracking; baselines in `benchmarks/`
 
 ## Documentation
 
