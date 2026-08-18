@@ -51,7 +51,7 @@ typedef struct {
     char namespace_str[128];
     char created[32];
     int num_components;
-    sbom_component_t components[4096];
+    sbom_component_t components[64];
     int verified;
 } sbom_doc_t;
 

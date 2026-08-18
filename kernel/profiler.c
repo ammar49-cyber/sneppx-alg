@@ -1,5 +1,5 @@
 #include "profiler.h"
-#include "../security/obfuscator.h"
+#include "security/obfuscator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
