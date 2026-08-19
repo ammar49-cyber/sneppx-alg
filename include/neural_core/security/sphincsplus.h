@@ -10,7 +10,7 @@ extern "C" {
 
 #define SPHINCS_PUBLICKEYBYTES 32
 #define SPHINCS_SECRETKEYBYTES 64
-#define SPHINCS_SIGBYTES 8080
+#define SPHINCS_SIGBYTES 14592
 /*
  * SNEPPX - SPHINCS+ Stateless Hash-Based Signatures
  *
