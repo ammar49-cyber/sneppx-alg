@@ -54,7 +54,7 @@ static char* unescape_string(const char* s, size_t len) {
                     unsigned int code = 0;
                     for (int k = 0; k < 4; k++) {
                         i++;
-                        char c = json_hexval(s[i]);
+                        char c = (char)json_hexval(s[i]);
                         if (c < 0) { out[j] = '\0'; return out; }
                         code = (code << 4) | (unsigned int)c;
                     }

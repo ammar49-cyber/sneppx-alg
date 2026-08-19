@@ -350,7 +350,11 @@ char* SNEPPX_llm_config_to_json(const SNEPPXLLMConfig* cfg) {
         default:
             return NULL;
     }
+#ifdef _WIN32
+    return _strdup(buf);
+#else
     return strdup(buf);
+#endif
 }
 
 /* =========================================================================
