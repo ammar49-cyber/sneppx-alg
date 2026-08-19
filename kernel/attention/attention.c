@@ -179,8 +179,12 @@ void SNEPPX_rope_apply(SNEPPXTensor* q, SNEPPXTensor* k, const SNEPPXTensor* cos
        `cos` (and `sin` is NULL or the same pointer). Process each (x_i,
        x_{i+half}) pair together from the ORIGINAL values so the in-place
        rotation is not contaminated by earlier writes. */
+    /* The [B,H,S,hd] layout means base/d is the flat [B*H*S] index, not the
+       sequence position. pos must be (base/d)%S so multi-head tensors with
+       S=1 do not index past the [S,hd] cos table. */
+    size_t seq_len = (q->ndim >= 2) ? q->shape[q->ndim - 2] : 1;
     for (size_t base = 0; base < total; base += d) {
-        size_t pos = (base / d) + offset;
+        size_t pos = ((base / d) % seq_len) + offset;
         for (size_t j = 0; j < half; j++) {
             float cosv = cd[pos * cd_last + j];
             float sinv = cd[pos * cd_last + half + j];
