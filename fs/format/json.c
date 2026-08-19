@@ -1,8 +1,8 @@
-/*
+﻿/*
  * SNEPPX - JSON Format
  *
  * WHAT
- *   JSON parser — recursive descent parser with nested object/array support.
+ *   JSON parser â€” recursive descent parser with nested object/array support.
  *
  * CONCEPT
  *   Provides a structured SNEPPX_JsonValue AST with proper memory lifecycle
@@ -20,9 +20,11 @@
 #include <ctype.h>
 
 /* Forward declarations */
-static SNEPPX_JsonValue* parse_value(const char* json, size_t* pos, size_t len);
-static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len);
-static SNEPPX_JsonValue* parse_array(const char* json, size_t* pos, size_t len);
+#define SNEPPX_JSON_MAX_DEPTH 128
+static int json_hexval(char c);
+static SNEPPX_JsonValue* parse_value(const char* json, size_t* pos, size_t len, unsigned depth);
+static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len, unsigned depth);
+static SNEPPX_JsonValue* parse_array(const char* json, size_t* pos, size_t len, unsigned depth);
 static SNEPPX_JsonValue* parse_string(const char* json, size_t* pos, size_t len);
 static SNEPPX_JsonValue* parse_number(const char* json, size_t* pos, size_t len);
 static SNEPPX_JsonValue* parse_literal(const char* json, size_t* pos, size_t len);
@@ -87,12 +89,13 @@ static int json_hexval(char c) {
     return -1;
 }
 
-static SNEPPX_JsonValue* parse_value(const char* json, size_t* pos, size_t len) {
+static SNEPPX_JsonValue* parse_value(const char* json, size_t* pos, size_t len, unsigned depth) {
+    if (depth > SNEPPX_JSON_MAX_DEPTH) return NULL;
     skip_whitespace(json, pos, len);
     if (*pos >= len) return NULL;
     char c = json[*pos];
-    if (c == '{') return parse_object(json, pos, len);
-    if (c == '[') return parse_array(json, pos, len);
+    if (c == '{') return parse_object(json, pos, len, depth);
+    if (c == '[') return parse_array(json, pos, len, depth);
     if (c == '"') return parse_string(json, pos, len);
     if (c == '-' || (c >= '0' && c <= '9')) return parse_number(json, pos, len);
     if (c == 't' || c == 'f' || c == 'n') return parse_literal(json, pos, len);
@@ -106,7 +109,7 @@ static SNEPPX_JsonValue* new_value(SNEPPX_JsonType type) {
     return v;
 }
 
-static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len) {
+static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len, unsigned depth) {
     SNEPPX_JsonValue* obj = new_value(SNEPPX_JSON_OBJECT);
     if (!obj) return NULL;
     (*pos)++; /* skip '{' */
@@ -130,7 +133,7 @@ static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len)
             return NULL;
         }
         (*pos)++;
-        SNEPPX_JsonValue* val = parse_value(json, pos, len);
+        SNEPPX_JsonValue* val = parse_value(json, pos, len, depth + 1);
         if (!val) { sneppx_json_free(key); sneppx_json_free(obj); return NULL; }
         /* Append key-value pair */
         SNEPPX_JsonObjectPair* pair = (SNEPPX_JsonObjectPair*)malloc(sizeof(SNEPPX_JsonObjectPair));
@@ -156,7 +159,7 @@ static SNEPPX_JsonValue* parse_object(const char* json, size_t* pos, size_t len)
     return obj;
 }
 
-static SNEPPX_JsonValue* parse_array(const char* json, size_t* pos, size_t len) {
+static SNEPPX_JsonValue* parse_array(const char* json, size_t* pos, size_t len, unsigned depth) {
     SNEPPX_JsonValue* arr = new_value(SNEPPX_JSON_ARRAY);
     if (!arr) return NULL;
     (*pos)++; /* skip '[' */
@@ -171,7 +174,7 @@ static SNEPPX_JsonValue* parse_array(const char* json, size_t* pos, size_t len) 
     arr->array.items = (SNEPPX_JsonValue**)calloc(capacity, sizeof(SNEPPX_JsonValue*));
     if (!arr->array.items) { sneppx_json_free(arr); return NULL; }
     while (1) {
-        SNEPPX_JsonValue* val = parse_value(json, pos, len);
+        SNEPPX_JsonValue* val = parse_value(json, pos, len, depth + 1);
         if (!val) { sneppx_json_free(arr); return NULL; }
         if (arr->array.size >= arr->array.capacity) {
             size_t new_cap = arr->array.capacity * 2;
@@ -230,7 +233,6 @@ static SNEPPX_JsonValue* parse_number(const char* json, size_t* pos, size_t len)
     for (size_t i = start; i < *pos; i++) {
         if (json[i] == '.' || json[i] == 'e' || json[i] == 'E') { v->is_integer = 0; break; }
     }
-    if (v->is_integer) v->int_val = (long long)val;
     return v;
 }
 
@@ -262,7 +264,7 @@ SNEPPX_JsonValue* sneppx_json_parse(const char* json) {
     if (!json) return NULL;
     size_t pos = 0;
     size_t len = strlen(json);
-    SNEPPX_JsonValue* v = parse_value(json, &pos, len);
+    SNEPPX_JsonValue* v = parse_value(json, &pos, len, 0);
     if (!v) return NULL;
     skip_whitespace(json, &pos, len);
     if (pos < len) { sneppx_json_free(v); return NULL; } /* trailing garbage */

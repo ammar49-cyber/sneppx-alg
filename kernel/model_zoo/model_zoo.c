@@ -374,7 +374,7 @@ static int json_get_float(SNEPPX_JsonValue* root, const char* key, float* out) {
 static int json_get_int(SNEPPX_JsonValue* root, const char* key, int* out) {
     SNEPPX_JsonValue* val = sneppx_json_find(root, key);
     if (!val || val->type != SNEPPX_JSON_NUMBER) return -1;
-    *out = (int)val->int_val;
+    *out = (int)val->number_val;
     return 0;
 }
 

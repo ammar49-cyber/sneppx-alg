@@ -40,7 +40,7 @@ typedef struct {
     SNEPPX_JsonValue** items;
 } SNEPPX_JsonArray;
 
-typedef struct {
+typedef struct SNEPPX_JsonObjectPair {
     char* key;
     SNEPPX_JsonValue* value;
     struct SNEPPX_JsonObjectPair* next;
@@ -85,8 +85,6 @@ SNEPPX_JsonValue* sneppx_json_find(SNEPPX_JsonValue* root, const char* path);
  * @param v Value to free.
  */
 void sneppx_json_free(SNEPPX_JsonValue* v);
-
-static int json_hexval(char c);
 
 #ifdef __cplusplus
 }
