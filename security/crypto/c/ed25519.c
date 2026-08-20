@@ -520,10 +520,8 @@ int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, 
     SNEPPX_sha512_update(&ctx, kp->public_key, 32);
     SNEPPX_sha512_update(&ctx, message, msg_len);
     SNEPPX_sha512_finish(&ctx, hram);
-    memcpy(h_scalar, hram, 32);
-    /* Reduce h_scalar mod L (copy 32 bytes into 64-byte buffer) */
-    { uint8_t h64[64]; memset(h64, 0, 64); memcpy(h64, h_scalar, 32);
-      sc_reduce64(h_scalar, h64); }
+    /* Reduce full 64-byte challenge hash mod L */
+    sc_reduce64(h_scalar, hram);
     /* S = (r + h*a) mod L */
     /* a is the clamped private key (kp->private_key[0:32]) */
     sc_mul256(product, h_scalar, kp->private_key);
@@ -541,15 +539,18 @@ int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, 
 }
 
 /**
- * @brief Verify Ed25519.
+ * @brief Core Ed25519 verify with selectable hash path.
  *
- * @param public_key [in] Public Key value.
- * @param message [in] Message value.
- * @param msg_len [in] Msg Len value.
+ * @param public_key [in] 32-byte public key.
+ * @param message [in]    Message bytes.
+ * @param msg_len [in]    Message length.
+ * @param sig [in]        64-byte signature struct.
+ * @param legacy [in]     If non-zero, use the pre-fix (legacy) SHA-512 digest.
  *
- * @return 0 on success, -1 on error.
+ * @return 1 on valid signature, 0 on invalid, -1 on error.
  */
-int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig) {
+static int ed25519_verify_core(const uint8_t* public_key, const uint8_t* message, size_t msg_len,
+                               const SNEPPXEd25519Signature* sig, int legacy) {
     if (!public_key || !message || !sig) return -1;
     init_base_point();
     uint8_t hram[64];
@@ -558,7 +559,10 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
     SNEPPX_sha512_update(&ctx, sig->data, 32);
     SNEPPX_sha512_update(&ctx, public_key, 32);
     SNEPPX_sha512_update(&ctx, message, msg_len);
-    SNEPPX_sha512_finish(&ctx, hram);
+    if (legacy)
+        SNEPPX_sha512_legacy_finish(&ctx, hram);
+    else
+        SNEPPX_sha512_finish(&ctx, hram);
     point A; int ret_A = point_from_bytes(&A, public_key);
     if (ret_A != 0) return -1;
     point R;
@@ -567,8 +571,7 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
 
     /* Verify: [S]B = R + [h]A */
     uint8_t h_scalar[32];
-    { uint8_t h64[64]; memset(h64, 0, 64); memcpy(h64, hram, 32);
-      sc_reduce64(h_scalar, h64); }
+    sc_reduce64(h_scalar, hram);
     point S_point;
     point_scalar_mult(&S_point, sig->data + 32, 32, &B);
     
@@ -585,6 +588,50 @@ int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, siz
     fe_to_bytes(bx, &S_point.X); fe_to_bytes(cx, &hA.X);
     fe_to_bytes(by, &S_point.Y); fe_to_bytes(cy, &hA.Y);
     return SNEPPX_ct_equal(bx, cx, 32) && SNEPPX_ct_equal(by, cy, 32);
+}
+
+/**
+ * @brief Verify Ed25519.
+ *
+ * @param public_key [in] Public Key value.
+ * @param message [in] Message value.
+ * @param msg_len [in] Msg Len value.
+ *
+ * @return 1 on valid, 0 on invalid, -1 on error.
+ */
+int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig) {
+    return ed25519_verify_core(public_key, message, msg_len, sig, 0);
+}
+
+/**
+ * @brief Verify Ed25519 with optional legacy-hash fallback.
+ *
+ * First attempts verification with the RFC-8032 compliant SHA-512.  If
+ * that fails with an invalid-signature result (0) and *allow_legacy* is
+ * non-zero, recomputes the challenge hash using the legacy (pre-fix)
+ * SHA-512 digest and retries.  This allows manifests signed before the
+ * SHA-512 length-encoding fix to still be verified.
+ *
+ * @param sig [in]          64-byte raw signature (R || S).
+ * @param m [in]            Message bytes.
+ * @param mlen [in]         Message length.
+ * @param pk [in]           32-byte public key.
+ * @param allow_legacy [in] If non-zero, fall back to legacy SHA-512 on failure.
+ *
+ * @return 1 on valid, 0 on invalid, -1 on error.
+ */
+int SNEPPX_ed25519_verify_compat(const uint8_t* sig, const uint8_t* m, size_t mlen, const uint8_t* pk, int allow_legacy) {
+    if (!sig || !m || !pk) return -1;
+    SNEPPXEd25519Signature sig_struct;
+    memcpy(sig_struct.data, sig, SNEPPX_ED25519_SIGNATURE_LEN);
+
+    /* RFC-correct verify first */
+    int ret = ed25519_verify_core(pk, m, mlen, &sig_struct, 0);
+    if (ret == 1) return 1;
+    /* On hard error (-1), do not retry with legacy */
+    if (ret == -1 || !allow_legacy) return ret;
+    /* Legacy fallback: re-derive challenge with old H1 digest */
+    return ed25519_verify_core(pk, m, mlen, &sig_struct, 1);
 }
 
 /**

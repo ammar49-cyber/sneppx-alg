@@ -77,6 +77,16 @@ int SNEPPX_ed25519_sign(const SNEPPXEd25519Keypair* kp, const uint8_t* message, 
  */
 int SNEPPX_ed25519_verify(const uint8_t* public_key, const uint8_t* message, size_t msg_len, const SNEPPXEd25519Signature* sig);
 /**
+ * @brief Verify Ed25519 with optional legacy-hash fallback for migration.
+ * @param sig [in] 64-byte raw signature (R || S).
+ * @param m [in] Message bytes.
+ * @param mlen [in] Message length.
+ * @param pk [in] 32-byte public key.
+ * @param allow_legacy [in] If non-zero, retry with legacy (pre-fix) SHA-512 on failure.
+ * @return 1 on valid, 0 on invalid, -1 on error.
+ */
+int SNEPPX_ed25519_verify_compat(const uint8_t* sig, const uint8_t* m, size_t mlen, const uint8_t* pk, int allow_legacy);
+/**
  * @brief Perform Ed25519 Scalar Multiply.
  *
  * @param result [out] Result value.
