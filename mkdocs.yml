@@ -196,3 +196,5 @@ nav:
     - Dev:
         - GitHub Pages Deployment: dev/pages-deploy.md
         - Doxygen Setup: doxygen/README.md
+        - PR Template: PR_TEMPLATE.md
+        - Upstream README: README_upstream.md

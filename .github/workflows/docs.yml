@@ -1,16 +1,29 @@
 name: Docs
 
 # Builds the MkDocs site (Material + mkdocstrings Python autodoc +
-# Doxygen-generated C/C++ reference) and publishes versioned docs to the
-# gh-pages branch via mike. Triggered on documentation changes and manually.
+# Doxygen-generated C/C++ reference). On pull requests it only builds (strict)
+# to catch broken docs; on push to main (and releases) it also deploys
+# versioned docs to the gh-pages branch via mike.
 on:
   push:
     branches: [main]
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'mkdocs.autodoc.yml'
       - 'Doxyfile'
+      - 'bindings/python/**'
       - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'mkdocs.autodoc.yml'
+      - 'Doxyfile'
+      - 'bindings/python/**'
+      - '.github/workflows/docs.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -21,7 +34,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history for mike + revision dates)
@@ -58,6 +71,50 @@ jobs:
       - name: Make SneppX_ALG importable for Python autodoc
         # The pure-Python wrappers import fine without the compiled C backend
         # (NumPy fallback), which is all griffe needs to introspect the API.
+        run: echo "PYTHONPATH=$PWD/bindings/python" >> "$GITHUB_ENV"
+
+      - name: Build docs (strict, no deploy)
+        run: mkdocs build --config-file mkdocs.autodoc.yml --strict
+
+  deploy:
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'release')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for mike + revision dates)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install docs toolchain
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            "mkdocs>=1.6" \
+            "mkdocs-material>=9.6" \
+            "mkdocstrings[python]>=1.0" \
+            "mkdocs-autorefs>=1.2" \
+            "mkdocs-gen-files" \
+            "mkdocs-section-index" \
+            "mkdocs-literate-nav" \
+            "mike>=2.0"
+
+      - name: Install Doxygen + Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+
+      - name: Generate C/C++ API reference (Doxygen)
+        run: doxygen Doxyfile
+
+      - name: Make SneppX_ALG importable for Python autodoc
         run: echo "PYTHONPATH=$PWD/bindings/python" >> "$GITHUB_ENV"
 
       - name: Deploy versioned docs with mike
