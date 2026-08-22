@@ -1,0 +1,24 @@
+# Inherits the main documentation configuration and adds the mkdocstrings
+# Python auto-doc plugin. Use this config (instead of mkdocs.yml) when you want
+# the live Python API reference rendered from source via griffe.
+#
+# Why a separate file? The griffe/mkdocstrings introspection step is memory
+# heavy and can crash `mkdocs build` on low-RAM machines. The default
+# `mkdocs.yml` therefore stays lean and always builds; this config is used by
+# the docs CI workflow (which runs on a full GitHub runner) and by anyone with
+# enough RAM who wants the auto-generated API pages.
+INHERITS: [mkdocs.yml]
+
+plugins:
+    - search
+    - mkdocstrings:
+        handlers:
+            python:
+                options:
+                    show_source: true
+                    show_root_heading: true
+                    show_root_full_path: false
+                    docstring_style: google
+                    members_order: source
+    - mike:
+        version_selector: true

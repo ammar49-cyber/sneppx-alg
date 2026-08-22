@@ -1,6 +1,15 @@
 # Python API Reference
 
-**Status**: v0.5.0 — All algorithm wrappers complete. C backend interface via `_HAS_C` flag.
+Stable as of **v1.1.1**. All algorithm wrappers are complete and delegate to the
+compiled C backend (`_SNEPPX_c` / `_arix_c`) when available, falling back to a
+pure-NumPy engine otherwise (exposed via the `_HAS_C` flag).
+
+> **Security note (S0 — Post-Quantum Crypto).** The Dilithium / ML-DSA
+> implementation in `security/crypto/c/dilithium.c` is verified against the
+> official **FIPS 204** known-answer tests shipped in
+> `tests/python/data/kat_vectors.json` (see `tests/python/test_crypto_kat.py`).
+> Signing of releases and updates uses these primitives, and the KAT suite runs
+> in CI and via `pytest tests/python`.
 
 ## Installation
 
@@ -241,12 +250,17 @@ output = cfg.forward_mha(hidden_states, attention_mask, position_ids)
 
 ## Running Tests
 
+The full Python suite uses `pytest` and runs against the same code paths exercised
+by the C-backed and NumPy-fallback engines:
+
 ```powershell
 $env:PYTHONPATH = "bindings/python"
-python tests/python/test_algo_wrappers.py    # 8 tests
-python tests/python/test_tensor.py
-python tests/python/test_quantization.py      # 17 tests
-python tests/python/test_checkpoint.py        # 23 tests
-python tests/python/test_profiler.py          # 13 tests
-python tests/python/test_model_zoo.py         # 49 tests
+python -m pytest tests/python -q
+```
+
+Crypto correctness is pinned by known-answer tests:
+
+```powershell
+$env:PYTHONPATH = "bindings/python"
+python -m pytest tests/python/test_crypto_kat.py -q   # Dilithium (FIPS 204) + SPHINCS+ KAT
 ```

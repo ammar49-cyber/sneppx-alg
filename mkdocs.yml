@@ -59,7 +59,8 @@ theme:
     exclude_docs: README.md
 plugins:
     - search
-    - mike
+    - mike:
+        version_selector: true
 
 markdown_extensions:
     - admonition
@@ -115,6 +116,7 @@ nav:
         - Model Conversion: tutorials/model_conversion.md
     - API Reference:
         - Python API: api/python.md
+        - Python API (auto): api/autodoc.md
         - C API: api/c.md
         - Doxygen (C/C++): api/index.md
     - Cookbook:
@@ -130,21 +132,67 @@ nav:
         - Security: cookbook/security.md
         - Profiling: cookbook/profiling.md
         - Checkpointing: cookbook/checkpointing.md
-        - Conversion: cookbook/conversion.md
+        - Conversion/Plugins: cookbook/conversion.md
         - Generation: cookbook/generation.md
+    - Security:
+        - Security Overview: security.md
+        - Security Layers (S0-S9): security_layers.md
+        - Security Architecture: architecture/security_architecture_overview.md
+        - Obfuscation Audit: security/obf_audit.md
+        - Threat Modeling: security/threat_modeling_overview.md
+        - Compliance: compliance/compliance_overview.md
+        - Incident Response: incident_response/ir_framework_overview.md
+    - Release Notes:
+        - v1.1.1: release_notes/v1.1.1.md
+        - v1.1.0: release_notes/v1.1.0.md
+        - v1.0.0: release_notes/v1.0.0.md
+        - v0.9.7.890e: release_notes/v0.9.7.890e.md
     - Migration:
-        - PyTorch: migration/from_pytorch.md
-        - TensorFlow: migration/from_tensorflow.md
-        - JAX: migration/from_jax.md
+        - v0.9.x to v1.0.0: migration/v0.9.x-to-v1.0.0.md
+        - v0.9.7.890e: migration/v0.9.7.890e.md
+        - From PyTorch: migration/from_pytorch.md
+        - From TensorFlow: migration/from_tensorflow.md
+        - From JAX: migration/from_jax.md
+    - Development:
+        - Development Workflow: DEVELOPMENT.md
+        - Testing: TESTING.md
+        - Build System: build.md
+        - Code Walkthrough: code-walkthrough.md
+        - Commenting Standard: COMMENTING.md
+        - Code Review Guide: CODE_REVIEW_GUIDE.md
+        - Contributor Tiers: CONTRIBUTOR_TIERS.md
+        - Branching Strategy: BRANCHING_STRATEGY.md
+        - HSS Training: hss_training.md
     - Guides:
         - SneppX Console: guides/sneppx_console.md
+        - Guides Index: guide/index.md
+        - Model Hub: guide/model_hub.md
+        - Model Zoo: guide/model_zoo.md
+        - Serving: guide/serving.md
+        - ONNX: guide/onnx.md
+        - MHA Forward Pass: guide/mha_forward_pass.md
+        - 128K Context: guide/128k_context_extension.md
+        - Testing Framework: guide/testing_framework.md
         - Installation: installation.md
+    - Reference:
+        - Architecture Overview: ARCHITECTURE.md
+        - API Index: API_REFERENCE.md
+        - API Quick Reference: api_quickref.md
+        - Benchmarks: BENCHMARKS.md
+        - Coverage: COVERAGE.md
+        - Glossary: GLOSSARY.md
+        - Design: DESIGN.md
+        - Vision: VISION.md
+        - Roadmap: ROADMAP.md
+        - Framework Comparison: comparison/ml_framework_feature_gap_analysis.md
+        - Learning Paths: LEARNING_PATHS.md
+        - Legacy API: API.md
+        - Style Guide: STYLE_GUIDE.md
     - Community: community/index.md
     - Learn:
         - Video Series: learn/videos.md
     - Changelog: changelog/index.md
     - FAQ: FAQ.md
-    - Reference Docs:
-        - Style Guide: STYLE_GUIDE.md
     - Dev:
         - GitHub Pages Deployment: dev/pages-deploy.md
+        - Doxygen Setup: doxygen/README.md

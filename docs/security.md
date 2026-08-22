@@ -34,8 +34,16 @@ All crypto source files follow the four-layer commenting standard in [COMMENTING
 | Argon2id  | RFC 9106 | Secure KDF | Test vectors + timing defense |
 | Secure Random | OS CPRG | Entropy | Windows CNG / Linux getrandom |
 | Kyber-512/768/1024 | FIPS 203 (ML-KEM) | PQ key encapsulation | NIST KAT vectors |
-| Dilithium-2/3/5 | FIPS 204 (ML-DSA) | PQ digital signatures | NIST KAT vectors |
+| Dilithium-2/3/5 | FIPS 204 (ML-DSA) | PQ digital signatures | FIPS 204 KAT (automated) |
 | SPHINCS+-128/192/256 | FIPS 205 (SLH-DSA) | Stateless PQ signatures | NIST KAT vectors |
+
+> **Automated Dilithium verification.** The ML-DSA / Dilithium implementation in
+> `security/crypto/c/dilithium.c` is exercised by the FIPS 204 known-answer test
+> suite in `tests/python/test_crypto_kat.py` (vectors in
+> `tests/python/data/kat_vectors.json`). The suite covers keypair generation,
+> signing, and verification round-trips for all three parameter sets
+> (Dilithium-2/3/5) and runs under `pytest` and in CI. This replaced the previous
+> ad-hoc KAT reference with deterministic, standard-aligned vectors.
 
 ### API
 

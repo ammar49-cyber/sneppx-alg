@@ -63,6 +63,16 @@ sneppx-onnx = "SneppX_ALG.interface_bindings.onnx_cli:main"
 dev = ["pytest>=7.0", "scipy>=1.7"]
 hf = ["huggingface_hub>=0.16.0"]
 serve = ["uvicorn>=0.22.0"]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.6",
+    "mkdocstrings[python]>=1.0",
+    "mkdocs-autorefs>=1.2",
+    "mkdocs-gen-files",
+    "mkdocs-section-index",
+    "mkdocs-literate-nav",
+    "mike>=2.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["bindings/python"]
