@@ -108,6 +108,26 @@ cmake --build build --config Release
 cd build && ctest -C Release --output-on-failure
 ```
 
+## Building the documentation
+
+The docs are built with [MkDocs](https://www.mkdocs.org/) (Material theme) plus
+the Doxygen-generated C/C++ reference. The default `mkdocs.yml` builds cleanly
+everywhere; an inherited `mkdocs.autodoc.yml` additionally renders the live
+Python API from source via `mkdocstrings` (needs more RAM, used by CI).
+
+```bash
+make docs                 # install docs toolchain, run doxygen, build site
+# or, manually:
+pip install -e ".[docs]"
+doxygen Doxyfile          # optional: C/C++ API reference (needs Doxygen)
+mkdocs build              # lean site (default config)
+mkdocs build -c mkdocs.autodoc.yml   # + live Python API reference
+```
+
+Docs are published automatically: the `docs.yml` workflow builds on every PR
+(strict) and deploys versioned docs to `gh-pages` via `mike` on push to `main`
+or on release. See `docs/` for the full site sources.
+
 ## Layout
 
 | Path | Purpose |

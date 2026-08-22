@@ -1,0 +1,51 @@
+name: CI
+
+# General build + test gate for the C/C++ core and the Python bindings.
+# CPU-only (no CUDA), runs on every PR and push to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: pip install cmake ninja
+
+      - name: Configure
+        run: >-
+          cmake -B build/ci -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DSNEPPX_BUILD_TESTS=ON
+          -DSNEPPX_BUILD_PYTHON=ON
+          -DSNEPPX_BUILD_BENCHMARKS=OFF
+          -DSNEPPX_BUILD_CUDA=OFF
+
+      - name: Build
+        run: cmake --build build/ci -j"$(nproc)"
+
+      - name: C/C++ tests (ctest)
+        run: cd build/ci && ctest --output-on-failure --timeout 300
+
+      - name: Python tests (pytest)
+        run: |
+          pip install pytest numpy pyyaml
+          PYTHONPATH=bindings/python python -m pytest tests/python -q
