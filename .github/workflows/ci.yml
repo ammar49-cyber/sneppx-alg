@@ -28,12 +28,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install build tools
-        run: pip install cmake ninja
+        run: pip install cmake ninja numpy
 
       - name: Configure
         run: >-
           cmake -B build/ci -G Ninja
           -DCMAKE_BUILD_TYPE=Release
+          -DPython3_EXECUTABLE="$(python3 -c 'import sys; print(sys.executable)')"
           -DSNEPPX_BUILD_TESTS=ON
           -DSNEPPX_BUILD_PYTHON=ON
           -DSNEPPX_BUILD_BENCHMARKS=OFF

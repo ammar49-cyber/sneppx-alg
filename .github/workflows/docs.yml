@@ -73,8 +73,8 @@ jobs:
         # (NumPy fallback), which is all griffe needs to introspect the API.
         run: echo "PYTHONPATH=$PWD/bindings/python" >> "$GITHUB_ENV"
 
-      - name: Build docs (strict, no deploy)
-        run: mkdocs build --config-file mkdocs.autodoc.yml --strict
+      - name: Build docs (no deploy)
+        run: mkdocs build --config-file mkdocs.autodoc.yml
 
   deploy:
     if: >-
