@@ -186,26 +186,29 @@ static void unpack_10bit(int32_t out[256], const uint8_t *in) {
     }
 }
 
-static void pack_3bit_signed(uint8_t *out, const int32_t in[256]) {
+static void pack_eta_signed(uint8_t *out, const int32_t in[256], int eta) {
+    int bits = (eta == 2) ? 3 : 4;
     uint64_t buf = 0;
-    int bits = 0, pos = 0;
+    int bitpos = 0, pos = 0;
     for (int i = 0; i < 256; i++) {
-        int val = in[i] + 2;
-        buf |= (uint64_t)(val & 7) << bits;
-        bits += 3;
-        while (bits >= 8) { out[pos++] = buf & 0xFF; buf >>= 8; bits -= 8; }
+        int val = in[i] + eta;
+        buf |= (uint64_t)(val & ((1 << bits) - 1)) << bitpos;
+        bitpos += bits;
+        while (bitpos >= 8) { out[pos++] = buf & 0xFF; buf >>= 8; bitpos -= 8; }
     }
-    while (bits > 0) { out[pos++] = buf & 0xFF; buf >>= 8; bits -= 8; }
+    while (bitpos > 0) { out[pos++] = buf & 0xFF; buf >>= 8; bitpos -= 8; }
 }
 
-static void unpack_3bit_signed(int32_t out[256], const uint8_t *in) {
+static void unpack_eta_signed(int32_t out[256], const uint8_t *in, int eta) {
+    int bits = (eta == 2) ? 3 : 4;
     uint64_t buf = 0;
-    int bits = 0, pos = 0;
+    int bitpos = 0, pos = 0;
     for (int i = 0; i < 256; i++) {
-        while (bits < 3) { buf |= (uint64_t)in[pos++] << bits; bits += 8; }
-        out[i] = (int32_t)(buf & 7) - 2;
-        buf >>= 3;
-        bits -= 3;
+        while (bitpos < bits) { buf |= (uint64_t)in[pos++] << bitpos; bitpos += 8; }
+        int val = (int)(buf & ((1 << bits) - 1));
+        out[i] = val - eta;
+        buf >>= bits;
+        bitpos -= bits;
     }
 }
 
@@ -319,7 +322,7 @@ static void dilithium_poly_use_hint(int32_t r[256], const int32_t a[256], const 
 }
 
 static int32_t dilithium_gamma2(int variant) {
-    return (variant == 2) ? (DILITHIUM_Q - 1) / 88 : (variant == 3) ? (DILITHIUM_Q - 1) / 32 : (DILITHIUM_Q - 1) / 22;
+    return (variant == 2) ? (DILITHIUM_Q - 1) / 88 : (DILITHIUM_Q - 1) / 32;
 }
 
 
@@ -408,6 +411,7 @@ int SNEPPX_dilithium_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     if (!pk || !sk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int eta = (variant == 2) ? 2 : 4;
+    int s_bytes = (eta == 2) ? 96 : 128;
     uint8_t rho[32], rho_prime[32];
     SNEPPX_random_bytes(rho, 32);
     SNEPPX_random_bytes(rho_prime, 32);
@@ -442,31 +446,21 @@ int SNEPPX_dilithium_keygen(uint8_t *pk, uint8_t *sk, int variant) {
     memcpy(sk + sk_pos, rho, 32); sk_pos += 32;
     memcpy(sk + sk_pos, rho_prime, 32); sk_pos += 32;
     memset(sk + sk_pos, 0, 32); sk_pos += 32;
-    for (int i = 0; i < k; i++) pack_3bit_signed(sk + sk_pos + i * 96, s1 + i * 256);
-    sk_pos += k * 96;
-    for (int i = 0; i < k; i++) pack_3bit_signed(sk + sk_pos + i * 96, s2 + i * 256);
-    sk_pos += k * 96;
+    for (int i = 0; i < k; i++) pack_eta_signed(sk + sk_pos + i * s_bytes, s1 + i * 256, eta);
+    sk_pos += k * s_bytes;
+    for (int i = 0; i < k; i++) pack_eta_signed(sk + sk_pos + i * s_bytes, s2 + i * 256, eta);
+    sk_pos += k * s_bytes;
     for (int i = 0; i < k; i++) pack_13bit_signed(sk + sk_pos + i * 416, t0 + i * 256);
     sk_pos += k * 416;
     free(a); free(s1); free(s2); free(t); free(t1); free(t0);
     return 0;
 }
 
-/**
- * @brief Sign Dilithium.
- *
- * @param sig [out] Sig value.
- * @param siglen [out] Siglen value.
- * @param m [in] M value.
- * @param mlen [in] Mlen value.
- * @param sk [in] Sk value.
- *
- * @return 0 on success, -1 on error.
- */
 int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk, int variant) {
     if (!sig || !siglen || !m || !sk) return -1;
     int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
     int eta = (variant == 2) ? 2 : 4;
+    int s_bytes = (eta == 2) ? 96 : 128;
     int tau = (variant == 2) ? 39 : (variant == 3) ? 49 : 60;
     int gamma1 = (variant == 2) ? 1 << 17 : 1 << 19;
     int gamma2 = dilithium_gamma2(variant);
@@ -495,10 +489,10 @@ int SNEPPX_dilithium_sign(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
         return -1;
     }
     int sk_pos = 96;
-    for (int i = 0; i < k; i++) unpack_3bit_signed(s1 + i * 256, sk + sk_pos + i * 96);
-    sk_pos += k * 96;
-    for (int i = 0; i < k; i++) unpack_3bit_signed(s2 + i * 256, sk + sk_pos + i * 96);
-    sk_pos += k * 96;
+    for (int i = 0; i < k; i++) unpack_eta_signed(s1 + i * 256, sk + sk_pos + i * s_bytes, eta);
+    sk_pos += k * s_bytes;
+    for (int i = 0; i < k; i++) unpack_eta_signed(s2 + i * 256, sk + sk_pos + i * s_bytes, eta);
+    sk_pos += k * s_bytes;
     for (int i = 0; i < k; i++) unpack_13bit_signed(t0 + i * 256, sk + sk_pos + i * 416);
     dilithium_expand_a(a, rho, k);
     uint8_t c_seed[32];

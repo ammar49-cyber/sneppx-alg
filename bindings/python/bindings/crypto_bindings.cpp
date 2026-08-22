@@ -17,6 +17,9 @@
 // Crypto wrappers — extracted from bindings.cpp lines 988–1127, 1657–1672
 #pragma once
 
+#include "neural_core/security/sphincsplus.h"
+#include "neural_core/security/dilithium.h"
+
 static void init_crypto(py::module& m) {
     py::module_ crypto = m.def_submodule("crypto", "Cryptographic functions");
 
@@ -79,8 +82,8 @@ static void init_crypto(py::module& m) {
         SNEPPXEd25519Signature sig_struct;
         memcpy(sig_struct.data, sig.data(), 64);
         return SNEPPX_ed25519_verify((const uint8_t*)pk.data(),
-                                   (const uint8_t*)m.data(), m.size(),
-                                   &sig_struct);
+                                    (const uint8_t*)m.data(), m.size(),
+                                    &sig_struct) == 1;
     });
 
     crypto.def("poly1305_mac", [](py::bytes key, py::bytes message) {
@@ -146,5 +149,75 @@ static void init_crypto(py::module& m) {
     crypto.def("ct_compare", [](py::bytes a, py::bytes b) {
         std::string sa = a, sb = b;
         return SNEPPX_ct_equal((const uint8_t*)sa.data(), (const uint8_t*)sb.data(), sa.size());
+    });
+
+    // ---- SPHINCS+ (SLH-DSA) -------------------------------------------------
+    // NOTE: the C implementation uses a single fixed parameter set
+    // (pk = SPHINCS_PUBLICKEYBYTES, sk = SPHINCS_SECRETKEYBYTES,
+    //  sig = SPHINCS_SIGBYTES); the `variant` argument is currently ignored.
+    crypto.def("sphincs_keygen", [](int variant) {
+        uint8_t pk[SPHINCS_PUBLICKEYBYTES];
+        uint8_t sk[SPHINCS_SECRETKEYBYTES];
+        SNEPPX_sphincs_keygen(pk, sk, variant);
+        return py::make_tuple(
+            py::bytes(reinterpret_cast<char*>(pk), SPHINCS_PUBLICKEYBYTES),
+            py::bytes(reinterpret_cast<char*>(sk), SPHINCS_SECRETKEYBYTES));
+    });
+
+    crypto.def("sphincs_sign", [](py::bytes sk_bytes, py::bytes msg, int variant) {
+        std::string sk = sk_bytes, m = msg;
+        if (sk.size() < SPHINCS_SECRETKEYBYTES)
+            throw std::runtime_error("sphincs secret key must be >= 64 bytes");
+        size_t siglen = 0;
+        std::vector<uint8_t> sig(SPHINCS_SIGBYTES);
+        SNEPPX_sphincs_sign(sig.data(), &siglen,
+                            (const uint8_t*)m.data(), m.size(),
+                            (const uint8_t*)sk.data(), variant);
+        return py::bytes(reinterpret_cast<char*>(sig.data()), siglen);
+    });
+
+    crypto.def("sphincs_verify", [](py::bytes sig, py::bytes msg, py::bytes pk_bytes, int variant) {
+        std::string s = sig, m = msg, pk = pk_bytes;
+        return SNEPPX_sphincs_verify((const uint8_t*)s.data(), s.size(),
+                                     (const uint8_t*)m.data(), m.size(),
+                                     (const uint8_t*)pk.data(), variant) == 0;
+    });
+
+    // ---- Dilithium (ML-DSA) ------------------------------------------------
+    // `variant` selects the parameter set (2 -> k=4, 3 -> k=6, 5 -> k=8).
+    // pk = 32 + k*320, sk = 96 + k*608 (same formulas used by the C keygen).
+    crypto.def("dilithium_keygen", [](int variant) {
+        int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
+        int eta = (variant == 2) ? 2 : 4;
+        int s_bytes = (eta == 2) ? 608 : 672;
+        int pk_size = 32 + k * 320;
+        int sk_size = 96 + k * s_bytes;
+        std::vector<uint8_t> pk(pk_size), sk(sk_size);
+        SNEPPX_dilithium_keygen(pk.data(), sk.data(), variant);
+        return py::make_tuple(
+            py::bytes(reinterpret_cast<char*>(pk.data()), pk_size),
+            py::bytes(reinterpret_cast<char*>(sk.data()), sk_size));
+    });
+
+    crypto.def("dilithium_sign", [](py::bytes sk_bytes, py::bytes msg, int variant) {
+        std::string sk = sk_bytes, m = msg;
+        int k = (variant == 2) ? 4 : (variant == 3) ? 6 : 8;
+        int eta = (variant == 2) ? 2 : 4;
+        int sk_size = 96 + k * (eta == 2 ? 608 : 672);
+        if ((int)sk.size() < sk_size)
+            throw std::runtime_error("dilithium secret key too short for variant");
+        size_t siglen = 0;
+        std::vector<uint8_t> sig(6000);
+        SNEPPX_dilithium_sign(sig.data(), &siglen,
+                              (const uint8_t*)m.data(), m.size(),
+                              (const uint8_t*)sk.data(), variant);
+        return py::bytes(reinterpret_cast<char*>(sig.data()), siglen);
+    });
+
+    crypto.def("dilithium_verify", [](py::bytes sig, py::bytes msg, py::bytes pk_bytes, int variant) {
+        std::string s = sig, m = msg, pk = pk_bytes;
+        return SNEPPX_dilithium_verify((const uint8_t*)s.data(), s.size(),
+                                       (const uint8_t*)m.data(), m.size(),
+                                       (const uint8_t*)pk.data(), variant) == 0;
     });
 }
