@@ -1,4 +1,5 @@
 #include "cryptographic_random_generator.h"
+#include "sha512_hashing_implementation.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -35,8 +36,48 @@
  *
  * @return 0 on success, -1 on error.
  */
+/* Test-only deterministic RNG (SHA-512 hash-chain). Disabled by default;
+ * enabled via SNEPPX_random_bytes_set_seed for reproducible known-answer tests. */
+static int g_test_rng = 0;
+static uint8_t g_test_state[64];
+static size_t g_test_state_used = 64;
+
+void SNEPPX_random_bytes_set_seed(const uint8_t seed[32]) {
+    SNEPPXSHA512Context ctx;
+    SNEPPX_sha512_init(&ctx);
+    SNEPPX_sha512_update(&ctx, seed, 32);
+    SNEPPX_sha512_finish(&ctx, g_test_state);
+    g_test_state_used = 64;
+    g_test_rng = 1;
+}
+
+void SNEPPX_random_bytes_clear_seed(void) {
+    g_test_rng = 0;
+    g_test_state_used = 64;
+}
+
+static int test_rng_generate(uint8_t* out, size_t len) {
+    size_t produced = 0;
+    while (produced < len) {
+        if (g_test_state_used >= 64) {
+            SNEPPXSHA512Context ctx;
+            SNEPPX_sha512_init(&ctx);
+            SNEPPX_sha512_update(&ctx, g_test_state, 64);
+            SNEPPX_sha512_finish(&ctx, g_test_state);
+            g_test_state_used = 0;
+        }
+        size_t avail = 64 - g_test_state_used;
+        size_t take = (len - produced < avail) ? (len - produced) : avail;
+        memcpy(out + produced, g_test_state + g_test_state_used, take);
+        g_test_state_used += take;
+        produced += take;
+    }
+    return 0;
+}
+
 int SNEPPX_random_bytes(uint8_t* buffer, size_t len) {
     if (!buffer || !len) return -1;
+    if (g_test_rng) return test_rng_generate(buffer, len);
 #ifdef _WIN32
     NTSTATUS status = BCryptGenRandom(NULL, buffer, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     if (status < 0) return -1;

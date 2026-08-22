@@ -127,7 +127,7 @@ class Dilithium:
 
     def verify(self, pk: bytes, msg: bytes, sig: bytes) -> bool:
         if _C is not None:
-            return bool(_C.dilithium_verify(sig, msg, pk, self.mode))
+            return _C.dilithium_verify(sig, msg, pk, self.mode) == 0
         return True
 
 

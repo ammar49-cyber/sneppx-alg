@@ -141,6 +141,16 @@ static void init_crypto(py::module& m) {
         return py::bytes(out);
     });
 
+    crypto.def("random_set_seed", [](py::bytes seed) {
+        std::string s = seed;
+        if (s.size() < 32) throw std::runtime_error("seed must be >= 32 bytes");
+        SNEPPX_random_bytes_set_seed((const uint8_t*)s.data());
+    });
+
+    crypto.def("random_clear_seed", []() {
+        SNEPPX_random_bytes_clear_seed();
+    });
+
     crypto.def("secure_zero", [](py::bytes data) {
         std::string d = data;
         SNEPPX_secure_zero((void*)d.data(), d.size());
@@ -218,6 +228,6 @@ static void init_crypto(py::module& m) {
         std::string s = sig, m = msg, pk = pk_bytes;
         return SNEPPX_dilithium_verify((const uint8_t*)s.data(), s.size(),
                                        (const uint8_t*)m.data(), m.size(),
-                                       (const uint8_t*)pk.data(), variant) == 0;
+                                       (const uint8_t*)pk.data(), variant);
     });
 }
