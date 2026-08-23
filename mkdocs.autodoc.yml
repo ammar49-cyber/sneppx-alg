@@ -38,8 +38,6 @@ theme:
     icon:
         repo: fontawesome/brands/github
         menu: material/menu
-        toc: material/list
-        search: material/search
         close: material/close
     logo: logo.jpeg
     features:
