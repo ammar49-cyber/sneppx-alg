@@ -73,6 +73,34 @@ jobs:
         # (NumPy fallback), which is all griffe needs to introspect the API.
         run: echo "PYTHONPATH=$PWD/bindings/python" >> "$GITHUB_ENV"
 
+      - name: Inspect material .icons (diagnostic)
+        run: |
+          python - <<'PY'
+          import os, sys
+          import material
+          base = os.path.dirname(material.__file__)
+          tmpl_icons = os.path.join(base, 'templates', '.icons')
+          target = os.path.join(tmpl_icons, 'material', 'search.svg')
+          print("material pkg:", base)
+          print("templates/.icons exists:", os.path.isdir(tmpl_icons))
+          print("TARGET templates/.icons/material/search.svg exists:", os.path.isfile(target))
+          if os.path.isdir(tmpl_icons):
+              mat = os.path.join(tmpl_icons, 'material')
+              print("material/.icons/material listing:", sorted(os.listdir(mat))[:20])
+          # extensions package
+          try:
+              import mkdocs_material_extensions as ext
+              ebase = os.path.dirname(ext.__file__)
+              eicons = os.path.join(ebase, '.icons')
+              print("EXT pkg:", ebase, "EXT .icons exists:", os.path.isdir(eicons))
+              if os.path.isdir(eicons):
+                  print("EXT .icons/material/search.svg exists:",
+                        os.path.isfile(os.path.join(eicons, 'material', 'search.svg')))
+          except Exception as e:
+              print("extensions import err:", repr(e))
+          print("python:", sys.executable)
+          PY
+
       - name: Build docs (no deploy)
         run: mkdocs build --config-file mkdocs.autodoc.yml
 
