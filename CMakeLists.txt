@@ -56,7 +56,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     # GCC/Clang require explicitly. Without this the codebase fails to
     # compile on Linux (e.g. uintptr_t, snprintf, memcpy, math fns, off64_t).
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE -include stdint.h -include stdlib.h -include string.h -include stdio.h -include math.h -include errno.h -include sys/types.h -include unistd.h -include fcntl.h")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -include cstdint -include cstdlib -include cstring -include cstdio -include cmath -include errno.h -include sys/types.h -include unistd.h -include fcntl.h")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -include cstdint -include cstdlib -include cstring -include cstdio -include cmath -include math.h -include errno.h -include sys/types.h -include unistd.h -include fcntl.h")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lm")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lm")
     if(SNEPPX_USE_ASAN)
