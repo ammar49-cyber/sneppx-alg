@@ -50,8 +50,8 @@ option(SNEPPX_USE_UBSAN "Enable UndefinedBehaviorSanitizer (GCC/Clang only)" OFF
 option(SNEPPX_USE_LTO "Enable Link-Time Optimization (Release only)" OFF)
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -fPIC")
     # Force-include the standard headers that MSVC injects implicitly but
     # GCC/Clang require explicitly. Without this the codebase fails to
     # compile on Linux (e.g. uintptr_t, snprintf, memcpy, math fns, off64_t).
