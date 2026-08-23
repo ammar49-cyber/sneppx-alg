@@ -359,13 +359,21 @@ static SNEPPXTensor* matmul_3d(const SNEPPXTensor* a, const SNEPPXTensor* b) {
 SNEPPXTensor* SNEPPX_attn_forward(const SNEPPXAttentionWeights* w, const SNEPPXTensor* x,
                                SNEPPXTensor* cos_t, SNEPPXTensor* sin_t) {
     if (!w || !x) return NULL;
-    size_t B = x->shape[0], S = x->shape[1], D = w->config.d_model;
+    /* Accept a 2D [seq_len, d_model] input as a single batch element. */
+    int orig_ndim = x->ndim;
+    SNEPPXTensor* x_work = (SNEPPXTensor*)x;
+    if (x->ndim == 2) {
+        size_t shp3[] = {1, x->shape[0], x->shape[1]};
+        x_work = SNEPPX_tensor_reshape(x, shp3, 3);
+        if (!x_work) return NULL;
+    }
+    size_t B = x_work->shape[0], S = x_work->shape[1], D = w->config.d_model;
     size_t H = w->config.num_heads, hd = w->config.head_dim;
 
     /* Q, K, V projections: [B, S, D] → [B, S, H*hd] */
-    SNEPPXTensor* q = matmul_3d(x, w->w_q);
-    SNEPPXTensor* k = matmul_3d(x, w->w_k);
-    SNEPPXTensor* v = matmul_3d(x, w->w_v);
+    SNEPPXTensor* q = matmul_3d(x_work, w->w_q);
+    SNEPPXTensor* k = matmul_3d(x_work, w->w_k);
+    SNEPPXTensor* v = matmul_3d(x_work, w->w_v);
     if (!q || !k || !v) {
         SNEPPX_tensor_destroy(q); SNEPPX_tensor_destroy(k); SNEPPX_tensor_destroy(v);
         return NULL;
@@ -433,6 +441,14 @@ SNEPPXTensor* SNEPPX_attn_forward(const SNEPPXAttentionWeights* w, const SNEPPXT
     SNEPPXTensor* result = matmul_3d(out_r, w->w_o);
     SNEPPX_tensor_destroy(out_r);
     SNEPPX_tensor_destroy(q_r); SNEPPX_tensor_destroy(k_r); SNEPPX_tensor_destroy(v_r);
+    if (orig_ndim == 2) {
+        size_t shp2[] = {x->shape[0], x->shape[1]};
+        SNEPPXTensor* squeezed = SNEPPX_tensor_reshape(result, shp2, 2);
+        SNEPPX_tensor_destroy(result);
+        if (x_work != x) SNEPPX_tensor_destroy(x_work);
+        return squeezed;
+    }
+    if (x_work != x) SNEPPX_tensor_destroy(x_work);
     return result;
 }
 

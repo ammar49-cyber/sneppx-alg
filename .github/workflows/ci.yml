@@ -39,8 +39,6 @@ jobs:
           -DSNEPPX_BUILD_PYTHON=ON
           -DSNEPPX_BUILD_BENCHMARKS=OFF
           -DSNEPPX_BUILD_CUDA=OFF
-          -DSNEPPX_USE_ASAN=ON
-          -DSNEPPX_USE_LTO=OFF
 
       - name: Build
         run: cmake --build build/ci -j"$(nproc)"

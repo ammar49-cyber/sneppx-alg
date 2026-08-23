@@ -95,10 +95,10 @@ void SNEPPX_storage_release(SNEPPXStorage* s) {
 
 /* ===== View creation helpers ===== */
 
-static SNEPPXTensor* tensor_view_alloc(const SNEPPXTensor* src) {
+static SNEPPXTensor* tensor_view_alloc(const SNEPPXTensor* src, size_t view_ndim) {
     SNEPPXTensor* t = (SNEPPXTensor*)aligned_alloc_wrapper(sizeof(SNEPPXTensor), 64);
     if (!t) return NULL;
-    size_t ndim = src->ndim > 0 ? src->ndim : 1;
+    size_t ndim = view_ndim > 0 ? view_ndim : 1;
     t->shape = (size_t*)aligned_alloc_wrapper(ndim * sizeof(size_t), 64);
     t->strides = (size_t*)aligned_alloc_wrapper(ndim * sizeof(size_t), 64);
     if (!t->shape || !t->strides) {
@@ -122,7 +122,7 @@ static SNEPPXTensor* tensor_view_alloc(const SNEPPXTensor* src) {
  */
 SNEPPXTensor* SNEPPX_tensor_as_strided(const SNEPPXTensor* src, size_t offset, const size_t* shape, size_t ndim, const size_t* strides) {
     if (!src) return NULL;
-    SNEPPXTensor* t = tensor_view_alloc(src);
+    SNEPPXTensor* t = tensor_view_alloc(src, ndim);
     if (!t) return NULL;
     SNEPPX_storage_retain(src->storage);
     t->storage = src->storage;
