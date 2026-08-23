@@ -51,10 +51,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install \
-            "mkdocs>=1.6" \
-            "mkdocs-material>=9.6" \
-            "mkdocstrings[python]>=1.0" \
-            "mkdocs-autorefs>=1.2" \
+            "mkdocs==1.5.3" \
+            "mkdocs-material==9.5.3" \
+            "mkdocstrings[python]==0.25.1" \
+            "mkdocs-autorefs==0.5.0" \
             "mkdocs-gen-files" \
             "mkdocs-section-index" \
             "mkdocs-literate-nav" \
@@ -97,10 +97,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install \
-            "mkdocs>=1.6" \
-            "mkdocs-material>=9.6" \
-            "mkdocstrings[python]>=1.0" \
-            "mkdocs-autorefs>=1.2" \
+            "mkdocs==1.5.3" \
+            "mkdocs-material==9.5.3" \
+            "mkdocstrings[python]==0.25.1" \
+            "mkdocs-autorefs==0.5.0" \
             "mkdocs-gen-files" \
             "mkdocs-section-index" \
             "mkdocs-literate-nav" \
