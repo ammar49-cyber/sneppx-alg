@@ -1,0 +1,23 @@
+<map id="security/updates/signed_update.c" name="security/updates/signed_update.c">
+<area shape="rect" id="Node000001" title=" " alt="" coords="445,5,623,45"/>
+<area shape="rect" id="Node000002" href="$signed__update_8h.html" title=" " alt="" coords="5,101,135,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="445,43,305,66,147,96,128,100,127,95,145,91,304,61,445,37"/>
+<area shape="rect" id="Node000005" href="$cryptographic__hashing__blake3_8h.html" title=" " alt="" coords="159,93,328,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="471,48,321,92,319,87,469,43"/>
+<area shape="rect" id="Node000006" href="$constant__time__operations_8h.html" title=" " alt="" coords="353,101,555,126"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="518,47,476,92,473,88,514,44"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="580,101,651,126"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="554,44,597,89,593,92,550,47"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="675,101,745,126"/>
+<area shape="poly" id="edge11_Node000001_Node000008" title=" " alt="" coords="574,43,676,92,673,97,571,48"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="770,101,834,126"/>
+<area shape="poly" id="edge12_Node000001_Node000009" title=" " alt="" coords="605,43,759,91,765,93,763,98,757,96,603,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="157,181,231,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="90,124,166,172,163,176,87,128"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="256,181,327,207"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="103,123,247,174,245,179,101,129"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="234,135,211,171,206,168,229,132"/>
+<area shape="poly" id="edge6_Node000005_Node000004" title=" " alt="" coords="257,132,279,168,275,171,253,135"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="417,129,245,180,243,175,415,123"/>
+<area shape="poly" id="edge9_Node000006_Node000004" title=" " alt="" coords="431,128,328,178,326,173,429,124"/>
+</map>

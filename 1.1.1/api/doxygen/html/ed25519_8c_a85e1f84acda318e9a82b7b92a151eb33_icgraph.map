@@ -1,0 +1,7 @@
+<map id="ed25519_verify_core" name="ed25519_verify_core">
+<area shape="rect" id="Node000001" title="Core Ed25519 verify with selectable hash path." alt="" coords="233,35,391,60"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#ad082a2f293bf30aea3ab1dfd16e40e46" title="Verify an Ed25519 signature." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,37,185,33,186,28,220,32"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#aca9a357925c06c4a8103215281d3b007" title="Verify Ed25519 with optional legacy&#45;hash fallback for migration." alt="" coords="5,55,185,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="220,62,186,66,185,61,219,57"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="SNEPPX_sha512" name="SNEPPX_sha512">
+<area shape="rect" id="Node000001" title="Compute SHA&#45;512 hash of input." alt="" coords="475,70,601,95"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a3ba40c0bd41a4134e2d94daafe3f9a09" title="Perform Ed25519 Secret Key Expand." alt="" coords="244,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="479,69,406,48,407,43,480,64"/>
+<area shape="rect" id="Node000004" href="$sha512__stub_8c.html#ad095c747542800a15c322407f2b3d828" title="Hash Sha512." alt="" coords="253,70,418,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="461,85,418,85,418,80,461,80"/>
+<area shape="rect" id="Node000005" href="$sha512__stub_8c.html#adb2e76385bc47a5752f565948585ada9" title="Perform Sha512 Hmac." alt="" coords="250,119,421,145"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="473,101,389,122,388,117,472,96"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#ad4f54e051afbb1eb163293877aebb36c" title="Perform Ed25519 Keypair Generate." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

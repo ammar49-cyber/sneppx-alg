@@ -1,0 +1,15 @@
+<map id="init_base_point" name="init_base_point">
+<area shape="rect" id="Node000001" title=" " alt="" coords="472,123,593,148"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a85e1f84acda318e9a82b7b92a151eb33" title="Core Ed25519 verify with selectable hash path." alt="" coords="250,33,407,59"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="501,117,464,95,423,74,386,61,388,56,425,69,467,90,504,113"/>
+<area shape="rect" id="Node000005" href="$ed25519_8c.html#ad4f54e051afbb1eb163293877aebb36c" title="Perform Ed25519 Keypair Generate." alt="" coords="233,83,424,123"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="458,126,424,121,425,116,459,121"/>
+<area shape="rect" id="Node000006" href="$ed25519_8c.html#a2c8ab1bc9b3f1a34d21f57bc45ad80ec" title="Perform Ed25519 Scalar Multiply." alt="" coords="237,147,420,187"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="458,150,421,156,420,150,458,144"/>
+<area shape="rect" id="Node000007" href="$ed25519_8c.html#a3615757645589bc2a9ad6526594ac4e3" title="Sign a message with Ed25519." alt="" coords="243,212,414,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="504,158,467,181,425,202,388,215,386,209,423,197,464,176,501,153"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#ad082a2f293bf30aea3ab1dfd16e40e46" title="Verify an Ed25519 signature." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="236,38,185,31,186,26,237,32"/>
+<area shape="rect" id="Node000004" href="$ed25519_8c.html#aca9a357925c06c4a8103215281d3b007" title="Verify Ed25519 with optional legacy&#45;hash fallback for migration." alt="" coords="5,55,185,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="237,60,186,67,185,61,236,55"/>
+</map>

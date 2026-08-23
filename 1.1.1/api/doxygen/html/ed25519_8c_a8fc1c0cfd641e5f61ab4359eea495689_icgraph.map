@@ -1,0 +1,7 @@
+<map id="clamp_scalar" name="clamp_scalar">
+<area shape="rect" id="Node000001" title=" " alt="" coords="475,13,583,38"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a3ba40c0bd41a4134e2d94daafe3f9a09" title="Perform Ed25519 Secret Key Expand." alt="" coords="244,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,28,427,28,427,23,461,23"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#ad4f54e051afbb1eb163293877aebb36c" title="Perform Ed25519 Keypair Generate." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

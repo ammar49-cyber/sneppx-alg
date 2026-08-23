@@ -1,0 +1,16 @@
+<map id="SNEPPX_update_verifier_verify_integrity" name="SNEPPX_update_verifier_verify_integrity">
+<area shape="rect" id="Node000001" title="Perform Update Verifier Verify Integrity." alt="" coords="5,47,184,87"/>
+<area shape="rect" id="Node000002" href="$signed__update_8c.html#afcd0f60b0a2b37b5d5eca988d75d70cf" title="Hash Update Verifier Compute." alt="" coords="232,47,411,87"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,65,218,65,218,70,185,70"/>
+<area shape="rect" id="Node000003" href="$blake3_8c.html#ae0715165a4a195205ca609cece213110" title="Perform Blake3 Finish." alt="" coords="463,5,629,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="410,45,473,31,474,36,412,50"/>
+<area shape="rect" id="Node000006" href="$blake3_8c.html#aa8f473a031cafa6cd73f115d971e3980" title="Initialize Blake3." alt="" coords="471,55,621,80"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="411,65,457,65,457,70,411,70"/>
+<area shape="rect" id="Node000007" href="$blake3_8c.html#a318c7e0e112bc3cb04fdb300e26c36ea" title="Update Blake3." alt="" coords="459,104,633,129"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="412,84,474,98,473,104,410,90"/>
+<area shape="rect" id="Node000004" href="$blake3_8c.html#a48fd214b4b29feec04376eeb9216a5d5" title=" " alt="" coords="681,55,831,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="601,28,689,49,687,54,600,33"/>
+<area shape="rect" id="Node000005" href="$blake3_8c.html#a8cd5822ab9c71f318152c899fa211e5f" title=" " alt="" coords="879,55,1013,80"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="831,65,865,65,865,70,831,70"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="600,101,687,81,689,86,601,107"/>
+</map>

@@ -1,0 +1,64 @@
+<map id="SNEPPX_kyber_keygen" name="SNEPPX_kyber_keygen">
+<area shape="rect" id="Node000001" title="Generate Kyber." alt="" coords="5,228,176,253"/>
+<area shape="rect" id="Node000002" href="$kyber_8c.html#ad045649ef7aee4e0f2a95498aecdd501" title=" " alt="" coords="224,228,353,253"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,238,211,238,211,243,177,243"/>
+<area shape="rect" id="Node000003" href="$kyber_8c.html#a8f8700c2c90d65dcfbef0f1c167684e3" title=" " alt="" coords="424,55,552,80"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="294,226,332,161,362,122,400,89,410,83,413,88,403,93,366,126,336,164,298,229"/>
+<area shape="rect" id="Node000012" href="$kyber_8c.html#a608d42749c745a461d36b31c753ed95a" title=" " alt="" coords="433,203,543,228"/>
+<area shape="poly" id="edge12_Node000002_Node000012" title=" " alt="" coords="354,230,419,221,419,227,354,235"/>
+<area shape="rect" id="Node000013" href="$kyber_8c.html#afc0b9e3f818ce1c26dfac91ef9ec0584" title=" " alt="" coords="447,252,529,277"/>
+<area shape="poly" id="edge13_Node000002_Node000013" title=" " alt="" coords="354,246,434,256,433,261,354,251"/>
+<area shape="rect" id="Node000015" href="$kyber_8c.html#a222ae20e1d9cec263e77a68e728586e2" title=" " alt="" coords="431,104,545,129"/>
+<area shape="poly" id="edge15_Node000002_Node000015" title=" " alt="" coords="299,226,340,183,369,159,400,138,417,130,419,135,403,143,372,163,344,187,303,230"/>
+<area shape="rect" id="Node000016" href="$kyber_8c.html#ae1ce286fff588786141b6d7a1459e501" title=" " alt="" coords="447,351,529,376"/>
+<area shape="poly" id="edge19_Node000002_Node000016" title=" " alt="" coords="303,251,344,293,372,316,403,336,434,349,432,354,400,340,369,320,341,297,299,255"/>
+<area shape="rect" id="Node000023" href="$kyber_8c.html#a9d481c0b110afcd0e708abd20e334527" title=" " alt="" coords="448,301,528,327"/>
+<area shape="poly" id="edge29_Node000002_Node000023" title=" " alt="" coords="318,251,402,286,435,297,434,302,400,291,316,256"/>
+<area shape="rect" id="Node000024" href="$kyber_8c.html#a5f3a43ab71eadefa70699f420fa09d8f" title=" " alt="" coords="435,400,541,425"/>
+<area shape="poly" id="edge31_Node000002_Node000024" title=" " alt="" coords="298,252,337,316,367,353,403,385,423,396,420,401,400,390,363,357,332,319,294,255"/>
+<area shape="rect" id="Node000025" href="$random_8c.html#ad67f0bfefe50eb90169a001f7d98625f" title="Perform Random Bytes." alt="" coords="401,153,575,179"/>
+<area shape="poly" id="edge32_Node000002_Node000025" title=" " alt="" coords="314,225,400,188,422,180,424,185,402,192,316,230"/>
+<area shape="rect" id="Node000004" href="$drbg_8c.html#a2ad9b0b9a552c93bd57bdb432427330e" title="Destroy DRBG context and wipe sensitive data." alt="" coords="627,5,793,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="545,52,638,31,639,36,546,57"/>
+<area shape="rect" id="Node000005" href="$drbg_8c.html#ac0cc4ee4212c37574be163aa80a06573" title="Generate random bytes from DRBG." alt="" coords="623,55,797,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="552,65,609,65,609,70,552,70"/>
+<area shape="rect" id="Node000011" href="$drbg_8c.html#a5e2c38fb90ee53833024fadcb50aae16" title="Initialize a DRBG context with entropy." alt="" coords="641,104,779,129"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="546,77,639,98,638,104,545,83"/>
+<area shape="rect" id="Node000006" href="$drbg_8c.html#a57f9c1fd87fa5865cb60da90b060172e" title=" " alt="" coords="875,104,956,129"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="764,77,862,101,860,106,763,83"/>
+<area shape="rect" id="Node000007" href="$sha512__hashing__implementation_8h.html#aa8ee2776ad34b6d29c058cda57d39b67" title="Compute SHA&#45;512 hash of input." alt="" coords="1038,80,1207,105"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="956,109,1024,101,1025,107,956,115"/>
+<area shape="rect" id="Node000008" href="$sha512_8c.html#a83ce3650029d22afeb2d9b907d0b0229" title="Initialize Sha512." alt="" coords="1045,129,1200,155"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="956,119,1032,128,1031,134,956,124"/>
+<area shape="rect" id="Node000009" href="$sha512_8c.html#aa45949b67a1004337c069d0dcb624528" title="Compute SHA&#45;512 hash of input." alt="" coords="1033,179,1212,204"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="954,127,986,140,1034,164,1059,172,1057,177,1032,168,984,144,952,132"/>
+<area shape="rect" id="Node000010" href="$sha512_8c.html#a72fe9a3a390a374405999461c75de575" title=" " alt="" coords="1260,179,1400,204"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1213,189,1246,189,1246,194,1213,194"/>
+<area shape="poly" id="edge11_Node000011_Node000006" title=" " alt="" coords="779,114,861,114,861,119,779,119"/>
+<area shape="rect" id="Node000014" href="$kyber_8c.html#abf47fea04728f19b562d29ece322e2c7" title=" " alt="" coords="667,252,753,277"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="529,262,653,262,653,267,529,267"/>
+<area shape="poly" id="edge16_Node000015_Node000004" title=" " alt="" coords="544,102,573,89,588,77,596,65,606,52,621,40,633,33,636,38,624,44,610,56,601,68,591,81,576,94,546,107"/>
+<area shape="poly" id="edge17_Node000015_Node000005" title=" " alt="" coords="544,102,638,80,640,86,545,107"/>
+<area shape="poly" id="edge18_Node000015_Node000011" title=" " alt="" coords="545,114,628,114,628,119,545,119"/>
+<area shape="rect" id="Node000017" href="$kyber_8c.html#ae65a83fdeb589a5eef5b409fcefb2810" title=" " alt="" coords="671,400,749,425"/>
+<area shape="poly" id="edge20_Node000016_Node000017" title=" " alt="" coords="530,370,658,399,657,404,529,375"/>
+<area shape="rect" id="Node000020" href="$kyber_8c.html#a071c0d5a5669a2d55971d5e8482d5b82" title=" " alt="" coords="677,301,743,327"/>
+<area shape="poly" id="edge23_Node000016_Node000020" title=" " alt="" coords="529,352,663,322,664,327,530,357"/>
+<area shape="rect" id="Node000022" href="$kyber_8c.html#abd602e31e017ba3dd8df08b227c1bd25" title=" " alt="" coords="690,351,730,376"/>
+<area shape="poly" id="edge26_Node000016_Node000022" title=" " alt="" coords="530,361,676,361,676,366,530,366"/>
+<area shape="rect" id="Node000018" href="$kyber_8c.html#a4be40bad95cc307e6689e9a2dc37859c" title=" " alt="" coords="885,351,945,376"/>
+<area shape="poly" id="edge21_Node000017_Node000018" title=" " alt="" coords="749,401,872,371,873,376,750,406"/>
+<area shape="rect" id="Node000019" href="$kyber_8c.html#a55a8a71a7ff9af848de8891ad2acff8c" title=" " alt="" coords="1069,351,1176,376"/>
+<area shape="poly" id="edge22_Node000018_Node000019" title=" " alt="" coords="946,361,1055,361,1055,366,946,366"/>
+<area shape="poly" id="edge25_Node000020_Node000018" title=" " alt="" coords="744,319,873,351,871,356,743,324"/>
+<area shape="rect" id="Node000021" href="$kyber_8c.html#af941477739974dab8ef3d319368c95cf" title=" " alt="" coords="857,301,974,327"/>
+<area shape="poly" id="edge24_Node000020_Node000021" title=" " alt="" coords="743,311,843,311,843,317,743,317"/>
+<area shape="poly" id="edge28_Node000022_Node000018" title=" " alt="" coords="730,361,871,361,871,366,730,366"/>
+<area shape="poly" id="edge27_Node000022_Node000021" title=" " alt="" coords="729,356,848,327,849,332,731,361"/>
+<area shape="poly" id="edge30_Node000023_Node000014" title=" " alt="" coords="527,303,653,275,654,280,529,308"/>
+<area shape="rect" id="Node000026" href="$random_8c.html#ad7357aa49d0e6a71470d5f7dc4e83178" title=" " alt="" coords="845,155,985,180"/>
+<area shape="poly" id="edge33_Node000025_Node000026" title=" " alt="" coords="575,164,832,164,832,170,575,169"/>
+<area shape="poly" id="edge34_Node000026_Node000007" title=" " alt="" coords="950,152,984,138,1032,114,1054,107,1056,112,1034,119,986,143,952,157"/>
+<area shape="poly" id="edge35_Node000026_Node000008" title=" " alt="" coords="985,156,1031,150,1032,156,986,161"/>
+<area shape="poly" id="edge36_Node000026_Node000009" title=" " alt="" coords="986,173,1020,177,1019,182,985,178"/>
+</map>

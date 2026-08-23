@@ -1,0 +1,74 @@
+<map id="blake3_hash_chunk" name="blake3_hash_chunk">
+<area shape="rect" id="Node000001" title=" " alt="" coords="948,486,1097,511"/>
+<area shape="rect" id="Node000002" href="$blake3_8c.html#ae0715165a4a195205ca609cece213110" title="Perform Blake3 Finish." alt="" coords="730,461,895,486"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="934,491,895,486,896,481,935,485"/>
+<area shape="rect" id="Node000028" href="$blake3_8c.html#a318c7e0e112bc3cb04fdb300e26c36ea" title="Update Blake3." alt="" coords="725,510,900,535"/>
+<area shape="poly" id="edge27_Node000001_Node000028" title=" " alt="" coords="934,511,900,515,900,510,934,506"/>
+<area shape="rect" id="Node000003" href="$c__binding__implementation_8c.html#ac19a7daccfe08a1c599a42dd73702810" title="Perform C Hash Blake3." alt="" coords="489,363,663,389"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="778,456,731,429,676,404,637,391,639,386,678,399,733,424,781,451"/>
+<area shape="rect" id="Node000004" href="$monitor__advanced_8c.html#adbf705a97672103aff8faaab54941de1" title="Perform Code Tamper Add Region." alt="" coords="493,413,659,453"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="723,461,659,450,659,445,724,456"/>
+<area shape="rect" id="Node000005" href="$monitor__advanced_8c.html#a531b9b2ca8dc40dbb9ca2ff948bf43b7" title="Perform Code Tamper Check." alt="" coords="493,477,659,517"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="716,486,659,492,658,486,716,480"/>
+<area shape="rect" id="Node000006" href="$monitor__advanced_8c.html#adc93b450786a048525cba2205da20e64" title="Perform Code Tamper Check All." alt="" coords="493,5,659,45"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="808,447,802,371,782,267,765,211,743,156,713,105,676,59,657,46,660,42,679,55,717,102,747,154,770,210,787,266,807,371,813,447"/>
+<area shape="rect" id="Node000008" href="$monitor__advanced_8c.html#a1fa7e22eb69976f231b2207ec8a77a7b" title="Initialize Code Tamper." alt="" coords="479,591,673,617"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="734,494,727,499,711,519,704,539,697,560,679,581,656,594,653,589,676,577,692,558,699,537,706,516,724,495,731,490"/>
+<area shape="rect" id="Node000009" href="$monitor__advanced_8c.html#ab435b1147833e9220f368f66b3768cbd" title="Perform Fs Integrity Scan." alt="" coords="481,641,671,666"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="732,495,727,499,714,515,708,530,704,563,700,597,693,614,679,630,659,643,656,638,676,626,688,611,695,595,699,563,703,529,710,512,723,495,728,491"/>
+<area shape="rect" id="Node000010" href="$monitor__advanced_8c.html#acd656b1c055d9417429a563d3c54f716" title="Perform Fs Integrity Verify With Report." alt="" coords="499,691,653,731"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="731,496,727,499,711,521,704,542,703,587,703,632,696,656,679,679,655,697,652,692,675,675,691,654,698,632,698,587,699,541,707,518,723,496,727,492"/>
+<area shape="rect" id="Node000011" href="$monitor__advanced_8c.html#a53a3914160cab5368e9498eeafd2fec5" title="Perform Fs Integrity Watch." alt="" coords="499,755,653,795"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="731,496,727,499,707,529,699,559,699,589,703,619,708,650,708,681,700,713,679,744,655,762,652,758,675,741,695,711,703,680,702,650,698,620,694,589,694,558,702,527,723,496,727,492"/>
+<area shape="rect" id="Node000012" href="$identity__management_8c.html#a2e56d9e833adc37ce48c511885070ef2" title="Verify Identity Tls." alt="" coords="499,819,653,859"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="730,496,727,499,713,518,703,537,694,575,696,613,703,651,711,689,713,729,704,768,694,788,679,809,655,827,651,823,675,805,689,786,699,766,707,728,705,690,698,652,691,613,689,574,698,535,708,515,723,496,727,492"/>
+<area shape="rect" id="Node000013" href="$monitor__advanced_8c.html#ad9e6c745a9453900bcb4d262ee60abde" title="Perform Ima Measure." alt="" coords="491,249,661,274"/>
+<area shape="poly" id="edge12_Node000002_Node000013" title=" " alt="" coords="798,449,779,413,752,369,718,326,676,289,651,277,654,272,679,284,722,322,757,366,784,410,803,447"/>
+<area shape="rect" id="Node000019" href="$monitor__advanced_8c.html#ac9816f5805a063e72e7278d5d1b6f05f" title="Perform Internal Verify All Regions." alt="" coords="489,947,663,987"/>
+<area shape="poly" id="edge18_Node000002_Node000019" title=" " alt="" coords="730,496,727,499,708,527,695,554,687,581,685,607,690,661,703,714,716,769,722,823,719,851,712,879,699,908,679,936,665,949,662,945,675,933,695,905,707,878,714,850,717,823,711,770,698,716,685,662,679,607,682,580,690,552,703,524,723,496,726,493"/>
+<area shape="rect" id="Node000020" href="$monitor__advanced_8c.html#a697e5e4b8ff511124102b3c3d55c0a50" title="Perform Toctou Check." alt="" coords="493,542,659,567"/>
+<area shape="poly" id="edge19_Node000002_Node000020" title=" " alt="" coords="744,493,727,500,703,516,679,532,642,544,640,539,676,527,700,511,724,495,742,488"/>
+<area shape="rect" id="Node000022" href="$monitor__advanced_8c.html#a015436e57bc5ec8ff65a32f8f539a1d0" title="Perform Toctou Get Change Count." alt="" coords="475,69,677,109"/>
+<area shape="poly" id="edge21_Node000002_Node000022" title=" " alt="" coords="806,448,796,382,774,295,757,249,735,203,708,161,676,123,659,111,662,107,679,119,713,157,740,201,762,247,779,294,802,381,812,447"/>
+<area shape="rect" id="Node000023" href="$monitor__advanced_8c.html#a39e339b2b5d29aa6aeefa5686ccd895b" title="Initialize Toctou." alt="" coords="501,134,651,159"/>
+<area shape="poly" id="edge22_Node000002_Node000023" title=" " alt="" coords="805,447,793,390,769,316,752,277,731,239,706,204,676,174,650,159,652,155,679,170,710,201,735,236,757,275,774,314,798,389,810,446"/>
+<area shape="rect" id="Node000024" href="$signed__update_8c.html#a84c0dd812043421d04fa4591c2f46373" title="Perform Update Verifier Check." alt="" coords="487,184,665,224"/>
+<area shape="poly" id="edge23_Node000002_Node000024" title=" " alt="" coords="801,448,785,403,759,346,722,288,700,261,676,238,657,226,660,222,679,234,704,258,727,285,763,344,790,401,806,446"/>
+<area shape="rect" id="Node000025" href="$signed__update_8c.html#afcd0f60b0a2b37b5d5eca988d75d70cf" title="Hash Update Verifier Compute." alt="" coords="487,883,665,923"/>
+<area shape="poly" id="edge24_Node000002_Node000025" title=" " alt="" coords="730,496,727,499,710,522,699,545,692,568,689,591,693,637,703,683,713,729,717,776,715,800,708,824,697,848,679,872,666,885,662,881,675,869,692,845,703,822,710,799,712,776,708,730,698,684,688,638,684,591,687,567,694,543,706,520,723,496,726,493"/>
+<area shape="rect" id="Node000027" href="$signed__update_8c.html#a117d63f8525f86c2ec6d59c88fd40a99" title="Update Update Verifier Sign." alt="" coords="487,299,665,339"/>
+<area shape="poly" id="edge26_Node000002_Node000027" title=" " alt="" coords="790,452,741,402,710,376,676,353,651,341,654,336,679,348,713,372,745,398,794,449"/>
+<area shape="rect" id="Node000007" href="$monitor__advanced_8c.html#a6f56a9dbff8180fa1e417c76457f7c16" title="Perform Code Tamper Verify All With Report." alt="" coords="239,5,409,45"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="480,28,410,28,410,23,480,23"/>
+<area shape="rect" id="Node000014" href="$monitor__advanced_8c.html#a452131dcfb3cb49b18e97b74e6f5e62b" title="Perform Ima Appraise." alt="" coords="240,225,408,250"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="478,255,408,248,408,243,478,249"/>
+<area shape="rect" id="Node000016" href="$monitor__advanced_8c.html#a9e229b869a1c219de10aabd5c4b7ffae" title="Perform Ima Appraise Path." alt="" coords="222,274,426,299"/>
+<area shape="poly" id="edge15_Node000013_Node000016" title=" " alt="" coords="478,274,427,279,426,274,478,269"/>
+<area shape="rect" id="Node000017" href="$monitor__advanced_8c.html#a8120073bec2210a96a0907bfe6ee25d8" title="Perform Ima Measure Batch." alt="" coords="239,324,409,364"/>
+<area shape="poly" id="edge16_Node000013_Node000017" title=" " alt="" coords="503,280,476,289,428,313,392,326,390,321,426,308,474,284,501,275"/>
+<area shape="rect" id="Node000018" href="$monitor__advanced_8c.html#a5f7d25b06547f7d677cd3872b25c918a" title="Perform Ima Measure Path." alt="" coords="221,175,427,201"/>
+<area shape="poly" id="edge17_Node000013_Node000018" title=" " alt="" coords="501,247,474,238,449,226,426,214,388,203,390,198,428,210,452,222,476,234,503,242"/>
+<area shape="rect" id="Node000015" href="$monitor__advanced_8c.html#aa3417e085222fe8e86b79b5d07693fb8" title="Perform Ima Appraise Batch." alt="" coords="5,217,173,257"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="226,240,174,240,174,235,226,235"/>
+<area shape="rect" id="Node000021" href="$monitor__advanced_8c.html#a1c1b26b1d3933861fe6c59f4e4c5236e" title="Update Toctou Check And." alt="" coords="241,535,407,575"/>
+<area shape="poly" id="edge20_Node000020_Node000021" title=" " alt="" coords="479,557,408,557,408,552,479,552"/>
+<area shape="rect" id="Node000026" href="$signed__update_8c.html#a1ffa9a82fc7994e187ffe8fccb349cd0" title="Perform Update Verifier Verify Integrity." alt="" coords="235,883,413,923"/>
+<area shape="poly" id="edge25_Node000025_Node000026" title=" " alt="" coords="473,905,413,905,413,900,473,900"/>
+<area shape="poly" id="edge28_Node000028_Node000003" title=" " alt="" coords="732,506,724,499,712,487,705,475,699,450,693,426,686,414,676,403,655,391,657,386,679,399,691,411,698,424,704,448,710,473,716,484,727,495,736,501"/>
+<area shape="poly" id="edge29_Node000028_Node000004" title=" " alt="" coords="745,508,724,500,700,484,676,468,648,456,650,451,679,463,703,479,727,495,747,503"/>
+<area shape="poly" id="edge30_Node000028_Node000005" title=" " alt="" coords="711,515,659,509,659,504,712,509"/>
+<area shape="poly" id="edge31_Node000028_Node000006" title=" " alt="" coords="728,504,723,499,703,471,690,442,682,414,679,386,685,332,698,277,711,223,717,169,715,142,707,115,695,87,675,59,657,44,661,40,679,56,699,84,712,113,720,141,722,169,717,224,703,279,690,332,685,386,687,413,695,440,708,468,727,496,732,500"/>
+<area shape="poly" id="edge32_Node000028_Node000008" title=" " alt="" coords="773,544,678,581,635,594,633,589,676,576,771,539"/>
+<area shape="poly" id="edge33_Node000028_Node000009" title=" " alt="" coords="791,547,742,589,711,611,678,630,645,643,643,638,676,626,708,607,739,585,788,543"/>
+<area shape="poly" id="edge34_Node000028_Node000010" title=" " alt="" coords="798,549,750,613,717,649,679,680,654,693,651,688,676,675,713,645,746,610,794,545"/>
+<area shape="poly" id="edge35_Node000028_Node000011" title=" " alt="" coords="805,550,787,592,761,645,725,698,679,745,655,759,652,755,676,741,721,695,756,642,783,590,800,548"/>
+<area shape="poly" id="edge36_Node000028_Node000012" title=" " alt="" coords="809,550,795,604,770,673,732,746,708,779,679,809,654,824,652,820,676,805,704,776,728,743,765,671,790,602,804,548"/>
+<area shape="poly" id="edge37_Node000028_Node000013" title=" " alt="" coords="729,504,723,499,705,472,697,445,696,418,699,391,702,365,701,339,694,314,675,289,659,276,662,272,679,285,698,311,707,338,707,365,704,392,702,418,702,444,710,470,727,496,732,500"/>
+<area shape="poly" id="edge38_Node000028_Node000019" title=" " alt="" coords="813,550,807,625,787,728,770,784,747,839,717,891,679,937,663,949,660,945,675,933,713,888,742,837,765,782,782,727,801,624,808,549"/>
+<area shape="poly" id="edge39_Node000028_Node000020" title=" " alt="" coords="712,539,660,546,659,541,711,534"/>
+<area shape="poly" id="edge40_Node000028_Node000022" title=" " alt="" coords="728,504,723,499,706,475,694,451,687,427,684,403,688,356,698,309,708,263,712,217,710,194,703,170,692,147,675,123,662,111,666,107,679,120,697,144,708,168,715,193,718,217,714,264,703,310,693,357,690,403,692,426,699,449,710,472,727,496,732,500"/>
+<area shape="poly" id="edge41_Node000028_Node000023" title=" " alt="" coords="728,504,723,499,708,478,697,457,689,415,691,374,700,333,708,293,710,253,701,214,691,194,675,174,664,164,650,157,652,152,667,159,679,170,695,191,706,212,715,253,713,294,705,335,696,375,694,415,702,455,712,475,727,496,732,500"/>
+<area shape="poly" id="edge42_Node000028_Node000024" title=" " alt="" coords="729,504,723,499,701,466,693,432,693,399,698,367,703,334,704,302,696,270,675,238,662,226,665,222,679,234,701,268,709,302,709,335,704,367,699,400,698,432,706,463,727,496,732,500"/>
+<area shape="poly" id="edge43_Node000028_Node000025" title=" " alt="" coords="811,549,801,614,779,701,762,747,740,793,712,835,679,873,662,885,659,880,676,869,708,832,735,790,757,745,774,699,796,613,806,549"/>
+<area shape="poly" id="edge44_Node000028_Node000027" title=" " alt="" coords="731,505,723,499,709,481,701,462,698,424,696,388,689,370,675,353,660,341,663,337,679,349,694,368,701,387,704,424,707,460,713,478,727,495,734,501"/>
+</map>

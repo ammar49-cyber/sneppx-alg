@@ -1,0 +1,13 @@
+<map id="fe_from_bytes" name="fe_from_bytes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="648,64,764,89"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a42d7398b8626101ebba349a310c882c3" title=" " alt="" coords="464,64,600,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="634,79,600,79,600,74,634,74"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#a85e1f84acda318e9a82b7b92a151eb33" title="Core Ed25519 verify with selectable hash path." alt="" coords="246,35,403,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="450,68,403,61,404,56,451,63"/>
+<area shape="rect" id="Node000006" href="$ed25519_8c.html#a2c8ab1bc9b3f1a34d21f57bc45ad80ec" title="Perform Ed25519 Scalar Multiply." alt="" coords="233,85,416,125"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="451,90,417,95,416,90,450,85"/>
+<area shape="rect" id="Node000004" href="$ed25519_8c.html#ad082a2f293bf30aea3ab1dfd16e40e46" title="Verify an Ed25519 signature." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="232,38,185,32,186,27,233,33"/>
+<area shape="rect" id="Node000005" href="$ed25519_8c.html#aca9a357925c06c4a8103215281d3b007" title="Verify Ed25519 with optional legacy&#45;hash fallback for migration." alt="" coords="5,55,185,95"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="233,61,186,67,185,62,232,56"/>
+</map>

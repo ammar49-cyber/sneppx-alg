@@ -1,0 +1,27 @@
+<map id="SNEPPX_ct_equal" name="SNEPPX_ct_equal">
+<area shape="rect" id="Node000001" title="Perform Ct Equal." alt="" coords="696,215,831,240"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a85e1f84acda318e9a82b7b92a151eb33" title="Core Ed25519 verify with selectable hash path." alt="" coords="479,63,636,88"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="744,205,703,155,676,128,647,106,614,90,616,86,649,101,680,124,707,151,748,202"/>
+<area shape="rect" id="Node000005" href="$aead_8c.html#a94018eba2cb3ac4308d2e4a4a88b1a96" title="Decrypt Aead." alt="" coords="473,116,641,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="733,208,694,181,647,155,616,144,618,139,649,150,696,176,736,204"/>
+<area shape="rect" id="Node000007" href="$argon2_8c.html#a80dc679d0d52656b9a729f4570f7d268" title="Verify Argon2id." alt="" coords="467,165,648,191"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="696,214,611,193,612,188,697,209"/>
+<area shape="rect" id="Node000008" href="$c__binding__implementation_8c.html#abf5c9bb8466f6ccbcc3893fb13d67747" title="Perform C Ct Memcmp." alt="" coords="470,215,645,240"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="682,230,645,230,645,225,682,225"/>
+<area shape="rect" id="Node000009" href="$canary_8c.html#a5a189a2bf3b077be5bb6e65f8736b3f0" title="Verify Canary." alt="" coords="473,264,641,289"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="697,246,612,267,611,261,696,241"/>
+<area shape="rect" id="Node000012" href="$timing_8c.html#a6b1f78fb6d210ff3f4d7069416358e45" title="Perform Timing Safe Equal." alt="" coords="479,314,636,354"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="736,251,696,278,649,304,622,316,620,311,647,300,693,273,733,246"/>
+<area shape="rect" id="Node000013" href="$signed__update_8c.html#a84c0dd812043421d04fa4591c2f46373" title="Perform Update Verifier Check." alt="" coords="468,378,647,418"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="750,254,709,311,681,341,650,368,628,380,626,376,646,364,678,338,705,307,745,251"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#ad082a2f293bf30aea3ab1dfd16e40e46" title="Verify an Ed25519 signature." alt="" coords="233,5,413,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="491,62,375,33,377,28,492,57"/>
+<area shape="rect" id="Node000004" href="$ed25519_8c.html#aca9a357925c06c4a8103215281d3b007" title="Verify Ed25519 with optional legacy&#45;hash fallback for migration." alt="" coords="233,55,413,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="465,78,414,78,414,73,465,73"/>
+<area shape="rect" id="Node000006" href="$c__binding__implementation_8c.html#ab071599ef2430b398e4928cba922380b" title="Decrypt C Aead." alt="" coords="232,120,415,145"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="460,133,415,134,415,128,460,128"/>
+<area shape="rect" id="Node000010" href="$secure__mem_8c.html#a377c4e243b37c8caaf6b3ca48ec95c7e" title="Free Secure Pool." alt="" coords="228,264,419,289"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="460,279,419,279,419,274,460,274"/>
+<area shape="rect" id="Node000011" href="$secure__mem_8c.html#ab36568b95ed140fd30bed074c10b517d" title="Perform Secure Realloc." alt="" coords="5,264,180,289"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="214,279,180,279,180,274,214,274"/>
+</map>

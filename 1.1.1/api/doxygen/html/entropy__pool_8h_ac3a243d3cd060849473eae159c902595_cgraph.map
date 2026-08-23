@@ -1,0 +1,14 @@
+<map id="SNEPPX_entropy_pool_add" name="SNEPPX_entropy_pool_add">
+<area shape="rect" id="Node000001" title="Add Entropy Pool." alt="" coords="5,55,201,80"/>
+<area shape="rect" id="Node000002" href="$siphash_8c.html#a220923dc0e0333768ec53729345453aa" title="Compute SipHash 2&#45;4 of input." alt="" coords="249,5,433,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,52,266,31,267,36,166,57"/>
+<area shape="rect" id="Node000005" href="$siphash_8c.html#a9c2503c774f2c5c99006b89363732f68" title="Initialize Siphash." alt="" coords="262,55,421,80"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="201,65,249,65,249,70,201,70"/>
+<area shape="rect" id="Node000006" href="$siphash_8c.html#aa02b4099e59778a97900f246fdd3666f" title="Update Siphash." alt="" coords="250,104,433,129"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="166,77,267,99,266,104,165,83"/>
+<area shape="rect" id="Node000003" href="$siphash_8c.html#aaeb3f56f97f46bbddb06d06a949da4dd" title=" " alt="" coords="481,55,560,80"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="392,28,434,39,469,49,467,55,433,45,391,33"/>
+<area shape="rect" id="Node000004" href="$siphash_8c.html#a6f476462ad749f36acbdb86eaeff342e" title=" " alt="" coords="608,55,668,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="560,65,594,65,594,70,560,70"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="387,101,467,79,469,84,389,107"/>
+</map>

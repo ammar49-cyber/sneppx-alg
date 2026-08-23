@@ -1,0 +1,5 @@
+<map id="SNEPPX_ed25519_secret_key_expand" name="SNEPPX_ed25519_secret_key_expand">
+<area shape="rect" id="Node000001" title="Perform Ed25519 Secret Key Expand." alt="" coords="244,5,427,45"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#ad4f54e051afbb1eb163293877aebb36c" title="Perform Ed25519 Keypair Generate." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

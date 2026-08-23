@@ -1,0 +1,7 @@
+<map id="SNEPPX_update_verifier_rollback_check" name="SNEPPX_update_verifier_rollback_check">
+<area shape="rect" id="Node000001" title="Perform Update Verifier Rollback Check." alt="" coords="232,37,411,77"/>
+<area shape="rect" id="Node000002" href="$signed__update_8c.html#a5b9a7ec7752033e1d24aa7abf07d316e" title="Apply Update Verifier." alt="" coords="5,5,184,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,45,184,41,185,35,219,40"/>
+<area shape="rect" id="Node000003" href="$signed__update_8c.html#a84c0dd812043421d04fa4591c2f46373" title="Perform Update Verifier Check." alt="" coords="5,69,184,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,75,185,79,184,74,218,69"/>
+</map>

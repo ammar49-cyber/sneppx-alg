@@ -1,0 +1,9 @@
+<map id="SNEPPX_sha512_legacy_finish" name="SNEPPX_sha512_legacy_finish">
+<area shape="rect" id="Node000001" title="Legacy SHA&#45;512 finish (pre&#45;RFC&#45;8032 length encoding, 8x too large)." alt="" coords="439,27,616,67"/>
+<area shape="rect" id="Node000002" href="$ed25519_8c.html#a85e1f84acda318e9a82b7b92a151eb33" title="Core Ed25519 verify with selectable hash path." alt="" coords="233,35,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="425,50,391,50,391,45,425,45"/>
+<area shape="rect" id="Node000003" href="$ed25519_8c.html#ad082a2f293bf30aea3ab1dfd16e40e46" title="Verify an Ed25519 signature." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="219,37,185,33,186,28,220,32"/>
+<area shape="rect" id="Node000004" href="$ed25519_8c.html#aca9a357925c06c4a8103215281d3b007" title="Verify Ed25519 with optional legacy&#45;hash fallback for migration." alt="" coords="5,55,185,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="220,62,186,66,185,61,219,57"/>
+</map>
