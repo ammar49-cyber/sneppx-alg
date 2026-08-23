@@ -89,7 +89,8 @@ after_a:
     /* ---- (b) undeclared node input ---- */
     {
         SneppXOnnxDim ydims[2] = { {0, "batch"}, {OUT_FEATURES, NULL} };
-        SneppXOnnxValueInfo inputs[1]  = { { "X", SX_ARR_C(SneppXOnnxDim, 2, {0,"batch"},{IN_FEATURES,NULL}), 2, 0 } };
+        SneppXOnnxDim bxdims[2] = { {0, "batch"}, {IN_FEATURES, NULL} };
+        SneppXOnnxValueInfo inputs[1]  = { { "X", bxdims, 2, 0 } };
         SneppXOnnxValueInfo outputs[1] = { { "Y", ydims, 2, 0 } };
         const char* relu_in[1] = { "ghost" };   /* never declared */
         const char* relu_out[1] = { "Y" };
