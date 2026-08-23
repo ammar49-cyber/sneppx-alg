@@ -48,5 +48,5 @@ jobs:
 
       - name: Python tests (pytest)
         run: |
-          pip install pytest numpy pyyaml cryptography pynacl fastapi httpx
-          PYTHONPATH=bindings/python python -m pytest tests/python -q
+          pip install pytest numpy pyyaml cryptography pynacl fastapi httpx pytest-timeout
+          PYTHONPATH=bindings/python timeout 300 python -m pytest tests/python -v --timeout=120 --tb=short
