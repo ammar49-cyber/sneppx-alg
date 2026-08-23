@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['t_0',['t',['../structpoint.html#a4b4de8a53d5fb4b0159e5473baba7958',1,'point::T'],['../structSNEPPXRAdamState.html#a4f0cc96183df08a8113ee5efbdee2557',1,'SNEPPXRAdamState::t'],['../structSNEPPXSFRAdamWState.html#a0c2623102b8ea2e33477c7a61afe6bf3',1,'SNEPPXSFRAdamWState::t']]],
+  ['t_0',['t',['../structSNEPPXRAdamState.html#a4f0cc96183df08a8113ee5efbdee2557',1,'SNEPPXRAdamState::t'],['../structSNEPPXSFRAdamWState.html#a0c2623102b8ea2e33477c7a61afe6bf3',1,'SNEPPXSFRAdamWState::t'],['../structpoint.html#a4b4de8a53d5fb4b0159e5473baba7958',1,'point::T']]],
   ['t_5fparam_1',['t_param',['../structSNEPPXBIKEKeypair.html#a78eb0ad09b6fea8526d607b2e39b4738',1,'SNEPPXBIKEKeypair']]],
   ['table_5fencrypted_2',['table_encrypted',['../classSNEPPX_1_1SNEPPXObfVM.html#af620d902740d22f4082f88c5ea5e1892',1,'SNEPPX::SNEPPXObfVM']]],
   ['tag_3',['tag',['../structSNEPPXAESGCM.html#a6ef309d4fff1fa25e80783cbe283ceb8',1,'SNEPPXAESGCM']]],
@@ -53,7 +53,7 @@ var searchData=
   ['tensor_5fparallel_2ec_50',['tensor_parallel.c',['../tensor__parallel_8c.html',1,'']]],
   ['tensor_5fparallel_5fsize_51',['tensor_parallel_size',['../structModelConfig.html#a38baf957556dfbe7def6e965edfa2292',1,'ModelConfig::tensor_parallel_size'],['../structSNEPPX__DistributedConfig.html#a9f3dd3f79a048178b9a8bacfc6a504bc',1,'SNEPPX_DistributedConfig::tensor_parallel_size']]],
   ['tensor_5fprep_5fcontiguous_52',['tensor_prep_contiguous',['../tensor_8c.html#a288df43c51c41ea15667447d4abda1e5',1,'tensor.c']]],
-  ['tensor_5fview_5falloc_53',['tensor_view_alloc',['../tensor_8c.html#a79de214e3e870021a72ce47b2638ed9e',1,'tensor.c']]],
+  ['tensor_5fview_5falloc_53',['tensor_view_alloc',['../tensor_8c.html#a0435f20131e8a7b73d12be7d7ef5d58f',1,'tensor.c']]],
   ['test_5frng_5fgenerate_54',['test_rng_generate',['../random_8c.html#ad7357aa49d0e6a71470d5f7dc4e83178',1,'random.c']]],
   ['testing_5fprocedure_55',['testing_procedure',['../structSNEPPXPCIDSSRequirementItem.html#a3de28d3bdb65ee953da4cfd0192b6d2b',1,'SNEPPXPCIDSSRequirementItem']]],
   ['testing_5fresults_56',['testing_results',['../structSNEPPXPCIDSSRequirementItem.html#ae6d70005695847948963c7445e53e2c4',1,'SNEPPXPCIDSSRequirementItem']]],

@@ -76,7 +76,7 @@ var searchData=
   ['check_5ffactual_5fconsistency_73',['check_factual_consistency',['../structSNEPPXS5Verifier.html#a3101ac927bf14e57d3dc66ccaa705153',1,'SNEPPXS5Verifier']]],
   ['check_5flen_74',['check_len',['../structSNEPPXSTIGVulnerability.html#a9883f803dcbd481276b7655677294ef9',1,'SNEPPXSTIGVulnerability']]],
   ['check_5fname_75',['check_name',['../structSNEPPXAuditCheck.html#aeb86017920bbda1fc04c5a003bd9ad22',1,'SNEPPXAuditCheck']]],
-  ['check_5fresults_76',['check_results',['../structSNEPPXVulnScannerCheck.html#aada9653ac478f88f2980b0cdb3ba166c',1,'SNEPPXVulnScannerCheck']]],
+  ['check_5fresults_76',['check_results',['../structSNEPPXVulnScanner.html#a8cf083861b5aefe7c32575355fa3ae8c',1,'SNEPPXVulnScanner::check_results'],['../structSNEPPXVulnScannerCheck.html#aada9653ac478f88f2980b0cdb3ba166c',1,'SNEPPXVulnScannerCheck::check_results']]],
   ['check_5ftype_77',['check_type',['../structSNEPPXCFICheck.html#aace20f5522b1e9b9735728a03f2c9295',1,'SNEPPXCFICheck']]],
   ['checked_5fat_78',['checked_at',['../structSNEPPXOCSPCacheEntry.html#a4ca9e6fda3058b2cba6994823a6762e5',1,'SNEPPXOCSPCacheEntry']]],
   ['checkpoint_5fdir_79',['checkpoint_dir',['../structSNEPPX__CheckpointCoord.html#ad09fcf16f588a4af98f1c8492275c743',1,'SNEPPX_CheckpointCoord']]],

@@ -1,15 +1,17 @@
 <map id="kernel/distributed/heartbeat.c" name="kernel/distributed/heartbeat.c">
-<area shape="rect" id="Node000001" title=" " alt="" coords="447,5,583,45"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="493,5,629,45"/>
 <area shape="rect" id="Node000002" href="$heartbeat_8h.html" title=" " alt="" coords="263,93,361,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="467,48,356,91,354,86,465,43"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="502,48,362,92,361,87,501,43"/>
 <area shape="rect" id="Node000009" title=" " alt="" coords="385,93,455,119"/>
-<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="493,48,447,86,443,82,490,43"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="529,48,454,89,452,84,526,43"/>
 <area shape="rect" id="Node000010" title=" " alt="" coords="479,93,550,119"/>
-<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="517,46,517,79,512,79,512,46"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="552,47,531,83,526,80,548,44"/>
 <area shape="rect" id="Node000011" title=" " alt="" coords="575,93,641,119"/>
-<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="539,44,585,82,582,86,536,48"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="575,44,596,80,592,83,570,47"/>
 <area shape="rect" id="Node000012" title=" " alt="" coords="665,93,729,119"/>
-<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="559,43,659,85,657,90,557,48"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="595,43,667,84,664,89,593,48"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="754,93,817,119"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="616,43,742,87,740,92,614,48"/>
 <area shape="rect" id="Node000003" title=" " alt="" coords="5,167,80,192"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="269,121,94,167,93,162,268,116"/>
 <area shape="rect" id="Node000004" title=" " alt="" coords="105,167,175,192"/>

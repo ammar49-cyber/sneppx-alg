@@ -5,7 +5,7 @@ var searchData=
   ['taint_5fmark_5fvariable_2',['taint_mark_variable',['../s8__extensions_8c.html#a5f55350ba0beac5c63bda2ac20a94fd3',1,'s8_extensions.c']]],
   ['tape_5ftopological_5fsort_3',['tape_topological_sort',['../tape_8c.html#a2550c5abe0303a51302953aa45a151d9',1,'tape.c']]],
   ['tensor_5fprep_5fcontiguous_4',['tensor_prep_contiguous',['../tensor_8c.html#a288df43c51c41ea15667447d4abda1e5',1,'tensor.c']]],
-  ['tensor_5fview_5falloc_5',['tensor_view_alloc',['../tensor_8c.html#a79de214e3e870021a72ce47b2638ed9e',1,'tensor.c']]],
+  ['tensor_5fview_5falloc_5',['tensor_view_alloc',['../tensor_8c.html#a0435f20131e8a7b73d12be7d7ef5d58f',1,'tensor.c']]],
   ['test_5frng_5fgenerate_6',['test_rng_generate',['../random_8c.html#ad7357aa49d0e6a71470d5f7dc4e83178',1,'random.c']]],
   ['text_5fto_5fembedding_7',['text_to_embedding',['../s5__extensions_8c.html#abf1f1fb3045bfdab8d054916bef621f3',1,'s5_extensions.c']]],
   ['text_5fto_5fids_5fbytewise_8',['text_to_ids_bytewise',['../tokenizer_8c.html#ad853afcd9c0bcc52b7b9119c55bf0b0f',1,'tokenizer.c']]],
