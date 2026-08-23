@@ -52,6 +52,13 @@ option(SNEPPX_USE_LTO "Enable Link-Time Optimization (Release only)" OFF)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+    # Force-include the standard headers that MSVC injects implicitly but
+    # GCC/Clang require explicitly. Without this the codebase fails to
+    # compile on Linux (e.g. uintptr_t, snprintf, memcpy, math fns).
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include stdint.h -include stdlib.h -include string.h -include stdio.h -include math.h -include errno.h -include unistd.h -include fcntl.h")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include cstdint -include cstdlib -include cstring -include cstdio -include cmath -include errno.h -include unistd.h -include fcntl.h")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lm")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lm")
     if(SNEPPX_USE_ASAN)
         set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address -fno-omit-frame-pointer")
         set(CMAKE_CXX_FLAGS_DEBUG "-g -fsanitize=address -fno-omit-frame-pointer")
