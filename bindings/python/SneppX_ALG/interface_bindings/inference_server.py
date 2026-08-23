@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 import numpy as np
 
 try:
-    from fastapi import FastAPI, HTTPException, Query, Header
+    from fastapi import FastAPI, HTTPException, Query, Header, Request, Depends
     from fastapi.responses import StreamingResponse, JSONResponse
     from pydantic import BaseModel, Field
 except ImportError:
@@ -294,6 +294,25 @@ def set_security(config: Optional[SecurityConfig] = None, firewall_config: Optio
         _security.firewall = _create_firewall(os.environ["FIREWALL_CONFIG"])
 
 
+def require_auth(request: "Request"):
+    """Enforce authentication on protected endpoints.
+
+    When security is disabled (auth mode ``"none"``) requests are allowed
+    through. When auth is enabled, a missing/invalid credential raises 401.
+    """
+    sec = get_security()
+    if sec is None:
+        return None
+    auth = sec.authenticator
+    if not auth.enabled:
+        return None
+    header = request.headers.get("authorization") or request.headers.get("Authorization")
+    info = auth.authenticate(header)
+    if info is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return info
+
+
 def _verify_admin_auth(authorization: Optional[str]) -> bool:
     if not authorization:
         return False
@@ -461,7 +480,7 @@ async def get_model_info(model_id: str):
     )
 
 
-@app.post("/v1/generate", response_model=GenerateResponse)
+@app.post("/v1/generate", response_model=GenerateResponse, dependencies=[Depends(require_auth)])
 async def generate_endpoint(req: GenerateRequest):
     filter_status, sanitized = _filter_prompt(req.prompt)
     if filter_status == "injection":
@@ -505,7 +524,7 @@ async def generate_endpoint(req: GenerateRequest):
     )
 
 
-@app.post("/v1/generate/batch", response_model=BatchGenerateResponse)
+@app.post("/v1/generate/batch", response_model=BatchGenerateResponse, dependencies=[Depends(require_auth)])
 async def batch_generate_endpoint(req: BatchGenerateRequest):
     sanitized_prompts = []
     for prompt in req.prompts:
@@ -654,7 +673,7 @@ async def quantize_model_endpoint(model_id: str = Query(...), quant_mode: str = 
     })
 
 
-@app.post("/v1/generate/stream")
+@app.post("/v1/generate/stream", dependencies=[Depends(require_auth)])
 async def generate_stream_endpoint(req: GenerateRequest):
     filter_status, sanitized = _filter_prompt(req.prompt)
     if filter_status == "injection":
@@ -726,7 +745,7 @@ async def generate_stream_endpoint(req: GenerateRequest):
     )
 
 
-@app.post("/v1/chat/completions")
+@app.post("/v1/chat/completions", dependencies=[Depends(require_auth)])
 async def chat_completions(req: ChatCompletionRequest):
     entry = get_model(req.model)
     gen_config = _make_chat_config(req)
