@@ -141,14 +141,9 @@ foreach(test_src ${SECURITY_CPP_TEST_SRCS})
     add_neural_cpp_test(${test_src} "neural_security_cpp;neural_security_c;neural_core_kernel;neural_architecture_layer")
 endforeach()
 
-if(SNEPPX_BUILD_PYTHON)
-    file(GLOB PYTHON_TEST_SRCS ../tests/python/*.py)
-    foreach(test_src ${PYTHON_TEST_SRCS})
-        get_filename_component(test_name ${test_src} NAME_WE)
-        add_test(NAME py_${test_name}
-            COMMAND ${CMAKE_COMMAND} -E env
-                PYTHONPATH=${CMAKE_BINARY_DIR}/src/python/$<CONFIG>
-                ${Python3_EXECUTABLE} ${test_src}
-        )
-    endforeach()
-endif()
+# Python tests are exercised by the dedicated `pytest tests/python` step in
+# CI (which sets up PYTHONPATH + the required pure-Python deps correctly).
+# They are intentionally NOT registered as ctest entries here: the previous
+# ctest registration pointed PYTHONPATH at a non-existent build dir and ran
+# the files with plain `python` instead of pytest, so every python test
+# failed with ModuleNotFoundError before any assertion could run.

@@ -48,5 +48,5 @@ jobs:
 
       - name: Python tests (pytest)
         run: |
-          pip install pytest numpy pyyaml
+          pip install pytest numpy pyyaml cryptography pynacl fastapi
           PYTHONPATH=bindings/python python -m pytest tests/python -q
