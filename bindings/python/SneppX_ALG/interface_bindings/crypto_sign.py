@@ -20,12 +20,18 @@ _PKG = os.path.dirname(_HERE)
 _PYD = os.path.join(_PKG, "_SNEPPX_c.cp311-win_amd64.pyd")
 
 _C = None
-if os.path.exists(_PYD):
+try:
+    import _SNEPPX_c as _mod
+
+    _C = getattr(_mod, "crypto", None)
+except Exception:
+    _C = None
+if _C is None and os.path.exists(_PYD):
     try:
         _spec = importlib.util.spec_from_file_location("_SNEPPX_c", _PYD)
         _mod = importlib.util.module_from_spec(_spec)
         _spec.loader.exec_module(_mod)
-        _C = _mod.crypto
+        _C = getattr(_mod, "crypto", None)
     except Exception:
         _C = None
 

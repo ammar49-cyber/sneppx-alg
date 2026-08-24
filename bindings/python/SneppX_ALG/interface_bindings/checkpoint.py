@@ -284,7 +284,8 @@ class CheckpointCoordinator:
         else:
             state_bytes = bytes(state)
             shape = (len(state_bytes),)
-            dtype_code = 0
+            dtype_code = 8  # np.uint8 — round-trips raw bytes losslessly
+            meta["_raw_bytes"] = True
 
         if self.async_save:
             self._save_thread = threading.Thread(
@@ -329,6 +330,8 @@ class CheckpointCoordinator:
         self.current_step = meta.get("step", 0)
         if self.rank == 0:
             print(f"[SNEPPX Checkpoint] Loaded from {path} (step {self.current_step})")
+        if meta.get("_raw_bytes"):
+            return bytes(data), meta
         return data, meta
 
     def coordinated_save(

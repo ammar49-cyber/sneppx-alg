@@ -10,7 +10,14 @@ class TrainConfig:
     def __init__(self):
         if _HAS_C_BACKEND:
             self._c = _neural_engine_bridge.SNEPPXTrainConfig()
-            self._c.default()
+            # The pybind `default()` binding is a non-mutating free function,
+            # so populate the read/write fields directly instead.
+            self._c.num_epochs = 10
+            self._c.batch_size = 32
+            self._c.learning_rate = 0.001
+            self._c.log_interval = 1
+            self._c.save_interval = 5
+            self._c.device = 0
         else:
             self._data = {
                 "num_epochs": 10,
@@ -119,10 +126,6 @@ class Optimizer:
                 p.grad = None
 
     def step(self):
-        if _HAS_C_BACKEND:
-            if hasattr(self, '_opt') and self._opt is not None:
-                self._opt.step(self._params, self._grads)
-            return
         lr = getattr(self, "lr", 0.01)
         for p in self._params:
             if p.grad is not None:
@@ -145,12 +148,6 @@ class SGD(Optimizer):
         else:
             self._opt = None
 
-    def step(self):
-        if _HAS_C_BACKEND:
-            self._opt.step(self._params, self._grads)
-        else:
-            super().step()
-
 
 class Adam(Optimizer):
     def __init__(
@@ -169,12 +166,6 @@ class Adam(Optimizer):
         else:
             self._opt = None
 
-    def step(self):
-        if _HAS_C_BACKEND:
-            self._opt.step(self._params, self._grads)
-        else:
-            super().step()
-
 
 class AdamW(Optimizer):
     def __init__(
@@ -192,12 +183,6 @@ class AdamW(Optimizer):
             )
         else:
             self._opt = None
-
-    def step(self):
-        if _HAS_C_BACKEND:
-            self._opt.step(self._params, self._grads)
-        else:
-            super().step()
 
 
 class LRScheduler:
