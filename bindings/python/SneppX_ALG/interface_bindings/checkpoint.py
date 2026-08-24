@@ -4,8 +4,20 @@ import json
 import threading
 import os
 import tempfile
+import numpy as np
 from dataclasses import dataclass, field
 from typing import Optional, Callable, List
+
+# Map between tensor dtype codes (matching bindings/python tensor Dtype) and numpy dtypes
+_DTYPE_CODE_TO_NP = {
+    0: np.float32,
+    1: np.float64,
+    2: np.float16,
+    4: np.int32,
+    5: np.int64,
+    8: np.uint8,
+}
+_NP_TO_DTYPE_CODE = {v: k for k, v in _DTYPE_CODE_TO_NP.items()}
 
 SNEPPX_CKPT_MAGIC = 0x41524958
 SNEPPX_CKPT_MAGIC_HI = 0x434B5054
@@ -232,9 +244,17 @@ class CheckpointCoordinator:
             self.checkpoint_dir, f"checkpoint_{step}_rank_{self.rank}.sneppx"
         )
 
-    def _do_async_save(self, path: str, state: bytes, step: int, meta: dict):
+    def _do_async_save(
+        self,
+        path: str,
+        state_bytes: bytes,
+        step: int,
+        meta: dict,
+        shape: tuple,
+        dtype_code: int,
+    ):
         w = CheckpointWriter(path)
-        w.write_tensor(state, shape=(len(state),), dtype=0)
+        w.write_tensor(state_bytes, shape=shape, dtype=dtype_code)
         w.write_metadata(meta)
         w.close()
         if self.rank == 0:
@@ -242,7 +262,7 @@ class CheckpointCoordinator:
 
     def save(
         self,
-        state: bytes,
+        state,
         step: int,
         metadata: Optional[dict] = None,
         barrier_fn: Optional[Callable] = None,
@@ -257,13 +277,23 @@ class CheckpointCoordinator:
         if metadata:
             meta.update(metadata)
 
+        if isinstance(state, np.ndarray):
+            dtype_code = _NP_TO_DTYPE_CODE.get(np.dtype(state.dtype), 0)
+            shape = tuple(state.shape)
+            state_bytes = state.tobytes()
+        else:
+            state_bytes = bytes(state)
+            shape = (len(state_bytes),)
+            dtype_code = 0
+
         if self.async_save:
             self._save_thread = threading.Thread(
-                target=self._do_async_save, args=(path, state, step, meta)
+                target=self._do_async_save,
+                args=(path, state_bytes, step, meta, shape, dtype_code),
             )
             self._save_thread.start()
         else:
-            self._do_async_save(path, state, step, meta)
+            self._do_async_save(path, state_bytes, step, meta, shape, dtype_code)
 
         self.last_checkpoint_path = path
         self._cleanup_old()
@@ -290,7 +320,10 @@ class CheckpointCoordinator:
         if not os.path.exists(path):
             raise FileNotFoundError(f"No checkpoint found at {path}")
         r = CheckpointReader(path)
-        data = r.read_tensor(0)
+        rec = r.records[0]
+        data_bytes = r.read_tensor(0)
+        np_dtype = _DTYPE_CODE_TO_NP.get(rec.dtype, np.float32)
+        data = np.frombuffer(data_bytes, dtype=np_dtype).reshape(rec.shape).copy()
         meta = r.read_metadata()
         r.close()
         self.current_step = meta.get("step", 0)

@@ -397,9 +397,10 @@ def multi_head_attention(
     training: bool = True,
 ) -> Tensor:
     """Multi-head attention."""
-    q = np.asarray(query.data, dtype=np.float64)
-    k = np.asarray(key.data, dtype=np.float64)
-    v = np.asarray(value.data, dtype=np.float64)
+    _to_arr = lambda t: np.asarray(t.data, dtype=np.float64) if hasattr(t, "data") else np.asarray(t, dtype=np.float64)
+    q = _to_arr(query)
+    k = _to_arr(key)
+    v = _to_arr(value)
 
     N, L_q, D = q.shape
     _, L_k, _ = k.shape
@@ -416,7 +417,7 @@ def multi_head_attention(
     attn = q @ k.transpose(0, 1, 3, 2) * scale
 
     if mask is not None:
-        m = np.asarray(mask.data, dtype=np.float64)
+        m = _to_arr(mask)
         attn = attn + m.reshape(N, 1, 1, -1) * -1e9
 
     attn = softmax(attn, axis=-1)
@@ -475,6 +476,34 @@ def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
     e = np.exp(x - x_max)
     return e / np.sum(e, axis=axis, keepdims=True)
+
+
+def topk(x: Tensor, k: int, dim: int = -1):
+    """Return the top-k values and indices along ``dim`` (descending)."""
+    data = np.asarray(x.data, dtype=np.float32)
+    axis = dim if dim >= 0 else data.ndim + dim
+    idx = np.argpartition(-data, k - 1, axis=axis)[..., :k]
+    vals = np.take_along_axis(data, idx, axis=axis)
+    order = np.argsort(-vals, axis=axis)
+    idx = np.take_along_axis(idx, order, axis=axis)
+    vals = np.take_along_axis(vals, order, axis=axis)
+    return Tensor.from_numpy(vals.astype(np.float32)), Tensor.from_numpy(
+        idx.astype(np.int64)
+    )
+
+
+def cross_entropy(logits: Tensor, targets: Tensor) -> Tensor:
+    """Negative log-likelihood of targets given logits (mean-reduced)."""
+    l = np.asarray(logits.data, dtype=np.float32)
+    t = np.asarray(targets.data if hasattr(targets, "data") else targets)
+    orig_shape = t.shape
+    l = l.reshape(-1, l.shape[-1])
+    t = t.reshape(-1).astype(np.int64)
+    lmax = l.max(axis=-1, keepdims=True)
+    logsumexp = np.log(np.exp(l - lmax).sum(axis=-1, keepdims=True)) + lmax
+    logp = l - logsumexp
+    loss = -logp[np.arange(l.shape[0]), t]
+    return Tensor.from_numpy(loss.reshape(orig_shape).astype(np.float32))
 
 
 def log_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
@@ -630,33 +659,32 @@ def instance_norm(
 
 def layer_norm(
     input: Tensor,
-    normalized_shape: Tuple[int, ...],
+    normalized_shape_or_weight,
     weight: Optional[Tensor] = None,
     bias: Optional[Tensor] = None,
     eps: float = 1e-5,
 ) -> Tensor:
-    """Layer normalization."""
+    """Layer normalization over the last dimension.
+
+    Supports both calling conventions used across the codebase:
+        layer_norm(x, weight, bias)                 # last-dim normalize
+        layer_norm(x, normalized_shape, weight, bias)
+    """
+    if isinstance(normalized_shape_or_weight, (tuple, list)):
+        w, b = weight, bias
+    else:
+        w, b = normalized_shape_or_weight, weight
+
     x = np.asarray(input.data, dtype=np.float64)
-    # normalized_shape indicates the last dims to normalize over
-    ndim = len(normalized_shape)
-    dims = tuple(range(-ndim, 0))
+    ww = np.asarray(w.data, dtype=np.float64) if w is not None else 1.0
+    bb = np.asarray(b.data, dtype=np.float64) if b is not None else 0.0
 
-    mean = np.mean(x, axis=dims, keepdims=True)
-    var = np.var(x, axis=dims, keepdims=True)
+    mean = np.mean(x, axis=-1, keepdims=True)
+    var = np.var(x, axis=-1, keepdims=True)
     x_norm = (x - mean) / np.sqrt(var + eps)
+    out = x_norm * ww + bb
 
-    if weight is not None:
-        w = np.asarray(weight.data, dtype=np.float64).reshape(
-            [1] * (x.ndim - ndim) + list(normalized_shape)
-        )
-        x_norm = x_norm * w
-    if bias is not None:
-        b = np.asarray(bias.data, dtype=np.float64).reshape(
-            [1] * (x.ndim - ndim) + list(normalized_shape)
-        )
-        x_norm = x_norm + b
-
-    return Tensor.from_numpy(x_norm.astype(np.float32))
+    return Tensor.from_numpy(out.astype(np.float32))
 
 
 def rmsnorm(input: Tensor, weight: Tensor, eps: float = 1e-5) -> Tensor:
@@ -1158,7 +1186,8 @@ def relu(input: Tensor) -> Tensor:
 
 def gelu(input: Tensor) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
-    return Tensor.from_numpy(gelu(x).astype(np.float32))
+    out = x * 0.5 * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x**3)))
+    return Tensor.from_numpy(out.astype(np.float32))
 
 
 def silu(input: Tensor) -> Tensor:
@@ -1217,3 +1246,18 @@ def softsign(input: Tensor) -> Tensor:
 def mish(input: Tensor) -> Tensor:
     x = np.asarray(input.data, dtype=np.float64)
     return Tensor.from_numpy((x * np.tanh(np.log1p(np.exp(x)))).astype(np.float32))
+
+
+def topk(input: Tensor, k: int, dim: int = -1):
+    """Return the k largest elements and their indices along ``dim``."""
+    x = np.asarray(input.data, dtype=np.float64)
+    axis = dim if dim >= 0 else x.ndim + dim
+    partitioned = np.argpartition(-x, k - 1, axis=axis)
+    index = [slice(None)] * x.ndim
+    index[axis] = slice(0, k)
+    idx = partitioned[tuple(index)]
+    values = np.take_along_axis(x, idx, axis=axis)
+    return (
+        Tensor.from_numpy(values.astype(np.float32)),
+        Tensor.from_numpy(idx.astype(np.int64)),
+    )

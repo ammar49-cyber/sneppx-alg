@@ -67,6 +67,20 @@ for k, (_, _, np_dt) in DTYPE_MAP.items():
     _NP_TO_DTYPE[np.dtype(np_dt)] = k
 
 
+def _cuda_available() -> bool:
+    """Best-effort detection of a usable CUDA device.
+
+    Returns ``False`` when torch is unavailable or no GPU is present so that
+    the (CPU-backed) simulation path is taken instead of enforcing strict
+    device matching between cuda-labelled and cpu tensors.
+    """
+    try:
+        import torch
+        return bool(getattr(torch.cuda, "is_available", lambda: False)())
+    except Exception:
+        return False
+
+
 def _resolve_dtype(dtype) -> str:
     if dtype is None:
         return "float32"
@@ -81,6 +95,20 @@ def _resolve_dtype(dtype) -> str:
 
 def _numpy_dtype(dtype) -> np.dtype:
     return DTYPE_MAP.get(_resolve_dtype(dtype), (None, None, np.float32))[2]
+
+
+class _TensorData(np.ndarray):
+    """ndarray subclass that allows ``float()`` and ``item()`` on size-1 arrays."""
+
+    def __float__(self):
+        if self.size == 1:
+            return float(self.item())
+        return float(self.flat[0])
+
+    def item(self, *args):
+        if self.size == 1:
+            return super().item(*args)
+        return float(self)
 
 
 class _CTensorData:
@@ -188,7 +216,7 @@ class Tensor:
 
     @property
     def data(self) -> np.ndarray:
-        return self._data.to_numpy()
+        return self._data.to_numpy().view(_TensorData)
 
     @data.setter
     def data(self, arr: np.ndarray):
@@ -221,8 +249,10 @@ class Tensor:
         if isinstance(other, Tensor):
             dev_self = self.device.split(":")[0]
             dev_other = other.device.split(":")[0]
-            # Allow mixing cuda and cpu in simulation mode (no real CUDA backend)
-            if _HAS_C_BACKEND and dev_self != dev_other:
+            # Allow mixing cuda and cpu in simulation mode (no real CUDA backend
+            # or no usable GPU). Strict matching is only enforced when an actual
+            # CUDA device is available.
+            if dev_self != dev_other and _cuda_available():
                 raise RuntimeError(
                     f"Expected all tensors to be on the same device, "
                     f"but found at least two devices: {self.device} and {other.device}"

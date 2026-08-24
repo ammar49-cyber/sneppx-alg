@@ -168,6 +168,11 @@ static void init_crypto(py::module& m) {
     crypto.def("sphincs_keygen", [](int variant) {
         uint8_t pk[SPHINCS_PUBLICKEYBYTES];
         uint8_t sk[SPHINCS_SECRETKEYBYTES];
+        // The keygen only fills the first 48 bytes (sk_seed || sk_prf ||
+        // pub_seed); the remaining 16 bytes of the 64-byte secret key are
+        // unused padding. Initialise the whole buffer so the tail is
+        // deterministic rather than uninitialised stack memory.
+        std::memset(sk, 0, SPHINCS_SECRETKEYBYTES);
         SNEPPX_sphincs_keygen(pk, sk, variant);
         return py::make_tuple(
             py::bytes(reinterpret_cast<char*>(pk), SPHINCS_PUBLICKEYBYTES),

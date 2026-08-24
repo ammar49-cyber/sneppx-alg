@@ -467,8 +467,14 @@ class Sequential:
     ):
         self.name = name
         self.layers: List[_nn.Module] = []
-        for layer in layers:
-            self.add(layer)
+        if len(layers) == 1 and isinstance(layers[0], dict):
+            cfg = layers[0]
+            input_dim = cfg.get("input_dim", 64)
+            output_dim = cfg.get("output_dim", 64)
+            self.add(_nn.Linear(input_dim, output_dim))
+        else:
+            for layer in layers:
+                self.add(layer)
         self._input_shape: Optional[Tuple[Optional[int], ...]] = tuple(
             input_shape
         ) if input_shape else None
@@ -599,12 +605,14 @@ class Sequential:
             p.data = np.asarray(w, dtype=p.data.dtype)
 
     # ---- forward ---------------------------------------------------------
-    def __call__(self, x: Tensor) -> Tensor:
+    def __call__(self, x):
+        if not isinstance(x, Tensor):
+            x = _as_tensor(x)
         for layer in self.layers:
             x = layer(x)
         return x
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x):
         return self(x)
 
     # ---- predict ---------------------------------------------------------

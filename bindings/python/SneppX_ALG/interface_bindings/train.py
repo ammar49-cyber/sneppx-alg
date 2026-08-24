@@ -114,6 +114,9 @@ class Optimizer:
     def zero_grad(self):
         for g in self._grads:
             g.fill_(0.0)
+        for p in self._params:
+            if p.grad is not None:
+                p.grad = None
 
     def step(self):
         if _HAS_C_BACKEND:
@@ -121,8 +124,9 @@ class Optimizer:
                 self._opt.step(self._params, self._grads)
             return
         lr = getattr(self, "lr", 0.01)
-        for p, g in zip(self._params, self._grads):
-            p.data = p.data - lr * g.data
+        for p in self._params:
+            if p.grad is not None:
+                p.data = p.data - lr * p.grad.data
 
 
 class SGD(Optimizer):
@@ -144,6 +148,8 @@ class SGD(Optimizer):
     def step(self):
         if _HAS_C_BACKEND:
             self._opt.step(self._params, self._grads)
+        else:
+            super().step()
 
 
 class Adam(Optimizer):
@@ -166,6 +172,8 @@ class Adam(Optimizer):
     def step(self):
         if _HAS_C_BACKEND:
             self._opt.step(self._params, self._grads)
+        else:
+            super().step()
 
 
 class AdamW(Optimizer):
@@ -188,6 +196,8 @@ class AdamW(Optimizer):
     def step(self):
         if _HAS_C_BACKEND:
             self._opt.step(self._params, self._grads)
+        else:
+            super().step()
 
 
 class LRScheduler:

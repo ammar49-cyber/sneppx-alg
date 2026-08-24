@@ -40,8 +40,8 @@ class Module:
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError
 
-    def __call__(self, x: Tensor) -> Tensor:
-        return self.forward(x)
+    def __call__(self, *args, **kwargs) -> Tensor:
+        return self.forward(*args, **kwargs)
 
     def parameters(self):
         params = []
@@ -221,6 +221,58 @@ class LayerNorm(Module):
         return Tensor(out, dtype=x.dtype_name, device=x.device)
 
 
+class Conv2d(Module):
+    """2D convolution layer."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups: int = 1,
+        bias: bool = True,
+        dtype="float32",
+    ):
+        super().__init__()
+        if isinstance(kernel_size, int):
+            kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int):
+            stride = (stride, stride)
+        if isinstance(padding, int):
+            padding = (padding, padding)
+        if isinstance(dilation, int):
+            dilation = (dilation, dilation)
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        kH, kW = kernel_size
+        scale = math.sqrt(1.0 / (in_channels * kH * kW))
+        self.weight = Tensor.randn(
+            (out_channels, in_channels // groups, kH, kW), dtype=dtype
+        ) * scale
+        self.bias = Tensor.zeros((out_channels,), dtype=dtype) if bias else None
+
+    def forward(self, x: Tensor) -> Tensor:
+        from .advanced_ops import conv2d as _conv2d
+
+        return _conv2d(
+            x,
+            self.weight,
+            self.bias,
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            groups=self.groups,
+        )
+
+
 class RMSNorm(Module):
     def __init__(self, dim: int, eps: float = 1e-6, dtype="float32"):
         super().__init__()
@@ -264,8 +316,10 @@ class Tanh(Module):
 
 
 class Sequential(Module):
-    def __init__(self, *modules: Module):
+    def __init__(self, *modules):
         super().__init__()
+        if len(modules) == 1 and isinstance(modules[0], (list, tuple)):
+            modules = modules[0]
         for i, m in enumerate(modules):
             self._modules[str(i)] = m
 
@@ -273,6 +327,9 @@ class Sequential(Module):
         for m in self._modules.values():
             x = m(x)
         return x
+
+    def __iter__(self):
+        return iter(self._modules.values())
 
 
 class MultiheadAttention(Module):

@@ -3,6 +3,7 @@
 import os
 import json
 import time
+import tempfile
 import hashlib
 import subprocess
 import threading
@@ -11,6 +12,24 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
+
+
+def _default_sneppx_dir() -> str:
+    """Return a writable base directory for SNEPPX state.
+
+    Honours ``SX_STATE_DIR`` / ``SNEPPX_STATE_DIR`` when set, otherwise falls
+    back to a per-user temp directory so the code works without root access.
+    """
+    env = os.environ.get("SX_STATE_DIR") or os.environ.get("SNEPPX_STATE_DIR")
+    if env:
+        return env
+    return os.path.join(tempfile.gettempdir(), "sneppx")
+
+
+def _resolve_update_dir(update_dir: Optional[str]) -> str:
+    if update_dir is not None:
+        return update_dir
+    return os.path.join(_default_sneppx_dir(), "updates")
 
 
 class ScanStatus(Enum):
@@ -495,10 +514,10 @@ class SignedUpdateManager:
     
     def __init__(
         self,
-        update_dir: str = "/var/lib/sneppx/updates",
+        update_dir: Optional[str] = None,
         public_key_path: Optional[str] = None,
     ):
-        self.update_dir = Path(update_dir)
+        self.update_dir = Path(_resolve_update_dir(update_dir))
         self.update_dir.mkdir(parents=True, exist_ok=True)
         self.public_key_path = public_key_path
         self._lock = threading.Lock()
@@ -611,7 +630,7 @@ class ContainerSecurityManager:
     
     def __init__(
         self,
-        update_dir: str = "/var/lib/sneppx/updates",
+        update_dir: Optional[str] = None,
         public_key_path: Optional[str] = None,
         cve_cache_dir: Optional[str] = None,
     ):
@@ -721,7 +740,7 @@ _global_container_security: Optional[ContainerSecurityManager] = None
 
 
 def get_container_security(
-    update_dir: str = "/var/lib/sneppx/updates",
+    update_dir: Optional[str] = None,
     public_key_path: Optional[str] = None,
     cve_cache_dir: Optional[str] = None,
 ) -> ContainerSecurityManager:

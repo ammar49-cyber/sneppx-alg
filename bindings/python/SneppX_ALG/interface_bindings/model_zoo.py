@@ -963,7 +963,10 @@ def get_model_config(family: str, size: str) -> dict:
             f"Unknown size '{size}' for {family}. "
             f"Available: {list(_MODEL_REGISTRY[family].keys())}"
         )
-    return dict(_MODEL_REGISTRY[family][size])
+    cfg = dict(_MODEL_REGISTRY[family][size])
+    cfg["family"] = family
+    cfg["size"] = size
+    return cfg
 
 
 def get_model_config_obj(family: str, size: str) -> "ModelConfig":

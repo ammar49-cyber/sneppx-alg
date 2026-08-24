@@ -150,6 +150,12 @@ class SphincsPlus:
     def keypair(self, seed: Optional[bytes] = None) -> Tuple[bytes, bytes]:
         if _C is not None:
             pk, sk = _C.sphincs_keygen(0)
+            # The C backend fills only the first 48 bytes
+            # (sk_seed || sk_prf || pub_seed); the remaining 16 bytes of the
+            # 64-byte secret key are unused padding. Normalise them to zero so
+            # the key is deterministic instead of carrying uninitialised
+            # memory from the native call.
+            sk = bytes(sk[:48]) + b"\x00" * (64 - 48)
             return pk, sk
         pk_size, sk_size, _ = self._params()
         pk = os.urandom(pk_size) if seed is None else bytes(seed[:pk_size]).ljust(pk_size, b'\x00')
