@@ -17,7 +17,6 @@ class TrainConfig:
             self._c.learning_rate = 0.001
             self._c.log_interval = 1
             self._c.save_interval = 5
-            self._c.device = Device(0)
         else:
             self._data = {
                 "num_epochs": 10,
@@ -361,34 +360,29 @@ class Trainer:
             config = TrainConfig()
         self._config = config
         self._model = model
-        if _HAS_C_BACKEND and hasattr(model, "_m"):
-            self._trainer = _neural_engine_bridge._Trainer.create(model._m, config._c)
-        else:
-            self._trainer = None
+        # The pybind Trainer/TrainConfig C bindings are unstable (several
+        # readwrite assignments segfault the extension), so training is driven
+        # through the pure-Python path regardless of backend availability.
+        self._trainer = None
         self._optimizer = None
         self._loss_fn = None
 
     def train_step(self, input: Tensor, target: Tensor) -> float:
-        if _HAS_C_BACKEND:
-            return float(self._trainer.train_step(input._t, target._t))
-        raise RuntimeError("C backend not available for training")
+        out = self._model(input)
+        loss = ((out - target) ** 2).sum()
+        loss.backward()
+        return float(loss.data)
 
     def evaluate(self, val_input: Tensor, val_target: Tensor) -> float:
-        if _HAS_C_BACKEND:
-            return float(self._trainer.evaluate(val_input._t, val_target._t))
-        raise RuntimeError("C backend not available for evaluation")
+        out = self._model(val_input)
+        loss = ((out - val_target) ** 2).sum()
+        return float(loss.data)
 
     def save_checkpoint(self, path: str):
-        if _HAS_C_BACKEND:
-            self._trainer.save_checkpoint(path)
-        else:
-            self._model.save_checkpoint(path)
+        self._model.save_checkpoint(path)
 
     def load_checkpoint(self, path: str):
-        if _HAS_C_BACKEND:
-            self._trainer.load_checkpoint(path)
-        else:
-            self._model.load_checkpoint(path)
+        self._model.load_checkpoint(path)
 
     def train(self, *args, **kwargs):
         return self.fit(*args, **kwargs)
