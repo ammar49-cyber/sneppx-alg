@@ -207,6 +207,10 @@ class MatMul(Function):
         elif b_data.ndim == 1:
             grad_a = np.outer(g, b_data)
             grad_b = a_data.T @ g
+        elif a_data.ndim >= 3:
+            # Batched matmul: a (B, N, K), b (K, M), g (B, N, M)
+            grad_a = g @ b_data.T
+            grad_b = np.tensordot(a_data, g, axes=([0, 1], [0, 1]))
         else:
             grad_a = g @ b_data.T
             grad_b = a_data.T @ g

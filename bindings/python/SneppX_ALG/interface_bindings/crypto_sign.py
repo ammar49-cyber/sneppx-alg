@@ -21,7 +21,7 @@ _PYD = os.path.join(_PKG, "_SNEPPX_c.cp311-win_amd64.pyd")
 
 _C = None
 try:
-    import _SNEPPX_c as _mod
+    from SneppX_ALG import _SNEPPX_c as _mod
 
     _C = getattr(_mod, "crypto", None)
 except Exception:

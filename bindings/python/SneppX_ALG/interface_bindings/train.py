@@ -17,7 +17,7 @@ class TrainConfig:
             self._c.learning_rate = 0.001
             self._c.log_interval = 1
             self._c.save_interval = 5
-            self._c.device = 0
+            self._c.device = Device(0)
         else:
             self._data = {
                 "num_epochs": 10,
@@ -361,8 +361,8 @@ class Trainer:
             config = TrainConfig()
         self._config = config
         self._model = model
-        if _HAS_C_BACKEND:
-            self._trainer = _neural_engine_bridge._Trainer.create(model, config._c)
+        if _HAS_C_BACKEND and hasattr(model, "_m"):
+            self._trainer = _neural_engine_bridge._Trainer.create(model._m, config._c)
         else:
             self._trainer = None
         self._optimizer = None

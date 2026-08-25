@@ -96,6 +96,7 @@ class Module:
         if isinstance(value, Module):
             self._modules[name] = value
         elif isinstance(value, Tensor):
+            value.requires_grad_(True)
             self._parameters[name] = value
         super().__setattr__(name, value)
 

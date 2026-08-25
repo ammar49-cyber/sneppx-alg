@@ -9,8 +9,7 @@ from .tensor import Tensor, _HAS_C_BACKEND
 class ModelConfig:
     def __init__(self):
         if _HAS_C_BACKEND:
-            self._c = _neural_engine_bridge.SNEPPXArchConfig()
-            self._c.default()
+            self._c = _neural_engine_bridge.SNEPPXArchConfig.default()
         else:
             self._data = {"input_dim": 64, "output_dim": 64, "seed": 42}
 
