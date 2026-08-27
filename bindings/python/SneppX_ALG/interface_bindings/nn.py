@@ -2,6 +2,7 @@
 
 from typing import Callable, List, Optional, Tuple, Union
 from .tensor import Tensor, Dtype
+from .autograd import Function
 import numpy as np
 import math
 
@@ -893,6 +894,176 @@ class GRU(Module):
             out = out.transpose(1, 0)
         h_n = Tensor.stack(h)
         return out, h_n
+
+
+# ===========================================================================
+#  Normalization layers: BatchNorm (1d/2d) and GroupNorm
+# ===========================================================================
+
+
+class BatchNormFn(Function):
+    @staticmethod
+    def forward(ctx, x, weight, bias, running_mean, running_var, training, momentum, eps):
+        xd = x.data
+        C = xd.shape[1]
+        keep = (1, C) + (1,) * (xd.ndim - 2)
+        axes = (0,) + tuple(range(2, xd.ndim))
+        if training:
+            mean = xd.mean(axis=axes, keepdims=True)
+            var = ((xd - mean) ** 2).mean(axis=axes, keepdims=True)
+            rm = running_mean.data * (1 - momentum) + momentum * mean.reshape(C)
+            rv = running_var.data * (1 - momentum) + momentum * var.reshape(C)
+            running_mean.data = rm.copy()
+            running_var.data = rv.copy()
+            use_mean = mean
+            use_var = var
+        else:
+            use_mean = running_mean.data.reshape(keep)
+            use_var = running_var.data.reshape(keep)
+        inv = 1.0 / np.sqrt(use_var + eps)
+        xhat = (xd - use_mean) * inv
+        y = xhat * weight.data.reshape(keep) + bias.data.reshape(keep)
+        N = int(np.prod([xd.shape[a] for a in axes]))
+        ctx.save_attr(inv=inv, xhat=xhat, w=weight.data.reshape(keep), axes=axes, N=N, training=training)
+        return Tensor(y, dtype=x.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        g = grad_output.data
+        inv = ctx.get_attr("inv")
+        xhat = ctx.get_attr("xhat")
+        w = ctx.get_attr("w")
+        axes = ctx.get_attr("axes")
+        N = ctx.get_attr("N")
+        training = ctx.get_attr("training")
+        grad_w = (g * xhat).sum(axis=axes)
+        grad_b = g.sum(axis=axes)
+        if training:
+            grad_xhat = g * w
+            dx = N * grad_xhat - grad_xhat.sum(axis=axes, keepdims=True) - xhat * (grad_xhat * xhat).sum(axis=axes, keepdims=True)
+            dx = dx / N * inv
+        else:
+            dx = g * w * inv
+        return [
+            Tensor(dx, dtype=grad_output.dtype),
+            Tensor(grad_w, dtype=grad_output.dtype),
+            Tensor(grad_b, dtype=grad_output.dtype),
+            None,
+            None,
+        ]
+
+
+class GroupNormFn(Function):
+    @staticmethod
+    def forward(ctx, x, weight, bias, num_groups, eps):
+        xd = x.data
+        N, C = xd.shape[0], xd.shape[1]
+        G = num_groups
+        Cg = C // G
+        spatial = xd.shape[2:]
+        xg = xd.reshape(N, G, Cg, *spatial)
+        reduce_axes = tuple(range(2, xg.ndim))  # (Cg, *spatial) within each (n, g)
+        mean = xg.mean(axis=reduce_axes, keepdims=True)
+        var = xg.var(axis=reduce_axes, keepdims=True)
+        xhat = (xg - mean) / np.sqrt(var + eps)
+        xhat = xhat.reshape(xd.shape)
+        keep = (1, C) + (1,) * (xd.ndim - 2)
+        y = xhat * weight.data.reshape(keep) + bias.data.reshape(keep)
+        Nred = int(np.prod(xg.shape[2:]))
+        inv_ch = np.repeat(np.sqrt(var + eps).reshape(N, G, 1, 1), Cg, axis=1).reshape(N, C, 1, 1)  # (N, C, 1, 1)
+        ctx.save_attr(inv=inv_ch, xhat=xhat, w=weight.data.reshape(keep), N=Nred, num_groups=G)
+        return Tensor(y, dtype=x.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        g = grad_output.data
+        inv = ctx.get_attr("inv")
+        xhat = ctx.get_attr("xhat")
+        w = ctx.get_attr("w")
+        N = ctx.get_attr("N")
+        num_groups = ctx.get_attr("num_groups")
+        C = g.shape[1]
+        Cg = C // num_groups
+        spatial = g.shape[2:]
+        gg = g.reshape(-1, num_groups, Cg, *spatial)
+        xh = xhat.reshape(-1, num_groups, Cg, *spatial)
+        inv_g = inv.reshape(g.shape[0], num_groups, Cg, 1, 1)[:, :, 0].reshape(g.shape[0], num_groups, 1, 1, 1)
+        rax = tuple(range(2, gg.ndim))           # (Cg, *spatial) within each (n, g)
+        sum_g = gg.sum(axis=rax, keepdims=True)
+        sum_gx = (gg * xh).sum(axis=rax, keepdims=True)
+        dxg = (N * gg - sum_g - xh * sum_gx) / N / inv_g
+        dx = dxg.reshape(g.shape)
+        sax = tuple(range(3, gg.ndim))           # spatial dims
+        grad_w = (gg * xh).sum(axis=(0,) + sax).reshape(C)
+        grad_b = gg.sum(axis=(0,) + sax).reshape(C)
+        return [
+            Tensor(dx, dtype=grad_output.dtype),
+            Tensor(grad_w, dtype=grad_output.dtype),
+            Tensor(grad_b, dtype=grad_output.dtype),
+            None,
+        ]
+
+
+class _BatchNorm(Module):
+    def __init__(self, num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True):
+        super().__init__()
+        self.num_features = num_features
+        self.eps = eps
+        self.momentum = momentum
+        self.affine = affine
+        self.track_running_stats = track_running_stats
+        if affine:
+            self.weight = Tensor.ones((num_features,))
+            self.weight.requires_grad_(True)
+            self.bias = Tensor.zeros((num_features,))
+            self.bias.requires_grad_(True)
+        if track_running_stats:
+            self.register_buffer("running_mean", Tensor.zeros((num_features,)))
+            self.register_buffer("running_var", Tensor.ones((num_features,)))
+
+    def forward(self, x: Tensor) -> Tensor:
+        training = self._training and self.track_running_stats
+        if self.affine:
+            w, b = self.weight, self.bias
+        else:
+            w = Tensor.ones((self.num_features,))
+            b = Tensor.zeros((self.num_features,))
+        if self.track_running_stats:
+            rm, rv = self.running_mean, self.running_var
+        else:
+            rm = Tensor.zeros((self.num_features,))
+            rv = Tensor.ones((self.num_features,))
+        return BatchNormFn.apply(x, w, b, rm, rv, training, self.momentum, self.eps)
+
+
+class BatchNorm1d(_BatchNorm):
+    pass
+
+
+class BatchNorm2d(_BatchNorm):
+    pass
+
+
+class GroupNorm(Module):
+    def __init__(self, num_groups, num_channels, eps=1e-5, affine=True):
+        super().__init__()
+        self.num_groups = num_groups
+        self.num_channels = num_channels
+        self.eps = eps
+        self.affine = affine
+        if affine:
+            self.weight = Tensor.ones((num_channels,))
+            self.weight.requires_grad_(True)
+            self.bias = Tensor.zeros((num_channels,))
+            self.bias.requires_grad_(True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        if self.affine:
+            w, b = self.weight, self.bias
+        else:
+            w = Tensor.ones((self.num_channels,))
+            b = Tensor.zeros((self.num_channels,))
+        return GroupNormFn.apply(x, w, b, self.num_groups, self.eps)
 
 
 # Parameter initialization namespace (torch.nn.init-compatible).
