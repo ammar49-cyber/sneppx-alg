@@ -932,53 +932,64 @@ class NLLLoss(Function):
     @staticmethod
     def forward(ctx, inp, target):
         x = inp.data
-        t = target.data
-        ctx.save_for_backward(inp=inp, target=target)
+        t = target.data if isinstance(target, Tensor) else np.asarray(target)
+        ctx.save_for_backward(inp=inp)
+        ctx.save_attr(t=t, one_hot=(t.ndim == x.ndim))
         n = x.shape[0] if x.ndim > 1 else 1
         ctx.save_attr(n=n)
-        nll = -np.sum(t * np.log(x + 1e-10), axis=-1 if x.ndim > 1 else 0)
-        return Tensor(np.array([float(np.mean(nll))], dtype=x.dtype), dtype=inp.dtype)
+        if t.ndim == x.ndim:  # one-hot targets
+            nll = -np.sum(t * np.log(x + 1e-12), axis=-1)
+            loss = float(np.mean(nll))
+        else:  # class indices
+            t = t.astype(np.int64)
+            if x.ndim == 1:
+                loss = float(-x[t])
+            else:
+                loss = float(np.mean(-x[np.arange(n), t]))
+        return Tensor(np.array([loss], dtype=x.dtype), dtype=inp.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
         inp = ctx.get_saved_tensor("inp")
-        target = ctx.get_saved_tensor("target")
+        t = ctx.get_attr("t")
+        one_hot = ctx.get_attr("one_hot")
         n = ctx.get_attr("n")
         g = grad_output.data.flat[0]
-        grad_inp = Tensor(
-            -(target.data / (inp.data + 1e-10)) * (g / n), dtype=inp.dtype
-        )
-        grad_target = Tensor(
-            -(np.log(inp.data + 1e-10)) * (g / n), dtype=inp.dtype
-        )
-        return [grad_inp, grad_target]
+        x = inp.data
+        grad_inp = np.zeros_like(x)
+        if one_hot:
+            grad_inp = -(t.astype(np.float64) / (x + 1e-12)) * (g / n)
+            grad_target = -(np.log(x + 1e-12)) * (g / n)
+        else:
+            t = t.astype(np.int64)
+            if x.ndim == 1:
+                grad_inp[t] = -g / n
+            else:
+                grad_inp[np.arange(n), t] = -g / n
+            grad_target = None
+        return [Tensor(grad_inp, dtype=inp.dtype), grad_target]
 
 
 class KLDivLoss(Function):
     @staticmethod
     def forward(ctx, inp, target):
         x = inp.data
-        t = target.data
-        ctx.save_for_backward(inp=inp, target=target)
-        n = x.size
-        ctx.save_attr(n=n)
-        kl = t * (np.log(t + 1e-10) - np.log(x + 1e-10))
+        t = target.data if isinstance(target, Tensor) else np.asarray(target)
+        ctx.save_for_backward(inp=inp)
+        ctx.save_attr(t=t, n=x.size)
+        # input `x` is log-probabilities; target `t` is probabilities.
+        kl = t * (np.log(t + 1e-10) - x)
         return Tensor(np.array([float(np.mean(kl))], dtype=x.dtype), dtype=inp.dtype)
 
     @staticmethod
     def backward(ctx, grad_output):
         inp = ctx.get_saved_tensor("inp")
-        target = ctx.get_saved_tensor("target")
+        t = ctx.get_attr("t")
         n = ctx.get_attr("n")
         g = grad_output.data.flat[0]
-        grad_inp = Tensor(
-            -(target.data / (inp.data + 1e-10)) * (g / n), dtype=inp.dtype
-        )
-        grad_target = Tensor(
-            (np.log(target.data + 1e-10) - np.log(inp.data + 1e-10)) * (g / n),
-            dtype=inp.dtype,
-        )
-        return [grad_inp, grad_target]
+        # kl = t*(log t - x)  =>  d kl/d x = -t ; target is a probability (not diff)
+        grad_inp = Tensor(-(t) * (g / n), dtype=inp.dtype)
+        return [grad_inp, None]
 
 
 class Stack(Function):

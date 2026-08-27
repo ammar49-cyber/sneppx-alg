@@ -1066,6 +1066,122 @@ class GroupNorm(Module):
         return GroupNormFn.apply(x, w, b, self.num_groups, self.eps)
 
 
+# ===========================================================================
+# Loss functions (torch.nn-compatible Module wrappers)
+# ===========================================================================
+
+
+class _Loss(Module):
+    """Base class for loss modules (mirrors torch.nn.modules.loss._Loss)."""
+
+    def __init__(self, reduction: str = "mean"):
+        super().__init__()
+        self.reduction = reduction
+
+
+class MSELoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.mse_loss(target)
+
+
+class L1Loss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.mae_loss(target)
+
+
+class MAELoss(L1Loss):
+    pass
+
+
+class CrossEntropyLoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.cross_entropy(target)
+
+
+class NLLLoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.nll_loss(target)
+
+
+class KLDivLoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.kl_div(target)
+
+
+class BCELoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.bce_loss(target)
+
+
+class BCEWithLogitsLoss(_Loss):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.bce_with_logits_loss(target)
+
+
+class SmoothL1Loss(_Loss):
+    def __init__(self, beta: float = 1.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.beta = beta
+
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.smooth_l1_loss(target, self.beta)
+
+
+class HuberLoss(_Loss):
+    def __init__(self, delta: float = 1.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.delta = delta
+
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.huber_loss(target, self.delta)
+
+
+class FocalLoss(_Loss):
+    def __init__(self, gamma: float = 2.0, alpha: float = 1.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.gamma = gamma
+        self.alpha = alpha
+
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        return input.focal_loss(target, self.gamma, self.alpha)
+
+
+class TripletMarginLoss(_Loss):
+    def __init__(self, margin: float = 1.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.margin = margin
+
+    def forward(self, anchor: Tensor, positive: Tensor, negative: Tensor) -> Tensor:
+        return anchor.triplet_margin_loss(positive, negative, self.margin)
+
+
+class ContrastiveLoss(_Loss):
+    def __init__(self, margin: float = 1.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.margin = margin
+
+    def forward(self, input: Tensor, other: Tensor, y: Tensor) -> Tensor:
+        return input.contrastive_loss(other, y, self.margin)
+
+
+class MarginRankingLoss(_Loss):
+    def __init__(self, margin: float = 0.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.margin = margin
+
+    def forward(self, input: Tensor, other: Tensor, y: Tensor) -> Tensor:
+        return input.margin_ranking_loss(other, y, self.margin)
+
+
+class CosineEmbeddingLoss(_Loss):
+    def __init__(self, margin: float = 0.0, reduction: str = "mean"):
+        super().__init__(reduction)
+        self.margin = margin
+
+    def forward(self, input: Tensor, other: Tensor, y: Tensor) -> Tensor:
+        return input.cosine_embedding_loss(other, y, self.margin)
+
+
 # Parameter initialization namespace (torch.nn.init-compatible).
 from .nn_init import (  # noqa: E402,F401
     zeros_ as _zeros_,
