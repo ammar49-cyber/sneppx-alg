@@ -589,10 +589,55 @@ class Tensor:
 
         return KLDivLoss.apply(self, target)
 
+    def smooth_l1_loss(self, target, beta=1.0):
+        from .autograd_ops import SmoothL1Loss
+
+        return SmoothL1Loss.apply(self, target, beta)
+
+    def huber_loss(self, target, delta=1.0):
+        from .autograd_ops import HuberLoss
+
+        return HuberLoss.apply(self, target, delta)
+
+    def bce_loss(self, target):
+        from .autograd_ops import BCELoss
+
+        return BCELoss.apply(self, target)
+
+    def bce_with_logits_loss(self, target):
+        from .autograd_ops import BCEWithLogitsLoss
+
+        return BCEWithLogitsLoss.apply(self, target)
+
     def binary_cross_entropy(self, target):
-        p = np.clip(self.data, 1e-10, 1 - 1e-10)
-        loss = -np.mean(target.data * np.log(p) + (1 - target.data) * np.log(1 - p))
-        return Tensor(np.array([loss]), dtype="float32")
+        from .autograd_ops import BCELoss
+
+        return BCELoss.apply(self, target)
+
+    def focal_loss(self, target, gamma=2.0, alpha=1.0):
+        from .autograd_ops import FocalLoss
+
+        return FocalLoss.apply(self, target, gamma, alpha)
+
+    def triplet_margin_loss(self, positive, negative, margin=1.0):
+        from .autograd_ops import TripletMarginLoss
+
+        return TripletMarginLoss.apply(self, positive, negative, margin)
+
+    def contrastive_loss(self, other, y, margin=1.0):
+        from .autograd_ops import ContrastiveLoss
+
+        return ContrastiveLoss.apply(self, other, y, margin)
+
+    def cosine_embedding_loss(self, other, y, margin=0.0):
+        from .autograd_ops import CosineEmbeddingLoss
+
+        return CosineEmbeddingLoss.apply(self, other, y, margin)
+
+    def margin_ranking_loss(self, other, y, margin=0.0):
+        from .autograd_ops import MarginRankingLoss
+
+        return MarginRankingLoss.apply(self, other, y, margin)
 
     def conv1d(self, kernel, stride=1, padding=0):
         from .autograd_ops import Conv1d

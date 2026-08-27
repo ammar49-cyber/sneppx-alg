@@ -1017,6 +1017,278 @@ class Cat(Function):
         return [Tensor(g.copy(), dtype=grad_output.dtype) for g in grads]
 
 
+# ===========================================================================
+#  Additional Loss Ops (smooth L1, BCE, focal, ranking, embedding, triplet)
+# ===========================================================================
+
+
+class SmoothL1Loss(Function):
+    @staticmethod
+    def forward(ctx, inp, target, beta=1.0):
+        x = inp.data - target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        ctx.save_attr(beta=beta, n=x.size)
+        absx = np.abs(x)
+        loss = np.where(absx < beta, 0.5 * x**2 / beta, absx - 0.5 * beta)
+        return Tensor(np.array([float(np.mean(loss))], dtype=x.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        beta = ctx.get_attr("beta")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        x = inp.data - target.data
+        absx = np.abs(x)
+        grad_x = np.where(absx < beta, x / beta, np.sign(x)) / n * g
+        return [Tensor(grad_x, dtype=inp.dtype), Tensor(-grad_x, dtype=inp.dtype)]
+
+
+class HuberLoss(Function):
+    @staticmethod
+    def forward(ctx, inp, target, delta=1.0):
+        x = inp.data - target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        ctx.save_attr(delta=delta, n=x.size)
+        absx = np.abs(x)
+        loss = np.where(absx <= delta, 0.5 * x**2, delta * (absx - 0.5 * delta))
+        return Tensor(np.array([float(np.mean(loss))], dtype=x.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        delta = ctx.get_attr("delta")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        x = inp.data - target.data
+        absx = np.abs(x)
+        grad_x = np.where(absx <= delta, x, delta * np.sign(x)) / n * g
+        return [Tensor(grad_x, dtype=inp.dtype), Tensor(-grad_x, dtype=inp.dtype)]
+
+
+class BCELoss(Function):
+    @staticmethod
+    def forward(ctx, inp, target):
+        x = inp.data
+        t = target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        n = x.size
+        ctx.save_attr(n=n)
+        loss = -(t * np.log(x + 1e-10) + (1 - t) * np.log(1 - x + 1e-10))
+        return Tensor(np.array([float(np.mean(loss))], dtype=x.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        x = inp.data
+        t = target.data
+        grad_in = (x - t) / (x * (1 - x) + 1e-10) / n * g
+        grad_t = -(np.log(x + 1e-10) - np.log(1 - x + 1e-10)) / n * g
+        return [Tensor(grad_in, dtype=inp.dtype), Tensor(grad_t, dtype=inp.dtype)]
+
+
+class BCEWithLogitsLoss(Function):
+    @staticmethod
+    def forward(ctx, inp, target):
+        z = inp.data
+        t = target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        n = z.size
+        ctx.save_attr(n=n)
+        z = np.clip(z, -30, 30)
+        sig = 1.0 / (1.0 + np.exp(-z))
+        loss = -(t * np.log(sig + 1e-10) + (1 - t) * np.log(1 - sig + 1e-10))
+        return Tensor(np.array([float(np.mean(loss))], dtype=z.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        z = np.clip(inp.data, -30, 30)
+        sig = 1.0 / (1.0 + np.exp(-z))
+        grad_in = (sig - target.data) / n * g
+        return [Tensor(grad_in, dtype=inp.dtype), None]
+
+
+class FocalLoss(Function):
+    """Focal loss over class logits (target = integer class indices)."""
+
+    @staticmethod
+    def forward(ctx, logits, target, gamma=2.0, alpha=1.0):
+        z = logits.data.astype(np.float64)
+        t = target.data.astype(np.int64).ravel()
+        zmax = z.max(axis=-1, keepdims=True)
+        e = np.exp(z - zmax)
+        p = e / e.sum(axis=-1, keepdims=True)
+        n = z.shape[0]
+        pt = p[np.arange(n), t]
+        loss = -alpha * (1 - pt) ** gamma * np.log(pt + 1e-10)
+        ctx.save_for_backward(logits=logits, target=target)
+        ctx.save_attr(gamma=gamma, alpha=alpha, n=n, p=p, pt=pt)
+        return Tensor(np.array([float(np.mean(loss))], dtype=z.dtype), dtype=logits.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        logits = ctx.get_saved_tensor("logits")
+        target = ctx.get_saved_tensor("target")
+        gamma = ctx.get_attr("gamma")
+        alpha = ctx.get_attr("alpha")
+        n = ctx.get_attr("n")
+        p = ctx.get_attr("p")
+        pt = ctx.get_attr("pt")
+        g = grad_output.data.flat[0]
+        t = target.data.astype(np.int64).ravel()
+        onehot = np.zeros_like(p)
+        onehot[np.arange(n), t] = 1.0
+        f = gamma * pt * (1 - pt) ** (gamma - 1) * np.log(pt + 1e-10) - (1 - pt) ** gamma
+        grad_z = alpha * (onehot - p) * f[:, None] / n * g
+        return [Tensor(grad_z.astype(np.float64), dtype=logits.dtype), None]
+
+
+class CosineEmbeddingLoss(Function):
+    @staticmethod
+    def forward(ctx, x1, x2, y, margin=0.0):
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.int64)
+        na = np.linalg.norm(a, axis=-1, keepdims=True) + 1e-10
+        nb = np.linalg.norm(b, axis=-1, keepdims=True) + 1e-10
+        cos = np.sum(a * b, axis=-1) / (na.ravel() * nb.ravel())
+        loss = np.where(yy == 1, 1 - cos, np.maximum(0.0, cos - margin))
+        ctx.save_for_backward(x1=x1, x2=x2, y=y)
+        ctx.save_attr(margin=margin, n=a.shape[0], cos=cos, na=na, nb=nb)
+        return Tensor(np.array([float(np.mean(loss))], dtype=a.dtype), dtype=x1.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x1 = ctx.get_saved_tensor("x1")
+        x2 = ctx.get_saved_tensor("x2")
+        y = ctx.get_saved_tensor("y")
+        margin = ctx.get_attr("margin")
+        n = ctx.get_attr("n")
+        cos = ctx.get_attr("cos")
+        na = ctx.get_attr("na")
+        nb = ctx.get_attr("nb")
+        g = grad_output.data.flat[0]
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.int64)
+        da = b / (na * nb) - cos[:, None] * a / na**2
+        db = a / (na * nb) - cos[:, None] * b / nb**2
+        active = (yy != 1) & (cos > margin)
+        ga = np.where(yy[:, None] == 1, -da, np.where(active[:, None], da, 0.0)) / n * g
+        gb = np.where(yy[:, None] == 1, -db, np.where(active[:, None], db, 0.0)) / n * g
+        return [Tensor(ga, dtype=x1.dtype), Tensor(gb, dtype=x1.dtype), None]
+
+
+class TripletMarginLoss(Function):
+    @staticmethod
+    def forward(ctx, anchor, positive, negative, margin=1.0, p=2):
+        a = anchor.data
+        pos = positive.data
+        neg = negative.data
+        d_ap = np.linalg.norm(a - pos, axis=-1) + 1e-10
+        d_an = np.linalg.norm(a - neg, axis=-1) + 1e-10
+        hinge = d_ap - d_an + margin
+        loss = np.maximum(0.0, hinge)
+        ctx.save_for_backward(anchor=anchor, positive=positive, negative=negative)
+        ctx.save_attr(margin=margin, n=a.shape[0], d_ap=d_ap, d_an=d_an)
+        return Tensor(np.array([float(np.mean(loss))], dtype=a.dtype), dtype=anchor.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        anchor = ctx.get_saved_tensor("anchor")
+        positive = ctx.get_saved_tensor("positive")
+        negative = ctx.get_saved_tensor("negative")
+        margin = ctx.get_attr("margin")
+        n = ctx.get_attr("n")
+        d_ap = ctx.get_attr("d_ap")
+        d_an = ctx.get_attr("d_an")
+        g = grad_output.data.flat[0]
+        a = anchor.data
+        pos = positive.data
+        neg = negative.data
+        hinge = d_ap - d_an + margin
+        active = (hinge > 0).astype(np.float64)[:, None]
+        ga = active * ((a - pos) / d_ap[:, None] - (a - neg) / d_an[:, None]) / n * g
+        gp = active * (-(a - pos) / d_ap[:, None]) / n * g
+        gn = active * ((a - neg) / d_an[:, None]) / n * g
+        return [Tensor(ga, dtype=anchor.dtype), Tensor(gp, dtype=anchor.dtype), Tensor(gn, dtype=anchor.dtype), None]
+
+
+class ContrastiveLoss(Function):
+    @staticmethod
+    def forward(ctx, x1, x2, y, margin=1.0):
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.int64)
+        d = np.linalg.norm(a - b, axis=-1) + 1e-10
+        sim = (1 - yy) * np.maximum(0.0, margin - d) ** 2
+        loss = yy * d**2 + sim
+        ctx.save_for_backward(x1=x1, x2=x2, y=y)
+        ctx.save_attr(margin=margin, n=a.shape[0], d=d)
+        return Tensor(np.array([float(np.mean(loss))], dtype=a.dtype), dtype=x1.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x1 = ctx.get_saved_tensor("x1")
+        x2 = ctx.get_saved_tensor("x2")
+        y = ctx.get_saved_tensor("y")
+        margin = ctx.get_attr("margin")
+        n = ctx.get_attr("n")
+        d = ctx.get_attr("d")
+        g = grad_output.data.flat[0]
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.float64)
+        diff = a - b
+        dn = d[:, None]
+        dd_ddiff = diff / dn
+        grad_d2 = yy[:, None] * 2.0 * diff
+        mask = (d < margin)[:, None]
+        grad_sim = (1 - yy)[:, None] * np.where(
+            mask, -2.0 * (margin - d)[:, None] * dd_ddiff, 0.0
+        )
+        ga = (grad_d2 + grad_sim) / n * g
+        gb = -ga
+        return [Tensor(ga, dtype=x1.dtype), Tensor(gb, dtype=x1.dtype), None]
+
+
+class MarginRankingLoss(Function):
+    @staticmethod
+    def forward(ctx, x1, x2, y, margin=0.0):
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.float64)
+        loss = np.maximum(0.0, -yy * (a - b) + margin)
+        ctx.save_for_backward(x1=x1, x2=x2, y=y)
+        ctx.save_attr(margin=margin, n=a.size)
+        return Tensor(np.array([float(np.mean(loss))], dtype=a.dtype), dtype=x1.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x1 = ctx.get_saved_tensor("x1")
+        x2 = ctx.get_saved_tensor("x2")
+        y = ctx.get_saved_tensor("y")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        a = x1.data
+        b = x2.data
+        yy = y.data.ravel().astype(np.float64)
+        hinge = -yy * (a - b) + ctx.get_attr("margin")
+        active = (hinge > 0).astype(np.float64)
+        grad_a = (active * (-yy)) / n * g
+        grad_b = (active * (yy)) / n * g
+        return [Tensor(grad_a, dtype=x1.dtype), Tensor(grad_b, dtype=x1.dtype), None]
+
+
 __all__ = [
     "Add",
     "Stack",
@@ -1058,4 +1330,13 @@ __all__ = [
     "CrossEntropyLoss",
     "NLLLoss",
     "KLDivLoss",
+    "SmoothL1Loss",
+    "HuberLoss",
+    "BCELoss",
+    "BCEWithLogitsLoss",
+    "FocalLoss",
+    "CosineEmbeddingLoss",
+    "TripletMarginLoss",
+    "ContrastiveLoss",
+    "MarginRankingLoss",
 ]
