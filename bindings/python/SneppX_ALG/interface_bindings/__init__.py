@@ -1593,6 +1593,7 @@ def __getattr__(name):
         'nn': '.nn',
         'optim': '.optim',
         'train': '.train',
+        'functional': '.functional',
         'Tensor': '.tensor',
         'Parameter': '.tensor',
         'Linear': '.nn',
