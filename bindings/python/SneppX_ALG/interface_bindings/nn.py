@@ -34,14 +34,24 @@ class Module:
     def __init__(self):
         self._parameters = {}
         self._modules = {}
+        self._buffers = {}
         self._training = True
         self._name = self.__class__.__name__
+        self._forward_hooks = {}
+        self._forward_pre_hooks = {}
+        self._backward_hooks = {}
+        self._hook_count = 0
 
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError
 
     def __call__(self, *args, **kwargs) -> Tensor:
-        return self.forward(*args, **kwargs)
+        if args:
+            self._run_forward_pre_hooks(args[0])
+        output = self.forward(*args, **kwargs)
+        if args:
+            self._run_forward_hooks(args[0], output)
+        return output
 
     def parameters(self):
         params = []
@@ -52,26 +62,71 @@ class Module:
             params.extend(m.parameters())
         return params
 
-    def named_parameters(self):
+    def named_parameters(self, prefix=""):
         named = []
         for name, p in self._parameters.items():
             if isinstance(p, Tensor):
-                named.append((name, p))
+                named.append((f"{prefix}.{name}" if prefix else name, p))
         for name, m in self._modules.items():
-            for n, p in m.named_parameters():
-                named.append((f"{name}.{n}", p))
+            for n, p in m.named_parameters(f"{prefix}.{name}" if prefix else name):
+                named.append((n, p))
         return named
+
+    def register_buffer(self, name: str, tensor) -> None:
+        object.__setattr__(self, name, tensor)
+        self._buffers[name] = tensor
+
+    def named_buffers(self):
+        named = []
+        for name, b in self._buffers.items():
+            if isinstance(b, Tensor):
+                named.append((name, b))
+        for name, m in self._modules.items():
+            for n, b in m.named_buffers():
+                named.append((f"{name}.{n}", b))
+        return named
+
+    def buffers(self):
+        return [b for _, b in self.named_buffers()]
+
+    def register_forward_pre_hook(self, hook) -> int:
+        self._hook_count += 1
+        self._forward_pre_hooks[self._hook_count] = hook
+        return self._hook_count
+
+    def register_forward_hook(self, hook) -> int:
+        self._hook_count += 1
+        self._forward_hooks[self._hook_count] = hook
+        return self._hook_count
+
+    def register_full_backward_hook(self, hook) -> int:
+        self._hook_count += 1
+        self._backward_hooks[self._hook_count] = hook
+        return self._hook_count
+
+    def _run_forward_pre_hooks(self, x):
+        for hook in self._forward_pre_hooks.values():
+            hook(self, x)
+
+    def _run_forward_hooks(self, x, output):
+        for hook in self._forward_hooks.values():
+            hook(self, x, output)
 
     def state_dict(self) -> dict:
         sd = {}
         for name, p in self.named_parameters():
             sd[name] = p.data.copy()
+        for name, b in self.named_buffers():
+            sd[name] = b.data.copy()
         return sd
 
     def load_state_dict(self, state_dict: dict):
         for name, p in self.named_parameters():
             if name in state_dict:
                 p.data = state_dict[name]
+        for name, b in self.named_buffers():
+            if name in state_dict:
+                b.data = state_dict[name]
 
     def to(self, device: str):
         for p in self.parameters():
@@ -80,6 +135,10 @@ class Module:
                 p._data = p._data  # Keep the same data buffer
                 p._data._is_cuda = device.startswith("cuda")
                 p.device = device
+        for b in self.buffers():
+            if b.device != device:
+                b._data._is_cuda = device.startswith("cuda")
+                b.device = device
         return self
 
     def train(self):
@@ -460,3 +519,396 @@ class Transformer(Module):
         x = self.blocks(x)
         x = self.norm(x)
         return self.lm_head(x)
+
+
+class ModuleList(Module):
+    """Holds submodules in a list; recurses parameter/buffer/hook traversal."""
+
+    def __init__(self, modules=None):
+        super().__init__()
+        self._list = []
+        if modules is not None:
+            for m in modules:
+                self.append(m)
+
+    def append(self, module):
+        self._list.append(module)
+        return module
+
+    def __getitem__(self, i):
+        return self._list[i]
+
+    def __setitem__(self, i, module):
+        self._list[i] = module
+
+    def __len__(self):
+        return len(self._list)
+
+    def __iter__(self):
+        return iter(self._list)
+
+    def parameters(self):
+        params = []
+        for m in self._list:
+            params.extend(m.parameters())
+        return params
+
+    def named_parameters(self, prefix=""):
+        named = []
+        for i, m in enumerate(self._list):
+            p = f"{prefix}.{i}" if prefix else str(i)
+            if hasattr(m, "named_parameters"):
+                named.extend(m.named_parameters(p))
+            elif isinstance(m, Tensor):
+                named.append((p, m))
+        return named
+
+    def named_buffers(self):
+        named = []
+        for i, m in enumerate(self._list):
+            if hasattr(m, "named_buffers"):
+                for n, b in m.named_buffers():
+                    named.append((f"{i}.{n}", b))
+        return named
+
+    def state_dict(self) -> dict:
+        sd = {}
+        for i, m in enumerate(self._list):
+            if hasattr(m, "state_dict"):
+                for k, v in m.state_dict().items():
+                    sd[f"{i}.{k}"] = v
+        return sd
+
+    def load_state_dict(self, state_dict: dict):
+        for i, m in enumerate(self._list):
+            if hasattr(m, "load_state_dict"):
+                sub = {k[len(f"{i}."):]: v for k, v in state_dict.items() if k.startswith(f"{i}.")}
+                m.load_state_dict(sub)
+
+    def to(self, device: str):
+        for m in self._list:
+            if hasattr(m, "to"):
+                m.to(device)
+        return self
+
+    def train(self):
+        self._training = True
+        for m in self._list:
+            m.train()
+
+    def eval(self):
+        self._training = False
+        for m in self._list:
+            m.eval()
+
+    def forward(self, x: Tensor) -> Tensor:
+        for m in self._list:
+            x = m(x)
+        return x
+
+
+class ModuleDict(Module):
+    """Holds submodules in a dict; recurses parameter/buffer/hook traversal."""
+
+    def __init__(self, modules=None):
+        super().__init__()
+        self._dict = {}
+        if modules is not None:
+            self._dict.update(modules)
+
+    def __getitem__(self, k):
+        return self._dict[k]
+
+    def __setitem__(self, k, v):
+        self._dict[k] = v
+
+    def keys(self):
+        return self._dict.keys()
+
+    def values(self):
+        return self._dict.values()
+
+    def parameters(self):
+        params = []
+        for m in self._dict.values():
+            params.extend(m.parameters())
+        return params
+
+    def named_parameters(self, prefix=""):
+        named = []
+        for k, m in self._dict.items():
+            p = f"{prefix}.{k}" if prefix else str(k)
+            if hasattr(m, "named_parameters"):
+                named.extend(m.named_parameters(p))
+            elif isinstance(m, Tensor):
+                named.append((p, m))
+        return named
+
+    def named_buffers(self):
+        named = []
+        for k, m in self._dict.items():
+            if hasattr(m, "named_buffers"):
+                for n, b in m.named_buffers():
+                    named.append((f"{k}.{n}", b))
+        return named
+
+    def state_dict(self) -> dict:
+        sd = {}
+        for k, m in self._dict.items():
+            if hasattr(m, "state_dict"):
+                for kk, v in m.state_dict().items():
+                    sd[f"{k}.{kk}"] = v
+        return sd
+
+    def load_state_dict(self, state_dict: dict):
+        for k, m in self._dict.items():
+            if hasattr(m, "load_state_dict"):
+                sub = {kk[len(f"{k}."):]: v for kk, v in state_dict.items() if kk.startswith(f"{k}.")}
+                m.load_state_dict(sub)
+
+    def to(self, device: str):
+        for m in self._dict.values():
+            if hasattr(m, "to"):
+                m.to(device)
+        return self
+
+    def train(self):
+        self._training = True
+        for m in self._dict.values():
+            m.train()
+
+    def eval(self):
+        self._training = False
+        for m in self._dict.values():
+            m.eval()
+
+    def forward(self, x: Tensor) -> Tensor:
+        raise NotImplementedError("ModuleDict has no default forward; index modules explicitly.")
+
+
+# ===========================================================================
+#  Recurrent layers: RNN / GRU / LSTM (pure-NumPy, autograd-aware)
+# ===========================================================================
+
+
+class RNNCell(Module):
+    def __init__(self, input_size, hidden_size, bias=True, nonlinearity="tanh"):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+        self.nonlinearity = nonlinearity
+        self.weight_ih = Tensor.randn((hidden_size, input_size)) * 0.1
+        self.weight_hh = Tensor.randn((hidden_size, hidden_size)) * 0.1
+        if bias:
+            self.bias_ih = Tensor.zeros((hidden_size,))
+            self.bias_hh = Tensor.zeros((hidden_size,))
+        else:
+            self.bias_ih = None
+            self.bias_hh = None
+
+    def forward(self, x: Tensor, h: Tensor) -> Tensor:
+        lin = x @ self.weight_ih.T
+        if self.bias_ih is not None:
+            lin = lin + self.bias_ih
+        lin = lin + (h @ self.weight_hh.T)
+        if self.bias_hh is not None:
+            lin = lin + self.bias_hh
+        if self.nonlinearity == "relu":
+            return lin.relu()
+        return lin.tanh()
+
+
+class LSTMCell(Module):
+    def __init__(self, input_size, hidden_size, bias=True):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+        self.weight_ih = Tensor.randn((4 * hidden_size, input_size)) * 0.1
+        self.weight_hh = Tensor.randn((4 * hidden_size, hidden_size)) * 0.1
+        if bias:
+            self.bias_ih = Tensor.zeros((4 * hidden_size,))
+            self.bias_hh = Tensor.zeros((4 * hidden_size,))
+        else:
+            self.bias_ih = None
+            self.bias_hh = None
+
+    def forward(self, x: Tensor, hc) -> tuple:
+        h, c = hc
+        lin = x @ self.weight_ih.T
+        if self.bias_ih is not None:
+            lin = lin + self.bias_ih
+        lin = lin + (h @ self.weight_hh.T)
+        if self.bias_hh is not None:
+            lin = lin + self.bias_hh
+        i, f, g, o = lin[:, : self.hidden_size], lin[:, self.hidden_size:2 * self.hidden_size], \
+            lin[:, 2 * self.hidden_size:3 * self.hidden_size], lin[:, 3 * self.hidden_size:]
+        i = i.sigmoid()
+        f = f.sigmoid()
+        g = g.tanh()
+        o = o.sigmoid()
+        c_new = f * c + i * g
+        h_new = o * c_new.tanh()
+        return h_new, c_new
+
+
+class GRUCell(Module):
+    def __init__(self, input_size, hidden_size, bias=True):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+        self.weight_ih = Tensor.randn((3 * hidden_size, input_size)) * 0.1
+        self.weight_hh = Tensor.randn((3 * hidden_size, hidden_size)) * 0.1
+        if bias:
+            self.bias_ih = Tensor.zeros((3 * hidden_size,))
+            self.bias_hh = Tensor.zeros((3 * hidden_size,))
+        else:
+            self.bias_ih = None
+            self.bias_hh = None
+
+    def forward(self, x: Tensor, h: Tensor) -> Tensor:
+        lin_ih = x @ self.weight_ih.T
+        if self.bias_ih is not None:
+            lin_ih = lin_ih + self.bias_ih
+        lin_hh = h @ self.weight_hh.T
+        if self.bias_hh is not None:
+            lin_hh = lin_hh + self.bias_hh
+        r = (lin_ih[:, : self.hidden_size] + lin_hh[:, : self.hidden_size]).sigmoid()
+        z = (lin_ih[:, self.hidden_size:2 * self.hidden_size] + lin_hh[:, self.hidden_size:2 * self.hidden_size]).sigmoid()
+        n = (lin_ih[:, 2 * self.hidden_size:] + r * lin_hh[:, 2 * self.hidden_size:]).tanh()
+        return (1 - z) * n + z * h
+
+
+class RNN(Module):
+    def __init__(self, input_size, hidden_size, num_layers=1, nonlinearity="tanh",
+                 bias=True, batch_first=False, dropout=0.0):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.batch_first = batch_first
+        self.dropout = dropout
+        self.layers = ModuleList(
+            [RNNCell(input_size if i == 0 else hidden_size, hidden_size, bias, nonlinearity)
+             for i in range(num_layers)]
+        )
+
+    def forward(self, x: Tensor, h0=None):
+        if self.batch_first:
+            x = x.transpose(1, 0) if x.ndim == 3 else x
+        T = x.shape[0]
+        batch = x.shape[1]
+        if h0 is None:
+            h = [Tensor.zeros((batch, self.hidden_size)) for _ in range(self.num_layers)]
+        else:
+            h = [h0[i] for i in range(self.num_layers)]
+        outputs = []
+        for t in range(T):
+            xt = x[t]
+            for l in range(self.num_layers):
+                h[l] = self.layers[l](xt, h[l])
+                xt = h[l]
+            outputs.append(h[-1])
+        out = Tensor.stack(outputs)  # (T, batch, hidden)
+        if self.batch_first:
+            out = out.transpose(1, 0)
+        h_n = Tensor.stack(h)  # (num_layers, batch, hidden)
+        return out, h_n
+
+
+class LSTM(Module):
+    def __init__(self, input_size, hidden_size, num_layers=1, bias=True,
+                 batch_first=False, dropout=0.0):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.batch_first = batch_first
+        self.dropout = dropout
+        self.layers = ModuleList(
+            [LSTMCell(input_size if i == 0 else hidden_size, hidden_size, bias)
+             for i in range(num_layers)]
+        )
+
+    def forward(self, x: Tensor, hc0=None):
+        if self.batch_first:
+            x = x.transpose(1, 0)
+        T = x.shape[0]
+        batch = x.shape[1]
+        if hc0 is None:
+            h = [Tensor.zeros((batch, self.hidden_size)) for _ in range(self.num_layers)]
+            c = [Tensor.zeros((batch, self.hidden_size)) for _ in range(self.num_layers)]
+        else:
+            h = [hc0[0][i] for i in range(self.num_layers)]
+            c = [hc0[1][i] for i in range(self.num_layers)]
+        outputs = []
+        for t in range(T):
+            xt = x[t]
+            for l in range(self.num_layers):
+                h[l], c[l] = self.layers[l](xt, (h[l], c[l]))
+                xt = h[l]
+            outputs.append(h[-1])
+        out = Tensor.stack(outputs)
+        if self.batch_first:
+            out = out.transpose(1, 0)
+        h_n = Tensor.stack(h)
+        c_n = Tensor.stack(c)
+        return out, (h_n, c_n)
+
+
+class GRU(Module):
+    def __init__(self, input_size, hidden_size, num_layers=1, bias=True,
+                 batch_first=False, dropout=0.0):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.batch_first = batch_first
+        self.dropout = dropout
+        self.layers = ModuleList(
+            [GRUCell(input_size if i == 0 else hidden_size, hidden_size, bias)
+             for i in range(num_layers)]
+        )
+
+    def forward(self, x: Tensor, h0=None):
+        if self.batch_first:
+            x = x.transpose(1, 0)
+        T = x.shape[0]
+        batch = x.shape[1]
+        if h0 is None:
+            h = [Tensor.zeros((batch, self.hidden_size)) for _ in range(self.num_layers)]
+        else:
+            h = [h0[i] for i in range(self.num_layers)]
+        outputs = []
+        for t in range(T):
+            xt = x[t]
+            for l in range(self.num_layers):
+                h[l] = self.layers[l](xt, h[l])
+                xt = h[l]
+            outputs.append(h[-1])
+        out = Tensor.stack(outputs)
+        if self.batch_first:
+            out = out.transpose(1, 0)
+        h_n = Tensor.stack(h)
+        return out, h_n
+
+
+# Parameter initialization namespace (torch.nn.init-compatible).
+from .nn_init import (  # noqa: E402,F401
+    zeros_ as _zeros_,
+    ones_ as _ones_,
+    constant_ as _constant_,
+    uniform_ as _uniform_,
+    normal_ as _normal_,
+    xavier_uniform_ as _xavier_uniform_,
+    xavier_normal_ as _xavier_normal_,
+    kaiming_uniform_ as _kaiming_uniform_,
+    kaiming_normal_ as _kaiming_normal_,
+    trunc_normal_ as _trunc_normal_,
+    calculate_gain as _calculate_gain,
+)
+
+from . import nn_init as init  # noqa: E402,F401
+

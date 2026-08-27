@@ -1,17 +1,56 @@
 """Optimizer Module — pure Python optimizers for pybind11-backed Tensor."""
 
-from typing import Callable, List, Optional, Iterator
+from typing import Callable, List, Optional, Iterator, Dict, Any
 from .tensor import Tensor
 from .nn import Module
 import numpy as np
 
+# Lion/LAMB are the canonical research-grade implementations in optim_extra;
+# re-export here so `from .optim import Lion, LAMB` keeps working.
+from .optim_extra import Lion, LAMB  # noqa: F401
+
 
 class Optimizer:
-    def __init__(self, params: Iterator[Tensor], lr: float, weight_decay: float = 0.0):
-        self.params = list(params)
+    def __init__(self, params: Iterator[Tensor], lr: float, weight_decay: float = 0.0, **kwargs):
         self.lr = lr
         self.weight_decay = weight_decay
+        self.defaults: Dict[str, Any] = {"lr": lr, "weight_decay": weight_decay, **kwargs}
+        self.param_groups = self._build_param_groups(params, lr, weight_decay, **kwargs)
+        self.params = [p for g in self.param_groups for p in g["params"]]
         self.state = [{} for _ in self.params]
+
+    @staticmethod
+    def _build_param_groups(params, lr, weight_decay, **kwargs) -> List[Dict[str, Any]]:
+        if params is None:
+            return []
+        # Support pass-in as a list of param groups (dicts) for per-group options.
+        if (
+            isinstance(params, (list, tuple))
+            and len(params) > 0
+            and isinstance(params[0], dict)
+            and "params" in params[0]
+        ):
+            groups: List[Dict[str, Any]] = []
+            for g in params:
+                grp = {
+                    "params": list(g["params"]),
+                    "lr": g.get("lr", lr),
+                    "weight_decay": g.get("weight_decay", weight_decay),
+                }
+                for k, v in g.items():
+                    if k not in ("params", "lr", "weight_decay"):
+                        grp[k] = v
+                groups.append(grp)
+            return groups
+        return [{"params": list(params), "lr": lr, "weight_decay": weight_decay}]
+
+    def _enumerate(self):
+        """Yield (flat_index, param, group) for every parameter."""
+        idx = 0
+        for group in self.param_groups:
+            for p in group["params"]:
+                yield idx, p, group
+                idx += 1
 
     def zero_grad(self):
         for p in self.params:
@@ -46,24 +85,41 @@ class Optimizer:
 
 class SGD(Optimizer):
     def __init__(
-        self, params, lr: float = 0.01, momentum: float = 0.0, weight_decay: float = 0.0
+        self,
+        params,
+        lr: float = 0.01,
+        momentum: float = 0.0,
+        weight_decay: float = 0.0,
+        dampening: float = 0.0,
+        nesterov: bool = False,
     ):
-        super().__init__(params, lr, weight_decay)
+        super().__init__(params, lr, weight_decay, momentum=momentum, dampening=dampening, nesterov=nesterov)
         self.momentum = momentum
+        self.dampening = dampening
+        self.nesterov = nesterov
 
     def step(self):
-        for i, p in enumerate(self.params):
+        for i, p, group in self._enumerate():
             if p.grad is None:
                 continue
-            g = p.grad.data + self.weight_decay * p.data
+            g = p.grad.data + group.get("weight_decay", 0.0) * p.data
             if self.momentum > 0:
                 if "momentum_buf" not in self.state[i]:
                     self.state[i]["momentum_buf"] = np.zeros_like(g)
-                buf = self.state[i]["momentum_buf"]
-                buf = self.momentum * buf + g
+                buf = self.momentum * self.state[i]["momentum_buf"] + (1 - self.dampening) * g
                 self.state[i]["momentum_buf"] = buf
-                g = buf
-            p.data = p.data - self.lr * g
+                if self.nesterov:
+                    g = g + self.momentum * buf
+                else:
+                    g = buf
+            p.data = p.data - group.get("lr", self.lr) * g
+
+
+class NesterovSGD(SGD):
+    """SGD with Nesterov momentum (convenience alias)."""
+
+    def __init__(self, params, lr: float = 0.01, momentum: float = 0.9, weight_decay: float = 0.0):
+        super().__init__(params, lr, momentum=momentum, weight_decay=weight_decay, nesterov=True)
 
 
 class AdamW(Optimizer):
@@ -75,7 +131,7 @@ class AdamW(Optimizer):
         eps: float = 1e-8,
         weight_decay: float = 0.01,
     ):
-        super().__init__(params, lr, weight_decay)
+        super().__init__(params, lr, weight_decay, betas=betas, eps=eps)
         self.betas = betas
         self.eps = eps
         self._step = 0
@@ -95,7 +151,7 @@ class AdamW(Optimizer):
 
     def step(self):
         self._step += 1
-        for i, p in enumerate(self.params):
+        for i, p, group in self._enumerate():
             if p.grad is None:
                 continue
             g = p.grad.data
@@ -110,70 +166,145 @@ class AdamW(Optimizer):
             self.state[i]["exp_avg_sq"] = v
             m_hat = m / (1 - self.betas[0] ** self._step)
             v_hat = v / (1 - self.betas[1] ** self._step)
-            p.data = p.data - self.lr * self.weight_decay * p.data
-            p.data = p.data - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
+            lr = group.get("lr", self.lr)
+            wd = group.get("weight_decay", self.weight_decay)
+            p.data = p.data - lr * wd * p.data
+            p.data = p.data - lr * m_hat / (np.sqrt(v_hat) + self.eps)
 
 
-class Lion(Optimizer):
-    def __init__(
-        self, params, lr: float = 0.0001, betas=(0.9, 0.99), weight_decay: float = 0.0
-    ):
-        super().__init__(params, lr, weight_decay)
-        self.betas = betas
-
-    def step(self):
-        for i, p in enumerate(self.params):
-            if p.grad is None:
-                continue
-            g = p.grad.data
-            if "momentum" not in self.state[i]:
-                self.state[i]["momentum"] = np.zeros_like(g)
-            m = self.state[i]["momentum"]
-            update = self.betas[0] * m + (1 - self.betas[0]) * g
-            m = self.betas[1] * m + (1 - self.betas[1]) * g
-            self.state[i]["momentum"] = m
-            p.data = p.data - self.lr * self.weight_decay * p.data
-            p.data = p.data - self.lr * np.sign(update)
-
-
-class LAMB(Optimizer):
+class RMSprop(Optimizer):
     def __init__(
         self,
         params,
-        lr: float = 0.001,
+        lr: float = 0.01,
+        alpha: float = 0.99,
+        eps: float = 1e-8,
+        weight_decay: float = 0.0,
+        momentum: float = 0.0,
+        centered: bool = False,
+    ):
+        super().__init__(params, lr, weight_decay, alpha=alpha, eps=eps, momentum=momentum, centered=centered)
+        self.alpha = alpha
+        self.eps = eps
+        self.momentum = momentum
+        self.centered = centered
+
+    def step(self):
+        for i, p, group in self._enumerate():
+            if p.grad is None:
+                continue
+            g = p.grad.data + group.get("weight_decay", 0.0) * p.data
+            st = self.state[i]
+            if "square_avg" not in st:
+                st["square_avg"] = np.zeros_like(g)
+            st["square_avg"] = self.alpha * st["square_avg"] + (1 - self.alpha) * g**2
+            if self.centered:
+                if "grad_avg" not in st:
+                    st["grad_avg"] = np.zeros_like(g)
+                st["grad_avg"] = self.alpha * st["grad_avg"] + (1 - self.alpha) * g
+                denom = np.sqrt(st["square_avg"] - st["grad_avg"] ** 2 + self.eps)
+            else:
+                denom = np.sqrt(st["square_avg"] + self.eps)
+            if self.momentum > 0:
+                if "momentum_buf" not in st:
+                    st["momentum_buf"] = np.zeros_like(g)
+                st["momentum_buf"] = self.momentum * st["momentum_buf"] + g / denom
+                p.data = p.data - group.get("lr", self.lr) * st["momentum_buf"]
+            else:
+                p.data = p.data - group.get("lr", self.lr) * g / denom
+
+
+class Adagrad(Optimizer):
+    def __init__(
+        self,
+        params,
+        lr: float = 0.01,
+        lr_decay: float = 0.0,
+        weight_decay: float = 0.0,
+        eps: float = 1e-10,
+    ):
+        super().__init__(params, lr, weight_decay, lr_decay=lr_decay, eps=eps)
+        self.lr_decay = lr_decay
+        self.eps = eps
+
+    def step(self):
+        for i, p, group in self._enumerate():
+            if p.grad is None:
+                continue
+            g = p.grad.data + group.get("weight_decay", 0.0) * p.data
+            st = self.state[i]
+            if "sum_sq" not in st:
+                st["sum_sq"] = np.zeros_like(g)
+                st["step"] = 0
+            st["sum_sq"] = st["sum_sq"] + g**2
+            st["step"] += 1
+            lr = group.get("lr", self.lr)
+            if self.lr_decay > 0:
+                lr = lr / (1 + self.lr_decay * st["step"])
+            p.data = p.data - lr * g / (np.sqrt(st["sum_sq"]) + self.eps)
+
+
+class Adadelta(Optimizer):
+    def __init__(
+        self,
+        params,
+        lr: float = 1.0,
+        rho: float = 0.9,
+        eps: float = 1e-6,
+        weight_decay: float = 0.0,
+    ):
+        super().__init__(params, lr, weight_decay, rho=rho, eps=eps)
+        self.rho = rho
+        self.eps = eps
+
+    def step(self):
+        for i, p, group in self._enumerate():
+            if p.grad is None:
+                continue
+            g = p.grad.data + group.get("weight_decay", 0.0) * p.data
+            st = self.state[i]
+            if "sq_grad" not in st:
+                st["sq_grad"] = np.zeros_like(g)
+                st["sq_delta"] = np.zeros_like(g)
+            st["sq_grad"] = self.rho * st["sq_grad"] + (1 - self.rho) * g**2
+            update = (
+                np.sqrt(st["sq_delta"] + self.eps)
+                / np.sqrt(st["sq_grad"] + self.eps)
+                * g
+            )
+            st["sq_delta"] = self.rho * st["sq_delta"] + (1 - self.rho) * update**2
+            p.data = p.data - group.get("lr", self.lr) * update
+
+
+class Adamax(Optimizer):
+    def __init__(
+        self,
+        params,
+        lr: float = 0.002,
         betas=(0.9, 0.999),
         eps: float = 1e-8,
         weight_decay: float = 0.0,
     ):
-        super().__init__(params, lr, weight_decay)
+        super().__init__(params, lr, weight_decay, betas=betas, eps=eps)
         self.betas = betas
         self.eps = eps
         self._step = 0
 
     def step(self):
         self._step += 1
-        for i, p in enumerate(self.params):
+        for i, p, group in self._enumerate():
             if p.grad is None:
                 continue
-            g = p.grad.data
-            if "exp_avg" not in self.state[i]:
-                self.state[i]["exp_avg"] = np.zeros_like(g)
-                self.state[i]["exp_avg_sq"] = np.zeros_like(g)
-            m = self.state[i]["exp_avg"]
-            v = self.state[i]["exp_avg_sq"]
-            m = self.betas[0] * m + (1 - self.betas[0]) * g
-            v = self.betas[1] * v + (1 - self.betas[1]) * g**2
-            self.state[i]["exp_avg"] = m
-            self.state[i]["exp_avg_sq"] = v
-            m_hat = m / (1 - self.betas[0] ** self._step)
-            v_hat = v / (1 - self.betas[1] ** self._step)
-            update = m_hat / (np.sqrt(v_hat) + self.eps) + self.weight_decay * p.data
-            p_norm = np.linalg.norm(p.data)
-            g_norm = np.linalg.norm(update)
-            trust = 1.0
-            if p_norm > 0 and g_norm > 0:
-                trust = p_norm / g_norm
-            p.data = p.data - self.lr * trust * update
+            g = p.grad.data + group.get("weight_decay", 0.0) * p.data
+            st = self.state[i]
+            if "exp_avg" not in st:
+                st["exp_avg"] = np.zeros_like(g)
+                st["exp_inf"] = np.zeros_like(g)
+            m = self.betas[0] * st["exp_avg"] + (1 - self.betas[0]) * g
+            u = np.maximum(self.betas[1] * st["exp_inf"], np.abs(g))
+            st["exp_avg"] = m
+            st["exp_inf"] = u
+            p.data = p.data - group.get("lr", self.lr) * m / (u + self.eps)
 
 
 class CosineAnnealingLR:

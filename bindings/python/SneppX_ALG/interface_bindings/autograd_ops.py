@@ -928,8 +928,99 @@ class CrossEntropyLoss(Function):
         return [Tensor(grad * g, dtype="float32"), None]
 
 
+class NLLLoss(Function):
+    @staticmethod
+    def forward(ctx, inp, target):
+        x = inp.data
+        t = target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        n = x.shape[0] if x.ndim > 1 else 1
+        ctx.save_attr(n=n)
+        nll = -np.sum(t * np.log(x + 1e-10), axis=-1 if x.ndim > 1 else 0)
+        return Tensor(np.array([float(np.mean(nll))], dtype=x.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        grad_inp = Tensor(
+            -(target.data / (inp.data + 1e-10)) * (g / n), dtype=inp.dtype
+        )
+        grad_target = Tensor(
+            -(np.log(inp.data + 1e-10)) * (g / n), dtype=inp.dtype
+        )
+        return [grad_inp, grad_target]
+
+
+class KLDivLoss(Function):
+    @staticmethod
+    def forward(ctx, inp, target):
+        x = inp.data
+        t = target.data
+        ctx.save_for_backward(inp=inp, target=target)
+        n = x.size
+        ctx.save_attr(n=n)
+        kl = t * (np.log(t + 1e-10) - np.log(x + 1e-10))
+        return Tensor(np.array([float(np.mean(kl))], dtype=x.dtype), dtype=inp.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        inp = ctx.get_saved_tensor("inp")
+        target = ctx.get_saved_tensor("target")
+        n = ctx.get_attr("n")
+        g = grad_output.data.flat[0]
+        grad_inp = Tensor(
+            -(target.data / (inp.data + 1e-10)) * (g / n), dtype=inp.dtype
+        )
+        grad_target = Tensor(
+            (np.log(target.data + 1e-10) - np.log(inp.data + 1e-10)) * (g / n),
+            dtype=inp.dtype,
+        )
+        return [grad_inp, grad_target]
+
+
+class Stack(Function):
+    @staticmethod
+    def forward(ctx, *args):
+        tensors = [a for a in args if isinstance(a, Tensor)]
+        dim = args[-1] if isinstance(args[-1], int) else 0
+        ctx.save_attr(dim=dim)
+        ctx.save_attr(n=len(tensors))
+        data = np.stack([t.data for t in tensors], axis=dim)
+        return Tensor(data, dtype=tensors[0].dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        dim = ctx.get_attr("dim")
+        n = ctx.get_attr("n")
+        grads = np.split(grad_output.data, n, axis=dim)
+        return [Tensor(np.squeeze(g, axis=dim).copy(), dtype=grad_output.dtype) for g in grads]
+
+
+class Cat(Function):
+    @staticmethod
+    def forward(ctx, *args):
+        tensors = [a for a in args if isinstance(a, Tensor)]
+        dim = args[-1] if isinstance(args[-1], int) else 0
+        ctx.save_attr(dim=dim)
+        ctx.save_attr(sizes=[t.shape[dim] for t in tensors])
+        data = np.concatenate([t.data for t in tensors], axis=dim)
+        return Tensor(data, dtype=tensors[0].dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        dim = ctx.get_attr("dim")
+        sizes = ctx.get_attr("sizes")
+        grads = np.split(grad_output.data, sizes, axis=dim)
+        return [Tensor(g.copy(), dtype=grad_output.dtype) for g in grads]
+
+
 __all__ = [
     "Add",
+    "Stack",
+    "Cat",
     "Sub",
     "Mul",
     "Div",
@@ -965,4 +1056,6 @@ __all__ = [
     "AvgPool2d",
     "MSELoss",
     "CrossEntropyLoss",
+    "NLLLoss",
+    "KLDivLoss",
 ]

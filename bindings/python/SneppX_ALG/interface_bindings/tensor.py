@@ -56,10 +56,17 @@ if not _HAS_C_BACKEND:
 
 DTYPE_MAP = {
     "float32": (ctypes.c_float, 4, np.float32),
+    "float64": (ctypes.c_double, 8, np.float64),
     "float16": (ctypes.c_uint16, 2, np.float16),
+    "bfloat16": (ctypes.c_uint16, 2, np.uint16),
     "int32": (ctypes.c_int32, 4, np.int32),
     "int64": (ctypes.c_int64, 8, np.int64),
+    "int16": (ctypes.c_int16, 2, np.int16),
+    "int8": (ctypes.c_int8, 1, np.int8),
     "uint8": (ctypes.c_uint8, 1, np.uint8),
+    "bool": (ctypes.c_uint8, 1, np.bool_),
+    "complex64": (ctypes.c_float, 8, np.complex64),
+    "complex128": (ctypes.c_double, 16, np.complex128),
 }
 
 _NP_TO_DTYPE = {}
@@ -573,15 +580,14 @@ class Tensor:
         )
 
     def nll_loss(self, target):
-        return Tensor(np.array([-np.mean(self.data * target.data)]), dtype="float32")
+        from .autograd_ops import NLLLoss
+
+        return NLLLoss.apply(self, target)
 
     def kl_div(self, target):
-        return Tensor(
-            np.array(
-                [np.mean(target.data * (np.log(target.data + 1e-10) - self.data))]
-            ),
-            dtype="float32",
-        )
+        from .autograd_ops import KLDivLoss
+
+        return KLDivLoss.apply(self, target)
 
     def binary_cross_entropy(self, target):
         p = np.clip(self.data, 1e-10, 1 - 1e-10)
@@ -678,11 +684,15 @@ class Tensor:
 
     @staticmethod
     def cat(tensors: List["Tensor"], dim=0) -> "Tensor":
-        return Tensor(np.concatenate([t.data for t in tensors], axis=dim))
+        from .autograd_ops import Cat
+
+        return Cat.apply(*tensors, dim)
 
     @staticmethod
     def stack(tensors: List["Tensor"], dim=0) -> "Tensor":
-        return Tensor(np.stack([t.data for t in tensors], axis=dim))
+        from .autograd_ops import Stack
+
+        return Stack.apply(*tensors, dim)
 
     @staticmethod
     def concat(tensors: List["Tensor"], dim=0) -> "Tensor":

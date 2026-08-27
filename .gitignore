@@ -91,3 +91,11 @@ CMakeLists_standalone.txt
 target/
 Cargo.lock
 
+# Audit deliverables (local working memory, not committed — see AGENTS.md)
+CAPABILITY_MATRIX.md
+MISSING_FEATURES.md
+IMPLEMENTATION_STATUS.md
+BENCHMARK_PLAN.md
+SECURITY_AUDIT.md
+COMPATIBILITY.md
+

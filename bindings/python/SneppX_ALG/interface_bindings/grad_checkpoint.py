@@ -1,9 +1,9 @@
 """Gradient checkpointing (activation recomputation).
 
-Wraps a sequence of forward sub-functions so that only the inputs to
-each checkpointed segment are stored; activations inside the segment are
-recomputed during backward. This trades compute for memory, enabling
-training of very deep models that would otherwise OOM. The API mirrors
+Wraps a forward sub-function so that only the inputs to each checkpointed
+segment are stored; activations inside the segment are recomputed during
+backward. This trades compute for memory, enabling training of very deep
+models that would otherwise OOM. The API mirrors
 ``torch.utils.checkpoint.checkpoint``.
 """
 
@@ -11,15 +11,52 @@ from typing import Callable, List, Tuple, Any, Optional
 import numpy as np
 
 from .tensor import Tensor
+from .autograd import Function, _backward
+
+
+class CheckpointFunction(Function):
+    """Recomputes its wrapped ``fn`` during the backward pass.
+
+    The forward output is disconnected from the inner autograd graph (the
+    inner ``_GradFn`` nodes are dropped), so intermediate activations are not
+    retained. On backward we re-run ``fn`` on detached clones of the inputs
+    and backprop through the freshly built graph, returning gradients for the
+    original inputs. Using clones keeps the originals' ``.grad`` correct even
+    when an input tensor is shared by several checkpointed segments.
+    """
+
+    @staticmethod
+    def forward(ctx, fn: Callable, *inputs: Tensor) -> Tensor:
+        ctx.fn = fn
+        ctx.inputs = inputs
+        return fn(*inputs)
+
+    @staticmethod
+    def backward(ctx, grad_output: Tensor):
+        fn = ctx.fn
+        inputs = ctx.inputs
+        clones = []
+        for inp in inputs:
+            c = Tensor.from_numpy(np.array(inp.data, copy=True), dtype=inp.dtype_name)
+            c.requires_grad_(inp.requires_grad)
+            clones.append(c)
+        inner = fn(*clones)
+        _backward(inner, grad_output)
+        grads = [c.grad if inp.requires_grad else None for c, inp in zip(clones, inputs)]
+        return grads
 
 
 class CheckpointSegment:
-    """A single recomputable segment of the forward graph."""
+    """Compatibility shim: records a recomputable segment for stats only.
+
+    The actual recompute-on-backward behaviour lives in
+    :class:`CheckpointFunction`; this keeps the previously exported name
+    available for callers that inspected ``CheckpointSegment`` instances.
+    """
 
     def __init__(self, fn: Callable, inputs: Tuple[Tensor, ...]):
         self.fn = fn
         self.inputs = inputs
-        self.saved_inputs = inputs
         self.output: Optional[Tensor] = None
 
     def forward(self) -> Tensor:
@@ -27,27 +64,17 @@ class CheckpointSegment:
         return self.output
 
     def recompute(self) -> Tensor:
-        # Re-run the wrapped function on the (detached) saved inputs
-        saved = tuple(
-            Tensor.from_numpy(i.data.copy(), dtype=i.dtype_name) for i in self.inputs
-        )
-        self.output = self.fn(*saved)
+        self.output = self.fn(*self.inputs)
         return self.output
 
 
 def checkpoint(fn: Callable, *inputs: Tensor, use_reentrant: bool = True) -> Tensor:
     """Run ``fn(*inputs)`` but discard intermediate activations.
 
-    During the backward pass the segment is recomputed. ``use_reentrant``
-    is accepted for API compatibility (the pure-NumPy engine is single-stream).
+    During the backward pass the segment is recomputed. ``use_reentrant`` is
+    accepted for API compatibility (the pure-NumPy engine is single-stream).
     """
-    seg = CheckpointSegment(fn, inputs)
-    out = seg.forward()
-    # Stash the segment on the output tensor for the backward engine
-    if not hasattr(out, "_checkpoint_segments"):
-        out._checkpoint_segments = []
-    out._checkpoint_segments.append(seg)
-    return out
+    return CheckpointFunction.apply(fn, *inputs)
 
 
 class GradientCheckpointer:
@@ -58,28 +85,18 @@ class GradientCheckpointer:
             h = checkpointer.checkpoint(block1, x)
             h = checkpointer.checkpoint(block2, h)
         # ... compute loss, backward ...
-        checkpointer.recompute_all()  # rebuild activations before 2nd pass
     """
 
     def __init__(self):
-        self.segments: List[CheckpointSegment] = []
+        self.segments: List[Tuple[Callable, Tuple[Tensor, ...]]] = []
         self._active = False
 
     def context(self):
         return _CheckpointContext(self)
 
     def checkpoint(self, fn: Callable, *inputs: Tensor) -> Tensor:
-        seg = CheckpointSegment(fn, inputs)
-        out = seg.forward()
-        self.segments.append(seg)
-        if not hasattr(out, "_checkpoint_segments"):
-            out._checkpoint_segments = []
-        out._checkpoint_segments.append(seg)
-        return out
-
-    def recompute_all(self):
-        for seg in self.segments:
-            seg.recompute()
+        self.segments.append((fn, inputs))
+        return CheckpointFunction.apply(fn, *inputs)
 
     def num_segments(self) -> int:
         return len(self.segments)
@@ -90,8 +107,8 @@ class GradientCheckpointer:
         This is a heuristic: sum of input sizes (the only thing kept).
         """
         total = 0
-        for seg in self.segments:
-            for t in seg.inputs:
+        for _, inputs in self.segments:
+            for t in inputs:
                 total += int(np.prod(t.shape)) * per_elem_bytes
         return total
 
